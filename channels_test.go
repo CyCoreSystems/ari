@@ -210,7 +210,7 @@ func TestNewChannelContexts(t *testing.T) {
 	// Creating and Getting the contexts
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = NewChannelContext(ctx, &ch)
-	ctx = NewChannelContextWithKey(ctx, &ch, "tester")
+	ctx = NewChannelContextWithKey(ctx, &ch2, "tester")
 	retCh, ok := ChannelFromContext(ctx)
 	assert.True(t, ok, "Query returned 'did not exist'")
 	retCh2, ok := ChannelFromContextWithKey(ctx, "tester")
