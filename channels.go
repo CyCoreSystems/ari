@@ -1,6 +1,9 @@
 package ari
 
-import "code.google.com/p/go-uuid/uuid"
+import (
+	"code.google.com/p/go-uuid/uuid"
+	"golang.org/x/net/context"
+)
 
 // Channel describes a(n active) communication connection between Asterisk
 // and an Endpoint
@@ -374,4 +377,34 @@ func (c *Client) StopSilenceChannel(channelId string) error {
 func (c *Client) StopHoldChannel(channelId string) error {
 	err := c.AriDelete("/channels/"+channelId+"/hold", nil, nil)
 	return err
+}
+
+//
+//  Context-related items
+//
+
+// channelKey is the key type for contexts
+type channelKey string
+
+// NewChannelContext returns a context with the channel attached
+func NewChannelContext(ctx context.Context, c *Channel) context.Context {
+	return NewChannelContextWithKey(ctx, c, "_default")
+}
+
+// NewChannelContext returns a context with the channel attached
+// as the given key
+func NewChannelContextWithKey(ctx context.Context, c *Channel, name string) context.Context {
+	return context.WithValue(ctx, channelKey(name), c)
+}
+
+// ChannelFromContext returns the default Channel stored in the context
+func ChannelFromContext(ctx context.Context) (*Channel, bool) {
+	return ChannelFromContextWithKey(ctx, "_default")
+}
+
+// ChannelFromContextWithKey returns the default Channel
+// stored in the context
+func ChannelFromContextWithKey(ctx context.Context, name string) (*Channel, bool) {
+	c, ok := ctx.Value(channelKey(name)).(*Channel)
+	return c, ok
 }

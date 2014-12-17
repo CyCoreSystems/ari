@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type ChannelTests struct {
@@ -192,4 +194,35 @@ func (s *ChannelTests) TestYContinue() {
 
 func TestChannelSuite(t *testing.T) {
 	suite.Run(t, new(ChannelTests))
+}
+
+// Below are the context tests. Much simpler and don't require shared info.
+
+func TestNewChannelContexts(t *testing.T) {
+	// Creation of separate channels
+	ch := Channel{
+		Id: "test",
+	}
+	ch2 := Channel{
+		Id: "test2",
+	}
+
+	// Creating and Getting the contexts
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx = NewChannelContext(ctx, &ch)
+	ctx = NewChannelContextWithKey(ctx, &ch, "tester")
+	retCh, ok := ChannelFromContext(ctx)
+	assert.True(t, ok, "Query returned 'did not exist'")
+	retCh2, ok := ChannelFromContextWithKey(ctx, "tester")
+	assert.True(t, ok, "Query returned 'did not exist'")
+
+	// Break if not ok
+	if ok == false {
+		return
+	}
+
+	// Assertions
+	assert.Equal(t, ch.Id, retCh.Id, "Returned channel Id not equal 'test'")
+	assert.Equal(t, ch2.Id, retCh2.Id, "Returned channel Id not equal 'test'")
+	cancel()
 }
