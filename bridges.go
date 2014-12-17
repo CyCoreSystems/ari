@@ -1,10 +1,15 @@
 package ari
 
+import (
+	"code.google.com/p/go-uuid/uuid"
+	"golang.org/x/net/context"
+)
+
 // Bridge describes an Asterisk Bridge, the entity which merges media from
 // one or more channels into a common audio output
 type Bridge struct {
 	Bridge_class string   `json:"bridge"`      // Class of the bridge (TODO: huh?)
-	Bridge_type  string   `json:"bridge_type"` // Type of bridge (TODO: enumerate types)
+	Bridge_type  string   `json:"bridge_type"` // Type of bridge (mixing, holding, dtmf_events, proxy_media)
 	Channels     []string `json:"channels"`    // List of pariticipating channel ids
 	Creator      string   `json:"creator"`     // Creating entity of the bridge
 	Id           string   `json:"id"`          // Unique Id for this bridge
@@ -14,11 +19,9 @@ type Bridge struct {
 
 //Request structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
 type CreateBridgeRequest struct {
+	Id   string `json:"bridgeId,omitempty"`
 	Type string `json:"type,omitempty"`
 	Name string `json:"name,omitempty"`
-
-	//BridgeId only necessary for the origination of a bridge.
-	BridgeId string `json:"bridgeId,omitempty"`
 }
 
 //Request structure to add a channel to a bridge. Only Channel is required.
@@ -37,6 +40,13 @@ func (c *Client) ListBridges() ([]Bridge, error) {
 		return m, err
 	}
 	return m, nil
+}
+
+// NewBridge is a simple wrapper to create a new,
+// unique bridge, with the default options
+func (c *Client) NewBridge() (Bridge, error) {
+	id := uuid.New()
+	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
 }
 
 //Create a new bridge
@@ -178,4 +188,33 @@ func (c *Client) BridgeDelete(bridgeId string) error {
 func (c *Client) BridgeStopMoh(bridgeId string) error {
 	err := c.AriDelete("/bridges/"+bridgeId+"/moh", nil, nil)
 	return err
+}
+
+//
+//  Context-related items
+//
+
+// bridgeKey is the key type for contexts
+type bridgeKey string
+
+// NewBridgeContext returns a context with the bridge attached
+func NewBridgeContext(ctx context.Context, b *Bridge) context.Context {
+	return NewBridgeContextWithKey(ctx, b, "_default")
+}
+
+// NewBridgeContextWithKey returns a context with the bridge attached
+// as the given key
+func NewBridgeContextWithKey(ctx context.Context, b *Bridge, name string) context.Context {
+	return context.WithValue(ctx, bridgeKey(name), b)
+}
+
+// BridgeFromContext returns the default Bridge stored in the context
+func BridgeFromContext(ctx context.Context) (*Bridge, bool) {
+	return BridgeFromContextWithKey(ctx, "_default")
+}
+
+// BridgeFromContextWithKey returns the Bridge stored in the context
+func BridgeFromContextWithKey(ctx context.Context, name string) (*Bridge, bool) {
+	c, ok := ctx.Value(bridgeKey(name)).(*Bridge)
+	return c, ok
 }

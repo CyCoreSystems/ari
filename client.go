@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"golang.org/x/net/context"
 
 	"code.google.com/p/go.net/websocket"
 )
@@ -66,6 +67,25 @@ func NewClient(appName, aurl, wsurl, username, password string) (Client, error) 
 func (c *Client) Go() {
 	// Dereference so we don't block
 	go c._goloop()
+
+	return
+}
+
+// GoWait maintains a websocket connection until told to stop
+// but does not return until a successful connection is established
+func (c *Client) GoWait() error {
+	go c._goloop()
+
+	// Wait until we see the WebSocket come up
+	for c.WebSocket == nil {
+		time.Sleep(100 * time.Millisecond)
+		// Exit if a stop has been requested
+		if c.StopRequested {
+			return fmt.Errorf("Timed out waiting for websocket")
+		}
+	}
+
+	return nil
 }
 
 // _goloop maintains the websocket connection
@@ -178,4 +198,35 @@ func (c *Client) ParseMessage(data []byte) {
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
+}
+
+//
+//  Context-related items
+//
+
+// clientKey is the key type for contexts
+type clientKey string
+
+// NewClientContext returns a context with the client attached
+func NewClientContext(ctx context.Context, c *Client) context.Context {
+	return NewClientContextWithKey(ctx, c, "_default")
+}
+
+// NewClientContextWithKey returns a context with the client attached
+// as the given key
+func NewClientContextWithKey(ctx context.Context, c *Client, name string) context.Context {
+	return context.WithValue(ctx, clientKey(name), c)
+}
+
+// ClientFromContext returns the Client stored in the context
+// with the default key
+func ClientFromContext(ctx context.Context) (*Client, bool) {
+	return ClientFromContextWithKey(ctx, "_default")
+}
+
+// ClientFromContextWithKey returns the Client stored in the context
+// with the given keyname
+func ClientFromContextWithKey(ctx context.Context, name string) (*Client, bool) {
+	c, ok := ctx.Value(clientKey(name)).(*Client)
+	return c, ok
 }

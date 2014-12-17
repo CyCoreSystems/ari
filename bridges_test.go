@@ -25,8 +25,8 @@ func (s *BridgeTests) TearDownSuite() {
 func (s *BridgeTests) TestBridgeCreate() {
 	//Creation of empty bridge.
 	bridge, err := DefaultClient.CreateBridge(CreateBridgeRequest{
-		BridgeId: "testBridge",
-		Type:     "mixing",
+		Id:   "testBridge",
+		Type: "mixing",
 	})
 	s.Nil(err, "Bridge creation failed.")
 
