@@ -1,8 +1,20 @@
 package ari
 
 import (
+	"fmt"
+
 	"code.google.com/p/go-uuid/uuid"
 	"golang.org/x/net/context"
+)
+
+// Mute-related constants for use with the mute commands
+// `MuteIn` mutes audio coming in to the channel from Asterisk
+// `MuteOut` mutes audio coming out from the channel to Asterisk
+// `MuteBoth` mutes audio in both directions
+const (
+	MuteIn   = "in"
+	MuteOut  = "out"
+	MuteBoth = "both"
 )
 
 // Channel describes a(n active) communication connection between Asterisk
@@ -16,6 +28,8 @@ type Channel struct {
 	Id           string       `json:"id"`       // Unique id for this channel (same as for AMI)
 	Name         string       `json:"name"`     // Name of this channel (tech/name-id format)
 	State        string       `json:"state"`    // State of the channel
+
+	client *Client // Reference to the client which created or returned this channel
 }
 
 // OriginateRequest is the basic structure for all channel creation methods
@@ -90,6 +104,217 @@ type SendDTMFToChannelRequest struct {
 	After    int    `json:"after,omitempty"`
 }
 
+// Hangup hangs up the current channel
+func (c *Channel) Hangup() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+	return c.client.HangupChannel(c.Id, "requested")
+}
+
+// Continue causes the current channel to continue in
+// the dialplan
+func (c *Channel) Continue(context string, extension string, priority int64) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	req := ContinueChannelRequest{
+		Context:   context,
+		Extension: extension,
+		Priority:  priority,
+	}
+
+	return c.client.ContinueChannel(c.Id, req)
+}
+
+// Answer answers the current channel
+func (c *Channel) Answer() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.AnswerChannel(c.Id)
+}
+
+// Ring indicates ringing to the channel
+func (c *Channel) Ring() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.ChannelRing(c.Id)
+}
+
+// StopRing stops ringing on the channel
+func (c *Channel) StopRing() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.StopRinging(c.Id)
+}
+
+// SendDTMF sends DTMF to the channel
+func (c *Channel) SendDTMF(dtmf string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	req := SendDTMFToChannelRequest{
+		Dtmf: dtmf,
+	}
+
+	return c.client.SendDTMFToChannel(c.Id, req)
+}
+
+// Mute mutes the channel in the given direction
+// (one of "in", "out", or "both")
+func (c *Channel) Mute(dir string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.MuteChannel(c.Id, dir)
+}
+
+// Unmute stops muting of the channel in the given direction
+// (one of "in", "out", or "both")
+func (c *Channel) Unmute(dir string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.UnMuteChannel(c.Id, dir)
+}
+
+// Hold puts the channel on hold
+func (c *Channel) Hold() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.HoldChannel(c.Id)
+}
+
+// Unhold retrieves the channel from hold
+func (c *Channel) Unhold() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.StopHoldChannel(c.Id)
+}
+
+// MOH plays music on hold of the given class
+// to the channel
+func (c *Channel) MOH(mohClass string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.PlayMOHToChannel(c.Id, mohClass)
+}
+
+// StopMOH stops playing of music on hold to the channel
+func (c *Channel) StopMOH() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.StopMohChannel(c.Id)
+}
+
+// Silence transmits silence (comfort noise) to the
+// channel
+func (c *Channel) Silence() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.PlaySilenceToChannel(c.Id)
+}
+
+// StopSilence stops transmission of silence to
+// channel
+func (c *Channel) StopSilence() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.StopSilenceChannel(c.Id)
+}
+
+// Play initiates playback of the specified media uri
+// to the channel, returning the Playback's Id
+func (c *Channel) Play(mediaUri string) (string, error) {
+	if c.client == nil {
+		return "", fmt.Errorf("No client found in Channel")
+	}
+
+	// Generate a playback id
+	id := uuid.New()
+
+	var err error
+	_, err = c.client.PlayToChannelById(c.Id, id, PlayMediaRequest{Media: mediaUri})
+	return id, err
+}
+
+// Record starts recording the channel, returning
+// the LiveRecording
+func (c *Channel) Record(name string, format string) (*LiveRecording, error) {
+	if c.client == nil {
+		return nil, fmt.Errorf("No client found in Channel")
+	}
+
+	recording, err := c.client.RecordChannel(c.Id, RecordRequest{
+		Name:   name,
+		Format: format,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to start recording: %s\n", err.Error())
+	}
+	return &recording, nil
+}
+
+// Get retrieves a channel variable from the channel
+func (c *Channel) Get(name string) (string, error) {
+	if c.client == nil {
+		return "", fmt.Errorf("No client found in Channel")
+	}
+
+	chanVar, err := c.client.GetChannelVariable(c.Id, name)
+	if err != nil {
+		return "", fmt.Errorf("Failed to retrieve variable: %s\n", err.Error())
+	}
+	return chanVar.Value, nil
+}
+
+// Set sets a channel variable of the channel
+func (c *Channel) Set(name string, value string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+
+	return c.client.SetChannelVariable(c.Id, name, value)
+}
+
+// Snoop begins a snoop session and returns its id
+// TODO: what is the channel being returned; do we need it?
+func (c *Channel) Snoop() (string, error) {
+	if c.client == nil {
+		return "", fmt.Errorf("No client found in Channel")
+	}
+
+	var err error
+	id := uuid.New()
+	_, err = c.client.StartSnoopChannelById(c.Id, id, SnoopRequest{App: c.client.Application})
+	if err != nil {
+		return "", fmt.Errorf("Failed to initiate snoop session: %s", err.Error())
+	}
+	return id, nil
+}
+
 //List all active channels in asterisk
 //Equivalent to Get /channels
 func (c *Client) ListChannels() ([]Channel, error) {
@@ -101,11 +326,57 @@ func (c *Client) ListChannels() ([]Channel, error) {
 	return m, nil
 }
 
+// NewOriginateRequest generates an originate request
+// with a unique channel Id, destination equal to the
+// current client, and an unlimited call timeout
+func (c *Client) NewOriginateRequest(endpoint string) OriginateRequest {
+	return OriginateRequest{
+		Endpoint:  endpoint,
+		Timeout:   -1,
+		App:       c.Application,
+		ChannelId: uuid.New(),
+	}
+}
+
+// NewChannel is a shorthand for creating a new channel.
+// It generates a unique Id, sets the destination to be
+// the current application, and passes any variables
+// through;  pass nil for vars if no variables are needed
+func (c *Client) NewChannel(endpoint string, vars map[string]string) (Channel, error) {
+	o := c.NewOriginateRequest(endpoint)
+	if vars != nil {
+		o.Variables = vars
+	}
+	return c.CreateChannelWithId(o.ChannelId, o)
+}
+
 // CreateChannel originates a new call
 func (c *Client) CreateChannel(req OriginateRequest) (Channel, error) {
 	var m Channel
 
 	err := c.AriPost("/channels", &m, &req)
+
+	// Attach the client
+	m.client = c
+
+	return m, err
+}
+
+// CreateChannelWithId originates a new call with
+// the given channel Id
+func (c *Client) CreateChannelWithId(id string, req OriginateRequest) (Channel, error) {
+	var m Channel
+
+	if id == "" {
+		return m, fmt.Errorf("No channel Id provided")
+	}
+	req.ChannelId = id
+
+	err := c.AriPost("/channels/"+id, &m, &req)
+
+	// Attach the client
+	m.client = c
+
 	return m, err
 }
 
@@ -117,6 +388,10 @@ func (c *Client) GetChannel(channelId string) (Channel, error) {
 	if err != nil {
 		return m, err
 	}
+
+	// Attach the client
+	m.client = c
+
 	return m, nil
 }
 

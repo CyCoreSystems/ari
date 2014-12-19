@@ -143,6 +143,79 @@ func (s *BridgeTests) TestBridgeRecordAndPlay() {
 	s.Nil(err, "Couldn't play recording back to 'testBridge'")
 }
 
+type BridgeTestsSplit struct {
+	suite.Suite
+	c chan *Event
+}
+
+func (s *BridgeTestsSplit) SetupSuite() {
+	DefaultClient.Go()
+	time.Sleep(1 * time.Second)
+}
+
+func (s *BridgeTestsSplit) TearDownSuite() {
+	DefaultClient.Close()
+}
+
+func (s *BridgeTestsSplit) TestBridgeOtherApp() {
+	// Create a channel with the default client
+	ch1, err := DefaultClient.NewChannel("PJSIP/101", nil)
+	s.Nil(err, "Failed to create first channel")
+
+	// Wait for answer
+	e := <-DefaultClient.Events
+	for e.Type != "StasisStart" {
+		e = <-DefaultClient.Events
+	}
+
+	// Create a bridge with the default client
+	br, err := DefaultClient.NewBridge()
+	s.Nil(err, "Failed to create bridge")
+
+	// Create a new client
+	nc, err := NewClient("second", DefaultBaseUri, DefaultWsUri, DefaultUsername, DefaultSecret)
+	s.Nil(err, "Failed to create second client")
+	nc.Go()
+
+	// Create channel on second client
+	ch2, err := nc.NewChannel("PJSIP/102", nil)
+	s.Nil(err, "Failed to create second channel")
+
+	// Wait for answer
+	e = <-nc.Events
+	for e.Type != "StasisStart" {
+		e = <-nc.Events
+	}
+
+	// Add ch1 to bridge
+	err = br.Add(ch1.Id)
+	s.Nil(err, "Failed to add ch1 to bridge")
+
+	// Add ch2 to the bridge
+	err = nc.AddChannel(br.Id, AddChannelRequest{ChannelId: ch2.Id})
+	s.Nil(err, "Failed to add ch2 to bridge")
+
+	fmt.Println("Waiting 1 second for achievement of serenity")
+	time.Sleep(1 * time.Second)
+
+	// Tear down bridge
+	err = br.Delete()
+	s.Nil(err, "Failed to delete bridge")
+
+	// Hang up ch1
+	err = ch1.Hangup()
+	s.Nil(err, "Failed to hang up ch1")
+
+	// Hang up ch2
+	err = ch2.Hangup()
+	s.Nil(err, "Failed to hang up ch2")
+
+	// Shut down extra application
+	nc.Close()
+}
+
 func TestBridgeSuite(t *testing.T) {
-	suite.Run(t, new(BridgeTests))
+	//suite.Run(t, new(BridgeTests))
+
+	suite.Run(t, new(BridgeTestsSplit))
 }

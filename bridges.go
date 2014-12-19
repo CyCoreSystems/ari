@@ -1,6 +1,8 @@
 package ari
 
 import (
+	"fmt"
+
 	"code.google.com/p/go-uuid/uuid"
 	"golang.org/x/net/context"
 )
@@ -8,13 +10,39 @@ import (
 // Bridge describes an Asterisk Bridge, the entity which merges media from
 // one or more channels into a common audio output
 type Bridge struct {
+	Id           string   `json:"id"`          // Unique Id for this bridge
 	Bridge_class string   `json:"bridge"`      // Class of the bridge (TODO: huh?)
 	Bridge_type  string   `json:"bridge_type"` // Type of bridge (mixing, holding, dtmf_events, proxy_media)
 	Channels     []string `json:"channels"`    // List of pariticipating channel ids
 	Creator      string   `json:"creator"`     // Creating entity of the bridge
-	Id           string   `json:"id"`          // Unique Id for this bridge
 	Name         string   `json:"name"`        // The name of the bridge
 	Technology   string   `json:"technology"`  // Name of the bridging technology
+
+	client *Client // Reference to the client which created or returned this bridge
+}
+
+// Add adds a channel to the bridge
+func (b *Bridge) Add(channelId string) error {
+	if b.client == nil {
+		return fmt.Errorf("No client found in Bridge")
+	}
+	return b.client.AddChannel(b.Id, AddChannelRequest{ChannelId: channelId})
+}
+
+// Remove removes a channel from the bridge
+func (b *Bridge) Remove(channelId string) error {
+	if b.client == nil {
+		return fmt.Errorf("No client found in Bridge")
+	}
+	return b.client.RemoveChannel(b.Id, channelId)
+}
+
+// Delete destroys the bridge
+func (b *Bridge) Delete() error {
+	if b.client == nil {
+		return fmt.Errorf("No client found in Bridge")
+	}
+	return b.client.BridgeDelete(b.Id)
 }
 
 //Request structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
@@ -39,6 +67,12 @@ func (c *Client) ListBridges() ([]Bridge, error) {
 	if err != nil {
 		return m, err
 	}
+
+	// Attach the client to each bridge
+	for _, b := range m {
+		b.client = c
+	}
+
 	return m, nil
 }
 
@@ -59,6 +93,10 @@ func (c *Client) CreateBridge(req CreateBridgeRequest) (Bridge, error) {
 	if err != nil {
 		return m, err
 	}
+
+	// Attach the client to the bridge
+	m.client = c
+
 	return m, nil
 }
 
@@ -72,6 +110,10 @@ func (c *Client) UpsertBridge(bridgeId string, req CreateBridgeRequest) (Bridge,
 	if err != nil {
 		return m, err
 	}
+
+	// Attach the client to the bridge
+	m.client = c
+
 	return m, nil
 }
 
@@ -83,6 +125,10 @@ func (c *Client) GetBridge(bridgeId string) (Bridge, error) {
 	if err != nil {
 		return m, err
 	}
+
+	// Attach the client to the bridge
+	m.client = c
+
 	return m, nil
 }
 
