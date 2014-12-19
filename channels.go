@@ -109,7 +109,7 @@ func (c *Channel) Hangup() error {
 	if c.client == nil {
 		return fmt.Errorf("No client found in Channel")
 	}
-	return c.client.HangupChannel(c.Id, "requested")
+	return c.client.HangupChannel(c.Id, "")
 }
 
 // Continue causes the current channel to continue in
