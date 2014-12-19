@@ -215,7 +215,7 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 }
 
 func TestBridgeSuite(t *testing.T) {
-	//suite.Run(t, new(BridgeTests))
+	suite.Run(t, new(BridgeTests))
 
 	suite.Run(t, new(BridgeTestsSplit))
 }
