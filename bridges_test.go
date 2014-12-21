@@ -198,8 +198,10 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	fmt.Println("Waiting 1 second for achievement of serenity")
 	time.Sleep(1 * time.Second)
 
-	// Tear down bridge
-	err = br.Delete()
+	// Tear down bridge by the second client
+	// (the one which did NOT create it)
+	//err = br.Delete()
+	err = nc.BridgeDelete(br.Id)
 	s.Nil(err, "Failed to delete bridge")
 
 	// Hang up ch1
@@ -215,7 +217,7 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 }
 
 func TestBridgeSuite(t *testing.T) {
-	suite.Run(t, new(BridgeTests))
+	//suite.Run(t, new(BridgeTests))
 
 	suite.Run(t, new(BridgeTestsSplit))
 }
