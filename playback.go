@@ -37,19 +37,19 @@ func (c *Client) GetPlaybackDetails(playbackId string) (Playback, error) {
 }
 
 // Control the current Playback
-func (p *Playback) Control(playbackId string, operation string) error {
+func (p *Playback) Control(operation string) error {
 	if p.client == nil {
 		return fmt.Errorf("No client found in Playback")
 	}
-	return p.client.ControlPlayback(playbackId, operation)
+	return p.client.ControlPlayback(p.Id, operation)
 }
 
 // Stop the current Playback.
-func (p *Playback) Stop(playbackId string) error {
+func (p *Playback) Stop() error {
 	if p.client == nil {
 		return fmt.Errorf("No client found in Playback")
 	}
-	return p.client.StopPlayback(playbackId)
+	return p.client.StopPlayback(p.Id)
 }
 
 //Equivalent to POST /playbacks/{playbackId}/control
