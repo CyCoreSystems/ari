@@ -57,70 +57,71 @@ func (c *Client) GetLiveRecording(recordingName string) (LiveRecording, error) {
 }
 
 //Copy current StoredRecording
-func (s *StoredRecording) Copy(recordingName string, destination string) (StoredRecording, error) {
+func (s *StoredRecording) Copy(destination string) (StoredRecording, error) {
+	var sRet StoredRecording
 	if s.client == nil {
-		return fmt.Errorf("No client found in StoredRecording")
+		return sRet, fmt.Errorf("No client found in StoredRecording")
 	}
-	return s.client.CopyLiveRecording(recordingName, destination)
+	return s.client.CopyStoredRecording(s.Name, destination)
 }
 
 // No method for getting the current LiveRecording--you have it.
 
 //Stop and store current LiveRecording
-func (l *LiveRecording) Stop(recordingName string) error {
+func (l *LiveRecording) Stop() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.StopLiveRecording(recordingName)
+	return l.client.StopLiveRecording(l.Name)
 }
 
 //Pause current LiveRecording
-func (l *LiveRecording) Pause(recordingName string) error {
+func (l *LiveRecording) Pause() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.PauseLiveRecording(recordingName)
+	return l.client.PauseLiveRecording(l.Name)
 }
 
 //Mute current LiveRecording
-func (l *LiveRecording) Mute(recordingName string) error {
+func (l *LiveRecording) Mute() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.MuteLiveRecording(recordingName)
+	return l.client.MuteLiveRecording(l.Name)
 }
 
 //Delete current LiveRecording
-func (l *LiveRecording) Delete(recordingName string) error {
+func (l *LiveRecording) Delete() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.DeleteStoredRecording(recordingName)
+	return l.client.DeleteStoredRecording(l.Name)
 }
 
 //TODO reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
 //Stop and delete current LiveRecording
-func (l *LiveRecording) Scrap(recordingName string) error {
+func (l *LiveRecording) Scrap() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.ScrapLiveRecording(recordingName)
+	return l.client.ScrapLiveRecording(l.Name)
 }
 
 //Unpause current LiveRecording
-func (l *LiveRecording) Resume(recordingName string) error {
+func (l *LiveRecording) Resume() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.ResumeLiveRecording(recordingName)
+	return l.client.ResumeLiveRecording(l.Name)
 }
 
 //Unmute current LiveRecording
-func (l *LiveRecording) Unmute(recordingName string) error {
+func (l *LiveRecording) Unmute() error {
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
-	return l.client.UnmuteLiveRecording(recordingName)
+	return l.client.UnmuteLiveRecording(l.Name)
 }
 
 //Copy a stored recording
