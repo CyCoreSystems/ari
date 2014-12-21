@@ -61,7 +61,7 @@ func (s *StoredRecording) Copy(recordingName string, destination string) (Stored
 	if s.client == nil {
 		return fmt.Errorf("No client found in StoredRecording")
 	}
-	return s.client.StopLiveRecording(recordingName, destination)
+	return s.client.CopyLiveRecording(recordingName, destination)
 }
 
 // No method for getting the current LiveRecording--you have it.
