@@ -80,7 +80,7 @@ func (s *ChannelTests) TestListChannel() {
 }
 
 func (s *ChannelTests) TestRingChannel() {
-	err := DefaultClient.ChannelRing("MyApp")
+	err := DefaultClient.RingChannel("MyApp")
 	s.Nil(err, "Could not ring to channel 'MyApp'")
 	fmt.Println("sleeping 1 second while we wait for a ring")
 	time.Sleep(1 * time.Second)

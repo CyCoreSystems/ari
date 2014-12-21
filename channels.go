@@ -143,7 +143,7 @@ func (c *Channel) Ring() error {
 		return fmt.Errorf("No client found in Channel")
 	}
 
-	return c.client.ChannelRing(c.Id)
+	return c.client.RingChannel(c.Id)
 }
 
 // StopRing stops ringing on the channel
@@ -417,7 +417,7 @@ func (c *Client) AnswerChannel(channelId string) error {
 
 //Indicate ringing to a channel
 //Equivalent to Post /channels/{channelId}/ring
-func (c *Client) ChannelRing(channelId string) error {
+func (c *Client) RingChannel(channelId string) error {
 	err := c.AriPost("/channels/"+channelId+"/ring", nil, nil)
 	if err != nil {
 		return err
