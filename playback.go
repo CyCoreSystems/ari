@@ -1,5 +1,7 @@
 package ari
 
+import "fmt"
+
 // Playback describes a session of playing media to a channel
 // MediaUri is of the form 'type:name', where type can be one of:
 //  - sound : a Sound on the Asterisk system
@@ -19,6 +21,8 @@ type Playback struct {
 	MediaUri  string `json:"media_uri"`  // URI for the media which is to be played
 	State     string `json:"state"`      // State of the playback operation
 	TargetUri string `json:"target_uri"` // URI of the channel or bridge on which the media should be played (follows format of 'type':'name')
+
+	client *Client // Reference to the client which created or returned this channel
 }
 
 //Get a playback's details
@@ -32,8 +36,24 @@ func (c *Client) GetPlaybackDetails(playbackId string) (Playback, error) {
 	return m, nil
 }
 
+// Control the current Playback
+func (p *Playback) Control(playbackId string, operation string) error {
+	if p.client == nil {
+		return fmt.Errorf("No client found in Playback")
+	}
+	return p.client.ControlPlayback(playbackId, operation)
+}
+
+// Stop the current Playback.
+func (p *Playback) Stop(playbackId string) error {
+	if p.client == nil {
+		return fmt.Errorf("No client found in Playback")
+	}
+	return p.client.StopPlayback(playbackId)
+}
+
 //Equivalent to POST /playbacks/{playbackId}/control
-func (c *Client) PlaybackControl(playbackId string, operation string) error {
+func (c *Client) ControlPlayback(playbackId string, operation string) error {
 
 	//Request structure for controlling playback. Operation is required.
 	type request struct {

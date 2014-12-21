@@ -84,7 +84,7 @@ func (s *PlaybackTests) TestGetPlaybackDetails() {
 	time.Sleep(3 * time.Second)
 
 	//Testing the control function using the 'restart' command.
-	err = DefaultClient.PlaybackControl(playback.Id, "restart")
+	err = DefaultClient.ControlPlayback(playback.Id, "restart")
 	fmt.Println("Restarting playback...")
 	time.Sleep(3 * time.Second)
 	s.Nil(err, "Couldn't restart playback.")
