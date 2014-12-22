@@ -61,6 +61,11 @@ type CallerId struct {
 	Number string `json:"number"`
 }
 
+// String returns the stringified callerid
+func (cid *CallerId) String() string {
+	return cid.Name + "<" + cid.Number + ">"
+}
+
 // DialplanCEP describes a location in the dialplan (context,extension,priority)
 type DialplanCEP struct {
 	Context  string `json:"context"`
@@ -342,8 +347,11 @@ func (c *Client) NewOriginateRequest(endpoint string) OriginateRequest {
 // It generates a unique Id, sets the destination to be
 // the current application, and passes any variables
 // through;  pass nil for vars if no variables are needed
-func (c *Client) NewChannel(endpoint string, vars map[string]string) (Channel, error) {
+func (c *Client) NewChannel(endpoint string, cid *CallerId, vars map[string]string) (Channel, error) {
 	o := c.NewOriginateRequest(endpoint)
+	if cid != nil {
+		o.CallerId = cid.String()
+	}
 	if vars != nil {
 		o.Variables = vars
 	}
