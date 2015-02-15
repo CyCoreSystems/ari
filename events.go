@@ -292,6 +292,15 @@ type StasisStart struct {
 	ReplaceChannel Channel  `json:"replacechannel,omitempty"` // TODO: find out what this is
 }
 
+// GetChannel returns the channel for whom the StasisStart event occurred,
+// optionally attaching a copy of the ARI client
+func (s *StasisStart) GetChannel(c *Client) Channel {
+	if c != nil {
+		s.Channel.AttachClient(c)
+	}
+	return s.Channel
+}
+
 // TextMessageReceived events indicate that an endpoint has emitted a text message
 type TextMessageReceived struct {
 	Event

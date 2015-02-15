@@ -109,6 +109,12 @@ type SendDTMFToChannelRequest struct {
 	After    int    `json:"after,omitempty"`
 }
 
+// AttachClient attaches the provided ARI client to the
+// channel
+func (c *Channel) AttachClient(a *Client) {
+	c.client = a
+}
+
 // Hangup hangs up the current channel
 func (c *Channel) Hangup() error {
 	if c.client == nil {
