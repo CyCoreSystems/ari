@@ -2,9 +2,9 @@ package ari
 
 import (
 	"io/ioutil"
+	"log"
 	"testing"
 
-	"github.com/golang/glog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,11 +15,11 @@ func init() {
 	var err error
 	ariStasisStartEvent, err = ioutil.ReadFile("test_events/stasis_start.json")
 	if err != nil {
-		glog.Fatalln("Failed to open test event file:", err.Error())
+		log.Fatalln("Failed to open test event file:", err.Error())
 	}
 	stateChange, err = ioutil.ReadFile("test_events/channelStateChange.json")
 	if err != nil {
-		glog.Fatalln("Failed to open test event file:", err.Error())
+		log.Fatalln("Failed to open test event file:", err.Error())
 	}
 }
 

@@ -536,10 +536,7 @@ func (c *Client) PlayToChannelById(channelId string, playbackId string, req Play
 	var m Playback
 
 	err := c.AriPost("/channels/"+channelId+"/play/"+playbackId, &m, &req)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+	return m, err
 }
 
 //Start a live recording

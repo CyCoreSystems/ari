@@ -159,7 +159,7 @@ func (s *BridgeTestsSplit) TearDownSuite() {
 
 func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	// Create a channel with the default client
-	ch1, err := DefaultClient.NewChannel("PJSIP/101", nil)
+	ch1, err := DefaultClient.NewChannel("PJSIP/101", nil, nil)
 	s.Nil(err, "Failed to create first channel")
 
 	// Wait for answer
@@ -178,7 +178,7 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	nc.Go()
 
 	// Create channel on second client
-	ch2, err := nc.NewChannel("PJSIP/102", nil)
+	ch2, err := nc.NewChannel("PJSIP/102", nil, nil)
 	s.Nil(err, "Failed to create second channel")
 
 	// Wait for answer

@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/golang/glog"
 	"golang.org/x/net/context"
 
 	"code.google.com/p/go.net/websocket"
@@ -26,18 +25,25 @@ type Client struct {
 
 	Events chan *Event // chan on which events are sent
 
-	StopRequested bool // Whether client has been requested to stop
+	StopChan <-chan struct{} // Stop signal channel
 }
 
 // NewClient creates a new Asterisk client
 // This function does not attempt to connect to Asterisk itself.
 func NewClient(appName, aurl, wsurl, username, password string) (Client, error) {
+	return NewClientWithStop(appName, aurl, wsurl, username, password, nil)
+}
+
+// NewClientWithStop creates a new Asterisk client with a stop channel
+// This function does not attempt to connect to Asterisk itself.
+func NewClientWithStop(appName, aurl, wsurl, username, password string, stopChan <-chan struct{}) (Client, error) {
 	c := Client{
 		Application: appName,
 		Url:         aurl,
 		WsUrl:       wsurl,
 		username:    username,
 		password:    password,
+		StopChan:    stopChan,
 	}
 
 	// Construct the websocket connection url
@@ -71,84 +77,69 @@ func (c *Client) Go() {
 	return
 }
 
-// GoWait maintains a websocket connection until told to stop
-// but does not return until a successful connection is established
-func (c *Client) GoWait() error {
-	go c._goloop()
-
-	// Wait until we see the WebSocket come up
-	for c.WebSocket == nil {
-		time.Sleep(100 * time.Millisecond)
-		// Exit if a stop has been requested
-		if c.StopRequested {
-			return fmt.Errorf("Timed out waiting for websocket")
-		}
-	}
-
-	return nil
-}
-
 // _goloop maintains the websocket connection
 func (c *Client) _goloop() {
-	for c.StopRequested == false {
-		glog.V(9).Infoln("Connecting to websocket")
-		err := c.Connect()
-
-		// Exit if we were _requested_ to stop
-		if c.StopRequested == true {
-			glog.V(3).Infoln("Websocket connection closed by request; exiting")
+	for {
+		Logger.Println("Connecting to websocket")
+		select {
+		case <-c.listen():
+			Logger.Println("Websocket connection lost")
+		case <-c.StopChan:
+			Logger.Println("Stop requested; exiting")
 			return
 		}
-
-		// An error indicates we failed to connect, not that we lost
-		// an active connection.  Hence, insert a delay before the
-		// next attempt
-		if err != nil {
-			glog.Errorln("Failed to open websocket connection: ", err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-
-		glog.Infoln("Websocket connection died (reconnecting)")
+		Logger.Println("Waiting 100ms to restart websocket")
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
-// Attempt to connect to the websocket connection
-func (c *Client) Connect() error {
+// listen opens a websocket, processes messages,
+// and returns a chan bool to indicate the socket
+// is closed
+func (c *Client) listen() chan bool {
+	closedChan := make(chan bool)
+
 	// Connect to the websocket
 	ws, err := websocket.DialConfig(c.WSConfig)
 	if err != nil {
-		return fmt.Errorf("Failed to create websocket connection to Asterisk:", err.Error())
+		Logger.Println("Failed to create websocket connection to Asterisk:", err.Error())
+		close(closedChan)
+		return closedChan
 	}
 	c.WebSocket = ws
 
-	// Start listening on the websocket
-	return c.Listen()
+	// Loop, receiving messages
+	go c.Listen(closedChan)
+
+	// TODO: Signal that we are ready
+
+	return closedChan
 }
 
 // Close an active client connection
 func (c *Client) Close() {
-	// Flag that a stop has been requested
-	c.StopRequested = true
-
-	// Call the real close routine
-	c._close()
+	c.closeWebsocket()
 }
 
-// Internal close function; does not set StopRequested flag
-func (c *Client) _close() {
+// closeWebsocket closes the websocket connection, if it exists
+func (c *Client) closeWebsocket() {
 	// Close the websocket connection
 	if c.WebSocket != nil {
 		err := c.WebSocket.Close()
 		if err != nil {
-			glog.Warningln("Failed to close websocket")
+			Logger.Println("Failed to close websocket")
 		}
 		c.WebSocket = nil
 	}
 }
 
 // Listen waits for events on the Websocket connection
-func (c *Client) Listen() error {
+func (c *Client) Listen(closedChan chan bool) {
+	defer func() {
+		c.closeWebsocket()
+		close(closedChan)
+	}()
+
 	for c.WebSocket != nil {
 		var data []byte
 
@@ -157,9 +148,8 @@ func (c *Client) Listen() error {
 
 		// If we got an error, signal failure and exit
 		if err != nil {
-			glog.Warningln("Failure in websocket (or connection lost):", err)
-			c._close()
-			return err
+			Logger.Println("Failure in websocket (or connection lost):", err)
+			return
 		}
 
 		// If we got a non-empty message, parse it into an event
@@ -167,8 +157,8 @@ func (c *Client) Listen() error {
 			go c.ParseMessage(data)
 		}
 	}
-	glog.V(3).Infoln("Websocket is gone")
-	return nil
+	Logger.Println("Websocket is gone")
+	return
 }
 
 // Parse a websocket message and send it to the Events chan
@@ -176,7 +166,7 @@ func (c *Client) ParseMessage(data []byte) {
 	// Attempt to construct a message out of the data
 	m, err := NewMessage(data)
 	if err != nil {
-		glog.Errorln("Failed to read message from websocket:", err.Error())
+		Logger.Println("Failed to read message from websocket:", err.Error())
 		return
 	}
 
@@ -184,7 +174,7 @@ func (c *Client) ParseMessage(data []byte) {
 	var e Event
 	err = m.DecodeAs(&e)
 	if err != nil {
-		glog.Errorln("Failed to decode message as an event.  Unhandled message type:", m.Type)
+		Logger.Println("Failed to decode message as an event.  Unhandled message type:", m.Type)
 		return
 	}
 

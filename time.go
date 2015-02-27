@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 // Asterisk ARI does not supply a format that the built-in
@@ -24,14 +22,14 @@ func (d *AsteriskDate) UnmarshalJSON(data []byte) error {
 	var stringDate string
 	err := json.Unmarshal(data, &stringDate)
 	if err != nil {
-		glog.Errorln("Failed to unmarshal asterisk timestamp", err)
+		Logger.Println("Failed to unmarshal asterisk timestamp", err)
 		fmt.Printf("data: %s\nstringDate: %s\n", data, stringDate)
 		return err
 	}
 
 	t, err := time.Parse(AsteriskDateFormat, stringDate)
 	if err != nil {
-		glog.Errorln("Failed to parse asterisk date format", stringDate)
+		Logger.Println("Failed to parse asterisk date format", stringDate)
 		return err
 	}
 	*d = (AsteriskDate)(t)

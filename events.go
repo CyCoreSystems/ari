@@ -1,10 +1,6 @@
 package ari
 
-import (
-	"encoding/json"
-
-	"github.com/golang/glog"
-)
+import "encoding/json"
 
 //Websocket connection for events
 //Equivalent to GET /events
@@ -54,7 +50,7 @@ func NewEvent(raw []byte) (*Event, error) {
 	var e Event
 	err := json.Unmarshal(raw, &e)
 	if err != nil {
-		glog.Errorln("Failed to unmarshal new event", err.Error())
+		Logger.Println("Failed to unmarshal new event", err.Error())
 		return &e, err
 	}
 

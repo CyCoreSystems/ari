@@ -2,9 +2,9 @@ package ari
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
-	"github.com/golang/glog"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -44,11 +44,11 @@ func (s *ApplicationTests) TestListApplications() {
 func (s *ApplicationTests) TestGetApplication() {
 	list, err := DefaultClient.ListApplications()
 	if err != nil {
-		glog.Warningln("Failed to get list of applications; skipping test")
+		log.Println("Failed to get list of applications; skipping test")
 		return
 	}
 	if len(list) == 0 {
-		glog.Warningln("No applications in list; skipping test")
+		log.Println("No applications in list; skipping test")
 		return
 	}
 	fmt.Println("Got application list:", list)

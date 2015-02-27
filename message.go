@@ -1,10 +1,6 @@
 package ari
 
-import (
-	"encoding/json"
-
-	"github.com/golang/glog"
-)
+import "encoding/json"
 
 type MessageRawer interface {
 	SetRaw(*[]byte)
@@ -55,7 +51,7 @@ func NewMessage(raw []byte) (*Message, error) {
 
 	err := json.Unmarshal(raw, &m)
 	if err != nil {
-		glog.Errorln("Failed to unmarshal new message", err.Error())
+		Logger.Println("Failed to unmarshal new message", err.Error())
 		return &m, err
 	}
 
