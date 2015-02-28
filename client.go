@@ -80,15 +80,15 @@ func (c *Client) Go() {
 // _goloop maintains the websocket connection
 func (c *Client) _goloop() {
 	for {
-		Logger.Println("Connecting to websocket")
+		Logger.Debug("Connecting to websocket")
 		select {
 		case <-c.listen():
-			Logger.Println("Websocket connection lost")
+			Logger.Warn("Websocket connection lost")
 		case <-c.StopChan:
-			Logger.Println("Stop requested; exiting")
+			Logger.Info("Stop requested; exiting")
 			return
 		}
-		Logger.Println("Waiting 100ms to restart websocket")
+		Logger.Info("Waiting 100ms to restart websocket")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -102,7 +102,7 @@ func (c *Client) listen() chan bool {
 	// Connect to the websocket
 	ws, err := websocket.DialConfig(c.WSConfig)
 	if err != nil {
-		Logger.Println("Failed to create websocket connection to Asterisk:", err.Error())
+		Logger.Error("Failed to create websocket connection to Asterisk:", err.Error())
 		close(closedChan)
 		return closedChan
 	}
@@ -127,7 +127,7 @@ func (c *Client) closeWebsocket() {
 	if c.WebSocket != nil {
 		err := c.WebSocket.Close()
 		if err != nil {
-			Logger.Println("Failed to close websocket")
+			Logger.Error("Failed to close websocket")
 		}
 		c.WebSocket = nil
 	}
@@ -148,7 +148,7 @@ func (c *Client) Listen(closedChan chan bool) {
 
 		// If we got an error, signal failure and exit
 		if err != nil {
-			Logger.Println("Failure in websocket (or connection lost):", err)
+			Logger.Error("Failure in websocket (or connection lost):", err)
 			return
 		}
 
@@ -157,7 +157,7 @@ func (c *Client) Listen(closedChan chan bool) {
 			go c.ParseMessage(data)
 		}
 	}
-	Logger.Println("Websocket is gone")
+	Logger.Info("Websocket is gone")
 	return
 }
 
@@ -166,7 +166,7 @@ func (c *Client) ParseMessage(data []byte) {
 	// Attempt to construct a message out of the data
 	m, err := NewMessage(data)
 	if err != nil {
-		Logger.Println("Failed to read message from websocket:", err.Error())
+		Logger.Error("Failed to read message from websocket:", err.Error())
 		return
 	}
 
@@ -174,7 +174,7 @@ func (c *Client) ParseMessage(data []byte) {
 	var e Event
 	err = m.DecodeAs(&e)
 	if err != nil {
-		Logger.Println("Failed to decode message as an event.  Unhandled message type:", m.Type)
+		Logger.Error("Failed to decode message as an event.  Unhandled message type:", m.Type)
 		return
 	}
 

@@ -22,14 +22,14 @@ func (d *AsteriskDate) UnmarshalJSON(data []byte) error {
 	var stringDate string
 	err := json.Unmarshal(data, &stringDate)
 	if err != nil {
-		Logger.Println("Failed to unmarshal asterisk timestamp", err)
+		Logger.Error("Failed to unmarshal asterisk timestamp", err)
 		fmt.Printf("data: %s\nstringDate: %s\n", data, stringDate)
 		return err
 	}
 
 	t, err := time.Parse(AsteriskDateFormat, stringDate)
 	if err != nil {
-		Logger.Println("Failed to parse asterisk date format", stringDate)
+		Logger.Error("Failed to parse asterisk date format", stringDate)
 		return err
 	}
 	*d = (AsteriskDate)(t)

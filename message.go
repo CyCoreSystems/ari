@@ -51,7 +51,7 @@ func NewMessage(raw []byte) (*Message, error) {
 
 	err := json.Unmarshal(raw, &m)
 	if err != nil {
-		Logger.Println("Failed to unmarshal new message", err.Error())
+		Logger.Error("Failed to unmarshal new message", err.Error())
 		return &m, err
 	}
 

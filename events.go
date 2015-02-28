@@ -50,7 +50,7 @@ func NewEvent(raw []byte) (*Event, error) {
 	var e Event
 	err := json.Unmarshal(raw, &e)
 	if err != nil {
-		Logger.Println("Failed to unmarshal new event", err.Error())
+		Logger.Error("Failed to unmarshal new event", err.Error())
 		return &e, err
 	}
 
