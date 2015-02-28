@@ -120,7 +120,25 @@ func (c *Channel) Hangup() error {
 	if c.client == nil {
 		return fmt.Errorf("No client found in Channel")
 	}
-	return c.client.HangupChannel(c.Id, "")
+	return c.client.HangupChannel(c.Id, "normal")
+}
+
+// Busy hangs up the current channel with the "busy"
+// cause code
+func (c *Channel) Busy() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+	return c.client.HangupChannel(c.Id, "busy")
+}
+
+// Congestion hangs up the current channel with the "congestion"
+// cause code
+func (c *Channel) Congestion() error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
+	return c.client.HangupChannel(c.Id, "congestion")
 }
 
 // Continue causes the current channel to continue in
