@@ -562,6 +562,8 @@ func (c *Client) PlayToChannelById(channelId string, playbackId string, req Play
 func (c *Client) RecordChannel(channelId string, req RecordRequest) (LiveRecording, error) {
 	var m LiveRecording
 
+	m.client = c
+
 	err := c.AriPost("/channels/"+channelId+"/record", &m, &req)
 	if err != nil {
 		return m, err
