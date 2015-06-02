@@ -130,6 +130,14 @@ func (s *RecordingTests) TestStoredRecordingFunctions() {
 	}
 	time.Sleep(1 * time.Second)
 
+	fmt.Println("Copying recording to 'record3/2'")
+	rec, err = DefaultClient.CopyStoredRecording("record", "record3/2")
+	s.Nil(err, "Couldn't copy stored recording.")
+	if err == nil {
+		fmt.Println("Copied recording: ", rec)
+	}
+	time.Sleep(1 * time.Second)
+
 	fmt.Println("Deleting recording 'record'")
 	err = DefaultClient.DeleteStoredRecording("record")
 	s.Nil(err, "Couldn't delete stored recording.")
@@ -138,12 +146,32 @@ func (s *RecordingTests) TestStoredRecordingFunctions() {
 	list, err := DefaultClient.ListStoredRecordings()
 	s.Nil(err, "Couldn't list stored recordings.")
 	if err == nil {
-		fmt.Println("Listing recordings. 'record3' should exist. 'record2' and 'record' should not.")
+		fmt.Println("Listing recordings. 'record3' and 'record3/2' should exist. 'record2' and 'record' should not.")
 		for _, element := range list {
 			fmt.Println("Element: ", element)
 		}
 	}
 	time.Sleep(1 * time.Second)
+
+	fmt.Println("Retrieving previous recording 'record3'")
+	rec, err = DefaultClient.GetStoredRecording("record3")
+	s.Nil(err, "Couldn't retrieve stored recording.")
+	if err == nil {
+		fmt.Println("Recording: ", rec)
+	}
+	time.Sleep(1 * time.Second)
+
+	fmt.Println("Retrieving previous recording 'record3/2'")
+	rec, err = DefaultClient.GetStoredRecording("record3/2")
+	s.Nil(err, "Couldn't retrieve stored recording record3/2.")
+	if err == nil {
+		fmt.Println("Recording: ", rec)
+	}
+	time.Sleep(1 * time.Second)
+
+	fmt.Println("Deleting recording 'record3/2' for future tests.")
+	err = DefaultClient.DeleteStoredRecording("record3/2")
+	s.Nil(err, "Couldn't delete stored recording record3/2.")
 
 	fmt.Println("Deleting recording 'record3' for future tests.")
 	err = DefaultClient.DeleteStoredRecording("record3")
