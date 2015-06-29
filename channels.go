@@ -115,6 +115,11 @@ func (c *Channel) AttachClient(a *Client) {
 	c.client = a
 }
 
+// GetClient returns the ARI client which created the channel
+func (c *Channel) GetClient() *Client {
+	return c.client
+}
+
 // Hangup hangs up the current channel
 func (c *Channel) Hangup() error {
 	if c.client == nil {
