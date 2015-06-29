@@ -60,6 +60,24 @@ func NewEvent(raw []byte) (*Event, error) {
 	return &e, nil
 }
 
+//
+// Meta events
+// These events are intermediate event types used for further
+// classification of events
+//
+
+// BridgeEvent (meta) is an event which affects a bridge
+type BridgeEvent struct {
+	Event
+	Bridge Bridge `json:"bridge,omitempty"` // Affected bridge
+}
+
+// ChannelEvent (meta) is an event which affects a channel
+type ChannelEvent struct {
+	Event
+	Channel Channel `json:"channel,omitempty"` // Affected channel
+}
+
 // ApplicationReplaced is a notification to the original
 // application that notifications about this application
 // are now going to a different WebSocket connection.
