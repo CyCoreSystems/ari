@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 )
 
 // Client describes an ARI connection to an Asterisk server
