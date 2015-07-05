@@ -3,7 +3,7 @@ package ari
 import (
 	"fmt"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )
 

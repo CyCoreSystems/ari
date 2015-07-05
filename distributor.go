@@ -3,7 +3,7 @@ package ari
 import (
 	"sync"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 )
 
 type Distributor interface {
