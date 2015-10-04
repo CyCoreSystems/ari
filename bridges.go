@@ -83,6 +83,12 @@ func (c *Client) NewBridge() (Bridge, error) {
 	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
 }
 
+// NewBridgeWithId is a simple wrapper to create a new,
+// unique bridge, with the default options
+func (c *Client) NewBridgeWithId(id string) (Bridge, error) {
+	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
+}
+
 //Create a new bridge
 //Equivalent to POST /bridges
 func (c *Client) CreateBridge(req CreateBridgeRequest) (Bridge, error) {
