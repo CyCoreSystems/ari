@@ -8,7 +8,7 @@ type MessageRawer interface {
 }
 
 type RawMessage struct {
-	__raw *[]byte `json:"-"` // The raw message
+	__raw *[]byte // The raw message
 }
 
 // DecodeAs converts the current message to

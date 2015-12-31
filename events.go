@@ -126,8 +126,8 @@ type BridgeDestroyed struct {
 // BridgeMerged events indicate a bridge has been merged into another (bridge)
 type BridgeMerged struct {
 	Event
-	Bridge      Bridge `json:"bridge"`       // New bridge
-	Bridge_from Bridge `json: "bridge_from"` // Old (independant) bridge -- TODO: verify this assumption
+	Bridge      Bridge `json:"bridge"`      // New bridge
+	Bridge_from Bridge `json:"bridge_from"` // Old (independant) bridge -- TODO: verify this assumption
 }
 
 // ChannelCallerId events indicate a channel's caller Id information has changed

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/parnurzeal/gorequest"
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
 )
@@ -25,6 +26,8 @@ type Client struct {
 	Events chan *Event // chan on which events are sent
 
 	StopChan <-chan struct{} // Stop signal channel
+
+	httpClient *gorequest.SuperAgent // reusable HTTP client
 }
 
 // NewClient creates a new Asterisk client
@@ -53,7 +56,7 @@ func NewClientWithStop(appName, aurl, wsurl, username, password string, stopChan
 	// Construct a websocket.Config
 	wsConfig, err := websocket.NewConfig(wsurl, "http://localhost/")
 	if err != nil {
-		return c, fmt.Errorf("Failed to construct websocket config:", err.Error())
+		return c, fmt.Errorf("Failed to construct websocket config: %s", err.Error())
 	}
 
 	// Add the authorization header

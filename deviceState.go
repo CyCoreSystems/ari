@@ -31,18 +31,10 @@ func (c *Client) GetDeviceState(deviceName string) (DeviceState, error) {
 //Change the state of a device controlled by ARI. (Note - implicitly creates the device state).
 //Equivalent to PUT /deviceStates/{deviceName}
 func (c *Client) ChangeDeviceState(deviceName string, deviceState string) error {
-	type request struct {
-		DeviceState string `json:"deviceState"`
+	req := map[string]string{
+		"deviceState": deviceState,
 	}
-
-	req := request{deviceState}
-
-	//send request
-	err := c.AriPut("/deviceStates/"+deviceName, nil, &req)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.AriPut("/deviceStates/"+deviceName, nil, &req)
 }
 
 //Destroy a device-state controlled by ARI.

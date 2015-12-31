@@ -1,5 +1,7 @@
 package ari
 
+import "strconv"
+
 // Mailbox respresents the state of an Asterisk (voice) mailbox
 type Mailbox struct {
 	Name         string `json:"name"`
@@ -32,12 +34,10 @@ func (c *Client) GetMailbox(mailboxName string) (Mailbox, error) {
 //Change the state of a mailbox. (Note - implicitly creates the mailbox).
 //Equivalent to PUT /mailboxes/{mailboxName}
 func (c *Client) ChangeMailboxState(mailboxName string, oldMessages int, newMessages int) error {
-	type request struct {
-		OldMessages int `json:"oldMessages"`
-		NewMessages int `json:"newMessages"`
+	req := map[string]string{
+		"oldMessages": strconv.Itoa(oldMessages),
+		"newMessages": strconv.Itoa(newMessages),
 	}
-
-	req := request{oldMessages, newMessages}
 
 	//send request
 	err := c.AriPut("/mailboxes/"+mailboxName, nil, &req)

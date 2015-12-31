@@ -73,7 +73,7 @@ func (c *Client) ControlPlayback(playbackId string, operation string) error {
 
 //Stop a playback.
 //Equivalent to DELETE /playbacks/{playbackId}
-func (c *Client) StopPlayback(playbackId string) RequestError {
+func (c *Client) StopPlayback(playbackId string) error {
 	err := c.AriDelete("/playbacks/"+playbackId, nil, nil)
 	return err
 }

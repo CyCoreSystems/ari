@@ -1,5 +1,7 @@
 package ari
 
+import "fmt"
+
 // Application describes a Stasis (Ari) application
 type Application struct {
 	Bridge_ids   []string `json:"bridge_ids"`   // Subscribed BridgeIds
@@ -62,16 +64,10 @@ func (c *Client) SubscribeApplication(applicationName string, eventSource string
 func (c *Client) UnsubscribeApplication(applicationName string, eventSource string) (Application, error) {
 	var m Application
 
-	type request struct {
-		EventSource string `json:"eventSource"`
-	}
-
-	req := request{eventSource}
-
 	// TODO: handle Error Responses individually
 
 	// Make the request
-	err := c.AriDelete("/applications/"+applicationName+"/subscription", &m, &req)
+	err := c.AriDelete("/applications/"+applicationName+"/subscription", &m, fmt.Sprintf("eventSource=%s", eventSource))
 	if err != nil {
 		return m, err
 	}

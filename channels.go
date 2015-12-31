@@ -631,16 +631,13 @@ func (c *Client) StartSnoopChannelById(channelId string, snoopId string, req Sno
 //Delete (i.e. hangup) a channel.
 //Equivalent to DELETE /channels/{channelId}
 func (c *Client) HangupChannel(channelId string, reason string) error {
-	//Request structure for hanging up a channel. Reason is not required.
-	type request struct {
-		Reason string `json:"reason,omitempty"`
+	var req string
+	if reason != "" {
+		req = fmt.Sprintf("reason=%s", reason)
 	}
 
-	req := request{reason}
-
 	//send request
-	err := c.AriDelete("/channels/"+channelId, nil, &req)
-	return err
+	return c.AriDelete("/channels/"+channelId, nil, &req)
 }
 
 //Stop ringing indication on a channel if locally generated.
@@ -660,11 +657,11 @@ func (c *Client) UnMuteChannel(channelId string, direction string) error {
 		return err
 	}
 
-	type request struct {
-		Direction string `json:"direction,omitempty"`
+	var req string
+	if direction != "" {
+		req = fmt.Sprintf("direction=%s", direction)
 	}
 
-	req := request{direction}
 	err = c.AriDelete("/channels/"+channelId+"/mute", nil, &req)
 	return err
 }
