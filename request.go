@@ -30,6 +30,15 @@ func (e *requestError) Code() int {
 	return e.statusCode
 }
 
+// Extract and return the code from an error, or
+// 0 if not found.
+func CodeFromError(err error) int {
+	if reqerr, ok := err.(RequestError); ok {
+		return reqerr.Code()
+	}
+	return 0
+}
+
 func maybeRequestError(resp *http.Response) RequestError {
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		// 2xx response: All good.
