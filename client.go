@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/parnurzeal/gorequest"
@@ -20,14 +21,17 @@ type Client struct {
 	username    string // username for ARI authentication
 	password    string // password for ARI authentication
 
-	WSConfig  *websocket.Config // websocket connection configuration
-	WebSocket *websocket.Conn   // websocket connection used to receive events
+	WSConfig *websocket.Config // websocket connection configuration
 
+	Bus    *Bus        // event bus
 	Events chan *Event // chan on which events are sent
 
-	StopChan <-chan struct{} // Stop signal channel
+	StopChan <-chan struct{}    // Stop signal channel
+	cancel   context.CancelFunc // context cancel function
 
 	httpClient *gorequest.SuperAgent // reusable HTTP client
+
+	mu sync.Mutex
 }
 
 // NewClient creates a new Asterisk client
@@ -36,9 +40,32 @@ func NewClient(appName, aurl, wsurl, username, password string) (Client, error) 
 	return NewClientWithStop(appName, aurl, wsurl, username, password, nil)
 }
 
+// NewClientWithBus is the new style of client creation, using a context and
+// passing events through an event Bus instead of a raw channel.  Any new code
+// should use this version.
+func NewClientWithBus(ctx context.Context, appName, aurl, wsurl, username, password string) *Client {
+	return &Client{
+		Application: appName,
+		Url:         aurl,
+		WsUrl:       wsurl,
+		username:    username,
+		password:    password,
+	}
+}
+
 // NewClientWithStop creates a new Asterisk client with a stop channel
 // This function does not attempt to connect to Asterisk itself.
 func NewClientWithStop(appName, aurl, wsurl, username, password string, stopChan <-chan struct{}) (Client, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Adapt stopChan to context and cancel
+	if stopChan != nil {
+		go func() {
+			<-stopChan
+			cancel()
+		}()
+	}
+
 	c := Client{
 		Application: appName,
 		Url:         aurl,
@@ -69,6 +96,106 @@ func NewClientWithStop(appName, aurl, wsurl, username, password string, stopChan
 	c.Events = make(chan *Event, 100)
 
 	return c, nil
+}
+
+// Connect starts the client, connecting to Asterisk and
+// starting the event bus
+func (c *Client) Connect(ctx context.Context) error {
+	// Generate the websocket configuration, if required
+	if c.WSConfig == nil {
+		// Construct the websocket connection url
+		v := url.Values{}
+		v.Set("app", c.Application)
+		wsurl = c.WsUrl + "?" + v.Encode()
+
+		// Construct a websocket.Config
+		wsConfig, err := websocket.NewConfig(wsurl, "http://localhost/")
+		if err != nil {
+			return &c, fmt.Errorf("Failed to construct websocket config:", err.Error())
+		}
+
+		// Add the authorization header
+		wsConfig.Header.Set("Authorization", "Basic "+basicAuth(c.username, c.password))
+
+		// Store the websocket configuration to our struct
+		c.WSConfig = wsConfig
+	}
+
+	// Connect and process the websocket
+	go func() {
+		var ws *websocket.Conn
+
+		// Always close the websocket on exit
+		defer func() {
+			if ws != nil {
+				ws.Close()
+			}
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				if ws != nil {
+					ws.Close()
+				}
+				return
+			case <-time.After(100 * time.Millisecond):
+			}
+
+			var err error
+			ws, err = websocket.DialConfig(c.WSConfig)
+			if err != nil {
+				Logger.Error("Failed to connect to websocket", "error", err)
+				continue
+			}
+
+			for {
+				select {
+				case <-ctx.Done():
+					ws.Close()
+					return
+				default:
+				}
+				var e Event
+				err := websocket.JSON.Receive(ws, &e)
+				if err != nil {
+					Logger.Error("Failure reading from websocket (or connection lost)", "error", err)
+					break
+				}
+				c.Bus.send(&e)
+			}
+		}
+	}()
+
+	// Set up the event bus
+	if c.Bus == nil {
+		c.Bus = &Bus{
+			subs: []*Subscription{},
+		}
+	}
+
+	// Make sure the events channel exists
+	if c.Events == nil {
+		c.Events = make(chan *Event, 100)
+	}
+
+	// Start the event bus
+	go func() {
+		for {
+			select {
+			case <-c.listen():
+				Logger.Warn("Websocket connection lost")
+				time.Sleep(100 * time.Millisecond)
+			case <-ctx.Done():
+				Logger.Info("Stop requested; exiting")
+				if c.WebSocket != nil {
+					c.WebSocket.Close()
+				}
+				return
+			}
+		}
+	}()
+
 }
 
 // Go maintains a websocket connection until told to stop
