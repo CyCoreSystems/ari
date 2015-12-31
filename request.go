@@ -57,7 +57,7 @@ func (c *Client) assureHttpClient() {
 	}
 }
 
-// AriGet wraps restclient.Get with the complete url
+// AriGet wraps gorequest.Get with the complete url
 // It calls the ARI server with a GET request
 func (c *Client) AriGet(url string, ret interface{}) error {
 	c.assureHttpClient()
@@ -82,7 +82,7 @@ func (c *Client) AriGet(url string, ret interface{}) error {
 
 // AriPost is a shorthand for MakeRequest("POST",url,ret,req)
 // It calls the ARI server with a POST request
-// Uses restclient.PostForm since ARI returns bad request otherwise
+// Uses gorequest.PostForm since ARI returns bad request otherwise
 func (c *Client) AriPost(url string, ret interface{}, req interface{}) error {
 	c.assureHttpClient()
 	finalUrl := c.Url + url
