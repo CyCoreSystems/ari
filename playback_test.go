@@ -6,21 +6,24 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type PlaybackTests struct {
 	suite.Suite
-	c    chan *Event
-	list []Channel
+	list   []Channel
+	cancel context.CancelFunc
 }
 
 func (s *PlaybackTests) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	DefaultClient.Listen(ctx)
+	s.cancel = cancel
 	time.Sleep(1 * time.Second)
 }
 
 func (s *PlaybackTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *PlaybackTests) TestGetPlaybackDetails() {
@@ -41,10 +44,7 @@ func (s *PlaybackTests) TestGetPlaybackDetails() {
 
 	//Wait until we receive "StasisStart" from our channel, meaning it has been answered (on far end) and may be answered by Asterisk.
 
-	e := <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	err = DefaultClient.AnswerChannel("MyApp")
 	s.Nil(err)

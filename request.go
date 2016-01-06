@@ -60,8 +60,8 @@ type MissingParams struct {
 func (c *Client) assureHttpClient() {
 	if c.httpClient == nil {
 		c.httpClient = gorequest.New().Timeout(RequestTimeout)
-		if c.username != "" {
-			c.httpClient = c.httpClient.SetBasicAuth(c.username, c.password)
+		if c.Options.Username != "" {
+			c.httpClient = c.httpClient.SetBasicAuth(c.Options.Username, c.Options.Password)
 		}
 	}
 }
@@ -70,7 +70,7 @@ func (c *Client) assureHttpClient() {
 // It calls the ARI server with a GET request
 func (c *Client) AriGet(url string, ret interface{}) error {
 	c.assureHttpClient()
-	finalUrl := c.Url + url
+	finalUrl := c.Options.Url + url
 	resp, body, errs := c.httpClient.Get(finalUrl).EndBytes()
 	if errs != nil {
 		var errString string
@@ -94,7 +94,7 @@ func (c *Client) AriGet(url string, ret interface{}) error {
 // Uses gorequest.PostForm since ARI returns bad request otherwise
 func (c *Client) AriPost(url string, ret interface{}, req interface{}) error {
 	c.assureHttpClient()
-	finalUrl := c.Url + url
+	finalUrl := c.Options.Url + url
 	r := c.httpClient.Post(finalUrl).Type("form")
 	if req != nil {
 		r = r.SendStruct(req)
@@ -121,7 +121,7 @@ func (c *Client) AriPost(url string, ret interface{}, req interface{}) error {
 // It calls the ARI server with a PUT request
 func (c *Client) AriPut(url string, ret interface{}, req interface{}) error {
 	c.assureHttpClient()
-	finalUrl := c.Url + url
+	finalUrl := c.Options.Url + url
 	r := c.httpClient.Put(finalUrl).Type("form")
 	if req != nil {
 		r = r.Send(req)
@@ -149,7 +149,7 @@ func (c *Client) AriPut(url string, ret interface{}, req interface{}) error {
 // It calls the ARI server with a DELETE request
 func (c *Client) AriDelete(url string, ret interface{}, req interface{}) error {
 	c.assureHttpClient()
-	finalUrl := c.Url + url
+	finalUrl := c.Options.Url + url
 
 	r := c.httpClient.Delete(finalUrl)
 	if req != nil {

@@ -6,14 +6,16 @@ import (
 	"golang.org/x/net/context"
 )
 
+// ALL signifies that the subscriber wants all events
+const ALL string = "all"
+
 // Bus is an event bus for ARI events.  It receives and
 // redistributes events based on a subscription
 // model.
 type Bus struct {
 	subs []*Subscription // The list of subscriptions
-	mu   sync.Mutex
 
-	cancel context.CancelFunc
+	mu sync.Mutex
 }
 
 func (b *Bus) addSubscription(s *Subscription) {
@@ -37,13 +39,94 @@ func (b *Bus) removeSubscription(s *Subscription) {
 	}
 }
 
-func (b *Bus) send(e *Event) {
+func (b *Bus) send(msg *Message) {
+	var e Eventer
+	switch msg.Type {
+	case "BridgeAttendedTransfer":
+		e = &BridgeAttendedTransfer{}
+	case "BridgeBlindTransfer":
+		e = &BridgeBlindTransfer{}
+	case "BridgeCreated":
+		e = &BridgeCreated{}
+	case "BridgeDestroyed":
+		e = &BridgeDestroyed{}
+	case "BridgeMerged":
+		e = &BridgeMerged{}
+	case "ChannelCallerId":
+		e = &ChannelCallerId{}
+	case "ChannelConnectedLine":
+		e = &ChannelConnectedLine{}
+	case "ChannelCreated":
+		e = &ChannelCreated{}
+	case "ChannelDestroyed":
+		e = &ChannelDestroyed{}
+	case "ChannelDialplan":
+		e = &ChannelDialplan{}
+	case "ChannelDtmfReceived":
+		e = &ChannelDtmfReceived{}
+	case "ChannelEnteredBridge":
+		e = &ChannelEnteredBridge{}
+	case "ChannelHangupRequest":
+		e = &ChannelHangupRequest{}
+	case "ChannelHold":
+		e = &ChannelHold{}
+	case "ChannelLeftBridge":
+		e = &ChannelLeftBridge{}
+	case "ChannelStateChange":
+		e = &ChannelStateChange{}
+	case "ChannelTalkingFinished":
+		e = &ChannelTalkingFinished{}
+	case "ChannelTalkingStarted":
+		e = &ChannelTalkingStarted{}
+	case "ChannelUnhold":
+		e = &ChannelUnhold{}
+	case "ChannelUserevent":
+		e = &ChannelUserevent{}
+	case "ChannelVarset":
+		e = &ChannelVarset{}
+	case "ContactStatusChanged":
+		e = &ContactStatusChanged{}
+	case "DeviceStateChanged":
+		e = &DeviceStateChanged{}
+	case "Dial":
+		e = &Dial{}
+	case "EndpointStateChange":
+		e = &EndpointStateChange{}
+	case "PeerStatusChange":
+		e = &PeerStatusChange{}
+	case "PlaybackFinished":
+		e = &PlaybackFinished{}
+	case "PlaybackStarted":
+		e = &PlaybackStarted{}
+	case "RecordingFailed":
+		e = &RecordingFailed{}
+	case "RecordingFinished":
+		e = &RecordingFinished{}
+	case "RecordingStarted":
+		e = &RecordingStarted{}
+	case "StasisEnd":
+		e = &StasisEnd{}
+	case "StasisStart":
+		e = &StasisStart{}
+	case "TextMessageReceived":
+		e = &TextMessageReceived{}
+	default:
+		Logger.Debug("Unhandled event received:", msg.Type)
+		e = &Event{}
+	}
+	err := msg.DecodeAs(e)
+	if err != nil {
+		Logger.Error("Failed to decode message:", err.Error())
+		return
+	}
+
+	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
 		for _, topic := range s.events {
-			if topic == e.Type {
+			if topic == e.GetType() || topic == ALL {
 				select {
 				case s.C <- e:
-				default:
+				default: // never block
 				}
 			}
 		}
@@ -52,16 +135,13 @@ func (b *Bus) send(e *Event) {
 
 // StartBus creates and returns the event bus.
 func StartBus(ctx context.Context) *Bus {
-	bCtx, cancel := context.WithCancel(ctx)
-
 	b := &Bus{
-		cancel: cancel,
-		subs:   []*Subscription{},
+		subs: []*Subscription{},
 	}
 
 	// Listen for stop and shut down subscriptions, as required
 	go func() {
-		<-bCtx.Done()
+		<-ctx.Done()
 		b.Stop()
 		return
 	}()
@@ -82,13 +162,12 @@ func (b *Bus) Stop() {
 		b.subs = nil
 	}
 	b.mu.Unlock()
-	b.cancel()
 }
 
 type Subscription struct {
-	b      *Bus        // reference to the event bus
-	events []string    // list of events to listen for
-	C      chan *Event // channel for sending events to the subscriber
+	b      *Bus         // reference to the event bus
+	events []string     // list of events to listen for
+	C      chan Eventer // channel for sending events to the subscriber
 	mu     sync.Mutex
 }
 
@@ -98,7 +177,7 @@ func (b *Bus) Subscribe(eTypes ...string) *Subscription {
 	s := &Subscription{
 		b:      b,
 		events: eTypes,
-		C:      make(chan *Event),
+		C:      make(chan Eventer),
 	}
 	b.addSubscription(s)
 	return s
@@ -110,7 +189,7 @@ func (b *Bus) Subscribe(eTypes ...string) *Subscription {
 // Normally, one would listen to subscription.C directly,
 // but this is a convenience function for providing a
 // context to alternately cancel.
-func (s *Subscription) Next(ctx context.Context) *Event {
+func (s *Subscription) Next(ctx context.Context) Eventer {
 	select {
 	case <-ctx.Done():
 		return nil
@@ -137,9 +216,9 @@ func (s *Subscription) Cancel() {
 
 // Once listens for the first event of the provided types,
 // returning a channel which supplies that event.
-func (b *Bus) Once(eTypes ...string) <-chan *Event {
+func (b *Bus) Once(eTypes ...string) <-chan Eventer {
 	s := b.Subscribe(eTypes...)
-	ret := make(chan *Event, 1)
+	ret := make(chan Eventer, 1)
 
 	// Stop subscription after one event
 	go func() {

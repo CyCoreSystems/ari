@@ -45,6 +45,20 @@ type Event struct {
 	Timestamp   AsteriskDate `json:"timestamp,omitempty"`
 }
 
+func (e *Event) GetApplication() string {
+	return e.Application
+}
+
+func (e *Event) GetType() string {
+	return e.Type
+}
+
+type Eventer interface {
+	MessageRawer
+	GetApplication() string
+	GetType() string
+}
+
 // NewEvent constructs an Event from a byte slice (unmarshals the event from Ari)
 func NewEvent(raw []byte) (*Event, error) {
 	var e Event
@@ -138,6 +152,12 @@ type ChannelCallerId struct {
 	Channel                 Channel `json:"channel"`
 }
 
+// ChannelConnectedLine events indicate a channel has changed its connected line
+type ChannelConnectedLine struct {
+	Event
+	Channel Channel `json:"channel"`
+}
+
 // ChannelCreated events indicate a channel has been created
 type ChannelCreated struct {
 	Event
@@ -190,6 +210,13 @@ type ChannelHangupRequest struct {
 	Soft    bool    `json:"soft,omitempty"` // Whether the request was "soft"
 }
 
+// ChannelHold events indicate that a channel has been put on hold
+type ChannelHold struct {
+	Event
+	Channel    Channel `json:"channel"`
+	MusicClass string  `json:"musicclass"` // The music class being played to the held channel
+}
+
 // ChannelLeftBridge events indicate that a channel has left a bridge
 type ChannelLeftBridge struct {
 	Event
@@ -218,6 +245,12 @@ type ChannelTalkingStarted struct {
 	Channel Channel `json:"channel"`
 }
 
+// ChannelUnhold events indicate that a channel has removed from Hold
+type ChannelUnhold struct {
+	Event
+	Channel Channel `json:"channel"`
+}
+
 // ChannelUserevent events are custom-formatted events which have been received
 //   TODO: figure out if these include AMI user events, etc, and how the data is
 //   formatted
@@ -236,6 +269,13 @@ type ChannelVarset struct {
 	Channel  Channel `json:"channel,omitempty"` // If not present, variable is global
 	Value    string  `json:"value"`             // New value
 	Variable string  `json:"variable"`          // Variable name
+}
+
+// ContactStatusChanged events indicate that a contact state has changed
+type ContactStatusChanged struct {
+	Event
+	Endpoint    Endpoint    `json:"endpoint"`
+	ContactInfo ContactInfo `json:"contact_info"`
 }
 
 // DeviceStateChanged events indicate that a device state has changed
@@ -259,6 +299,13 @@ type Dial struct {
 type EndpointStateChange struct {
 	Event
 	Endpoint Endpoint `json:"endpoint"`
+}
+
+// PeerStatusChange events indicate that a peer has changed state
+type PeerStatusChange struct {
+	Event
+	Endpoint Endpoint `json:"endpoint"`
+	Peer     Peer     `json:"peer"`
 }
 
 // PlaybackFinished events indicate that a media playback operation has completed

@@ -6,20 +6,23 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type RecordingTests struct {
 	suite.Suite
-	c chan *Event
+	cancel context.CancelFunc
 }
 
 func (s *RecordingTests) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	DefaultClient.Listen(ctx)
 	time.Sleep(1 * time.Second)
 }
 
 func (s *RecordingTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *RecordingTests) TestLiveRecordingFunctions() {
@@ -33,10 +36,7 @@ func (s *RecordingTests) TestLiveRecordingFunctions() {
 	_, err := DefaultClient.CreateChannel(req2)
 	s.Nil(err, "Channel by Application not made")
 
-	e := <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	err = DefaultClient.AnswerChannel("MyApp")
 

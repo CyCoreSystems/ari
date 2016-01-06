@@ -6,20 +6,23 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type BridgeTests struct {
 	suite.Suite
-	c chan *Event
+	cancel context.CancelFunc
 }
 
 func (s *BridgeTests) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	DefaultClient.Listen(ctx)
 	time.Sleep(1 * time.Second)
 }
 
 func (s *BridgeTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *BridgeTests) TestBridgeCreate() {
@@ -41,10 +44,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u1Chan)
 	s.Nil(err, "Channel for User1 not created")
 
-	e := <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan1")
 	s.Nil(err)
@@ -61,10 +61,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u2Chan)
 	s.Nil(err, "Channel for User2 not created")
 
-	e = <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan2")
 	s.Nil(err)
@@ -145,16 +142,18 @@ func (s *BridgeTests) TestBridgeRecordAndPlay() {
 
 type BridgeTestsSplit struct {
 	suite.Suite
-	c chan *Event
+	cancel context.CancelFunc
 }
 
 func (s *BridgeTestsSplit) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	DefaultClient.Listen(ctx)
 	time.Sleep(1 * time.Second)
 }
 
 func (s *BridgeTestsSplit) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *BridgeTestsSplit) TestBridgeOtherApp() {
@@ -163,29 +162,24 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	s.Nil(err, "Failed to create first channel")
 
 	// Wait for answer
-	e := <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	// Create a bridge with the default client
 	br, err := DefaultClient.NewBridge()
 	s.Nil(err, "Failed to create bridge")
 
 	// Create a new client
-	nc, err := NewClient("second", DefaultBaseUri, DefaultWsUri, DefaultUsername, DefaultSecret)
-	s.Nil(err, "Failed to create second client")
-	nc.Go()
+	secondCtx, cancel := context.WithCancel(context.Background())
+	nc := NewClient(nil)
+	nc.Listen(secondCtx)
+	defer cancel()
 
 	// Create channel on second client
 	ch2, err := nc.NewChannel("PJSIP/102", nil, nil)
 	s.Nil(err, "Failed to create second channel")
 
 	// Wait for answer
-	e = <-nc.Events
-	for e.Type != "StasisStart" {
-		e = <-nc.Events
-	}
+	<-nc.Bus.Once("StasisStart")
 
 	// Add ch1 to bridge
 	err = br.Add(ch1.Id)
@@ -211,13 +205,12 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	// Hang up ch2
 	err = ch2.Hangup()
 	s.Nil(err, "Failed to hang up ch2")
-
-	// Shut down extra application
-	nc.Close()
 }
 
 func TestBridgeSuite(t *testing.T) {
-	//suite.Run(t, new(BridgeTests))
+	suite.Run(t, new(BridgeTests))
+}
 
+func TestBridgeSplitSuite(t *testing.T) {
 	suite.Run(t, new(BridgeTestsSplit))
 }

@@ -1,6 +1,43 @@
 package ari
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+
+	"golang.org/x/net/websocket"
+)
+
+// Marshal is a no-op to implement websocket.Codec.  Asterisk
+// websocket connections should never have the client send any data
+func marshal(v interface{}) (data []byte, payloadType byte, err error) {
+	return
+}
+
+// Unmarshal implements websocket.Codec
+func unmarshal(data []byte, payloadType byte, v interface{}) error {
+	data = append(data, '\n')
+
+	e, ok := v.(Message)
+	if !ok {
+		return fmt.Errorf("Cannot cast receiver to a Message")
+	}
+
+	err := json.Unmarshal(data, &e)
+	if err != nil {
+		return err
+	}
+
+	// Store the raw data
+	e.__raw = &data
+
+	return nil
+}
+
+// AsteriskCode is a websocket Codec for Asterisk messages
+var AsteriskCodec = websocket.Codec{
+	Marshal:   marshal,
+	Unmarshal: unmarshal,
+}
 
 type MessageRawer interface {
 	SetRaw(*[]byte)

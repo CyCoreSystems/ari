@@ -12,17 +12,19 @@ import (
 
 type ChannelTests struct {
 	suite.Suite
-	c    chan *Event
-	list []Channel
+	cancel context.CancelFunc
+	list   []Channel
 }
 
 func (s *ChannelTests) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	DefaultClient.Listen(ctx)
 	time.Sleep(1 * time.Second)
 }
 
 func (s *ChannelTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *ChannelTests) TestCreateChannelByDialplan() {
@@ -62,10 +64,7 @@ func (s *ChannelTests) TestCreateChannelByApp() {
 
 	//Wait until we receive "StasisStart" from our channel, meaning it has been answered (on far end) and may be answered by Asterisk.
 
-	e := <-DefaultClient.Events
-	for e.Type != "StasisStart" {
-		e = <-DefaultClient.Events
-	}
+	<-DefaultClient.Bus.Once("StasisStart")
 
 	err = DefaultClient.AnswerChannel("MyApp")
 	s.Nil(err)

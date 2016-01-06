@@ -6,20 +6,23 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type DeviceTests struct {
 	suite.Suite
-	c chan *Event
+	cancel context.CancelFunc
 }
 
 func (s *DeviceTests) SetupSuite() {
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	DefaultClient.Listen(ctx)
 	time.Sleep(1 * time.Second)
 }
 
 func (s *DeviceTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *DeviceTests) TestListDeviceStates() {

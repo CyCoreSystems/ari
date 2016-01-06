@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 type ApplicationTests struct {
 	suite.Suite
-	c    chan *Event
 	list []Application
+
+	cancel context.CancelFunc
 }
 
 func (s *ApplicationTests) SetupSuite() {
@@ -19,17 +21,19 @@ func (s *ApplicationTests) SetupSuite() {
 	go s.LogEvent()
 
 	// Connect to Asterisk
-	DefaultClient.Go()
+	ctx, cancel := context.WithCancel(context.Background())
+	DefaultClient.Listen(ctx)
+	s.cancel = cancel
 }
 
 func (s *ApplicationTests) TearDownSuite() {
-	DefaultClient.Close()
+	s.cancel()
 }
 
 func (s *ApplicationTests) LogEvent() {
 	defer s.LogEvent()
-	e := <-DefaultClient.Events
-	s.NotNil(e.Application, "Event's application name must exist")
+	e := <-DefaultClient.Bus.Once(ALL)
+	s.NotNil(e.GetApplication(), "Event's application name must exist")
 }
 
 var List []Application
