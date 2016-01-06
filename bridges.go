@@ -3,7 +3,7 @@ package ari
 import (
 	"fmt"
 
-	"github.com/pborman/uuid"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -79,7 +79,7 @@ func (c *Client) ListBridges() ([]Bridge, error) {
 // NewBridge is a simple wrapper to create a new,
 // unique bridge, with the default options
 func (c *Client) NewBridge() (Bridge, error) {
-	id := uuid.New()
+	id := uuid.NewV1().String()
 	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
 }
 

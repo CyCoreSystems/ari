@@ -3,7 +3,7 @@ package ari
 import (
 	"fmt"
 
-	"github.com/pborman/uuid"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -22,7 +22,7 @@ const (
 type Channel struct {
 	Accountcode  string       `json:"accountcode"`
 	Caller       CallerId     `json:"caller"`    // CallerId of the calling endpoint
-	Connected    CallerId     `json:"connected"` // CallerId of (TODO: what?)
+	Connected    CallerId     `json:"connected"` // CallerId of the connected line
 	Creationtime AsteriskDate `json:"creationtime"`
 	Dialplan     DialplanCEP  `json:"dialplan"` // Current location in the dialplan
 	Id           string       `json:"id"`       // Unique id for this channel (same as for AMI)
@@ -287,7 +287,7 @@ func (c *Channel) Play(mediaUri string) (string, error) {
 	}
 
 	// Generate a playback id
-	id := uuid.New()
+	id := uuid.NewV1().String()
 
 	var err error
 	_, err = c.client.PlayToChannelById(c.Id, id, PlayMediaRequest{Media: mediaUri})
@@ -341,8 +341,8 @@ func (c *Channel) Snoop() (string, error) {
 	}
 
 	var err error
-	id := uuid.New()
-	_, err = c.client.StartSnoopChannelById(c.Id, id, SnoopRequest{App: c.client.Application})
+	id := uuid.NewV1().String()
+	_, err = c.client.StartSnoopChannelById(c.Id, id, SnoopRequest{App: c.client.Options.Application})
 	if err != nil {
 		return "", fmt.Errorf("Failed to initiate snoop session: %s", err.Error())
 	}
@@ -367,8 +367,8 @@ func (c *Client) NewOriginateRequest(endpoint string) OriginateRequest {
 	return OriginateRequest{
 		Endpoint:  endpoint,
 		Timeout:   -1,
-		App:       c.Application,
-		ChannelId: uuid.New(),
+		App:       c.Options.Application,
+		ChannelId: uuid.NewV1().String(),
 	}
 }
 
@@ -532,7 +532,7 @@ func (c *Client) PlaySilenceToChannel(channelId string) error {
 // PlayMedia is a wrapper to initiate a playback
 // with the given Media URI, returning the playback id
 func (c *Client) PlayMedia(channelId, mediaUri string) (string, error) {
-	playbackId := uuid.New()
+	playbackId := uuid.NewV1().String()
 	req := PlayMediaRequest{
 		Media: mediaUri,
 	}
