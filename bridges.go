@@ -45,6 +45,33 @@ func (b *Bridge) Delete() error {
 	return b.client.BridgeDelete(b.Id)
 }
 
+// Play plays an audio uri to a bridge, returning its playback ID
+func (b *Bridge) Play(mediaUri string) (string, error) {
+	id := uuid.NewV1().String()
+	err := b.PlayWithID(id, mediaUri)
+	return id, err
+}
+
+// PlayWithID plays an audio uri to the bridge with the provided playback ID
+func (b *Bridge) PlayWithID(id, mediaUri string) error {
+	if b.client == nil {
+		return fmt.Errorf("No client found in Bridge")
+	}
+
+	_, err := b.client.PlayToBridgeById(b.Id, id, PlayMediaRequest{Media: mediaUri})
+	return err
+}
+
+// AttachClient attaches the provided ARI client to the bridge
+func (b *Bridge) AttachClient(a *Client) {
+	b.client = a
+}
+
+// GetClient returns the ARI client which created the bridge
+func (b *Bridge) GetClient() *Client {
+	return b.client
+}
+
 //Request structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
 type CreateBridgeRequest struct {
 	Id   string `json:"bridgeId,omitempty"`

@@ -282,16 +282,21 @@ func (c *Channel) StopSilence() error {
 // Play initiates playback of the specified media uri
 // to the channel, returning the Playback's Id
 func (c *Channel) Play(mediaUri string) (string, error) {
-	if c.client == nil {
-		return "", fmt.Errorf("No client found in Channel")
-	}
-
-	// Generate a playback id
 	id := uuid.NewV1().String()
+	err := c.PlayWithID(id, mediaUri)
+	return id, err
+}
+
+// PlayWithID initiates playback of the specified media uri
+// with the provided playbackID to the channel.
+func (c *Channel) PlayWithID(id, mediaUri string) error {
+	if c.client == nil {
+		return fmt.Errorf("No client found in Channel")
+	}
 
 	var err error
 	_, err = c.client.PlayToChannelById(c.Id, id, PlayMediaRequest{Media: mediaUri})
-	return id, err
+	return err
 }
 
 // Record starts recording the channel, returning

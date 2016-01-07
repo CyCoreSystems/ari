@@ -177,7 +177,7 @@ func (b *Bus) Subscribe(eTypes ...string) *Subscription {
 	s := &Subscription{
 		b:      b,
 		events: eTypes,
-		C:      make(chan Eventer),
+		C:      make(chan Eventer, 1),
 	}
 	b.addSubscription(s)
 	return s

@@ -1,6 +1,20 @@
 package ari
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+	"time"
+
+	"golang.org/x/net/context"
+)
+
+// PlaybackStartTimeout is the time to allow for Asterisk to
+// send the PlaybackStarted before giving up.
+var PlaybackStartTimeout = 1 * time.Second
+
+// MaxPlaybackTime is the maximum amount of time to allow for
+// a playback to complete.
+var MaxPlaybackTime = 10 * time.Minute
 
 // Playback describes a session of playing media to a channel
 // MediaUri is of the form 'type:name', where type can be one of:
@@ -76,4 +90,115 @@ func (c *Client) ControlPlayback(playbackId string, operation string) error {
 func (c *Client) StopPlayback(playbackId string) error {
 	err := c.AriDelete("/playbacks/"+playbackId, nil, nil)
 	return err
+}
+
+// A Player is anyhing which can "Play" an mediaUri
+type Player interface {
+	Play(string) (string, error)
+	GetClient() *Client
+}
+
+// Play plays audio to the given Player, returning a channel
+// which is closed on completion.  If an error occurs, the
+// error is sent on the channel first.
+func Play(ctx context.Context, p Player, mediaUri string) error {
+	c := p.GetClient()
+	if c == nil {
+		return fmt.Errorf("Failed to find *ari.Client in Player")
+	}
+
+	s := c.Bus.Subscribe("PlaybackStarted", "PlaybackFinished")
+	defer s.Cancel()
+
+	id, err := p.Play(mediaUri)
+	if err != nil {
+		return err
+	}
+	defer c.StopPlayback(id)
+
+	// Wait for the playback to start
+	startTimer := time.After(PlaybackStartTimeout)
+PlaybackStartLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case v := <-s.C:
+			if v == nil {
+				Logger.Debug("Nil event received")
+				continue PlaybackStartLoop
+			}
+			switch v.GetType() {
+			case "PlaybackStarted":
+				e := v.(*PlaybackStarted)
+				if e.Playback.Id != id {
+					Logger.Debug("Ignoring unrelated playback")
+					continue PlaybackStartLoop
+				}
+				Logger.Debug("Playback started")
+				break PlaybackStartLoop
+			case "PlaybackFinished":
+				e := v.(*PlaybackFinished)
+				if e.Playback.Id != id {
+					Logger.Debug("Ignoring unrelated playback")
+					continue PlaybackStartLoop
+				}
+				Logger.Debug("Playback stopped (before PlaybackStated received)")
+				return nil
+			default:
+				Logger.Debug("Unhandled e.Type", v.GetType())
+				continue PlaybackStartLoop
+			}
+		case <-startTimer:
+			Logger.Error("Playback timed out")
+			return fmt.Errorf("Timeout waiting for start of playback")
+		}
+	}
+
+	// Playback has started.  Wait for it to finish
+	stopTimer := time.After(MaxPlaybackTime)
+PlaybackStopLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case v := <-s.C:
+			if v == nil {
+				Logger.Debug("Nil event received")
+				continue PlaybackStopLoop
+			}
+			switch v.GetType() {
+			case "PlaybackFinished":
+				e := v.(*PlaybackFinished)
+				if e.Playback.Id != id {
+					Logger.Debug("Ignoring unrelated playback")
+					continue PlaybackStopLoop
+				}
+				Logger.Debug("Playback stopped")
+				return nil
+			default:
+				Logger.Debug("Unhandled e.Type", v.GetType())
+				continue PlaybackStopLoop
+			}
+		case <-stopTimer:
+			Logger.Error("Playback timed out")
+			return fmt.Errorf("Timeout waiting for start of playback")
+		}
+	}
+}
+
+// PlaybackQueue represents a sequence of audio playbacks
+// which are to be played on the associated Player
+type PlaybackQueue struct {
+	player Player             // the player (channel or bridge on which the audio is to be played)
+	cancel context.CancelFunc // the cancel function for this playback context
+
+	presentPlaybackId string // Id of the currently-playing playback
+
+	queue []string // List of mediaUris to be played
+	mu    sync.Mutex
+}
+
+func NewPlaybackQueue(p Player) *PlaybackQueue {
+	return &PlaybackQueue{player: p}
 }
