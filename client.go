@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +41,15 @@ type Client struct {
 
 // NewClient creates a new Asterisk client
 // This function does not attempt to connect to Asterisk itself.
+// The ARI URL and websocket URL may also be defined by environment
+// variables ARI_URL and ARI_WSURL, respectively; explicitly-supplied
+// values for these in the supplied `Options` struct will override
+// any environment variables.  Defaults for each are to connect to
+// `localhost` at the normal locations for each.
+//
+// Additionally, username and password for the ARI connection may also
+// be supplied by environment variables ARI_USERNAME and ARI_PASSWORD,
+// respectively.  There are no defaults for these values.
 func NewClient(opts *Options) *Client {
 	if opts == nil {
 		opts = &Options{}
@@ -52,18 +62,26 @@ func NewClient(opts *Options) *Client {
 
 	// URL should default to localhost
 	if opts.Url == "" {
-		opts.Url = "http://localhost:8088/ari"
+		if ariUrl := os.Getenv("ARI_URL"); ariUrl != "" {
+			opts.Url = ariUrl
+		} else {
+			opts.Url = "http://localhost:8088/ari"
+		}
 	}
 
 	// Websocket URL should default to be derived from Url
 	if opts.WsUrl == "" {
-		opts.WsUrl = "ws" + strings.TrimPrefix(opts.Url, "http") + "/events"
+		if ariWsUrl := os.Getenv("ARI_WSURL"); ariWsUrl != "" {
+			opts.WsUrl = ariWsUrl
+		} else {
+			opts.WsUrl = "ws" + strings.TrimPrefix(opts.Url, "http") + "/events"
+		}
 	}
 
 	return &Client{Options: opts}
 }
 
-// Listen maintains and listens to a websocket connection until told to stop
+// Listen maintains and listens to a websocket connection until told to stop.
 func (c *Client) Listen(ctx context.Context) (err error) {
 	// Construct the websocket config, if we don't already have one
 	if c.WSConfig == nil {
@@ -82,6 +100,10 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 		// Add the authorization header
 		if c.Options.Username != "" && c.Options.Password != "" {
 			c.WSConfig.Header.Set("Authorization", "Basic "+basicAuth(c.Options.Username, c.Options.Password))
+		} else if os.Getenv("ARI_USERNAME") != "" {
+			c.WSConfig.Header.Set("Authorization", "Basic "+basicAuth(os.Getenv("ARI_USERNAME"), os.Getenv("ARI_PASSWORD")))
+		} else {
+			Logger.Warn("No credentials found; expect failure")
 		}
 	}
 

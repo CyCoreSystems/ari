@@ -187,7 +187,7 @@ PlaybackStopLoop:
 	}
 }
 
-// PlaybackQueue represents a sequence of audio playbacks
+// TODO: PlaybackQueue represents a sequence of audio playbacks
 // which are to be played on the associated Player
 type PlaybackQueue struct {
 	player Player             // the player (channel or bridge on which the audio is to be played)
