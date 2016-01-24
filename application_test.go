@@ -32,7 +32,7 @@ func (s *ApplicationTests) TearDownSuite() {
 
 func (s *ApplicationTests) LogEvent() {
 	defer s.LogEvent()
-	e := <-DefaultClient.Bus.Once(ALL)
+	e := <-DefaultClient.Bus.Once(context.TODO(), ALL)
 	s.NotNil(e.GetApplication(), "Event's application name must exist")
 }
 

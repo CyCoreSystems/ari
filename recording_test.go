@@ -36,7 +36,7 @@ func (s *RecordingTests) TestLiveRecordingFunctions() {
 	_, err := DefaultClient.CreateChannel(req2)
 	s.Nil(err, "Channel by Application not made")
 
-	<-DefaultClient.Bus.Once("StasisStart")
+	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
 
 	err = DefaultClient.AnswerChannel("MyApp")
 

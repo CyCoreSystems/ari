@@ -44,7 +44,7 @@ func (s *PlaybackTests) TestGetPlaybackDetails() {
 
 	//Wait until we receive "StasisStart" from our channel, meaning it has been answered (on far end) and may be answered by Asterisk.
 
-	<-DefaultClient.Bus.Once("StasisStart")
+	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
 
 	err = DefaultClient.AnswerChannel("MyApp")
 	s.Nil(err)

@@ -44,7 +44,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u1Chan)
 	s.Nil(err, "Channel for User1 not created")
 
-	<-DefaultClient.Bus.Once("StasisStart")
+	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan1")
 	s.Nil(err)
@@ -61,7 +61,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u2Chan)
 	s.Nil(err, "Channel for User2 not created")
 
-	<-DefaultClient.Bus.Once("StasisStart")
+	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan2")
 	s.Nil(err)
@@ -162,7 +162,7 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	s.Nil(err, "Failed to create first channel")
 
 	// Wait for answer
-	<-DefaultClient.Bus.Once("StasisStart")
+	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
 
 	// Create a bridge with the default client
 	br, err := DefaultClient.NewBridge()
@@ -179,7 +179,7 @@ func (s *BridgeTestsSplit) TestBridgeOtherApp() {
 	s.Nil(err, "Failed to create second channel")
 
 	// Wait for answer
-	<-nc.Bus.Once("StasisStart")
+	<-nc.Bus.Once(secondCtx, "StasisStart")
 
 	// Add ch1 to bridge
 	err = br.Add(ch1.Id)

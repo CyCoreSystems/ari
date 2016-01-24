@@ -216,13 +216,16 @@ func (s *Subscription) Cancel() {
 
 // Once listens for the first event of the provided types,
 // returning a channel which supplies that event.
-func (b *Bus) Once(eTypes ...string) <-chan Eventer {
+func (b *Bus) Once(ctx context.Context, eTypes ...string) <-chan Eventer {
 	s := b.Subscribe(eTypes...)
 	ret := make(chan Eventer, 1)
 
 	// Stop subscription after one event
 	go func() {
-		ret <- <-s.C
+		select {
+		case ret <- <-s.C:
+		case <-ctx.Done():
+		}
 		close(ret)
 		s.Cancel()
 	}()
