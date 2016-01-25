@@ -72,6 +72,11 @@ func (b *Bridge) GetClient() *Client {
 	return b.client
 }
 
+// GetID returns the ID of this bridge
+func (b *Bridge) GetID() string {
+	return b.Id
+}
+
 //Request structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
 type CreateBridgeRequest struct {
 	Id   string `json:"bridgeId,omitempty"`

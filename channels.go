@@ -120,6 +120,11 @@ func (c *Channel) GetClient() *Client {
 	return c.client
 }
 
+// GetID returns the ID of this channel
+func (c *Channel) GetID() string {
+	return c.Id
+}
+
 // Hangup hangs up the current channel
 func (c *Channel) Hangup() error {
 	if c.client == nil {

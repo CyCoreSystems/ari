@@ -76,22 +76,22 @@ func (s *PlaybackTests) TestGetPlaybackDetails() {
 	//Playing the recording back to the channel, creating a playback session.
 
 	//Trying to retrieve that playback session.
-	playback2, err := DefaultClient.GetPlaybackDetails(playback.Id)
+	playback2, err := DefaultClient.GetPlaybackDetails(playback.ID)
 	fmt.Printf("%+v", playback2)
 	s.Nil(err, "Error retrieving playback.")
-	s.Equal(playback.Id, playback2.Id, "Playbacks not equal.")
+	s.Equal(playback.ID, playback2.ID, "Playbacks not equal.")
 	fmt.Println("Playback returned: ", playback2)
 	time.Sleep(3 * time.Second)
 
 	//Testing the control function using the 'restart' command.
-	err = DefaultClient.ControlPlayback(playback.Id, "restart")
+	err = DefaultClient.ControlPlayback(playback.ID, "restart")
 	fmt.Println("Restarting playback...")
 	time.Sleep(3 * time.Second)
 	s.Nil(err, "Couldn't restart playback.")
 
 	//Lastly, let's delete the playback session prematurely.
 	fmt.Println("Cutting off playback.")
-	err = DefaultClient.StopPlayback(playback.Id)
+	err = DefaultClient.StopPlayback(playback.ID)
 	s.Nil(err, "Couldn't stop playback.")
 }
 
