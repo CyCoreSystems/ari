@@ -220,19 +220,25 @@ func NewPlaybackQueue() *PlaybackQueue {
 	return &PlaybackQueue{}
 }
 
-// Add appends a mediaURI to the playback queue
-func (pq *PlaybackQueue) Add(mediaURI string) {
-	if mediaURI == "" {
-		return
-	}
-
+// Add appends one or more mediaURIs to the playback queue
+func (pq *PlaybackQueue) Add(mediaURIs ...[]string) {
+	// Make sure our queue exists
 	pq.mu.Lock()
 	if pq.queue == nil {
 		pq.queue = []string{}
 	}
-
-	pq.queue = append(pq.queue, mediaURI)
 	pq.mu.Unlock()
+
+	// Add each media URI to the queue
+	for _, u := range mediaURIs {
+		if u == "" {
+			continue
+		}
+
+		pq.mu.Lock()
+		pq.queue = append(pq.queue, u)
+		pq.mu.Unlock()
+	}
 }
 
 // Flush empties a playback queue.
