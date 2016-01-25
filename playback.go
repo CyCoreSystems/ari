@@ -221,7 +221,7 @@ func NewPlaybackQueue() *PlaybackQueue {
 }
 
 // Add appends one or more mediaURIs to the playback queue
-func (pq *PlaybackQueue) Add(mediaURIs ...[]string) {
+func (pq *PlaybackQueue) Add(mediaURIs ...string) {
 	// Make sure our queue exists
 	pq.mu.Lock()
 	if pq.queue == nil {
