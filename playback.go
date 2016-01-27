@@ -334,6 +334,22 @@ func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptio
 	return nil
 }
 
+// PlayAsync plays the queue, returing immediately with an error channel,
+// which will pass any errors and be closed on completion of the queue.
+func (pq *PlaybackQueue) PlayAsync(ctx context.Context, p Player, opts *PlaybackOptions) chan error {
+	errChan := make(chan error)
+	go func() {
+		err := pq.Play(ctx, p, opts)
+		if err != nil {
+			errChan <- err
+		}
+		close(errChan)
+		return
+	}()
+
+	return errChan
+}
+
 // IsOpenPattern determines whether the regular expression is
 // open-ended (allows for an indeterminite number of trailing
 // parts) or not.
