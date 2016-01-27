@@ -2,11 +2,16 @@ package ari
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/net/context"
 )
+
+// AllDTMF is a string which contains all possible
+// DTMF digits.
+const AnyDTMF = "0123456789ABCD*#"
 
 // PlaybackStartTimeout is the time to allow for Asterisk to
 // send the PlaybackStarted before giving up.
@@ -20,8 +25,8 @@ var MaxPlaybackTime = 10 * time.Minute
 // MediaURI is of the form 'type:name', where type can be one of:
 //  - sound : a Sound on the Asterisk system
 //  - recording : a StoredRecording on the Asterisk system
-//  - number : a number, to be spoken
-//  - digits : a set of digits, to be spoken
+//  - number : a number, to be spoken (integers, positive or negative)
+//  - digits : a set of digits, to be spoken (includes -*#0123456789)
 //  - characters : a set of characters, to be spoken
 //  - tone : a tone sequence, which may optionally take a tonezone parameter (e.g, tone:ring:tonezone=fr)
 //
@@ -52,6 +57,11 @@ type PlaybackOptions struct {
 	// DTMF is an optional channel for received DTMF tones received during the playback.
 	// This channel will NOT be closed by the playback.
 	DTMF chan<- *ChannelDtmfReceived
+
+	// ExitOnDTMF defines a list of DTMF digits on receipt of which will
+	// terminate the playback of the queue.  You may set this to AllDTMF
+	// in order to match any DTMF digit.
+	ExitOnDTMF string
 
 	// Done is an optional channel for receiving notification when the playback
 	// is complete.  This is useful if the playback is to be executed asynchronously.
@@ -213,6 +223,8 @@ PlaybackStopLoop:
 type PlaybackQueue struct {
 	queue []string // List of mediaURI to be played
 	mu    sync.Mutex
+
+	receivedDTMF string // Storage for received DTMF, if we are listening for them
 }
 
 // NewPlaybackQueue creates (but does not start) a new playback queue.
@@ -249,6 +261,12 @@ func (pq *PlaybackQueue) Flush() {
 	pq.mu.Unlock()
 }
 
+// ReceivedDTMF returns any DTMF which has been received
+// by the PlaybackQueue.
+func (pq *PlaybackQueue) ReceivedDTMF() string {
+	return pq.receivedDTMF
+}
+
 // Play starts the playback of the queue to the Player.
 func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptions) error {
 	// Handle any options we were given
@@ -276,6 +294,28 @@ func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptio
 		}
 	}
 
+	// Record any DTMF (this is separate from opts.DTMF) so that we can
+	//  - Service ReceivedDTMF requests
+	//  - Exit if we were given an ExitOnDTMF list
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	go func() {
+		dtmfSub := p.GetClient().Bus.Subscribe("ChannelDtmfReceived")
+		defer dtmfSub.Cancel()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case e := <-dtmfSub.C:
+				digit := e.(*ChannelDtmfReceived).Digit
+				pq.receivedDTMF += digit
+				if strings.Contains(opts.ExitOnDTMF, digit) {
+					cancel()
+				}
+			}
+		}
+	}()
+
 	// Start the playback
 	for i := 0; len(pq.queue) > i; i++ {
 		// Make sure our context isn't closed
@@ -292,4 +332,18 @@ func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptio
 	}
 
 	return nil
+}
+
+// IsOpenPattern determines whether the regular expression is
+// open-ended (allows for an indeterminite number of trailing
+// parts) or not.
+func IsOpenPattern(p string) bool {
+	strings.TrimSuffix(p, "$")
+	if strings.HasSuffix(p, ".") {
+		return true
+	}
+	if strings.HasSuffix(p, "*") {
+		return true
+	}
+	return false
 }
