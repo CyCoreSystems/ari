@@ -123,7 +123,7 @@ func (s *BridgeTests) TestBridgeRecordAndPlay() {
 		IfExists:           "overwrite",
 		MaxDurationSeconds: 4,
 	}
-	rec, err := DefaultClient.RecordBridge("testBridge", req)
+	rec, err := DefaultClient.RecordBridge("testBridge", &req)
 	fmt.Println("Allowing 5 seconds for liveRecording")
 	time.Sleep(5 * time.Second)
 	s.Nil(err, "Could not start live recording 'name'")

@@ -15,13 +15,25 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// Client connection options
+// Options describes client connection options
 type Options struct {
-	Application string // ARI Application name
-	Url         string // root URL of ARI server (asterisk box), e.g. http://localhost:8088/ari
-	WsUrl       string // URL of ARI Websocket events, e.g. ws://localhost:8088/ari/events
-	Username    string // username for ARI authentication
-	Password    string // password for ARI authentication
+	// Application is the the name of this ARI application
+	Application string
+
+	// URL is the root URL of the ARI server (asterisk box).
+	// Default to http://localhost:8088/ari
+	URL string
+
+	// WebsocketURL is the URL for ARI Websocket events.
+	// Defaults to the events directory of URL, with a protocol of ws.
+	// Usually ws://localhost:8088/ari/events.
+	WebsocketURL string
+
+	// Username for ARI authentication
+	Username string
+
+	// Password for ARI authentication
+	Password string
 }
 
 // Client describes an ARI connection to an Asterisk server
@@ -61,20 +73,20 @@ func NewClient(opts *Options) *Client {
 	}
 
 	// URL should default to localhost
-	if opts.Url == "" {
-		if ariUrl := os.Getenv("ARI_URL"); ariUrl != "" {
-			opts.Url = ariUrl
+	if opts.URL == "" {
+		if ariURL := os.Getenv("ARI_URL"); ariURL != "" {
+			opts.URL = ariURL
 		} else {
-			opts.Url = "http://localhost:8088/ari"
+			opts.URL = "http://localhost:8088/ari"
 		}
 	}
 
 	// Websocket URL should default to be derived from Url
-	if opts.WsUrl == "" {
-		if ariWsUrl := os.Getenv("ARI_WSURL"); ariWsUrl != "" {
-			opts.WsUrl = ariWsUrl
+	if opts.WebsocketURL == "" {
+		if ariWsURL := os.Getenv("ARI_WSURL"); ariWsURL != "" {
+			opts.WebsocketURL = ariWsURL
 		} else {
-			opts.WsUrl = "ws" + strings.TrimPrefix(opts.Url, "http") + "/events"
+			opts.WebsocketURL = "ws" + strings.TrimPrefix(opts.URL, "http") + "/events"
 		}
 	}
 
@@ -88,7 +100,7 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 		// Construct the websocket connection url
 		v := url.Values{}
 		v.Set("app", c.Options.Application)
-		wsurl := c.Options.WsUrl + "?" + v.Encode()
+		wsurl := c.Options.WebsocketURL + "?" + v.Encode()
 
 		// Construct a websocket.Config
 		c.WSConfig, err = websocket.NewConfig(wsurl, "http://localhost/")
@@ -143,8 +155,10 @@ func (c *Client) listen(ctx context.Context) {
 			}
 
 			// Clean up
-			ws.Close()
-			ws = nil
+			if ws != nil {
+				ws.Close()
+				ws = nil
+			}
 
 			// Don't restart too quickly
 			Logger.Info("Waiting 10ms to restart websocket")
@@ -155,7 +169,10 @@ func (c *Client) listen(ctx context.Context) {
 	// Wait for stop
 	<-ctx.Done()
 	stop = true
-	ws.Close()
+	if ws != nil {
+		ws.Close()
+		ws = nil
+	}
 	return
 }
 

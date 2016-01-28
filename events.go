@@ -6,7 +6,7 @@ import "encoding/json"
 //Equivalent to GET /events
 func (c *Client) GetEvents(app string) (Message, error) {
 	var m Message
-	err := c.AriGet("/events/?app="+app, &m)
+	err := c.Get("/events/?app="+app, &m)
 	if err != nil {
 		return m, err
 	}
@@ -20,7 +20,7 @@ func (c *Client) CreateUserEvent(eventName string, req CreateUserEventRequest) e
 	//TODO handle the Error responses individually (by code)
 
 	//Send request
-	err := c.AriPost("/events/user/"+eventName, nil, &req)
+	err := c.Post("/events/user/"+eventName, nil, &req)
 	if err != nil {
 		return err
 	}

@@ -9,9 +9,15 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-var MaxIdleConnections int = 20
-var RequestTimeout time.Duration = 2 * time.Second
+// MaxIdleConnections is the maximum number of idle web client
+// connections to maintain.
+var MaxIdleConnections = 20
 
+// RequestTimeout describes the maximum amount of time to wait
+// for a response to any request.
+var RequestTimeout = 2 * time.Second
+
+// RequestError describes an error with an error Code.
 type RequestError interface {
 	error
 	Code() int
@@ -22,15 +28,17 @@ type requestError struct {
 	text       string
 }
 
+// Error returns the request error as a string.
 func (e *requestError) Error() string {
 	return e.text
 }
 
+// Code returns the status code from the request.
 func (e *requestError) Code() int {
 	return e.statusCode
 }
 
-// Extract and return the code from an error, or
+// CodeFromError extracts and returns the code from an error, or
 // 0 if not found.
 func CodeFromError(err error) int {
 	if reqerr, ok := err.(RequestError); ok {
@@ -57,7 +65,7 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-func (c *Client) assureHttpClient() {
+func (c *Client) assureHTTPClient() {
 	if c.httpClient == nil {
 		c.httpClient = gorequest.New().Timeout(RequestTimeout)
 		if c.Options.Username != "" {
@@ -66,12 +74,12 @@ func (c *Client) assureHttpClient() {
 	}
 }
 
-// AriGet wraps gorequest.Get with the complete url
+// Get wraps gorequest.Get with the complete url
 // It calls the ARI server with a GET request
-func (c *Client) AriGet(url string, ret interface{}) error {
-	c.assureHttpClient()
-	finalUrl := c.Options.Url + url
-	resp, body, errs := c.httpClient.Get(finalUrl).EndBytes()
+func (c *Client) Get(url string, ret interface{}) error {
+	c.assureHTTPClient()
+	finalURL := c.Options.URL + url
+	resp, body, errs := c.httpClient.Get(finalURL).EndBytes()
 	if errs != nil {
 		var errString string
 		for _, e := range errs {
@@ -89,13 +97,13 @@ func (c *Client) AriGet(url string, ret interface{}) error {
 	return maybeRequestError(resp)
 }
 
-// AriPost is a shorthand for MakeRequest("POST",url,ret,req)
+// Post is a shorthand for MakeRequest("POST",url,ret,req)
 // It calls the ARI server with a POST request
 // Uses gorequest.PostForm since ARI returns bad request otherwise
-func (c *Client) AriPost(url string, ret interface{}, req interface{}) error {
-	c.assureHttpClient()
-	finalUrl := c.Options.Url + url
-	r := c.httpClient.Post(finalUrl).Type("form")
+func (c *Client) Post(url string, ret interface{}, req interface{}) error {
+	c.assureHTTPClient()
+	finalURL := c.Options.URL + url
+	r := c.httpClient.Post(finalURL).Type("form")
 	if req != nil {
 		r = r.SendStruct(req)
 	}
@@ -117,12 +125,12 @@ func (c *Client) AriPost(url string, ret interface{}, req interface{}) error {
 	return maybeRequestError(resp)
 }
 
-// AriPut is a shorthand for MakeRequest("PUT",url,ret,req)
+// Put is a shorthand for MakeRequest("PUT",url,ret,req)
 // It calls the ARI server with a PUT request
-func (c *Client) AriPut(url string, ret interface{}, req interface{}) error {
-	c.assureHttpClient()
-	finalUrl := c.Options.Url + url
-	r := c.httpClient.Put(finalUrl).Type("form")
+func (c *Client) Put(url string, ret interface{}, req interface{}) error {
+	c.assureHTTPClient()
+	finalURL := c.Options.URL + url
+	r := c.httpClient.Put(finalURL).Type("form")
 	if req != nil {
 		r = r.Send(req)
 	}
@@ -145,13 +153,13 @@ func (c *Client) AriPut(url string, ret interface{}, req interface{}) error {
 	return maybeRequestError(resp)
 }
 
-// AriDelete is a shorthand for MakeRequest("DELETE",url,nil,nil)
+// Delete is a shorthand for MakeRequest("DELETE",url,nil,nil)
 // It calls the ARI server with a DELETE request
-func (c *Client) AriDelete(url string, ret interface{}, req interface{}) error {
-	c.assureHttpClient()
-	finalUrl := c.Options.Url + url
+func (c *Client) Delete(url string, ret interface{}, req interface{}) error {
+	c.assureHTTPClient()
+	finalURL := c.Options.URL + url
 
-	r := c.httpClient.Delete(finalUrl)
+	r := c.httpClient.Delete(finalURL)
 	if req != nil {
 		r = r.Query(req)
 	}

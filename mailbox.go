@@ -13,7 +13,7 @@ type Mailbox struct {
 //Equivalent to GET /mailboxes
 func (c *Client) ListMailboxes() ([]Mailbox, error) {
 	var m []Mailbox
-	err := c.AriGet("/mailboxes", &m)
+	err := c.Get("/mailboxes", &m)
 	if err != nil {
 		return m, err
 	}
@@ -24,7 +24,7 @@ func (c *Client) ListMailboxes() ([]Mailbox, error) {
 //Equivalent to GET /mailboxes/{mailboxName}
 func (c *Client) GetMailbox(mailboxName string) (Mailbox, error) {
 	var m Mailbox
-	err := c.AriGet("/mailboxes/"+mailboxName, &m)
+	err := c.Get("/mailboxes/"+mailboxName, &m)
 	if err != nil {
 		return m, err
 	}
@@ -40,7 +40,7 @@ func (c *Client) ChangeMailboxState(mailboxName string, oldMessages int, newMess
 	}
 
 	//send request
-	err := c.AriPut("/mailboxes/"+mailboxName, nil, &req)
+	err := c.Put("/mailboxes/"+mailboxName, nil, &req)
 	return err
 }
 
@@ -49,6 +49,6 @@ func (c *Client) ChangeMailboxState(mailboxName string, oldMessages int, newMess
 //Destroy a mailbox.
 //Equivalent to DELETE /mailboxes/{mailboxName}
 func (c *Client) DeleteMailbox(mailboxName string) error {
-	err := c.AriDelete("/mailboxes/"+mailboxName, nil, nil)
+	err := c.Delete("/mailboxes/"+mailboxName, nil, nil)
 	return err
 }

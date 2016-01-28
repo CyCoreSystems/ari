@@ -149,7 +149,7 @@ func (s *ChannelTests) TestLiveRecording() {
 		IfExists:           "overwrite",
 		MaxDurationSeconds: 4,
 	}
-	rec, err := DefaultClient.RecordChannel("MyApp", req)
+	rec, err := DefaultClient.RecordChannel("MyApp", &req)
 	fmt.Println("Allowing 5 seconds for liveRecording")
 	time.Sleep(5 * time.Second)
 	s.Nil(err, "Could not start live recording 'name'")

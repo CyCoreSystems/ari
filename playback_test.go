@@ -58,7 +58,7 @@ func (s *PlaybackTests) TestGetPlaybackDetails() {
 		IfExists:           "overwrite",
 		MaxDurationSeconds: 4,
 	}
-	rec, err := DefaultClient.RecordChannel("MyApp", req3)
+	rec, err := DefaultClient.RecordChannel("MyApp", &req3)
 	fmt.Println("Allowing 6 seconds for liveRecording")
 	time.Sleep(6 * time.Second)
 	s.Nil(err, "Could not start live recording 'name'")

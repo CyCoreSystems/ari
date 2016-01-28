@@ -46,7 +46,7 @@ func (s *RecordingTests) TestLiveRecordingFunctions() {
 		Beep:     true,
 		IfExists: "overwrite",
 	}
-	rec, err := DefaultClient.RecordChannel("Recorder", req)
+	rec, err := DefaultClient.RecordChannel("Recorder", &req)
 	fmt.Println("LiveRecording has begun for recording test")
 	s.Nil(err, "Could not start live recording 'record'")
 	fmt.Println("Waiting 3 seconds before pausing.")
@@ -96,7 +96,7 @@ func (s *RecordingTests) TestLiveRecordingFunctions() {
 		Beep:     true,
 		IfExists: "overwrite",
 	}
-	rec, err = DefaultClient.RecordChannel("Recorder", req4)
+	rec, err = DefaultClient.RecordChannel("Recorder", &req4)
 	s.Nil(err, "Could not start live recording 'record2'")
 	if err == nil {
 		fmt.Println("LiveRecording has begun for scrap test")

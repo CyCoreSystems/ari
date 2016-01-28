@@ -28,7 +28,7 @@ func (c *Client) SendMessage(from, tech, resource, body string, vars map[string]
 		vars = map[string]string{}
 	}
 
-	return c.AriPut("/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
+	return c.Put("/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
 }
 
 // SendMessageByUri sends a text message to an endpoint by free-form URI (rather than tech/resource)
@@ -44,5 +44,5 @@ func (c *Client) SendMessageByUri(from, to, body string, vars map[string]string)
 		vars = map[string]string{}
 	}
 
-	return c.AriPut("/endpoints/sendMessage?"+v.Encode(), nil, &vars)
+	return c.Put("/endpoints/sendMessage?"+v.Encode(), nil, &vars)
 }

@@ -10,7 +10,7 @@ type DeviceState struct {
 //Equivalent to GET /deviceStates
 func (c *Client) ListDeviceStates() ([]DeviceState, error) {
 	var m []DeviceState
-	err := c.AriGet("/deviceStates", &m)
+	err := c.Get("/deviceStates", &m)
 	if err != nil {
 		return m, err
 	}
@@ -21,7 +21,7 @@ func (c *Client) ListDeviceStates() ([]DeviceState, error) {
 //Equivalent to GET /deviceStates/{deviceName}
 func (c *Client) GetDeviceState(deviceName string) (DeviceState, error) {
 	var m DeviceState
-	err := c.AriGet("/deviceStates/"+deviceName, &m)
+	err := c.Get("/deviceStates/"+deviceName, &m)
 	if err != nil {
 		return m, err
 	}
@@ -34,12 +34,12 @@ func (c *Client) ChangeDeviceState(deviceName string, deviceState string) error 
 	req := map[string]string{
 		"deviceState": deviceState,
 	}
-	return c.AriPut("/deviceStates/"+deviceName, nil, &req)
+	return c.Put("/deviceStates/"+deviceName, nil, &req)
 }
 
 //Destroy a device-state controlled by ARI.
 //Equivalent to DELETE /deviceStates/{deviceName}
 func (c *Client) DeleteDeviceState(deviceName string) error {
-	err := c.AriDelete("/deviceStates/"+deviceName, nil, nil)
+	err := c.Delete("/deviceStates/"+deviceName, nil, nil)
 	return err
 }

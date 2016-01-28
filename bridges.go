@@ -62,6 +62,14 @@ func (b *Bridge) PlayWithID(id, mediaUri string) error {
 	return err
 }
 
+// Record starts recording the audio from a bridge to the given recording name.
+func (b *Bridge) Record(name string, opts *RecordingOptions) (*LiveRecording, error) {
+	if opts == nil {
+		opts = &RecordingOptions{}
+	}
+	return b.GetClient().RecordBridge(b.Id, opts.ToRequest(name))
+}
+
 // AttachClient attaches the provided ARI client to the bridge
 func (b *Bridge) AttachClient(a *Client) {
 	b.client = a
@@ -95,7 +103,7 @@ type AddChannelRequest struct {
 //Equivalent to GET /bridges
 func (c *Client) ListBridges() ([]Bridge, error) {
 	var m []Bridge
-	err := c.AriGet("/bridges", &m)
+	err := c.Get("/bridges", &m)
 	if err != nil {
 		return m, err
 	}
@@ -127,7 +135,7 @@ func (c *Client) CreateBridge(req CreateBridgeRequest) (Bridge, error) {
 	var m Bridge
 
 	//send request
-	err := c.AriPost("/bridges", &m, &req)
+	err := c.Post("/bridges", &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -144,7 +152,7 @@ func (c *Client) UpsertBridge(bridgeId string, req CreateBridgeRequest) (Bridge,
 	var m Bridge
 
 	//send request
-	err := c.AriPost("/bridges/"+bridgeId, &m, &req)
+	err := c.Post("/bridges/"+bridgeId, &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -159,7 +167,7 @@ func (c *Client) UpsertBridge(bridgeId string, req CreateBridgeRequest) (Bridge,
 //Equivalent to Get /bridges/{bridgeId}
 func (c *Client) GetBridge(bridgeId string) (Bridge, error) {
 	var m Bridge
-	err := c.AriGet("/bridges/"+bridgeId, &m)
+	err := c.Get("/bridges/"+bridgeId, &m)
 	if err != nil {
 		return m, err
 	}
@@ -176,7 +184,7 @@ func (c *Client) AddChannel(bridgeId string, req AddChannelRequest) error {
 	//No return, so no model to create
 
 	//send request, no model so pass nil
-	err := c.AriPost("/bridges/"+bridgeId+"/addChannel", nil, &req)
+	err := c.Post("/bridges/"+bridgeId+"/addChannel", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -194,7 +202,7 @@ func (c *Client) RemoveChannel(bridgeId string, channelId string) error {
 	req := request{channelId}
 
 	//pass request
-	err := c.AriPost("/bridges/"+bridgeId+"/removeChannel", nil, &req)
+	err := c.Post("/bridges/"+bridgeId+"/removeChannel", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -213,7 +221,7 @@ func (c *Client) PlayMusicOnHold(bridgeId string, mohClass string) error {
 	req := request{mohClass}
 
 	//send request
-	err := c.AriPost("/bridges/"+bridgeId+"/moh", nil, &req)
+	err := c.Post("/bridges/"+bridgeId+"/moh", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -226,7 +234,7 @@ func (c *Client) PlayToBridge(bridgeId string, req PlayMediaRequest) (Playback, 
 	var m Playback
 
 	//send request
-	err := c.AriPost("/bridges/"+bridgeId+"/play", &m, &req)
+	err := c.Post("/bridges/"+bridgeId+"/play", &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -238,7 +246,7 @@ func (c *Client) PlayToBridge(bridgeId string, req PlayMediaRequest) (Playback, 
 func (c *Client) PlayToBridgeById(bridgeId string, playbackId string, req PlayMediaRequest) (Playback, error) {
 	var m Playback
 
-	err := c.AriPost("/bridges/"+bridgeId+"/play/"+playbackId, &m, &req)
+	err := c.Post("/bridges/"+bridgeId+"/play/"+playbackId, &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -247,30 +255,26 @@ func (c *Client) PlayToBridgeById(bridgeId string, playbackId string, req PlayMe
 
 //start a recording on specified bridge
 //Equivalent to  Post /bridges/{bridgeId}/record
-func (c *Client) RecordBridge(bridgeId string, req RecordRequest) (LiveRecording, error) {
-
+func (c *Client) RecordBridge(bridgeId string, req *RecordRequest) (*LiveRecording, error) {
 	var m LiveRecording
 
 	//send request
-	err := c.AriPost("/bridges/"+bridgeId+"/record", &m, &req)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+	err := c.Post("/bridges/"+bridgeId+"/record", &m, &req)
+	return &m, err
 }
 
 //Shut down a bridge. If any channels are in this bridge, they will be removed and resume whatever they were doing beforehand.
 //This means that the channels themselves are not deleted.
 //Equivalent to DELETE /bridges/{bridgeId}
 func (c *Client) BridgeDelete(bridgeId string) error {
-	err := c.AriDelete("/bridges/"+bridgeId, nil, nil)
+	err := c.Delete("/bridges/"+bridgeId, nil, nil)
 	return err
 }
 
 //Stop playing music on hold to a bridge. This will only stop music on hold being played via POST bridges/{bridgeId}/moh.
 //Equivalent to DELETE /bridges/{bridgeId}/moh
 func (c *Client) BridgeStopMoh(bridgeId string) error {
-	err := c.AriDelete("/bridges/"+bridgeId+"/moh", nil, nil)
+	err := c.Delete("/bridges/"+bridgeId+"/moh", nil, nil)
 	return err
 }
 

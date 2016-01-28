@@ -15,7 +15,7 @@ type Endpoint struct {
 // TODO: associated with the application, or on the entire system?
 func (c *Client) ListEndpoints() ([]Endpoint, error) {
 	var m []Endpoint
-	err := c.AriGet("/endpoints", &m)
+	err := c.Get("/endpoints", &m)
 	return m, err
 }
 
@@ -23,13 +23,13 @@ func (c *Client) ListEndpoints() ([]Endpoint, error) {
 //Equivalent to Get /endpoints/{tech}
 func (c *Client) GetEndpointsByTech(tech string) ([]Endpoint, error) {
 	var m []Endpoint
-	err := c.AriGet("/endpoints/"+tech, &m)
+	err := c.Get("/endpoints/"+tech, &m)
 	return m, err
 }
 
 // GetEndpoint requests the details of an endpoint from Asterisk
 func (c *Client) GetEndpoint(tech string, resource string) (Endpoint, error) {
 	var m Endpoint
-	err := c.AriGet("/endpoints/"+tech+"/"+resource, &m)
+	err := c.Get("/endpoints/"+tech+"/"+resource, &m)
 	return m, err
 }

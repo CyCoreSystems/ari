@@ -306,19 +306,15 @@ func (c *Channel) PlayWithID(id, mediaUri string) error {
 
 // Record starts recording the channel, returning
 // the LiveRecording
-func (c *Channel) Record(name string, format string) (*LiveRecording, error) {
+func (c *Channel) Record(name string, opts *RecordingOptions) (*LiveRecording, error) {
+	if opts == nil {
+		opts = &RecordingOptions{}
+	}
 	if c.client == nil {
 		return nil, fmt.Errorf("No client found in Channel")
 	}
 
-	recording, err := c.client.RecordChannel(c.Id, RecordRequest{
-		Name:   name,
-		Format: format,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to start recording: %s\n", err.Error())
-	}
-	return &recording, nil
+	return c.GetClient().RecordChannel(c.Id, opts.ToRequest(name))
 }
 
 // Get retrieves a channel variable from the channel
@@ -363,7 +359,7 @@ func (c *Channel) Snoop() (string, error) {
 //Equivalent to Get /channels
 func (c *Client) ListChannels() ([]Channel, error) {
 	var m []Channel
-	err := c.AriGet("/channels", &m)
+	err := c.Get("/channels", &m)
 	if err != nil {
 		return m, err
 	}
@@ -401,7 +397,7 @@ func (c *Client) NewChannel(endpoint string, cid *CallerId, vars map[string]stri
 func (c *Client) CreateChannel(req OriginateRequest) (Channel, error) {
 	var m Channel
 
-	err := c.AriPost("/channels", &m, &req)
+	err := c.Post("/channels", &m, &req)
 
 	// Attach the client
 	m.client = c
@@ -419,7 +415,7 @@ func (c *Client) CreateChannelWithId(id string, req OriginateRequest) (Channel, 
 	}
 	req.ChannelId = id
 
-	err := c.AriPost("/channels/"+id, &m, &req)
+	err := c.Post("/channels/"+id, &m, &req)
 
 	// Attach the client
 	m.client = c
@@ -431,7 +427,7 @@ func (c *Client) CreateChannelWithId(id string, req OriginateRequest) (Channel, 
 //Equivalent to Get /channels/{channelId}
 func (c *Client) GetChannel(channelId string) (Channel, error) {
 	var m Channel
-	err := c.AriGet("/channels/"+channelId, &m)
+	err := c.Get("/channels/"+channelId, &m)
 	if err != nil {
 		return m, err
 	}
@@ -445,7 +441,7 @@ func (c *Client) GetChannel(channelId string) (Channel, error) {
 //Exit application and continue execution in the dialplan
 //Equivalent to Post /channels/{channelId}/continue
 func (c *Client) ContinueChannel(channelId string, req ContinueChannelRequest) error {
-	err := c.AriPost("/channels/"+channelId+"/continue", nil, &req)
+	err := c.Post("/channels/"+channelId+"/continue", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -455,7 +451,7 @@ func (c *Client) ContinueChannel(channelId string, req ContinueChannelRequest) e
 //Answer a channel
 //Equivalent to Post /channels/{channelId}/answer
 func (c *Client) AnswerChannel(channelId string) error {
-	err := c.AriPost("/channels/"+channelId+"/answer", nil, nil)
+	err := c.Post("/channels/"+channelId+"/answer", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -465,7 +461,7 @@ func (c *Client) AnswerChannel(channelId string) error {
 //Indicate ringing to a channel
 //Equivalent to Post /channels/{channelId}/ring
 func (c *Client) RingChannel(channelId string) error {
-	err := c.AriPost("/channels/"+channelId+"/ring", nil, nil)
+	err := c.Post("/channels/"+channelId+"/ring", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -475,7 +471,7 @@ func (c *Client) RingChannel(channelId string) error {
 //Send provided DTMF to a given channel
 //Equivalent to Post /channels/{channelId}/dtmf
 func (c *Client) SendDTMFToChannel(channelId string, req SendDTMFToChannelRequest) error {
-	err := c.AriPost("/channels/"+channelId+"/dtmf", nil, &req)
+	err := c.Post("/channels/"+channelId+"/dtmf", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -497,7 +493,7 @@ func (c *Client) MuteChannel(channelId string, direction string) error {
 	}
 
 	req := request{direction}
-	err = c.AriPost("/channels/"+channelId+"/mute", nil, &req)
+	err = c.Post("/channels/"+channelId+"/mute", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -507,7 +503,7 @@ func (c *Client) MuteChannel(channelId string, direction string) error {
 //Hold a channel
 //Equivalent to Post /channels/{channelId}/hold
 func (c *Client) HoldChannel(channelId string) error {
-	err := c.AriPost("/channels/"+channelId+"/hold", nil, nil)
+	err := c.Post("/channels/"+channelId+"/hold", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -522,7 +518,7 @@ func (c *Client) PlayMOHToChannel(channelId string, mohClass string) error {
 	}
 	req := request{mohClass}
 
-	err := c.AriPost("/channels/"+channelId+"/moh", nil, &req)
+	err := c.Post("/channels/"+channelId+"/moh", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -532,7 +528,7 @@ func (c *Client) PlayMOHToChannel(channelId string, mohClass string) error {
 //Play silence to a channel
 //Equivalent to Post /channels/{channelId}/silence
 func (c *Client) PlaySilenceToChannel(channelId string) error {
-	err := c.AriPost("/channels/"+channelId+"/silence", nil, nil)
+	err := c.Post("/channels/"+channelId+"/silence", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -555,7 +551,7 @@ func (c *Client) PlayMedia(channelId, mediaUri string) (string, error) {
 func (c *Client) PlayToChannel(channelId string, req PlayMediaRequest) (Playback, error) {
 	var m Playback
 
-	err := c.AriPost("/channels/"+channelId+"/play", &m, &req)
+	err := c.Post("/channels/"+channelId+"/play", &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -568,29 +564,26 @@ func (c *Client) PlayToChannelById(channelId string, playbackId string, req Play
 
 	var m Playback
 
-	err := c.AriPost("/channels/"+channelId+"/play/"+playbackId, &m, &req)
+	err := c.Post("/channels/"+channelId+"/play/"+playbackId, &m, &req)
 	return m, err
 }
 
 //Start a live recording
 //Equivalent to Post /channels/{channelId}/record
-func (c *Client) RecordChannel(channelId string, req RecordRequest) (LiveRecording, error) {
+func (c *Client) RecordChannel(channelId string, req *RecordRequest) (*LiveRecording, error) {
 	var m LiveRecording
 
 	m.client = c
 
-	err := c.AriPost("/channels/"+channelId+"/record", &m, &req)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+	err := c.Post("/channels/"+channelId+"/record", &m, req)
+	return &m, err
 }
 
 //Get the value of a channel variable or function
 //Equivalent to Get /channels/{channelId}/variable
 func (c *Client) GetChannelVariable(channelId string, variable string) (Variable, error) {
 	var m Variable
-	err := c.AriGet("/channels/"+channelId+"/variable?variable="+variable, &m)
+	err := c.Get("/channels/"+channelId+"/variable?variable="+variable, &m)
 	if err != nil {
 		return m, err
 	}
@@ -607,7 +600,7 @@ func (c *Client) SetChannelVariable(channelId string, variable string, value str
 
 	req := request{variable, value}
 
-	err := c.AriPost("/channels/"+channelId+"/variable", nil, &req)
+	err := c.Post("/channels/"+channelId+"/variable", nil, &req)
 	if err != nil {
 		return err
 	}
@@ -619,7 +612,7 @@ func (c *Client) SetChannelVariable(channelId string, variable string, value str
 func (c *Client) StartSnoopChannel(channelId string, req SnoopRequest) (Channel, error) {
 	var m Channel
 
-	err := c.AriPost("/channels/"+channelId+"/snoop", &m, &req)
+	err := c.Post("/channels/"+channelId+"/snoop", &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -631,7 +624,7 @@ func (c *Client) StartSnoopChannel(channelId string, req SnoopRequest) (Channel,
 func (c *Client) StartSnoopChannelById(channelId string, snoopId string, req SnoopRequest) (Channel, error) {
 	var m Channel
 
-	err := c.AriPost("/channels/"+channelId+"/snoop/"+snoopId, &m, &req)
+	err := c.Post("/channels/"+channelId+"/snoop/"+snoopId, &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -647,13 +640,13 @@ func (c *Client) HangupChannel(channelId string, reason string) error {
 	}
 
 	//send request
-	return c.AriDelete("/channels/"+channelId, nil, &req)
+	return c.Delete("/channels/"+channelId, nil, &req)
 }
 
 //Stop ringing indication on a channel if locally generated.
 //Equivalent to DELETE /channels/{channelId}/ring
 func (c *Client) StopRinging(channelId string) error {
-	err := c.AriDelete("/channels/"+channelId+"/ring", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/ring", nil, nil)
 	return err
 }
 
@@ -672,28 +665,28 @@ func (c *Client) UnMuteChannel(channelId string, direction string) error {
 		req = fmt.Sprintf("direction=%s", direction)
 	}
 
-	err = c.AriDelete("/channels/"+channelId+"/mute", nil, &req)
+	err = c.Delete("/channels/"+channelId+"/mute", nil, &req)
 	return err
 }
 
 //Stop playing music on hold to a channel
 //Equivalent to DELETE /channels/{channelId}/moh
 func (c *Client) StopMohChannel(channelId string) error {
-	err := c.AriDelete("/channels/"+channelId+"/moh", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/moh", nil, nil)
 	return err
 }
 
 //Stop playing silence to a channel
 //Equivalent to DELETE /channels/{channelId}/silence
 func (c *Client) StopSilenceChannel(channelId string) error {
-	err := c.AriDelete("/channels/"+channelId+"/silence", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/silence", nil, nil)
 	return err
 }
 
 //Remove a channel from hold
 //Equivalent to DELETE /channels/{channelId}/hold
 func (c *Client) StopHoldChannel(channelId string) error {
-	err := c.AriDelete("/channels/"+channelId+"/hold", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/hold", nil, nil)
 	return err
 }
 

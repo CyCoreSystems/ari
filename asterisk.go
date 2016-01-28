@@ -68,7 +68,7 @@ func (c *Client) GetAsteriskInfo(only string) (*AsteriskInfo, error) {
 	// That means we should probably break this
 	// method into multiple submethods
 
-	err := c.AriGet(path, &m)
+	err := c.Get(path, &m)
 	if err != nil {
 		return &m, err
 	}
@@ -80,7 +80,7 @@ func (c *Client) GetAsteriskInfo(only string) (*AsteriskInfo, error) {
 func (c *Client) GetAsteriskVariable(variable string) (string, error) {
 	var m Variable
 	path := "/asterisk/variable?variable=" + variable
-	err := c.AriGet(path, &m)
+	err := c.Get(path, &m)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +97,7 @@ func (c *Client) SetAsteriskVariable(variable string, value string) error {
 	}
 	req := request{variable, value}
 
-	err := c.AriPost(path, nil, &req)
+	err := c.Post(path, nil, &req)
 	if err != nil {
 		return err
 	}

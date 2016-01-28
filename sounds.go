@@ -18,7 +18,7 @@ type FormatLangPair struct {
 //ListSounds returns a list of (all) the available sounds
 func (c *Client) ListSounds(filters map[string]string) ([]Sound, error) {
 	var m []Sound
-	err := c.AriGet("/sounds", &m)
+	err := c.Get("/sounds", &m)
 	if err != nil {
 		return m, err
 	}
@@ -37,7 +37,7 @@ func (c *Client) ListSoundsFiltered(filters map[string]string) ([]Sound, error) 
 		}
 		uri += "?" + v.Encode()
 	}
-	err := c.AriGet(uri, &m)
+	err := c.Get(uri, &m)
 	if err != nil {
 		return m, err
 	}
@@ -48,7 +48,7 @@ func (c *Client) ListSoundsFiltered(filters map[string]string) ([]Sound, error) 
 //Equivalent to GET /sounds/{soundId}
 func (c *Client) GetSound(soundId string) (Sound, error) {
 	var m Sound
-	err := c.AriGet("/sounds/"+soundId, &m)
+	err := c.Get("/sounds/"+soundId, &m)
 	if err != nil {
 		return m, err
 	}

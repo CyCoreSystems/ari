@@ -4,11 +4,11 @@ import "fmt"
 
 // Application describes a Stasis (Ari) application
 type Application struct {
-	Bridge_ids   []string `json:"bridge_ids"`   // Subscribed BridgeIds
-	Channel_ids  []string `json:"channel_ids"`  // Subscribed ChannelIds
-	Device_names []string `json:"device_names"` // Subscribed Device names
-	Endpoint_ids []string `json:"endpoint_ids"` // Subscribed Endpoints (tech/resource format)
-	Name         string   `json:"name"`         // Name of the application
+	BridgeIDs   []string `json:"bridge_ids"`   // Subscribed BridgeIds
+	ChannelIDs  []string `json:"channel_ids"`  // Subscribed ChannelIds
+	DeviceNames []string `json:"device_names"` // Subscribed Device names
+	EndpointIDs []string `json:"endpoint_ids"` // Subscribed Endpoints (tech/resource format)
+	Name        string   `json:"name"`         // Name of the application
 }
 
 // ListApplications returns the list of ARI applications on
@@ -16,7 +16,7 @@ type Application struct {
 // Equivalent to GET /applications
 func (c *Client) ListApplications() ([]Application, error) {
 	var m []Application
-	err := c.AriGet("/applications", &m)
+	err := c.Get("/applications", &m)
 	if err != nil {
 		return m, err
 	}
@@ -27,7 +27,7 @@ func (c *Client) ListApplications() ([]Application, error) {
 // Equivalent to GET /applications/{applicationName}
 func (c *Client) GetApplication(applicationName string) (Application, error) {
 	var m Application
-	err := c.AriGet("/applications/"+applicationName, &m)
+	err := c.Get("/applications/"+applicationName, &m)
 	if err != nil {
 		return m, err
 	}
@@ -51,7 +51,7 @@ func (c *Client) SubscribeApplication(applicationName string, eventSource string
 	req := request{EventSource: eventSource}
 
 	// Make the request
-	err := c.AriPost("/applications/"+applicationName+"/subscription", &m, &req)
+	err := c.Post("/applications/"+applicationName+"/subscription", &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -67,7 +67,7 @@ func (c *Client) UnsubscribeApplication(applicationName string, eventSource stri
 	// TODO: handle Error Responses individually
 
 	// Make the request
-	err := c.AriDelete("/applications/"+applicationName+"/subscription", &m, fmt.Sprintf("eventSource=%s", eventSource))
+	err := c.Delete("/applications/"+applicationName+"/subscription", &m, fmt.Sprintf("eventSource=%s", eventSource))
 	if err != nil {
 		return m, err
 	}

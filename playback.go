@@ -73,7 +73,7 @@ type PlaybackOptions struct {
 // (Equivalent to GET /playbacks/{playbackID})
 func (c *Client) GetPlaybackDetails(playbackID string) (Playback, error) {
 	var m Playback
-	err := c.AriGet("/playbacks/"+playbackID, &m)
+	err := c.Get("/playbacks/"+playbackID, &m)
 	if err != nil {
 		return m, err
 	}
@@ -109,7 +109,7 @@ func (c *Client) ControlPlayback(playbackID string, operation string) error {
 	req := request{operation}
 
 	//Make the request
-	err := c.AriPost("/playbacks/"+playbackID+"/control", nil, &req)
+	err := c.Post("/playbacks/"+playbackID+"/control", nil, &req)
 
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (c *Client) ControlPlayback(playbackID string, operation string) error {
 // StopPlayback stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
 func (c *Client) StopPlayback(playbackID string) error {
-	err := c.AriDelete("/playbacks/"+playbackID, nil, nil)
+	err := c.Delete("/playbacks/"+playbackID, nil, nil)
 	return err
 }
 
