@@ -238,6 +238,9 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 		}()
 
 		select {
+		case <-ctx.Done():
+			rec.setStatus(RecordCanceled)
+			return
 		case <-c.Bus.Once(ctx, "ChannelHangup"):
 			rec.setStatus(RecordHangup)
 			return
@@ -246,9 +249,6 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 			return
 		case <-c.Bus.Once(ctx, "RecordingFailed"):
 			rec.setStatus(RecordFailed)
-			return
-		case <-ctx.Done():
-			rec.setStatus(RecordCanceled)
 			return
 		}
 	}()
