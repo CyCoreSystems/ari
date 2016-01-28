@@ -28,7 +28,7 @@ type LiveRecording struct {
 	doneChan chan struct{} // channel for indicating the the recording is stopped.
 	mu       sync.Mutex
 
-	err error
+	status int // The status of the live recording
 }
 
 var (
@@ -65,6 +65,23 @@ var (
 	// TerminatePound indicates that a recording should be terminated
 	// if a # DTMF character is received.
 	TerminatePound = "#"
+)
+
+const (
+	// RecordInProgress indicates that a recording is still in progress
+	RecordInProgress = iota
+
+	// RecordCanceled indicates that a recording was canceled (by request)
+	RecordCanceled
+
+	// RecordFailed indicates that a recording failed
+	RecordFailed
+
+	// RecordFinished indicates that a recording finished normally
+	RecordFinished
+
+	// RecordHangup indicates that a recording was ended due to hangup
+	RecordHangup
 )
 
 // RecordingOptions describes the set of options available when making a recording.
@@ -173,7 +190,10 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 	defer startSub.Cancel()
 
 	finishedSub := c.Bus.Subscribe("RecordingFinished")
+	defer finishedSub.Cancel()
+
 	failedSub := c.Bus.Subscribe("RecordingFailed")
+	defer failedSub.Cancel()
 
 	// Start recording
 	r.Record(name, opts)
@@ -183,8 +203,6 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 	for rec == nil {
 		select {
 		case <-ctx.Done():
-			finishedSub.Cancel()
-			failedSub.Cancel()
 			return nil, fmt.Errorf("Recording canceled.")
 		case e := <-startSub.C:
 			Logger.Debug("Recording started.")
@@ -195,8 +213,6 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 		case e := <-finishedSub.C:
 			r := e.(*RecordingFinished).Recording
 			if r.Name == name {
-				finishedSub.Cancel()
-				failedSub.Cancel()
 				return nil, fmt.Errorf("Recording stopped before starting")
 			}
 			if e.GetType() == "RecordingFailed" {
@@ -205,13 +221,9 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 		case e := <-failedSub.C:
 			r := e.(*RecordingFinished).Recording
 			if r.Name == name {
-				finishedSub.Cancel()
-				failedSub.Cancel()
 				return nil, fmt.Errorf("Recording failed to start.")
 			}
 		case <-startTimer:
-			finishedSub.Cancel()
-			failedSub.Cancel()
 			return nil, fmt.Errorf("Timed out waiting for recording to start.")
 		}
 	}
@@ -223,17 +235,20 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 	go func() {
 		defer func() {
 			rec.Stop()
-			failedSub.Cancel()
-			finishedSub.Cancel()
 		}()
 
 		select {
+		case <-c.Bus.Once(ctx, "ChannelHangup"):
+			rec.setStatus(RecordHangup)
+			return
+		case <-c.Bus.Once(ctx, "RecordingFinished"):
+			rec.setStatus(RecordFinished)
+			return
+		case <-c.Bus.Once(ctx, "RecordingFailed"):
+			rec.setStatus(RecordFailed)
+			return
 		case <-ctx.Done():
-			return
-		case <-finishedSub.C:
-			return
-		case <-failedSub.C:
-			rec.setErr(fmt.Errorf("Recording failed."))
+			rec.setStatus(RecordCanceled)
 			return
 		}
 	}()
@@ -256,18 +271,13 @@ func (l *LiveRecording) Done() <-chan struct{} {
 	return l.doneChan
 }
 
-func (l *LiveRecording) setErr(err error) {
-	l.mu.Lock()
-	if l.err == nil {
-		l.err = err
-	}
-	l.mu.Unlock()
+func (l *LiveRecording) setStatus(status int) {
+	l.status = status
 }
 
-// Err returns any errors which have been received while
-// making the recording.
-func (l *LiveRecording) Err() error {
-	return l.err
+// Status returns the status of the recording.
+func (l *LiveRecording) Status() int {
+	return l.status
 }
 
 //Stop and store current LiveRecording
