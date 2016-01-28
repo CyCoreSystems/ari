@@ -11,7 +11,7 @@ import (
 
 // AllDTMF is a string which contains all possible
 // DTMF digits.
-const AnyDTMF = "0123456789ABCD*#"
+const AllDTMF = "0123456789ABCD*#"
 
 // PlaybackStartTimeout is the time to allow for Asterisk to
 // send the PlaybackStarted before giving up.
