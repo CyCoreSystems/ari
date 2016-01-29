@@ -145,6 +145,13 @@ type Recorder interface {
 	GetClient() *Client
 }
 
+// A PlayerRecorder is anywhich which can Record and Play
+type PlayerRecorder interface {
+	Record(string, *RecordingOptions) (*LiveRecording, error)
+	Play(string) (string, error)
+	GetClient() *Client
+}
+
 //ListStoredRecordings lists all completed recordings
 //Equivalent to GET /recordings/stored
 func (c *Client) ListStoredRecordings() ([]StoredRecording, error) {
