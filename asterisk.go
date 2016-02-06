@@ -27,11 +27,11 @@ type ConfigInfo struct {
 	MaxLoad         float64 `json:"max_load,omitempty"`
 	MaxOpenFiles    int     `json:"max_open_files,omitempty"`
 	Name            string  `json:"name"`  // Asterisk system name
-	SetId           SetId   `json:"setid"` // Effective user/group id under which Asterisk is running
+	SetID           SetId   `json:"setid"` // Effective user/group id under which Asterisk is running
 }
 
-// SetId describes a userid/groupid pair
-type SetId struct {
+// SetID describes a userid/groupid pair
+type SetID struct {
 	Group string `json:"group"` // group id (not name? why string?)
 	User  string `json:"user"`  // user id (not name? why string?)
 }
@@ -44,7 +44,7 @@ type StatusInfo struct {
 
 // SystemInfo describes information about the Asterisk system
 type SystemInfo struct {
-	EntityId string `json:"entity_id"`
+	EntityID string `json:"entity_id"`
 	Version  string `json:"version"`
 }
 
@@ -87,7 +87,8 @@ func (c *Client) GetAsteriskVariable(variable string) (string, error) {
 	return m.Value, nil
 }
 
-//Equivalent to POST /asterisk/variable
+// SetAsteriskVariable sets a global channel variable
+// (Equivalent to POST /asterisk/variable)
 func (c *Client) SetAsteriskVariable(variable string, value string) error {
 	path := "/asterisk/variable"
 
@@ -102,4 +103,9 @@ func (c *Client) SetAsteriskVariable(variable string, value string) error {
 		return err
 	}
 	return nil
+}
+
+// ReloadModule tells asterisk to load the given module
+func (c *Client) ReloadModule(name string) error {
+	return c.Put("/asterisk/modules/" + name)
 }
