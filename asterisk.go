@@ -27,7 +27,7 @@ type ConfigInfo struct {
 	MaxLoad         float64 `json:"max_load,omitempty"`
 	MaxOpenFiles    int     `json:"max_open_files,omitempty"`
 	Name            string  `json:"name"`  // Asterisk system name
-	SetID           SetId   `json:"setid"` // Effective user/group id under which Asterisk is running
+	SetID           SetID   `json:"setid"` // Effective user/group id under which Asterisk is running
 }
 
 // SetID describes a userid/groupid pair
@@ -107,5 +107,5 @@ func (c *Client) SetAsteriskVariable(variable string, value string) error {
 
 // ReloadModule tells asterisk to load the given module
 func (c *Client) ReloadModule(name string) error {
-	return c.Put("/asterisk/modules/" + name)
+	return c.Put("/asterisk/modules/"+name, nil, nil)
 }
