@@ -26,6 +26,9 @@ func (s *BridgeTests) TearDownSuite() {
 }
 
 func (s *BridgeTests) TestBridgeCreate() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	//Creation of empty bridge.
 	bridge, err := DefaultClient.CreateBridge(CreateBridgeRequest{
 		Id:   "testBridge",
@@ -44,7 +47,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u1Chan)
 	s.Nil(err, "Channel for User1 not created")
 
-	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
+	<-DefaultClient.Bus.Once(ctx, "StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan1")
 	s.Nil(err)
@@ -61,7 +64,7 @@ func (s *BridgeTests) TestBridgeCreate() {
 	_, err = DefaultClient.CreateChannel(u2Chan)
 	s.Nil(err, "Channel for User2 not created")
 
-	<-DefaultClient.Bus.Once(context.TODO(), "StasisStart")
+	<-DefaultClient.Bus.Once(ctx, "StasisStart")
 
 	err = DefaultClient.AnswerChannel("Chan2")
 	s.Nil(err)

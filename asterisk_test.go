@@ -25,7 +25,7 @@ func TestAsteriskInfo(t *testing.T) {
 	assert.NotEmpty(info.StatusInfo.StartupTime)
 	assert.NotEmpty(info.StatusInfo.LastReloadTime)
 	// Check SystemInfo
-	assert.NotEmpty(info.SystemInfo.EntityId)
+	assert.NotEmpty(info.SystemInfo.EntityID)
 	assert.NotEmpty(info.SystemInfo.Version)
 
 }

@@ -3,6 +3,7 @@ package ari
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"golang.org/x/net/websocket"
 )
@@ -19,7 +20,7 @@ func unmarshal(data []byte, payloadType byte, v interface{}) error {
 
 	e, ok := v.(Message)
 	if !ok {
-		return fmt.Errorf("Cannot cast receiver to a Message")
+		return fmt.Errorf("Cannot cast receiver to a Message", "type", reflect.TypeOf(v))
 	}
 
 	err := json.Unmarshal(data, &e)

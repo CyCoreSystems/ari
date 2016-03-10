@@ -111,14 +111,15 @@ func (b *Bus) send(msg *Message) {
 	case "TextMessageReceived":
 		e = &TextMessageReceived{}
 	default:
-		Logger.Debug("Unhandled event received:", msg.Type)
+		Logger.Debug("Unhandled event received:", "type", msg.Type)
 		e = &Event{}
 	}
 	err := msg.DecodeAs(e)
 	if err != nil {
-		Logger.Error("Failed to decode message:", err.Error())
+		Logger.Error("Failed to decode message", "error", err)
 		return
 	}
+	Logger.Debug("Received event", "event", e)
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
@@ -164,6 +165,8 @@ func (b *Bus) Stop() {
 	b.mu.Unlock()
 }
 
+// A Subscription is a wrapped channel for receiving
+// events from the ARI event bus.
 type Subscription struct {
 	b      *Bus         // reference to the event bus
 	events []string     // list of events to listen for

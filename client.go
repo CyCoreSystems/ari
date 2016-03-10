@@ -148,7 +148,7 @@ func (c *Client) listen(ctx context.Context) {
 				var msg Message
 				err := AsteriskCodec.Receive(ws, &msg)
 				if err != nil {
-					Logger.Error("Failure in websocket connection:", err.Error())
+					Logger.Error("Failure in websocket connection:", "error", err.Error())
 					break ReadLoop
 				}
 				c.Bus.send(&msg)
