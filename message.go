@@ -18,9 +18,9 @@ func marshal(v interface{}) (data []byte, payloadType byte, err error) {
 func unmarshal(data []byte, payloadType byte, v interface{}) error {
 	data = append(data, '\n')
 
-	e, ok := v.(Message)
+	e, ok := v.(*Message)
 	if !ok {
-		return fmt.Errorf("Cannot cast receiver to a Message", "type", reflect.TypeOf(v))
+		return fmt.Errorf("Cannot cast receiver to a Message when it is of type %v", reflect.TypeOf(v))
 	}
 
 	err := json.Unmarshal(data, &e)
