@@ -269,6 +269,10 @@ func (pq *PlaybackQueue) ReceivedDTMF() string {
 
 // Play starts the playback of the queue to the Player.
 func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptions) error {
+	if opts == nil {
+		opts = &PlaybackOptions{}
+	}
+
 	// Handle any options we were given
 	if opts != nil {
 		// Close the done channel when we finish,
