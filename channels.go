@@ -640,7 +640,7 @@ func (c *Client) HangupChannel(channelId string, reason string) error {
 	}
 
 	//send request
-	return c.Delete("/channels/"+channelId, nil, &req)
+	return c.Delete("/channels/"+channelId+"?"+req, nil, nil)
 }
 
 //Stop ringing indication on a channel if locally generated.
