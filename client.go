@@ -43,6 +43,8 @@ type Client struct {
 
 	WSConfig *websocket.Config // websocket connection configuration
 
+	ReadyChan chan struct{}
+
 	Bus    *Bus        // event bus
 	events chan *Event // chan on which events are sent
 
@@ -90,7 +92,7 @@ func NewClient(opts *Options) *Client {
 		}
 	}
 
-	return &Client{Options: opts}
+	return &Client{Options: opts, ReadyChan: make(chan struct{})}
 }
 
 // Listen maintains and listens to a websocket connection until told to stop.
@@ -143,6 +145,7 @@ func (c *Client) listen(ctx context.Context) {
 				continue
 			}
 
+			close(c.ReadyChan)
 		ReadLoop:
 			for !stop {
 				var msg Message
@@ -159,6 +162,8 @@ func (c *Client) listen(ctx context.Context) {
 				ws.Close()
 				ws = nil
 			}
+
+			c.ReadyChan = make(chan struct{})
 
 			// Don't restart too quickly
 			Logger.Info("Waiting 10ms to restart websocket")
