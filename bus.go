@@ -157,7 +157,7 @@ func (b *Bus) Stop() {
 	b.mu.Lock()
 	if b.subs != nil {
 		for i, s := range b.subs {
-			s.Cancel()
+			s.closeChan()
 			b.subs[i] = nil
 		}
 		b.subs = nil
