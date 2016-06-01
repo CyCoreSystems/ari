@@ -213,7 +213,7 @@ PlaybackStopLoop:
 			}
 		case <-stopTimer:
 			Logger.Error("Playback timed out")
-			return fmt.Errorf("Timeout waiting for start of playback")
+			return fmt.Errorf("Timeout waiting for stop of playback")
 		}
 	}
 }
