@@ -216,6 +216,7 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 			r := &(e.(*RecordingStarted).Recording)
 			if r.Name == name {
 				rec = r
+				rec.Client = c
 			}
 		case e := <-finishedSub.C:
 			r := e.(*RecordingFinished).Recording
