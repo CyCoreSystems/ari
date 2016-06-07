@@ -99,11 +99,10 @@ func (c *Client) Get(url string, ret interface{}) error {
 
 // Post is a shorthand for MakeRequest("POST",url,ret,req)
 // It calls the ARI server with a POST request
-// Uses gorequest.PostForm since ARI returns bad request otherwise
 func (c *Client) Post(url string, ret interface{}, req interface{}) error {
 	c.assureHTTPClient()
 	finalURL := c.Options.URL + url
-	r := c.httpClient.Post(finalURL).Type("form")
+	r := c.httpClient.Post(finalURL).Type("json")
 	if req != nil {
 		r = r.SendStruct(req)
 	}
