@@ -95,7 +95,7 @@ func (c *Client) Get(url string, ret interface{}) error {
 		}
 	}
 
-	return json.NewDecoder(resp.Body).Decode(ret)
+	return maybeRequestError(resp)
 }
 
 // Post calls the ARI server with a POST request.
