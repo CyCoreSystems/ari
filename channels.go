@@ -646,7 +646,7 @@ func (c *Client) HangupChannel(channelId string, reason string) error {
 //Stop ringing indication on a channel if locally generated.
 //Equivalent to DELETE /channels/{channelId}/ring
 func (c *Client) StopRinging(channelId string) error {
-	err := c.Delete("/channels/"+channelId+"/ring", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/ring", nil, "")
 	return err
 }
 
@@ -665,28 +665,28 @@ func (c *Client) UnMuteChannel(channelId string, direction string) error {
 		req = fmt.Sprintf("direction=%s", direction)
 	}
 
-	err = c.Delete("/channels/"+channelId+"/mute", nil, &req)
+	err = c.Delete("/channels/"+channelId+"/mute", nil, req)
 	return err
 }
 
 //Stop playing music on hold to a channel
 //Equivalent to DELETE /channels/{channelId}/moh
 func (c *Client) StopMohChannel(channelId string) error {
-	err := c.Delete("/channels/"+channelId+"/moh", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/moh", nil, "")
 	return err
 }
 
 //Stop playing silence to a channel
 //Equivalent to DELETE /channels/{channelId}/silence
 func (c *Client) StopSilenceChannel(channelId string) error {
-	err := c.Delete("/channels/"+channelId+"/silence", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/silence", nil, "")
 	return err
 }
 
 //Remove a channel from hold
 //Equivalent to DELETE /channels/{channelId}/hold
 func (c *Client) StopHoldChannel(channelId string) error {
-	err := c.Delete("/channels/"+channelId+"/hold", nil, nil)
+	err := c.Delete("/channels/"+channelId+"/hold", nil, "")
 	return err
 }
 

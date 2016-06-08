@@ -411,7 +411,7 @@ func (c *Client) MuteLiveRecording(recordingName string) error {
 //DeleteStoredRecording deletes a stored recording
 //Equivalent to DELETE /recordings/stored/{recordingName}
 func (c *Client) DeleteStoredRecording(recordingName string) error {
-	err := c.Delete("/recordings/stored/"+recordingName, nil, nil)
+	err := c.Delete("/recordings/stored/"+recordingName, nil, "")
 	return err
 }
 
@@ -419,20 +419,20 @@ func (c *Client) DeleteStoredRecording(recordingName string) error {
 //Equivalent to DELETE /recordings/live/{recordingName}
 //TODO reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
 func (c *Client) ScrapLiveRecording(recordingName string) error {
-	err := c.Delete("/recordings/live/"+recordingName, nil, nil)
+	err := c.Delete("/recordings/live/"+recordingName, nil, "")
 	return err
 }
 
 // ResumeLiveRecording resumes (unpauses) a live recording
 //Equivalent to DELETE /recordings/live/{recordingName}/pause
 func (c *Client) ResumeLiveRecording(recordingName string) error {
-	err := c.Delete("/recordings/live/"+recordingName+"/pause", nil, nil)
+	err := c.Delete("/recordings/live/"+recordingName+"/pause", nil, "")
 	return err
 }
 
 // UnmuteLiveRecording unmutes a live recording
 //Equivalent to DELETE /recordings/live/{recordingName}/mute
 func (c *Client) UnmuteLiveRecording(recordingName string) error {
-	err := c.Delete("/recordings/live/"+recordingName+"/mute", nil, nil)
+	err := c.Delete("/recordings/live/"+recordingName+"/mute", nil, "")
 	return err
 }

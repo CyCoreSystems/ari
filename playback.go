@@ -120,7 +120,7 @@ func (c *Client) ControlPlayback(playbackID string, operation string) error {
 // StopPlayback stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
 func (c *Client) StopPlayback(playbackID string) error {
-	err := c.Delete("/playbacks/"+playbackID, nil, nil)
+	err := c.Delete("/playbacks/"+playbackID, nil, "")
 	return err
 }
 

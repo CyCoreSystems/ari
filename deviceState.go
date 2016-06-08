@@ -40,6 +40,6 @@ func (c *Client) ChangeDeviceState(deviceName string, deviceState string) error 
 //Destroy a device-state controlled by ARI.
 //Equivalent to DELETE /deviceStates/{deviceName}
 func (c *Client) DeleteDeviceState(deviceName string) error {
-	err := c.Delete("/deviceStates/"+deviceName, nil, nil)
+	err := c.Delete("/deviceStates/"+deviceName, nil, "")
 	return err
 }
