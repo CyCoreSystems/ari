@@ -65,25 +65,25 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-func (c *Client) httpClient() *http.Client {
-	cl := http.Client{Timeout: RequestTimeout}
-
-	if c.Options.Username != "" {
-		cl.Transport = &httpAuthTransport{
-			Transport: http.DefaultTransport,
-			Username:  c.Options.Username,
-			Password:  c.Options.Password,
-		}
+func (c *Client) assureHttpClient() {
+	if c.httpClient == nil {
+		//TODO: see if we can override the timeout on the DefaultClient instead
+		c.httpClient = &http.Client{Timeout: RequestTimeout}
 	}
-
-	return &cl
 }
 
 // Get calls the ARI server with a GET request
 func (c *Client) Get(url string, ret interface{}) error {
+	c.assureHttpClient()
+
 	finalURL := c.Options.URL + url
 
-	resp, err := c.httpClient().Get(finalURL)
+	httpReq, err := c.buildRequest("GET", finalURL, "", nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("Error making request: %s", err)
 	}
@@ -100,6 +100,7 @@ func (c *Client) Get(url string, ret interface{}) error {
 
 // Post calls the ARI server with a POST request.
 func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error {
+	c.assureHttpClient()
 
 	finalURL := c.Options.URL + requestURL
 
@@ -108,7 +109,12 @@ func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error
 		return err
 	}
 
-	resp, err := c.httpClient().Post(finalURL, contentType, requestBody)
+	httpReq, err := c.buildRequest("POST", finalURL, contentType, requestBody)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("Error making request: %s", err)
 	}
@@ -125,6 +131,7 @@ func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error
 
 // Put calls the ARI server with a PUT request.
 func (c *Client) Put(url string, ret interface{}, req interface{}) error {
+	c.assureHttpClient()
 
 	finalURL := c.Options.URL + url
 
@@ -133,10 +140,12 @@ func (c *Client) Put(url string, ret interface{}, req interface{}) error {
 		return err
 	}
 
-	httpReq, err := http.NewRequest("PUT", finalURL, requestBody)
-	httpReq.Header.Set("Content-Type", contentType)
+	httpReq, err := c.buildRequest("PUT", finalURL, contentType, requestBody)
+	if err != nil {
+		return err
+	}
 
-	resp, err := c.httpClient().Do(httpReq)
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("Error making request: %s", err)
 	}
@@ -153,17 +162,19 @@ func (c *Client) Put(url string, ret interface{}, req interface{}) error {
 
 // Delete calls the ARI server with a DELETE request
 func (c *Client) Delete(url string, ret interface{}, req string) error {
+	c.assureHttpClient()
+
 	finalURL := c.Options.URL + url
 	if req != "" {
 		finalURL = finalURL + "?" + req
 	}
 
-	httpReq, err := http.NewRequest("DELETE", finalURL, nil)
+	httpReq, err := c.buildRequest("DELETE", finalURL, "", nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpClient().Do(httpReq)
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("Error making request: %s", err)
 	}
@@ -176,6 +187,26 @@ func (c *Client) Delete(url string, ret interface{}, req string) error {
 	}
 
 	return maybeRequestError(resp)
+}
+
+func (c *Client) buildRequest(method string, finalURL string, contentType string, body io.Reader) (*http.Request, error) {
+
+	if contentType == "" {
+		contentType = "application/json"
+	}
+
+	ret, err := http.NewRequest(method, finalURL, body)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Options.Username != "" {
+		ret.SetBasicAuth(c.Options.Username, c.Options.Password)
+	}
+
+	ret.Header.Set("Content-Type", contentType)
+
+	return ret, nil
 }
 
 func structToRequestBody(req interface{}) (io.Reader, string, error) {

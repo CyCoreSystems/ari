@@ -3,6 +3,7 @@ package ari
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -46,6 +47,8 @@ type Client struct {
 
 	Bus    *Bus        // event bus
 	events chan *Event // chan on which events are sent
+
+	httpClient *http.Client
 
 	mu sync.Mutex
 }
