@@ -267,14 +267,14 @@ func (c *Client) RecordBridge(bridgeId string, req *RecordRequest) (*LiveRecordi
 //This means that the channels themselves are not deleted.
 //Equivalent to DELETE /bridges/{bridgeId}
 func (c *Client) BridgeDelete(bridgeId string) error {
-	err := c.Delete("/bridges/"+bridgeId, nil, nil)
+	err := c.Delete("/bridges/"+bridgeId, nil, "")
 	return err
 }
 
 //Stop playing music on hold to a bridge. This will only stop music on hold being played via POST bridges/{bridgeId}/moh.
 //Equivalent to DELETE /bridges/{bridgeId}/moh
 func (c *Client) BridgeStopMoh(bridgeId string) error {
-	err := c.Delete("/bridges/"+bridgeId+"/moh", nil, nil)
+	err := c.Delete("/bridges/"+bridgeId+"/moh", nil, "")
 	return err
 }
 

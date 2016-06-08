@@ -1,12 +1,12 @@
 package ari
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
-
-	"github.com/parnurzeal/gorequest"
 )
 
 // MaxIdleConnections is the maximum number of idle web client
@@ -65,119 +65,126 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-func (c *Client) assureHTTPClient() {
-	if c.httpClient == nil {
-		c.httpClient = gorequest.New().Timeout(RequestTimeout)
-		if c.Options.Username != "" {
-			c.httpClient = c.httpClient.SetBasicAuth(c.Options.Username, c.Options.Password)
+func (c *Client) httpClient() *http.Client {
+	cl := http.Client{Timeout: RequestTimeout}
+
+	if c.Options.Username != "" {
+		cl.Transport = &httpAuthTransport{
+			Transport: http.DefaultTransport,
+			Username:  c.Options.Username,
+			Password:  c.Options.Password,
 		}
 	}
+
+	return &cl
 }
 
-// Get wraps gorequest.Get with the complete url
-// It calls the ARI server with a GET request
+// Get calls the ARI server with a GET request
 func (c *Client) Get(url string, ret interface{}) error {
-	c.assureHTTPClient()
 	finalURL := c.Options.URL + url
-	resp, body, errs := c.httpClient.Get(finalURL).EndBytes()
-	if errs != nil {
-		var errString string
-		for _, e := range errs {
-			errString += ": " + e.Error()
-		}
-		return fmt.Errorf("Error making request: %s", errString)
+
+	resp, err := c.httpClient().Get(finalURL)
+	if err != nil {
+		return fmt.Errorf("Error making request: %s", err)
 	}
+	defer resp.Body.Close()
 
 	if ret != nil {
-		err := json.Unmarshal(body, ret)
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
 			return err
 		}
 	}
-	return maybeRequestError(resp)
+
+	return json.NewDecoder(resp.Body).Decode(ret)
 }
 
-// Post is a shorthand for MakeRequest("POST",url,ret,req)
-// It calls the ARI server with a POST request
-// Uses gorequest.PostForm since ARI returns bad request otherwise
-func (c *Client) Post(url string, ret interface{}, req interface{}) error {
-	c.assureHTTPClient()
-	finalURL := c.Options.URL + url
-	r := c.httpClient.Post(finalURL).Type("form")
-	if req != nil {
-		r = r.SendStruct(req)
-	}
-	resp, body, errs := r.EndBytes()
-	if errs != nil {
-		var errString string
-		for _, e := range errs {
-			errString += ": " + e.Error()
-		}
-		return fmt.Errorf("Error making request: %s", errString)
+// Post calls the ARI server with a POST request.
+func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error {
+
+	finalURL := c.Options.URL + requestURL
+
+	requestBody, contentType, err := structToRequestBody(req)
+	if err != nil {
+		return err
 	}
 
+	resp, err := c.httpClient().Post(finalURL, contentType, requestBody)
+	if err != nil {
+		return fmt.Errorf("Error making request: %s", err)
+	}
+	defer resp.Body.Close()
+
 	if ret != nil {
-		err := json.Unmarshal(body, ret)
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
 			return err
 		}
 	}
+
 	return maybeRequestError(resp)
 }
 
-// Put is a shorthand for MakeRequest("PUT",url,ret,req)
-// It calls the ARI server with a PUT request
+// Put calls the ARI server with a PUT request.
 func (c *Client) Put(url string, ret interface{}, req interface{}) error {
-	c.assureHTTPClient()
+
 	finalURL := c.Options.URL + url
-	r := c.httpClient.Put(finalURL).Type("form")
-	if req != nil {
-		r = r.Send(req)
+
+	requestBody, contentType, err := structToRequestBody(req)
+	if err != nil {
+		return err
 	}
 
-	resp, body, errs := r.EndBytes()
-	if errs != nil {
-		var errString string
-		for _, e := range errs {
-			errString += ": " + e.Error()
-		}
-		return fmt.Errorf("Error making request: %s", errString)
+	httpReq, err := http.NewRequest("PUT", finalURL, requestBody)
+	httpReq.Header.Set("Content-Type", contentType)
+
+	resp, err := c.httpClient().Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("Error making request: %s", err)
 	}
+	defer resp.Body.Close()
 
 	if ret != nil {
-		err := json.Unmarshal(body, ret)
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
 			return err
 		}
 	}
+
 	return maybeRequestError(resp)
 }
 
-// Delete is a shorthand for MakeRequest("DELETE",url,nil,nil)
-// It calls the ARI server with a DELETE request
-func (c *Client) Delete(url string, ret interface{}, req interface{}) error {
-	c.assureHTTPClient()
+// Delete calls the ARI server with a DELETE request
+func (c *Client) Delete(url string, ret interface{}, req string) error {
 	finalURL := c.Options.URL + url
-
-	r := c.httpClient.Delete(finalURL)
-	if req != nil {
-		r = r.Query(req)
+	if req != "" {
+		finalURL = finalURL + "?" + req
 	}
 
-	resp, body, errs := r.EndBytes()
-	if errs != nil {
-		var errString string
-		for _, e := range errs {
-			errString += ": " + e.Error()
-		}
-		return fmt.Errorf("Error making request: %s", errString)
+	httpReq, err := http.NewRequest("DELETE", finalURL, nil)
+	if err != nil {
+		return err
 	}
+
+	resp, err := c.httpClient().Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("Error making request: %s", err)
+	}
+	defer resp.Body.Close()
 
 	if ret != nil {
-		err := json.Unmarshal(body, ret)
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
 			return err
 		}
 	}
+
 	return maybeRequestError(resp)
+}
+
+func structToRequestBody(req interface{}) (io.Reader, string, error) {
+	buf := bytes.NewBuffer([]byte(""))
+	if req != nil {
+		if err := json.NewEncoder(buf).Encode(req); err != nil {
+			return nil, "", err
+		}
+	}
+
+	return buf, "application/json", nil
 }

@@ -49,6 +49,6 @@ func (c *Client) ChangeMailboxState(mailboxName string, oldMessages int, newMess
 //Destroy a mailbox.
 //Equivalent to DELETE /mailboxes/{mailboxName}
 func (c *Client) DeleteMailbox(mailboxName string) error {
-	err := c.Delete("/mailboxes/"+mailboxName, nil, nil)
+	err := c.Delete("/mailboxes/"+mailboxName, nil, "")
 	return err
 }

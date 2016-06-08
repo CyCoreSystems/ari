@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/parnurzeal/gorequest"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
@@ -47,8 +46,6 @@ type Client struct {
 
 	Bus    *Bus        // event bus
 	events chan *Event // chan on which events are sent
-
-	httpClient *gorequest.SuperAgent // reusable HTTP client
 
 	mu sync.Mutex
 }
