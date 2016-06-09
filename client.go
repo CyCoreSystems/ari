@@ -92,6 +92,16 @@ func NewClient(opts *Options) *Client {
 		}
 	}
 
+	// Add the authorization settings
+	if opts.Username == "" && opts.Password == "" {
+		if os.Getenv("ARI_USERNAME") != "" {
+			opts.Username = os.Getenv("ARI_USERNAME")
+			opts.Password = os.Getenv("ARI_PASSWORD")
+		} else {
+			Logger.Warn("No credentials found; expect failure")
+		}
+	}
+
 	return &Client{Options: opts, ReadyChan: make(chan struct{})}
 }
 
