@@ -136,59 +136,67 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 		c.Bus = StartBus(ctx)
 	}
 
+	// Make sure we have a readychan to signal the websocket is up
+	if c.ReadyChan == nil {
+		c.ReadyChan = make(chan struct{})
+	}
+
+	// Setup and listen on the websocket
 	go c.listen(ctx)
+
+	// Wait for the websocket connection to connect
+	<-c.ReadyChan
+
 	return nil
 }
 
 func (c *Client) listen(ctx context.Context) {
-	var err error
-	var ws *websocket.Conn
-	var stop bool
-
-	go func() {
-		for !stop {
-			Logger.Debug("Connecting to websocket")
-			ws, err = websocket.DialConfig(c.WSConfig)
-			if err != nil {
-				Logger.Error("Failed to create websocket connection to Asterisk:", err.Error())
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			close(c.ReadyChan)
-		ReadLoop:
-			for !stop {
-				var msg Message
-				err := AsteriskCodec.Receive(ws, &msg)
-				if err != nil {
-					Logger.Error("Failure in websocket connection:", "error", err.Error())
-					break ReadLoop
-				}
-				c.Bus.send(&msg)
-			}
-
-			// Clean up
-			if ws != nil {
-				ws.Close()
-				ws = nil
-			}
-
-			c.ReadyChan = make(chan struct{})
-
-			// Don't restart too quickly
-			Logger.Info("Waiting 10ms to restart websocket")
-			time.Sleep(10 * time.Millisecond)
+	for {
+		select {
+		case <-ctx.Done():
+			Logger.Debug("Exiting websocket on request")
+			return
+		default:
 		}
-	}()
 
-	// Wait for stop
-	<-ctx.Done()
-	stop = true
-	if ws != nil {
+		Logger.Debug("Connecting to websocket")
+		ws, err := websocket.DialConfig(c.WSConfig)
+		if err != nil {
+			Logger.Error("Failed to create websocket connection to Asterisk:", err.Error())
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		close(c.ReadyChan)
+
+		err = c.wsRead(ws)
+		if err != nil {
+			Logger.Error("Failure reading from websocket:", "error", err.Error())
+		}
+
+		// Clean up
 		ws.Close()
 		ws = nil
+
+		c.ReadyChan = make(chan struct{})
+
+		// Don't restart too quickly
+		Logger.Info("Waiting 10ms to restart websocket")
+		time.Sleep(10 * time.Millisecond)
 	}
-	return
+}
+
+// wsRead loops for the duration of a websocket connection,
+// reading messages, decoding them to events, and passing
+// them to the event bus.
+func (c *Client) wsRead(ws *websocket.Conn) (err error) {
+	for {
+		var msg Message
+		err = AsteriskCodec.Receive(ws, &msg)
+		if err != nil {
+			return err
+		}
+		c.Bus.send(&msg)
+	}
 }
 
 // basicAuth (stolen from net/http/client.go) creates a basic authentication header
