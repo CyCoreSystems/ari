@@ -74,6 +74,10 @@ func (c *Client) assureHttpClient() {
 
 // Get calls the ARI server with a GET request
 func (c *Client) Get(url string, ret interface{}) error {
+	if c.TestMode {
+		return nil
+	}
+
 	c.assureHttpClient()
 
 	finalURL := c.Options.URL + url
@@ -100,6 +104,10 @@ func (c *Client) Get(url string, ret interface{}) error {
 
 // Post calls the ARI server with a POST request.
 func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error {
+	if c.TestMode {
+		return nil
+	}
+
 	c.assureHttpClient()
 
 	finalURL := c.Options.URL + requestURL
@@ -131,6 +139,10 @@ func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error
 
 // Put calls the ARI server with a PUT request.
 func (c *Client) Put(url string, ret interface{}, req interface{}) error {
+	if c.TestMode {
+		return nil
+	}
+
 	c.assureHttpClient()
 
 	finalURL := c.Options.URL + url
@@ -162,6 +174,10 @@ func (c *Client) Put(url string, ret interface{}, req interface{}) error {
 
 // Delete calls the ARI server with a DELETE request
 func (c *Client) Delete(url string, ret interface{}, req string) error {
+	if c.TestMode {
+		return nil
+	}
+
 	c.assureHttpClient()
 
 	finalURL := c.Options.URL + url

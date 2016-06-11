@@ -51,6 +51,8 @@ type Client struct {
 	httpClient *http.Client
 
 	mu sync.Mutex
+
+	TestMode bool // Client is in test mode: no actual HTTP requests will be made
 }
 
 // NewClient creates a new Asterisk client
