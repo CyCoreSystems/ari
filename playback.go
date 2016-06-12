@@ -311,6 +311,9 @@ func (pq *PlaybackQueue) Play(ctx context.Context, p Player, opts *PlaybackOptio
 			case <-ctx.Done():
 				return
 			case e := <-dtmfSub.C:
+				if e == nil {
+					return
+				}
 				digit := e.(*ChannelDtmfReceived).Digit
 				pq.receivedDTMF += digit
 				if strings.Contains(opts.ExitOnDTMF, digit) {

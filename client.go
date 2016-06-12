@@ -119,7 +119,7 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 		// Construct a websocket.Config
 		c.WSConfig, err = websocket.NewConfig(wsurl, "http://localhost/")
 		if err != nil {
-			Logger.Error("Failed to construct a calid websocket config:", err.Error())
+			Logger.Error("Failed to construct a valid websocket config:", err.Error())
 			return fmt.Errorf("Failed to construct websocket config: %s", err.Error())
 		}
 
@@ -141,6 +141,13 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 	// Make sure we have a readychan to signal the websocket is up
 	if c.ReadyChan == nil {
 		c.ReadyChan = make(chan struct{})
+	}
+
+	// If we are in test mode, do not connect the websocket, but
+	// return and close the ready channel.
+	if c.TestMode {
+		close(c.ReadyChan)
+		return nil
 	}
 
 	// Setup and listen on the websocket
