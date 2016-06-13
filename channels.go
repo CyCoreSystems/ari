@@ -393,6 +393,31 @@ func (c *Client) NewChannel(endpoint string, cid *CallerId, vars map[string]stri
 	return c.CreateChannelWithId(o.ChannelId, o)
 }
 
+// NewLocalChannel creates a new local channel and returns each side
+func (c *Client) NewLocalChannel(endpoint string, cid *CallerId, vars map[string]string) (Channel, Channel, error) {
+	o := c.NewOriginateRequest(endpoint)
+	if cid != nil {
+		o.CallerId = cid.String()
+	}
+	if vars != nil {
+		o.Variables = vars
+	}
+
+	o.OtherChannelId = uuid.NewV1().String()
+
+	ch, err := c.CreateChannelWithId(o.ChannelId, o)
+	if err != nil {
+		return ch, ch, err
+	}
+
+	ch2, err := c.GetChannel(o.OtherChannelId)
+	if err != nil {
+		return ch, ch2, err
+	}
+
+	return ch, ch2, nil
+}
+
 // CreateChannel originates a new call
 func (c *Client) CreateChannel(req OriginateRequest) (Channel, error) {
 	var m Channel
