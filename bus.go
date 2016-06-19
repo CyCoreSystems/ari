@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// BuxMaxChannelBuffer defines the buffer size of the subscription channels
+// BusChannelBuffer defines the buffer size of the subscription channels
 var BusChannelBuffer = 100
 
 // ALL signifies that the subscriber wants all events
