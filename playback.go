@@ -15,7 +15,7 @@ const AllDTMF = "0123456789ABCD*#"
 
 // PlaybackStartTimeout is the time to allow for Asterisk to
 // send the PlaybackStarted before giving up.
-var PlaybackStartTimeout = 1 * time.Second
+var PlaybackStartTimeout = 10 * time.Second
 
 // MaxPlaybackTime is the maximum amount of time to allow for
 // a playback to complete.
