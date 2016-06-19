@@ -6,6 +6,9 @@ import (
 	"golang.org/x/net/context"
 )
 
+// BuxMaxChannelBuffer defines the buffer size of the subscription channels
+var BusChannelBuffer = 100
+
 // ALL signifies that the subscriber wants all events
 const ALL string = "all"
 
@@ -180,7 +183,7 @@ func (b *Bus) Subscribe(eTypes ...string) *Subscription {
 	s := &Subscription{
 		b:      b,
 		events: eTypes,
-		C:      make(chan Eventer, 1),
+		C:      make(chan Eventer, BusChannelBuffer),
 	}
 	b.addSubscription(s)
 	return s
@@ -221,7 +224,7 @@ func (s *Subscription) Cancel() {
 // returning a channel which supplies that event.
 func (b *Bus) Once(ctx context.Context, eTypes ...string) <-chan Eventer {
 	s := b.Subscribe(eTypes...)
-	ret := make(chan Eventer, 1)
+	ret := make(chan Eventer, BusChannelBuffer)
 
 	// Stop subscription after one event
 	go func() {
