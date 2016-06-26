@@ -14,14 +14,14 @@ var RecordingStartTimeout = 1 * time.Second
 
 // LiveRecording describes a recording which is in progress
 type LiveRecording struct {
-	Cause           string `json:"cause,omitempty"`            // If failed, the cause of the failure
-	Duration        int    `json:"duration,omitempty"`         // Length of recording in seconds
-	Format          string `json:"format"`                     // Format of recording (wav, gsm, etc)
-	Name            string `json:"name"`                       // (base) name for the recording
-	SilenceDuration int    `json:"silence_duration,omitempty"` // If silence was detected in the recording, the duration in seconds of that silence (requires that maxSilenceSeconds be non-zero)
-	State           string `json:"state"`                      // Current state of the recording
-	TalkingDuration int    `json:"talking_duration,omitempty"` // Duration of talking, in seconds, that has been detected in the recording (requires that maxSilenceSeconds be non-zero)
-	TargetURI       string `json:"target_uri"`                 // URI for the channel or bridge which is being recorded (TODO: figure out format for this)
+	Cause       string `json:"cause,omitempty"`            // If failed, the cause of the failure
+	DurationSec int    `json:"duration,omitempty"`         // Length of recording in seconds
+	Format      string `json:"format"`                     // Format of recording (wav, gsm, etc)
+	Name        string `json:"name"`                       // (base) name for the recording
+	SilenceSec  int    `json:"silence_duration,omitempty"` // If silence was detected in the recording, the duration in seconds of that silence (requires that maxSilenceSeconds be non-zero)
+	State       string `json:"state"`                      // Current state of the recording
+	TalkingSec  int    `json:"talking_duration,omitempty"` // Duration of talking, in seconds, that has been detected in the recording (requires that maxSilenceSeconds be non-zero)
+	TargetURI   string `json:"target_uri"`                 // URI for the channel or bridge which is being recorded (TODO: figure out format for this)
 
 	client *Client // Reference to the client which created or returned this LiveRecording
 
@@ -29,6 +29,32 @@ type LiveRecording struct {
 	mu       sync.Mutex
 
 	status int // The status of the live recording
+}
+
+// Duration returns the duration of the live recording, if known
+func (l *LiveRecording) Duration() (dur time.Duration) {
+	if l.DurationSec > 0 {
+		dur = time.Duration(l.DurationSec) * time.Second
+	}
+	return
+}
+
+// SilenceDuration returns the duration of the detected silence
+// during the recording, if known
+func (l *LiveRecording) SilenceDuration() (dur time.Duration) {
+	if l.SilenceSec > 0 {
+		dur = time.Duration(l.SilenceSec) * time.Second
+	}
+	return
+}
+
+// TalkingDuration returns the duration of the detected talking
+// during the recording, if known
+func (l *LiveRecording) TalkingDuration() (dur time.Duration) {
+	if l.TalkingSec > 0 {
+		dur = time.Duration(l.TalkingSec) * time.Second
+	}
+	return
 }
 
 var (
