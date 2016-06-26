@@ -210,8 +210,6 @@ func (c *Client) GetLiveRecording(recordingName string) (*LiveRecording, error) 
 
 // Record starts a recording on the given Recorder.
 func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions) (*LiveRecording, error) {
-	var rec *LiveRecording
-
 	// Extract the ari client from the recorder
 	c := r.GetClient()
 	if c == nil {
@@ -222,72 +220,61 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 	startSub := c.Bus.Subscribe("RecordingStarted")
 	defer startSub.Cancel()
 
-	finishedSub := c.Bus.Subscribe("RecordingFinished")
-	defer finishedSub.Cancel()
-
 	failedSub := c.Bus.Subscribe("RecordingFailed")
 	defer failedSub.Cancel()
 
+	finishedSub := c.Bus.Subscribe("RecordingFinished")
+	defer finishedSub.Cancel()
+
 	// Start recording
-	r.Record(name, opts)
+	rec, err := r.Record(name, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer rec.Stop()
+
+	// TODO: we have no way to track hangups because we do
+	// not have the affiliated channel ID.  We _may_ be able
+	// to compare a ChannelHangupRequest event's channel with
+	// the LiveRecording's TargetURI, but that will only work
+	// for channels.
 
 	// Wait for the recording to start
-	startTimer := time.After(RecordingStartTimeout)
-	for rec == nil {
+	startTimer := time.NewTimer(RecordingStartTimeout)
+	for {
 		select {
+		case <-startTimer.C:
+			rec.setStatus(RecordFailed)
+			return rec, fmt.Errorf("Timed out waiting for recording to start.")
 		case <-ctx.Done():
-			return nil, fmt.Errorf("Recording canceled.")
+			rec.setStatus(RecordCanceled)
+			return rec, fmt.Errorf("Recording canceled.")
 		case e := <-startSub.C:
-			Logger.Debug("Recording started.")
-			r := &(e.(*RecordingStarted).Recording)
+			r := e.(*RecordingStarted).Recording
 			if r.Name == name {
-				rec = r
+				Logger.Debug("Recording started.")
+				startTimer.Stop()
+				rec = &r
 				rec.client = c
+			}
+		case e := <-failedSub.C:
+			r := e.(*RecordingFailed).Recording
+			if r.Name == name {
+				rec.setStatus(RecordFailed)
+				return rec, fmt.Errorf("Recording failed to start.")
 			}
 		case e := <-finishedSub.C:
 			r := e.(*RecordingFinished).Recording
 			if r.Name == name {
-				return nil, fmt.Errorf("Recording stopped before starting")
-			}
-			if e.GetType() == "RecordingFailed" {
+				Logger.Debug("Recording stopped")
+				rec = &r
+				rec.client = c
+				rec.setStatus(RecordFinished)
+				return rec, nil
 			}
 			return nil, fmt.Errorf("Recording stopped before starting.")
-		case e := <-failedSub.C:
-			r := e.(*RecordingFinished).Recording
-			if r.Name == name {
-				return nil, fmt.Errorf("Recording failed to start.")
-			}
-		case <-startTimer:
-			return nil, fmt.Errorf("Timed out waiting for recording to start.")
 		}
 	}
-
-	// Make the doneChan on the recording to service Done() requests
-	rec.doneChan = make(chan struct{})
-
-	// Listen for the recording to finish
-	go func() {
-		defer func() {
-			rec.Stop()
-		}()
-
-		select {
-		case <-ctx.Done():
-			rec.setStatus(RecordCanceled)
-			return
-		case <-c.Bus.Once(ctx, "ChannelHangup"):
-			rec.setStatus(RecordHangup)
-			return
-		case <-c.Bus.Once(ctx, "RecordingFinished"):
-			rec.setStatus(RecordFinished)
-			return
-		case <-c.Bus.Once(ctx, "RecordingFailed"):
-			rec.setStatus(RecordFailed)
-			return
-		}
-	}()
-
-	return rec, nil
 }
 
 //Copy current StoredRecording to a new name (retaining the existing copy)
