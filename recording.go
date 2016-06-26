@@ -2,7 +2,6 @@ package ari
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"golang.org/x/net/context"
@@ -26,7 +25,6 @@ type LiveRecording struct {
 	client *Client // Reference to the client which created or returned this LiveRecording
 
 	doneChan chan struct{} // channel for indicating the the recording is stopped.
-	mu       sync.Mutex
 
 	status int // The status of the live recording
 }
@@ -286,12 +284,6 @@ func (s *StoredRecording) Copy(destination string) (StoredRecording, error) {
 	return s.client.CopyStoredRecording(s.Name, destination)
 }
 
-// Done returns a channel which is closed when the LiveRecording
-// stops.
-func (l *LiveRecording) Done() <-chan struct{} {
-	return l.doneChan
-}
-
 func (l *LiveRecording) setStatus(status int) {
 	l.status = status
 }
@@ -303,12 +295,6 @@ func (l *LiveRecording) Status() int {
 
 //Stop and store current LiveRecording
 func (l *LiveRecording) Stop() error {
-	l.mu.Lock()
-	if l.doneChan != nil {
-		close(l.doneChan)
-		l.doneChan = nil
-	}
-	l.mu.Unlock()
 	if l.client == nil {
 		return fmt.Errorf("No client found in LiveRecording")
 	}
