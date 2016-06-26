@@ -229,7 +229,6 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 	if err != nil {
 		return nil, err
 	}
-	defer rec.Stop()
 
 	// TODO: we have no way to track hangups because we do
 	// not have the affiliated channel ID.  We _may_ be able
@@ -259,7 +258,7 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 			r := e.(*RecordingFailed).Recording
 			if r.Name == name {
 				rec.setStatus(RecordFailed)
-				return rec, fmt.Errorf("Recording failed to start.")
+				return rec, fmt.Errorf("Recording failed: %s", r.Cause)
 			}
 		case e := <-finishedSub.C:
 			r := e.(*RecordingFinished).Recording
@@ -270,7 +269,6 @@ func Record(ctx context.Context, r Recorder, name string, opts *RecordingOptions
 				rec.setStatus(RecordFinished)
 				return rec, nil
 			}
-			return nil, fmt.Errorf("Recording stopped before starting.")
 		}
 	}
 }
