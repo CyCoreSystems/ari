@@ -2,6 +2,7 @@ package ari
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
@@ -186,7 +187,7 @@ func (c *Channel) IsAnswered() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("Failed to get updated channel: %s", err.Error())
 	}
-	return updated.State == "Up", nil
+	return strings.ToLower(updated.State) == "up", nil
 }
 
 // Ring indicates ringing to the channel
