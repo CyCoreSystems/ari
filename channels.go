@@ -176,6 +176,19 @@ func (c *Channel) Answer() error {
 	return c.client.AnswerChannel(c.Id)
 }
 
+// IsAnswered checks the current state of the channel to
+// see if it is "Up" (answered)
+func (c *Channel) IsAnswered() (bool, error) {
+	if c.client == nil {
+		return false, fmt.Errorf("No client found in Channel")
+	}
+	updated, err := c.GetClient().GetChannel(c.GetID())
+	if err != nil {
+		return false, fmt.Errorf("Failed to get updated channel: %s", err.Error())
+	}
+	return updated.State == "Up", nil
+}
+
 // Ring indicates ringing to the channel
 func (c *Channel) Ring() error {
 	if c.client == nil {
