@@ -153,8 +153,11 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 	// Setup and listen on the websocket
 	go c.listen(ctx)
 
-	// Wait for the websocket connection to connect
-	<-c.ReadyChan
+	// Wait for the websocket connection to connect or for the context to be cancelled
+	select {
+	case <-c.ReadyChan:
+	case <-ctx.Done():
+	}
 
 	return nil
 }
