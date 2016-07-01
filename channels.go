@@ -126,6 +126,12 @@ func (c *Channel) GetID() string {
 	return c.Id
 }
 
+// IsReal indicates whether the channel is "real"
+// (not a local channel)
+func (c *Channel) IsReal() bool {
+	return !strings.HasPrefix(c.Name, "Local/")
+}
+
 // Hangup hangs up the current channel
 func (c *Channel) Hangup() error {
 	if c.client == nil {
