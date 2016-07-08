@@ -345,7 +345,13 @@ func (c *Channel) Get(name string) (string, error) {
 
 	chanVar, err := c.client.GetChannelVariable(c.Id, name)
 	if err != nil {
-		return "", fmt.Errorf("Failed to retrieve variable: %s\n", err.Error())
+		// Asterisk (as of 13.9.1) returns an Internal Server Error
+		// when requesting a PJSIP header which does not exist;
+		// therefore, we treat 500 as simply an empty value.
+		if err.(RequestError).Code() == 500 {
+			return "", nil
+		}
+		return "", err
 	}
 	return chanVar.Value, nil
 }
