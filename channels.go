@@ -348,8 +348,10 @@ func (c *Channel) Get(name string) (string, error) {
 		// Asterisk (as of 13.9.1) returns an Internal Server Error
 		// when requesting a PJSIP header which does not exist;
 		// therefore, we treat 500 as simply an empty value.
-		if err.(RequestError).Code() == 500 {
-			return "", nil
+		if rerr, ok := err.(RequestError); ok {
+			if rerr.Code() == 500 {
+				return "", nil
+			}
 		}
 		return "", err
 	}
