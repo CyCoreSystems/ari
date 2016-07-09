@@ -10,31 +10,31 @@ import (
 // Bridge describes an Asterisk Bridge, the entity which merges media from
 // one or more channels into a common audio output
 type Bridge struct {
-	Id           string   `json:"id"`          // Unique Id for this bridge
-	Bridge_class string   `json:"bridge"`      // Class of the bridge (TODO: huh?)
-	Bridge_type  string   `json:"bridge_type"` // Type of bridge (mixing, holding, dtmf_events, proxy_media)
-	Channels     []string `json:"channels"`    // List of pariticipating channel ids
-	Creator      string   `json:"creator"`     // Creating entity of the bridge
-	Name         string   `json:"name"`        // The name of the bridge
-	Technology   string   `json:"technology"`  // Name of the bridging technology
+	ID         string   `json:"id"`          // Unique Id for this bridge
+	Class      string   `json:"bridge"`      // Class of the bridge (TODO: huh?)
+	Type       string   `json:"bridge_type"` // Type of bridge (mixing, holding, dtmf_events, proxy_media)
+	ChannelIDs []string `json:"channels"`    // List of pariticipating channel ids
+	Creator    string   `json:"creator"`     // Creating entity of the bridge
+	Name       string   `json:"name"`        // The name of the bridge
+	Technology string   `json:"technology"`  // Name of the bridging technology
 
 	client *Client // Reference to the client which created or returned this bridge
 }
 
 // Add adds a channel to the bridge
-func (b *Bridge) Add(channelId string) error {
+func (b *Bridge) Add(channelID string) error {
 	if b.client == nil {
 		return fmt.Errorf("No client found in Bridge")
 	}
-	return b.client.AddChannel(b.Id, AddChannelRequest{ChannelId: channelId})
+	return b.client.AddChannel(b.ID, AddChannelRequest{ChannelID: channelID})
 }
 
 // Remove removes a channel from the bridge
-func (b *Bridge) Remove(channelId string) error {
+func (b *Bridge) Remove(channelID string) error {
 	if b.client == nil {
 		return fmt.Errorf("No client found in Bridge")
 	}
-	return b.client.RemoveChannel(b.Id, channelId)
+	return b.client.RemoveChannel(b.ID, channelID)
 }
 
 // Delete destroys the bridge
@@ -42,23 +42,23 @@ func (b *Bridge) Delete() error {
 	if b.client == nil {
 		return fmt.Errorf("No client found in Bridge")
 	}
-	return b.client.BridgeDelete(b.Id)
+	return b.client.BridgeDelete(b.ID)
 }
 
 // Play plays an audio uri to a bridge, returning its playback ID
-func (b *Bridge) Play(mediaUri string) (string, error) {
+func (b *Bridge) Play(mediaURI string) (string, error) {
 	id := uuid.NewV1().String()
-	err := b.PlayWithID(id, mediaUri)
+	err := b.PlayWithID(id, mediaURI)
 	return id, err
 }
 
 // PlayWithID plays an audio uri to the bridge with the provided playback ID
-func (b *Bridge) PlayWithID(id, mediaUri string) error {
+func (b *Bridge) PlayWithID(id, mediaURI string) error {
 	if b.client == nil {
 		return fmt.Errorf("No client found in Bridge")
 	}
 
-	_, err := b.client.PlayToBridgeById(b.Id, id, PlayMediaRequest{Media: mediaUri})
+	_, err := b.client.PlayToBridgeByID(b.ID, id, PlayMediaRequest{Media: mediaURI})
 	return err
 }
 
@@ -67,7 +67,7 @@ func (b *Bridge) Record(name string, opts *RecordingOptions) (*LiveRecording, er
 	if opts == nil {
 		opts = &RecordingOptions{}
 	}
-	return b.GetClient().RecordBridge(b.Id, opts.ToRequest(name))
+	return b.GetClient().RecordBridge(b.ID, opts.ToRequest(name))
 }
 
 // AttachClient attaches the provided ARI client to the bridge
@@ -82,25 +82,25 @@ func (b *Bridge) GetClient() *Client {
 
 // GetID returns the ID of this bridge
 func (b *Bridge) GetID() string {
-	return b.Id
+	return b.ID
 }
 
-//Request structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
+// CreateBridgeRequest is the structure for creating a bridge. No properies are required, meaning an empty struct may be passed to 'CreateBridge'
 type CreateBridgeRequest struct {
-	Id   string `json:"bridgeId,omitempty"`
+	ID   string `json:"bridgeId,omitempty"`
 	Type string `json:"type,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-//Request structure to add a channel to a bridge. Only Channel is required.
-//Channel field allows for comma-separated-values to add multiple channels.
+// AddChannelRequest is the structure to add a channel to a bridge. Only Channel is required.
+// ChannelID field allows for comma-separated-values to add multiple channels.
 type AddChannelRequest struct {
-	ChannelId string `json:"channel"`
+	ChannelID string `json:"channel"`
 	Role      string `json:"role,omitempty"`
 }
 
-//List all active bridges in Asterisk
-//Equivalent to GET /bridges
+// ListBridges returns all active bridges in Asterisk
+// Equivalent to GET /bridges
 func (c *Client) ListBridges() ([]Bridge, error) {
 	var m []Bridge
 	err := c.Get("/bridges", &m)
@@ -120,16 +120,16 @@ func (c *Client) ListBridges() ([]Bridge, error) {
 // unique bridge, with the default options
 func (c *Client) NewBridge() (Bridge, error) {
 	id := uuid.NewV1().String()
-	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
+	return c.UpsertBridge(id, CreateBridgeRequest{ID: id})
 }
 
-// NewBridgeWithId is a simple wrapper to create a new,
+// NewBridgeWithID is a simple wrapper to create a new,
 // unique bridge, with the default options
-func (c *Client) NewBridgeWithId(id string) (Bridge, error) {
-	return c.UpsertBridge(id, CreateBridgeRequest{Id: id})
+func (c *Client) NewBridgeWithID(id string) (Bridge, error) {
+	return c.UpsertBridge(id, CreateBridgeRequest{ID: id})
 }
 
-//Create a new bridge
+// CreateBridge creates a new bridge
 //Equivalent to POST /bridges
 func (c *Client) CreateBridge(req CreateBridgeRequest) (Bridge, error) {
 	var m Bridge
@@ -146,13 +146,13 @@ func (c *Client) CreateBridge(req CreateBridgeRequest) (Bridge, error) {
 	return m, nil
 }
 
-//Update a bridge or create a new one (upsert)
-//Equivalent to POST /bridges/{bridgeId}
-func (c *Client) UpsertBridge(bridgeId string, req CreateBridgeRequest) (Bridge, error) {
+// UpsertBridge adds or updates a bridge
+// Equivalent to POST /bridges/{bridgeId}
+func (c *Client) UpsertBridge(id string, req CreateBridgeRequest) (Bridge, error) {
 	var m Bridge
 
 	//send request
-	err := c.Post("/bridges/"+bridgeId, &m, &req)
+	err := c.Post("/bridges/"+id, &m, &req)
 	if err != nil {
 		return m, err
 	}
@@ -163,11 +163,11 @@ func (c *Client) UpsertBridge(bridgeId string, req CreateBridgeRequest) (Bridge,
 	return m, nil
 }
 
-//Get bridge details
-//Equivalent to Get /bridges/{bridgeId}
-func (c *Client) GetBridge(bridgeId string) (Bridge, error) {
+// GetBridge returns the details of a bridge
+// Equivalent to Get /bridges/{bridgeId}
+func (c *Client) GetBridge(id string) (Bridge, error) {
 	var m Bridge
-	err := c.Get("/bridges/"+bridgeId, &m)
+	err := c.Get("/bridges/"+id, &m)
 	if err != nil {
 		return m, err
 	}
@@ -178,103 +178,101 @@ func (c *Client) GetBridge(bridgeId string) (Bridge, error) {
 	return m, nil
 }
 
-//Add a channel to a bridge
-//Equivalent to Post /bridges/{bridgeId}/addChannel
-func (c *Client) AddChannel(bridgeId string, req AddChannelRequest) error {
+// AddChannel adds a channel to a bridge
+// Equivalent to Post /bridges/{id}/addChannel
+func (c *Client) AddChannel(id string, req AddChannelRequest) error {
 	//No return, so no model to create
 
 	//send request, no model so pass nil
-	err := c.Post("/bridges/"+bridgeId+"/addChannel", nil, &req)
+	err := c.Post("/bridges/"+id+"/addChannel", nil, &req)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-//Remove a specific channel from a bridge
-//Equivalent to Post /bridges/{bridgeId}/removeChannel
-func (c *Client) RemoveChannel(bridgeId string, channelId string) error {
-	//Request structure to remove a channel from a bridge. Channel is required.
-	type request struct {
-		ChannelId string `json:"channel"`
+// RemoveChannel removes the specified channel from a bridge
+// Equivalent to Post /bridges/{id}/removeChannel
+func (c *Client) RemoveChannel(id string, channelID string) error {
+	req := struct {
+		ChannelID string `json:"channel"`
+	}{
+		ChannelID: channelID,
 	}
-
-	req := request{channelId}
 
 	//pass request
-	err := c.Post("/bridges/"+bridgeId+"/removeChannel", nil, &req)
+	err := c.Post("/bridges/"+id+"/removeChannel", nil, &req)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-//Play music on hold to a bridge or change the MOH class that's playing
-//Equivalent to  Post /bridges/{bridgeId}/moh (music on hold)
-func (c *Client) PlayMusicOnHold(bridgeId string, mohClass string) error {
+// PlayMusicOnHold plays a music on hold class to a bridge or changes the existing MOH class
+// Equivalent to  Post /bridges/{bridgeId}/moh (music on hold)
+func (c *Client) PlayMusicOnHold(id string, class string) error {
 
-	//Request structure for playing music on hold to a bridge. MohClass is _not_ required.
-	type request struct {
-		MohClass string `json:"mohClass,omitempty"`
+	req := struct {
+		Class string `json:"mohClass,omitempty"`
+	}{
+		Class: class,
 	}
 
-	req := request{mohClass}
-
 	//send request
-	err := c.Post("/bridges/"+bridgeId+"/moh", nil, &req)
+	err := c.Post("/bridges/"+id+"/moh", nil, &req)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-//Start playback of media on specified bridge
-//Equivalent to  Post /bridges/{bridgeId}/play
-func (c *Client) PlayToBridge(bridgeId string, req PlayMediaRequest) (Playback, error) {
+// PlayToBridge starts playback of media on specified bridge
+//Equivalent to  Post /bridges/{id}/play
+func (c *Client) PlayToBridge(id string, req PlayMediaRequest) (Playback, error) {
 	var m Playback
 
 	//send request
-	err := c.Post("/bridges/"+bridgeId+"/play", &m, &req)
+	err := c.Post("/bridges/"+id+"/play", &m, &req)
 	if err != nil {
 		return m, err
 	}
 	return m, nil
 }
 
-//Start playback of specific media on specified bridge
-//Equivalent to  Post /bridges/{bridgeId}/play/{playbackId}
-func (c *Client) PlayToBridgeById(bridgeId string, playbackId string, req PlayMediaRequest) (Playback, error) {
+// PlayToBridgeByID starts playback of specific media on specified bridge
+//Equivalent to  Post /bridges/{id}/play/{playbackID}
+func (c *Client) PlayToBridgeByID(id string, playbackID string, req PlayMediaRequest) (Playback, error) {
 	var m Playback
 
-	err := c.Post("/bridges/"+bridgeId+"/play/"+playbackId, &m, &req)
+	err := c.Post("/bridges/"+id+"/play/"+playbackID, &m, &req)
 	if err != nil {
 		return m, err
 	}
 	return m, nil
 }
 
-//start a recording on specified bridge
-//Equivalent to  Post /bridges/{bridgeId}/record
-func (c *Client) RecordBridge(bridgeId string, req *RecordRequest) (*LiveRecording, error) {
+// RecordBridge starts a recording on specified bridge
+//Equivalent to  Post /bridges/{id}/record
+func (c *Client) RecordBridge(id string, req *RecordRequest) (*LiveRecording, error) {
 	var m LiveRecording
 
 	//send request
-	err := c.Post("/bridges/"+bridgeId+"/record", &m, &req)
+	err := c.Post("/bridges/"+id+"/record", &m, &req)
 	return &m, err
 }
 
-//Shut down a bridge. If any channels are in this bridge, they will be removed and resume whatever they were doing beforehand.
+// BridgeDelete shuts down a bridge. If any channels are in this bridge, they will be removed and resume whatever they were doing beforehand.
 //This means that the channels themselves are not deleted.
-//Equivalent to DELETE /bridges/{bridgeId}
-func (c *Client) BridgeDelete(bridgeId string) error {
-	err := c.Delete("/bridges/"+bridgeId, nil, "")
+//Equivalent to DELETE /bridges/{id}
+func (c *Client) BridgeDelete(id string) error {
+	err := c.Delete("/bridges/"+id, nil, "")
 	return err
 }
 
-//Stop playing music on hold to a bridge. This will only stop music on hold being played via POST bridges/{bridgeId}/moh.
-//Equivalent to DELETE /bridges/{bridgeId}/moh
-func (c *Client) BridgeStopMoh(bridgeId string) error {
-	err := c.Delete("/bridges/"+bridgeId+"/moh", nil, "")
+// BridgeStopMoh stops playing music on hold to a bridge. This will only stop music on hold being played via POST bridges/{id}/moh.
+// Equivalent to DELETE /bridges/{id}/moh
+func (c *Client) BridgeStopMoh(id string) error {
+	err := c.Delete("/bridges/"+id+"/moh", nil, "")
 	return err
 }
 

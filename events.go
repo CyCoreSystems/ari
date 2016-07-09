@@ -102,27 +102,34 @@ type ApplicationReplaced Event
 // BridgeAttendedTransfer events signify that an attended transfer has occurred
 type BridgeAttendedTransfer struct {
 	Event
-	Destination_application      string  `json:"destination_application,omitempty"`
-	Destination_bridge           string  `json:"desination_bridge,omitempty"`
-	Destination_link_first_leg   Channel `json:"destination_link_first_leg,omitempty"`
-	Destination_link_second_leg  Channel `json:"destination_link_second_leg,omitempty"`
-	Destination_threeway_bridge  Bridge  `json:"destination_threeway_bridge,omitempty"`
-	Destination_threeway_channel Channel `json:"destination_threeway_channel,omitempty"`
-	Destination_type             string  `json:"destination_type"`
-	Is_external                  bool    `json:"is_external"`
-	Result                       string  `json:"result"`
-	Transferer_first_leg         Channel `json:"transferer_first_leg"`
-	Transferer_first_leg_bridge  Bridge  `json:"transferer_first_leg_bridge,omitempty"`
-	Transferer_second_leg        Channel `json:"transferer_second_leg"`
-	Transferer_second_leg_bridge Bridge  `json:"transferer_second_leg_bridge,omitempty"`
+	DestinationApplication     string  `json:"destination_application,omitempty"`
+	DestinationBridge          string  `json:"desination_bridge,omitempty"`
+	DestinationLinkFirstLeg    Channel `json:"destination_link_first_leg,omitempty"`
+	DestinationLinkSecondLeg   Channel `json:"destination_link_second_leg,omitempty"`
+	DestinationThreewayBridge  Bridge  `json:"destination_threeway_bridge,omitempty"`
+	DestinationThreewayChannel Channel `json:"destination_threeway_channel,omitempty"`
+	DestinationType            string  `json:"destination_type"`
+	External                   bool    `json:"is_external"`
+	Result                     string  `json:"result"`
+	Transferee                 Channel `json:"transferee,omitempty"`
+	TransferTarget             Channel `json:"transfer_target,omitempty"`
+	TransfererFirstLeg         Channel `json:"transferer_first_leg"`
+	TransfererFirstLegBridge   Bridge  `json:"transferer_first_leg_bridge,omitempty"`
+	TransfererSecondLeg        Channel `json:"transferer_second_leg"`
+	TransfererSecondLegBridge  Bridge  `json:"transferer_second_leg_bridge,omitempty"`
 }
 
 // BridgeBlindTransfer events signify that a blind transfer has occurred
 type BridgeBlindTransfer struct {
 	Event
-	Bridge  Bridge  `json:"bridge,omitempty"`
-	Channel Channel `json:"channel"`
-	Context string  `json:"context"`
+	Bridge         Bridge  `json:"bridge,omitempty"`
+	Channel        Channel `json:"channel"`
+	Context        string  `json:"context"`
+	Extension      string  `json:"exten"`
+	External       bool    `json:"external"`
+	ReplaceChannel Channel `json:"external,omitempty"`
+	Result         string  `json:"result"`
+	Transferee     Channel `json:"transferee,omitempty"`
 }
 
 // BridgeCreated events indicate a bridge has been created
