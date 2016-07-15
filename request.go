@@ -53,7 +53,7 @@ func maybeRequestError(resp *http.Response) RequestError {
 		return nil
 	}
 	return &requestError{
-		text:       "Non-2XX response: " + http.StatusText(resp.StatusCode),
+		text:       "Non-2XX response: " + resp.Status,
 		statusCode: resp.StatusCode,
 	}
 }
@@ -65,7 +65,7 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-func (c *Client) assureHttpClient() {
+func (c *Client) assureHTTPClient() {
 	if c.httpClient == nil {
 		//TODO: see if we can override the timeout on the DefaultClient instead
 		c.httpClient = &http.Client{Timeout: RequestTimeout}
@@ -78,7 +78,7 @@ func (c *Client) Get(url string, ret interface{}) error {
 		return nil
 	}
 
-	c.assureHttpClient()
+	c.assureHTTPClient()
 
 	finalURL := c.Options.URL + url
 
@@ -108,7 +108,7 @@ func (c *Client) Post(requestURL string, ret interface{}, req interface{}) error
 		return nil
 	}
 
-	c.assureHttpClient()
+	c.assureHTTPClient()
 
 	finalURL := c.Options.URL + requestURL
 
@@ -143,7 +143,7 @@ func (c *Client) Put(url string, ret interface{}, req interface{}) error {
 		return nil
 	}
 
-	c.assureHttpClient()
+	c.assureHTTPClient()
 
 	finalURL := c.Options.URL + url
 
@@ -178,7 +178,7 @@ func (c *Client) Delete(url string, ret interface{}, req string) error {
 		return nil
 	}
 
-	c.assureHttpClient()
+	c.assureHTTPClient()
 
 	finalURL := c.Options.URL + url
 	if req != "" {
