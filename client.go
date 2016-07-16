@@ -195,7 +195,7 @@ func (c *Client) listen(ctx context.Context) {
 		}
 
 		Logger.Debug("Connecting to websocket")
-		ws, err := websocket.DialConfig(c.WSConfig)
+		ws, err = websocket.DialConfig(c.WSConfig)
 		if err != nil {
 			Logger.Error("Failed to create websocket connection to Asterisk:", err.Error())
 			time.Sleep(1 * time.Second)
