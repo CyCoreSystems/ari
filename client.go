@@ -195,6 +195,8 @@ func (c *Client) listen(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			Logger.Debug("Closing websocket on request")
+			ws.Close()
+			ws = nil
 			return
 		case err := <-c.wsRead(ws):
 			Logger.Error("Failure reading from websocket:", "error", err.Error())

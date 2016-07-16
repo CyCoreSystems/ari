@@ -2,6 +2,7 @@ package ari
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -52,6 +53,9 @@ type RawMessage struct {
 // DecodeAs converts the current message to
 // a new message type
 func (m *RawMessage) DecodeAs(v MessageRawer) error {
+	if v == nil {
+		return errors.New("empty message")
+	}
 	// First, unmarshal raw into the new type
 	err := json.Unmarshal(*m.GetRaw(), v)
 	if err != nil {
