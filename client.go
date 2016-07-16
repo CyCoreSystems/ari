@@ -50,7 +50,8 @@ type Client struct {
 
 	httpClient *http.Client
 
-	mu sync.Mutex
+	cancel context.CancelFunc
+	mu     sync.Mutex
 
 	TestMode bool // Client is in test mode: no actual HTTP requests will be made
 }
@@ -107,8 +108,19 @@ func NewClient(opts *Options) *Client {
 	return &Client{Options: opts, ReadyChan: make(chan struct{})}
 }
 
+// Close closes the ARI client
+func (c *Client) Close() {
+	if c.cancel != nil {
+		c.cancel()
+	}
+}
+
 // Listen maintains and listens to a websocket connection until told to stop.
 func (c *Client) Listen(ctx context.Context) (err error) {
+	if c.cancel == nil {
+		ctx, c.cancel = context.WithCancel(ctx)
+	}
+
 	// Construct the websocket config, if we don't already have one
 	if c.WSConfig == nil {
 		// Construct the websocket connection url
