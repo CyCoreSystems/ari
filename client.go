@@ -175,10 +175,21 @@ func (c *Client) Listen(ctx context.Context) (err error) {
 }
 
 func (c *Client) listen(ctx context.Context) {
+	var ws *websocket.Conn
+	var err error
+
+	// Close the websocket if our context is closed
+	go func() {
+		<-ctx.Done()
+		Logger.Info("closing websocket on request")
+		if ws != nil {
+			ws.Close()
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
-			Logger.Debug("Exiting websocket on request")
 			return
 		default:
 		}
@@ -192,13 +203,8 @@ func (c *Client) listen(ctx context.Context) {
 		}
 		close(c.ReadyChan)
 
-		select {
-		case <-ctx.Done():
-			Logger.Debug("Closing websocket on request")
-			ws.Close()
-			ws = nil
-			return
-		case err := <-c.wsRead(ws):
+		err = c.wsRead(ws)
+		if err != nil {
 			Logger.Error("Failure reading from websocket:", "error", err.Error())
 		}
 
@@ -217,10 +223,7 @@ func (c *Client) listen(ctx context.Context) {
 // wsRead loops for the duration of a websocket connection,
 // reading messages, decoding them to events, and passing
 // them to the event bus.
-func (c *Client) wsRead(ws *websocket.Conn) chan error {
-	var err error
-	ch := make(chan error, 1)
-
+func (c *Client) wsRead(ws *websocket.Conn) (err error) {
 	for {
 		var msg Message
 		err = AsteriskCodec.Receive(ws, &msg)
