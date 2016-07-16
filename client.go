@@ -228,8 +228,7 @@ func (c *Client) wsRead(ws *websocket.Conn) (err error) {
 		var msg Message
 		err = AsteriskCodec.Receive(ws, &msg)
 		if err != nil {
-			ch <- err
-			close(ch)
+			return
 		}
 		c.Bus.send(&msg)
 	}
