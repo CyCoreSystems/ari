@@ -126,6 +126,10 @@ func (b *Bus) send(msg *Message) {
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
+		if s == nil {
+			Logger.Error("nil subscription")
+			continue
+		}
 		for _, topic := range s.events {
 			if topic == e.GetType() || topic == ALL {
 				select {
