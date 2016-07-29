@@ -125,11 +125,9 @@ func (b *Bus) send(msg *Message) {
 	Logger.Debug("Received event", "event", e)
 
 	// Disseminate the message to the subscribers
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	for _, s := range b.subs {
-		if s == nil {
-			Logger.Error("nil subscription")
-			continue
-		}
 		for _, topic := range s.events {
 			if topic == e.GetType() || topic == ALL {
 				select {
