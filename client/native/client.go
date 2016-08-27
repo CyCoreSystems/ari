@@ -59,5 +59,6 @@ func New(_ *Options) (*ari.Client, error) {
 		Channel:     &nativeChannel{&conn},
 		Asterisk:    &nativeAsterisk{&conn},
 		Application: &nativeApplication{&conn},
+		Playback:    &nativePlayback{&conn},
 	}, nil
 }
