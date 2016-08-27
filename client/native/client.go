@@ -56,6 +56,7 @@ func New(_ *Options) (*ari.Client, error) {
 
 	//TODO: populate client
 	return &ari.Client{
-		Channel: &nativeChannel{&conn},
+		Channel:  &nativeChannel{&conn},
+		Asterisk: &nativeAsterisk{&conn},
 	}, nil
 }
