@@ -60,5 +60,6 @@ func New(_ *Options) (*ari.Client, error) {
 		Asterisk:    &nativeAsterisk{&conn},
 		Application: &nativeApplication{&conn},
 		Playback:    &nativePlayback{&conn},
+		Bridge:      &nativeBridge{&conn},
 	}, nil
 }
