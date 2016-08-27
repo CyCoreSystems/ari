@@ -21,6 +21,14 @@ type Channel interface {
 	// TODO: rest of interface
 }
 
+// NewChannelHandle returns a handle to the given ARI channel
+func NewChannelHandle(id string, c Channel) *ChannelHandle {
+	return &ChannelHandle{
+		id: id,
+		c:  c,
+	}
+}
+
 // ChannelHandle provides a wrapper to a Channel interface for
 // operations on a particular channel ID
 type ChannelHandle struct {

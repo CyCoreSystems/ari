@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/CyCoreSystems"
+	"github.com/CyCoreSystems/ari"
+
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
 )
@@ -49,6 +50,12 @@ type Conn struct {
 }
 
 // New creates a new ari.Client connected to a native ARI server
-func New(opts *Options) (*ari.Client, error) {
-	// TODO: implement
+func New(_ *Options) (*ari.Client, error) {
+
+	var conn Conn //TODO: create connection from opts
+
+	//TODO: populate client
+	return &ari.Client{
+		Channel: &nativeChannel{&conn},
+	}, nil
 }
