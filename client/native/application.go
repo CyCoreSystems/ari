@@ -10,6 +10,11 @@ type nativeApplication struct {
 	conn *Conn
 }
 
+// Get returns a managed handle to an ARI application
+func (a *nativeApplication) Get(name string) *ari.ApplicationHandle {
+	return ari.NewApplicationHandle(name, a)
+}
+
 // Data returns the details of a given ARI application
 // Equivalent to GET /applications/{applicationName}
 func (a *nativeApplication) Data(name string) (d ari.ApplicationData, err error) {

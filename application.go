@@ -4,6 +4,9 @@ package ari
 // server for application-level resources
 type Application interface {
 
+	// Get returns a handle to the application for further interaction
+	Get(name string) *ApplicationHandle
+
 	// Data returns the applications data
 	Data(name string) (ApplicationData, error)
 
