@@ -10,6 +10,7 @@ type Client struct {
 	Channel     Channel
 	Bridge      Bridge
 	Playback    Playback
+	Mailbox     Mailbox
 	// TODO: other interaces
 
 	// Concrete implementations
