@@ -62,5 +62,6 @@ func New(_ *Options) (*ari.Client, error) {
 		Playback:    &nativePlayback{&conn},
 		Bridge:      &nativeBridge{&conn},
 		Mailbox:     &nativeMailbox{&conn},
+		Endpoint:    &nativeEndpoint{&conn},
 	}, nil
 }
