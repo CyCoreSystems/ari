@@ -11,6 +11,7 @@ type Client struct {
 	Bridge      Bridge
 	Playback    Playback
 	Mailbox     Mailbox
+	Endpoint    Endpoint
 	// TODO: other interaces
 
 	// Concrete implementations
