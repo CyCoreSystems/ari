@@ -15,6 +15,21 @@ func (a *nativeApplication) Get(name string) *ari.ApplicationHandle {
 	return ari.NewApplicationHandle(name, a)
 }
 
+// List returns the list of applications managed by asterisk
+func (a *nativeApplication) List() (ax []*ari.ApplicationHandle, err error) {
+	var apps = []struct {
+		Name string `json:"name"`
+	}{}
+
+	err = Get(a.conn, "/applications", &apps)
+
+	for _, i := range apps {
+		ax = append(ax, a.Get(i.Name))
+	}
+
+	return
+}
+
 // Data returns the details of a given ARI application
 // Equivalent to GET /applications/{applicationName}
 func (a *nativeApplication) Data(name string) (d ari.ApplicationData, err error) {
