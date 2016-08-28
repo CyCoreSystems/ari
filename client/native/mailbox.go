@@ -15,7 +15,7 @@ func (m *nativeMailbox) Get(name string) *ari.MailboxHandle {
 }
 
 func (m *nativeMailbox) Data(name string) (md ari.MailboxData, err error) {
-	err = Get(m.conn, "/mailboxes", &md)
+	err = Get(m.conn, "/mailboxes/"+name, &md)
 	return
 }
 
