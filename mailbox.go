@@ -7,6 +7,9 @@ type Mailbox interface {
 	// Get gets a handle to the mailbox for further operations
 	Get(name string) *MailboxHandle
 
+	// List lists the mailboxes in asterisk
+	List() ([]*MailboxHandle, error)
+
 	// Data gets the current state of the mailbox
 	Data(name string) (MailboxData, error)
 
