@@ -4,6 +4,9 @@ package ari
 // Asterisk server for working with bridge resources
 type Bridge interface {
 
+	// Lists returns the lists of bridges in asterisk
+	List() ([]*BridgeHandle, error)
+
 	// Data gets the bridge data
 	Data(id string) (BridgeData, error)
 

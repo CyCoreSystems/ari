@@ -11,6 +11,9 @@ type Channel interface {
 	// Get returns a handle to a channel for further interaction
 	Get(id string) *ChannelHandle
 
+	// List lists the channels in asterisk
+	List() ([]*ChannelHandle, error)
+
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed
 	Create() (*ChannelHandle, error)

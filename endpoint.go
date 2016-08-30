@@ -4,6 +4,13 @@ package ari
 // for endpoint resources
 type Endpoint interface {
 
+	// List lists the endpoints
+	// TODO: associated with the application, or on the entire system?
+	List() ([]*EndpointHandle, error)
+
+	// List available endpoints for a given endpoint technology
+	ListByTech(tech string) ([]*EndpointHandle, error)
+
 	// Get returns a handle to the endpoint for further operations
 	Get(tech string, resource string) *EndpointHandle
 

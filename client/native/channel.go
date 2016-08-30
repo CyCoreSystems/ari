@@ -11,6 +11,19 @@ type nativeChannel struct {
 	conn *Conn
 }
 
+func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
+	var channels = []struct {
+		ID string `json:"id"`
+	}{}
+
+	err = Get(c.conn, "/channels", &channels)
+	for _, i := range channels {
+		cx = append(cx, c.Get(i.ID))
+	}
+
+	return
+}
+
 func (c *nativeChannel) Hangup(id, reason string) error {
 	var req string
 	if reason != "" {

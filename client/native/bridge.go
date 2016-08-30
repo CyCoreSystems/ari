@@ -6,6 +6,22 @@ type nativeBridge struct {
 	conn *Conn
 }
 
+func (b *nativeBridge) Get(id string) *ari.BridgeHandle {
+	return ari.NewBridgeHandle(id, b)
+}
+
+func (b *nativeBridge) List() (bx []*ari.BridgeHandle, err error) {
+	var bridges = []struct {
+		ID string `json:"id"`
+	}{}
+
+	err = Get(b.conn, "/bridges", &bridges)
+	for _, i := range bridges {
+		bx = append(bx, b.Get(i.ID))
+	}
+	return
+}
+
 // Data returns the details of a bridge
 // Equivalent to Get /bridges/{bridgeId}
 func (b *nativeBridge) Data(id string) (bd ari.BridgeData, err error) {
