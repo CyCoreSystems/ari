@@ -40,19 +40,21 @@ type Conn struct {
 
 	ReadyChan chan struct{}
 
-	Bus    *ari.Bus    // event bus
-	events chan *Event // chan on which events are sent
+	Bus *ari.Bus // event bus
+	//events chan *Event // chan on which events are sent
 
-	httpClient *http.Client
+	httpClient http.Client
 
 	cancel context.CancelFunc
 	mu     sync.Mutex
 }
 
 // New creates a new ari.Client connected to a native ARI server
-func New(_ *Options) (*ari.Client, error) {
+func New(opts *Options) (*ari.Client, error) {
 
-	var conn Conn //TODO: create connection from opts
+	conn := Conn{
+		Options: opts,
+	}
 
 	//TODO: populate client
 	return &ari.Client{
