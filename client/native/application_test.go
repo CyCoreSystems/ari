@@ -23,7 +23,7 @@ func createClientURL(t *testing.T, baseURL string) (*ari.Client, bool) {
 	return client, true
 }
 
-func TestApplication(t *testing.T) {
+func TestApplicationData(t *testing.T) {
 
 	// start asterisk in docker container
 	url, deferFn, err := dockertest.StartAsterisk()
@@ -46,4 +46,32 @@ func TestApplication(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error getting application 'test'")
 	}
+
+	//TODO: populate data, attempt a valid get
+}
+
+func TestApplicationList(t *testing.T) {
+
+	// start asterisk in docker container
+	url, deferFn, err := dockertest.StartAsterisk()
+	if err != nil {
+		t.Fatalf("cannot start asterisk in container for testing: %s", err)
+	}
+	defer deferFn()
+
+	client, ok := createClientURL(t, url)
+	if !ok {
+		return
+	}
+
+	l, err := client.Application.List()
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	if len(l) != 0 {
+		t.Errorf("Expected list to be empty, was '%+v'", l)
+	}
+
+	//TODO: populate list of apps, attempt a valid List
 }
