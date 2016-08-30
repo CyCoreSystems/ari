@@ -1,10 +1,12 @@
 package native
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/CyCoreSystems/ari"
 )
+
+var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
 
 type nativeAsterisk struct {
 	conn *Conn
@@ -20,7 +22,7 @@ func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	// pass it on as the 'only' querystring parameter
 	if only != "" {
 		path += "?only=" + only
-		return &m, fmt.Errorf("Only-restricted AsteriskInfo requests are not yet implemented")
+		return &m, errOnlyUnsupported
 	}
 	// TODO: handle "only" parameter
 	// the problem is that responses with "only" do not
