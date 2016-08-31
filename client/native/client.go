@@ -44,6 +44,7 @@ func New(opts *Options) (*ari.Client, error) {
 		Application: &nativeApplication{conn},
 		Mailbox:     &nativeMailbox{conn},
 		Endpoint:    &nativeEndpoint{conn},
+		DeviceState: &nativeDeviceState{conn},
 		Bus:         conn.Bus,
 	}, nil
 }
