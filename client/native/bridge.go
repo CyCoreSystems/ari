@@ -3,7 +3,8 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativeBridge struct {
-	conn *Conn
+	conn           *Conn
+	nativePlayback *nativePlayback
 }
 
 func (b *nativeBridge) Get(id string) *ari.BridgeHandle {
@@ -63,5 +64,16 @@ func (b *nativeBridge) RemoveChannel(id string, channelID string) (err error) {
 // Equivalent to DELETE /bridges/{id}
 func (b *nativeBridge) Delete(id string) (err error) {
 	err = Delete(b.conn, "/bridges/"+id, nil, "")
+	return
+}
+
+func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
+	resp := make(map[string]interface{})
+	type request struct {
+		Media string `json:"media"`
+	}
+	req := request{mediaURI}
+	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, resp, &req)
+	ph = b.nativePlayback.Get(playbackID)
 	return
 }

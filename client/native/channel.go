@@ -8,7 +8,8 @@ import (
 )
 
 type nativeChannel struct {
-	conn *Conn
+	conn           *Conn
+	nativePlayback *nativePlayback
 }
 
 func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
@@ -149,5 +150,16 @@ func (c *nativeChannel) Silence(id string) (err error) {
 
 func (c *nativeChannel) StopSilence(id string) (err error) {
 	err = Delete(c.conn, "/channels/"+id+"/silence", nil, "")
+	return
+}
+
+func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
+	resp := make(map[string]interface{})
+	type request struct {
+		Media string `json:"media"`
+	}
+	req := request{mediaURI}
+	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, resp, &req)
+	ph = c.nativePlayback.Get(playbackID)
 	return
 }
