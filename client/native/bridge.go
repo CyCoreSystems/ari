@@ -3,8 +3,8 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativeBridge struct {
-	conn           *Conn
-	nativePlayback *nativePlayback
+	conn     *Conn
+	playback ari.Playback
 }
 
 func (b *nativeBridge) Get(id string) *ari.BridgeHandle {
@@ -74,6 +74,6 @@ func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *
 	}
 	req := request{mediaURI}
 	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, resp, &req)
-	ph = b.nativePlayback.Get(playbackID)
+	ph = b.playback.Get(playbackID)
 	return
 }

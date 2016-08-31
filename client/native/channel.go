@@ -8,8 +8,8 @@ import (
 )
 
 type nativeChannel struct {
-	conn           *Conn
-	nativePlayback *nativePlayback
+	conn     *Conn
+	playback ari.Playback
 }
 
 func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
@@ -160,6 +160,6 @@ func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph 
 	}
 	req := request{mediaURI}
 	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, resp, &req)
-	ph = c.nativePlayback.Get(playbackID)
+	ph = c.playback.Get(playbackID)
 	return
 }
