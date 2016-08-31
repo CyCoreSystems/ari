@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/satori/go.uuid"
 )
 
 // Channel represents a communication path interacting with an Asterisk server.
@@ -68,6 +69,9 @@ type Channel interface {
 
 	// StopSilence stops the silence on the channel
 	StopSilence(id string) error
+
+	// Play plays the media URI to the channel
+	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
 }
 
 // ChannelData is the data for a specific channel
@@ -105,6 +109,18 @@ func (ch *ChannelHandle) Data() (ChannelData, error) {
 // Continue tells Asterisk to return the channel to the dialplan
 func (ch *ChannelHandle) Continue(context, extension, priority string) error {
 	return ch.c.Continue(ch.id, context, extension, priority)
+}
+
+//---
+// Play operations
+//---
+
+// Play initiates playback of the specified media uri
+// to the channel, returning the Playback's ID
+func (ch *ChannelHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
+	id := uuid.NewV1().String()
+	ph, err = ch.c.Play(ch.id, id, mediaURI)
+	return
 }
 
 //---
