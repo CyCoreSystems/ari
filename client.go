@@ -13,6 +13,7 @@ type Client struct {
 	Mailbox     Mailbox
 	Endpoint    Endpoint
 	Bus         Bus
+	DeviceState DeviceState
 
 	// TODO: other interaces
 }
