@@ -1,14 +1,6 @@
 package native
 
-import (
-	"net/http"
-	"sync"
-
-	"github.com/CyCoreSystems/ari"
-
-	"golang.org/x/net/context"
-	"golang.org/x/net/websocket"
-)
+import "github.com/CyCoreSystems/ari"
 
 // Options describes the options for connecting to
 // a native Asterisk ARI server.
@@ -32,33 +24,15 @@ type Options struct {
 	Password string
 }
 
-// Conn is a connection to a native ARI server
-type Conn struct {
-	Options *Options // client options
-
-	WSConfig *websocket.Config // websocket connection configuration
-
-	ReadyChan chan struct{}
-
-	Bus *ari.Bus // event bus
-	//events chan *Event // chan on which events are sent
-
-	httpClient http.Client
-
-	cancel context.CancelFunc
-	mu     sync.Mutex
-}
-
-func newConn(opts *Options) *Conn {
-	return &Conn{
-		Options: opts,
-	}
-}
-
 // New creates a new ari.Client connected to a native ARI server
 func New(opts *Options) (*ari.Client, error) {
 
 	conn := newConn(opts)
+
+	if err := conn.Listen(nil); err != nil {
+		conn.Close()
+		return nil, err
+	}
 
 	playback := &nativePlayback{conn}
 
@@ -70,5 +44,6 @@ func New(opts *Options) (*ari.Client, error) {
 		Application: &nativeApplication{conn},
 		Mailbox:     &nativeMailbox{conn},
 		Endpoint:    &nativeEndpoint{conn},
+		Bus:         conn.Bus,
 	}, nil
 }
