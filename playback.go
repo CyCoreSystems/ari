@@ -4,6 +4,9 @@ package ari
 // with an Asterisk server for playback resources
 type Playback interface {
 
+	// Get gets the handle to the given playbacl ID
+	Get(id string) *PlaybackHandle
+
 	// Data gets the playback data
 	Data(id string) (PlaybackData, error)
 

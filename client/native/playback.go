@@ -6,6 +6,11 @@ type nativePlayback struct {
 	conn *Conn
 }
 
+func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
+	ph = ari.NewPlaybackHandle(id, a)
+	return
+}
+
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
 func (a *nativePlayback) Data(id string) (p ari.PlaybackData, err error) {
