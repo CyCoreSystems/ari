@@ -61,12 +61,12 @@ func New(opts *Options) (*ari.Client, error) {
 	conn := newConn(opts)
 
 	return &ari.Client{
-		Channel:     &nativeChannel{&conn},
-		Asterisk:    &nativeAsterisk{&conn},
-		Application: &nativeApplication{&conn},
-		Playback:    &nativePlayback{&conn},
-		Bridge:      &nativeBridge{&conn},
-		Mailbox:     &nativeMailbox{&conn},
-		Endpoint:    &nativeEndpoint{&conn},
+		Channel:     &nativeChannel{conn},
+		Asterisk:    &nativeAsterisk{conn},
+		Application: &nativeApplication{conn},
+		Playback:    &nativePlayback{conn},
+		Bridge:      &nativeBridge{conn},
+		Mailbox:     &nativeMailbox{conn},
+		Endpoint:    &nativeEndpoint{conn},
 	}, nil
 }
