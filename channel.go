@@ -16,7 +16,7 @@ type Channel interface {
 
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed
-	Create() (*ChannelHandle, error)
+	Create(OriginateRequest) (*ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
 	Data(id string) (ChannelData, error)

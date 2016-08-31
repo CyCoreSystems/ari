@@ -42,16 +42,11 @@ func (c *nativeChannel) Get(id string) *ari.ChannelHandle {
 	return ari.NewChannelHandle(id, c)
 }
 
-func (c *nativeChannel) Create() (*ari.ChannelHandle, error) {
+func (c *nativeChannel) Create(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
 	id := uuid.NewV1().String()
 	h := ari.NewChannelHandle(id, c)
 
 	var err error
-	type request struct {
-		//TODO: populate request
-	}
-	req := request{}
-
 	err = Post(c.conn, "/channels/"+id, nil, &req)
 	if err != nil {
 		return nil, err
