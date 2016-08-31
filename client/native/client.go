@@ -49,14 +49,17 @@ type Conn struct {
 	mu     sync.Mutex
 }
 
+func newConn(opts *Options) *Conn {
+	return &Conn{
+		Options: opts,
+	}
+}
+
 // New creates a new ari.Client connected to a native ARI server
 func New(opts *Options) (*ari.Client, error) {
 
-	conn := Conn{
-		Options: opts,
-	}
+	conn := newConn(opts)
 
-	//TODO: populate client
 	return &ari.Client{
 		Channel:     &nativeChannel{&conn},
 		Asterisk:    &nativeAsterisk{&conn},
