@@ -42,6 +42,11 @@ func (b *Bus) removeSubscription(s *Subscription) {
 	}
 }
 
+// Send sends the message on the bus
+func (b *Bus) Send(msg *Message) {
+	b.send(msg)
+}
+
 func (b *Bus) send(msg *Message) {
 	var e Eventer
 	switch msg.Type {
