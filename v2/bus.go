@@ -184,14 +184,19 @@ type Subscription struct {
 	mu     sync.Mutex
 }
 
-// Subscribe returns a subscription to the given list
-// of event types
-func (b *Bus) Subscribe(eTypes ...string) *Subscription {
-	s := &Subscription{
-		b:      b,
+// NewSubscription creates a new, unattached subscription
+func NewSubscription(eTypes ...string) *Subscription {
+	return &Subscription{
 		events: eTypes,
 		C:      make(chan Eventer, BusChannelBuffer),
 	}
+}
+
+// Subscribe returns a subscription to the given list
+// of event types
+func (b *Bus) Subscribe(eTypes ...string) *Subscription {
+	s := NewSubscription(eTypes...)
+	s.b = b
 	b.addSubscription(s)
 	return s
 }
@@ -223,7 +228,9 @@ func (s *Subscription) closeChan() {
 // Cancel cancels the subscription and removes it from
 // the event bus.
 func (s *Subscription) Cancel() {
-	s.b.removeSubscription(s)
+	if s.b != nil {
+		s.b.removeSubscription(s)
+	}
 	s.closeChan()
 }
 
