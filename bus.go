@@ -7,7 +7,16 @@ import (
 // Bus is an event bus for ARI events.  It receives and
 // redistributes events based on a subscription model.
 type Bus interface {
-	Send(m *v2.Message)
+	Sender
+	Subscriber
+}
 
+// A Sender is an entity which can send event bus messages
+type Sender interface {
+	Send(m *v2.Message)
+}
+
+// A Subscriber is an entity which can create ARI event subscriptions
+type Subscriber interface {
 	Subscribe(n ...string) *v2.Subscription
 }
