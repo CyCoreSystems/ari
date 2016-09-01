@@ -1,7 +1,6 @@
 package audio
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
@@ -22,94 +21,159 @@ var PlaybackStartTimeout = 1 * time.Second
 // a playback to complete.
 var MaxPlaybackTime = 10 * time.Minute
 
-// Play plays audio to the given Player, waiting for completion
-// and returning any error encountered during playback.
-func Play(ctx context.Context, bus ari.Bus, p Player, mediaURI string) error {
-
-	s := bus.Subscribe("PlaybackStarted", "PlaybackFinished")
-	defer s.Cancel()
-
-	h, err := p.Play(mediaURI)
+// Play plays the audio to the given Player, waiting for the playback to finish or an error to be generated
+func Play(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) error {
+	pb, err := PlayAsync(ctx, bus, p, mediaURI)
 	if err != nil {
 		return err
 	}
-	defer h.Stop()
+	defer pb.Cancel()
+
+	select {
+	case <-pb.StopCh():
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return pb.Err()
+}
+
+// PlayAsync plays audio to the given Player, returning a Playback object
+func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) (*Playback, error) {
+
+	var pb Playback
+
+	// subscribe to ARI events
+	s := bus.Subscribe("PlaybackStarted", "PlaybackFinished")
+
+	// start playback
+	h, err := p.Play(mediaURI)
+	if err != nil {
+		s.Cancel()
+		return nil, err
+	}
+
+	// build return value
+
+	pb.handle = h
+	pb.stopCh = make(chan struct{})
+	pb.startCh = make(chan struct{})
+	pb.ctx, pb.cancel = context.WithCancel(ctx) //TODO: use deadline for timeout?
+
+	ctx = pb.ctx
+
+	// get playback data/identifier
 
 	// NOTE: this is where we may want to be able to access handle.ID directly?
 	data, err := h.Data()
 	if err != nil {
-		return err
+		s.Cancel()
+		return nil, err
 	}
 
-	id := data.ID
+	go func() {
 
-	// Wait for the playback to start
-	startTimer := time.After(PlaybackStartTimeout)
-PlaybackStartLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case v := <-s.C:
-			if v == nil {
-				Logger.Debug("Nil event received")
-				continue PlaybackStartLoop
-			}
-			switch v.GetType() {
-			case "PlaybackStarted":
-				e := v.(*v2.PlaybackStarted)
-				if e.Playback.ID != id {
-					Logger.Debug("Ignoring unrelated playback")
+		defer s.Cancel()
+		defer pb.cancel()
+
+		id := data.ID
+
+		// Wait for the playback to start
+		startTimer := time.After(PlaybackStartTimeout)
+	PlaybackStartLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				close(pb.startCh)
+				close(pb.stopCh)
+				pb.err = pb.ctx.Err()
+				return
+			case v := <-s.C:
+				if v == nil {
+					Logger.Debug("Nil event received")
 					continue PlaybackStartLoop
 				}
-				Logger.Debug("Playback started")
-				break PlaybackStartLoop
-			case "PlaybackFinished":
-				e := v.(*v2.PlaybackFinished)
-				if e.Playback.ID != id {
-					Logger.Debug("Ignoring unrelated playback")
+				switch v.GetType() {
+				case "PlaybackStarted":
+					e := v.(*v2.PlaybackStarted)
+					if e.Playback.ID != id {
+						Logger.Debug("Ignoring unrelated playback")
+						continue PlaybackStartLoop
+					}
+					Logger.Debug("Playback started")
+					break PlaybackStartLoop
+				case "PlaybackFinished":
+					e := v.(*v2.PlaybackFinished)
+					if e.Playback.ID != id {
+						Logger.Debug("Ignoring unrelated playback")
+						continue PlaybackStartLoop
+					}
+					Logger.Debug("Playback stopped (before PlaybackStated received)")
+					close(pb.startCh)
+					close(pb.stopCh)
+					return
+				default:
+					Logger.Debug("Unhandled e.Type", v.GetType())
 					continue PlaybackStartLoop
 				}
-				Logger.Debug("Playback stopped (before PlaybackStated received)")
-				return nil
-			default:
-				Logger.Debug("Unhandled e.Type", v.GetType())
-				continue PlaybackStartLoop
+			case <-startTimer:
+				Logger.Error("Playback timed out")
+				pb.err = timeoutErr{"Timeout waiting for start of playback"}
+				close(pb.startCh)
+				close(pb.stopCh)
+				return
 			}
-		case <-startTimer:
-			Logger.Error("Playback timed out")
-			return fmt.Errorf("Timeout waiting for start of playback")
 		}
-	}
 
-	// Playback has started.  Wait for it to finish
-	stopTimer := time.After(MaxPlaybackTime)
-PlaybackStopLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case v := <-s.C:
-			if v == nil {
-				Logger.Debug("Nil event received")
-				continue PlaybackStopLoop
-			}
-			switch v.GetType() {
-			case "PlaybackFinished":
-				e := v.(*v2.PlaybackFinished)
-				if e.Playback.ID != id {
-					Logger.Debug("Ignoring unrelated playback")
+		// trigger playback start signal and defer playback stop signal
+		close(pb.startCh)
+		defer close(pb.stopCh)
+
+		// Playback has started.  Wait for it to finish
+		stopTimer := time.After(MaxPlaybackTime)
+	PlaybackStopLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				pb.err = pb.ctx.Err()
+				return
+			case v := <-s.C:
+				if v == nil {
+					Logger.Debug("Nil event received")
 					continue PlaybackStopLoop
 				}
-				Logger.Debug("Playback stopped")
-				return nil
-			default:
-				Logger.Debug("Unhandled e.Type", v.GetType())
-				continue PlaybackStopLoop
+				switch v.GetType() {
+				case "PlaybackFinished":
+					e := v.(*v2.PlaybackFinished)
+					if e.Playback.ID != id {
+						Logger.Debug("Ignoring unrelated playback")
+						continue PlaybackStopLoop
+					}
+					Logger.Debug("Playback stopped")
+					return
+				default:
+					Logger.Debug("Unhandled e.Type", v.GetType())
+					continue PlaybackStopLoop
+				}
+			case <-stopTimer:
+				Logger.Error("Playback timed out")
+				pb.err = timeoutErr{"Timeout waiting for stop of playback"}
+				return
 			}
-		case <-stopTimer:
-			Logger.Error("Playback timed out")
-			return fmt.Errorf("Timeout waiting for stop of playback")
 		}
-	}
+	}()
+
+	return &pb, err
+}
+
+type timeoutErr struct {
+	msg string
+}
+
+func (err timeoutErr) Error() string {
+	return err.msg
+}
+
+func (err timeoutErr) IsTimeout() bool {
+	return true
 }
