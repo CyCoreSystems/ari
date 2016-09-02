@@ -12,7 +12,8 @@ type Client struct {
 	Playback    Playback
 	Mailbox     Mailbox
 	Endpoint    Endpoint
+	TextMessage TextMessage
 	Bus         Bus
 
-	// TODO: other interaces
+	// TODO: other interfaces
 }
