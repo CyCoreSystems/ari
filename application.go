@@ -1,9 +1,34 @@
 package ari
 
-import "fmt"
+// Application represents a communication path interacting with an Asterisk
+// server for application-level resources
+type Application interface {
 
-// Application describes a Stasis (Ari) application
-type Application struct {
+	// List returns the list of applications in Asterisk
+	List() ([]*ApplicationHandle, error)
+
+	// Get returns a handle to the application for further interaction
+	Get(name string) *ApplicationHandle
+
+	// Data returns the applications data
+	Data(name string) (ApplicationData, error)
+
+	// Subscribe subscribes the given application to an event source
+	// event source may be one of:
+	//  - channel:<channelId>
+	//  - bridge:<bridgeId>
+	//  - endpoint:<tech>/<resource> (e.g. SIP/102)
+	//  - deviceState:<deviceName>
+	Subscribe(name string, eventSource string) error
+
+	// Unsubscribe unsubscribes (removes a subscription to) a given
+	// ARI application from the provided event source
+	// Equivalent to DELETE /applications/{applicationName}/subscription
+	Unsubscribe(name string, eventSource string) error
+}
+
+// ApplicationData describes the data for a Stasis (Ari) application
+type ApplicationData struct {
 	BridgeIDs   []string `json:"bridge_ids"`   // Subscribed BridgeIds
 	ChannelIDs  []string `json:"channel_ids"`  // Subscribed ChannelIds
 	DeviceNames []string `json:"device_names"` // Subscribed Device names
@@ -11,67 +36,42 @@ type Application struct {
 	Name        string   `json:"name"`         // Name of the application
 }
 
-// ListApplications returns the list of ARI applications on
-// the Asterisk server
-// Equivalent to GET /applications
-func (c *Client) ListApplications() ([]Application, error) {
-	var m []Application
-	err := c.Get("/applications", &m)
-	if err != nil {
-		return m, err
+// NewApplicationHandle creates a new handle to the application name
+func NewApplicationHandle(name string, app Application) *ApplicationHandle {
+	return &ApplicationHandle{
+		name: name,
+		a:    app,
 	}
-	return m, nil
 }
 
-// GetApplication returns the details of a given ARI application
-// Equivalent to GET /applications/{applicationName}
-func (c *Client) GetApplication(applicationName string) (Application, error) {
-	var m Application
-	err := c.Get("/applications/"+applicationName, &m)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+// ApplicationHandle provides a wrapper to an Application interface for
+// operations on a specific application
+type ApplicationHandle struct {
+	name string
+	a    Application
 }
 
-// SubscribeApplication subscribes the given application to an event source
+// Data retrives the data for the application
+func (ah *ApplicationHandle) Data() (ad ApplicationData, err error) {
+	ad, err = ah.a.Data(ah.name)
+	return
+}
+
+// Subscribe subscribes the application to an event source
 // event source may be one of:
 //  - channel:<channelId>
 //  - bridge:<bridgeId>
 //  - endpoint:<tech>/<resource> (e.g. SIP/102)
 //  - deviceState:<deviceName>
-// Equivalent to POST /applications/{applicationName}/subscription
-func (c *Client) SubscribeApplication(applicationName string, eventSource string) (Application, error) {
-	var m Application
-
-	type request struct {
-		EventSource string `json:"eventSource"`
-	}
-
-	req := request{EventSource: eventSource}
-
-	// Make the request
-	err := c.Post("/applications/"+applicationName+"/subscription", &m, &req)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
+	err = ah.a.Subscribe(ah.name, eventSource)
+	return
 }
 
-// UnsubscribeApplication unsubscribes (removes a subscription to) a given
+// Unsubscribe unsubscribes (removes a subscription to) a given
 // ARI application from the provided event source
 // Equivalent to DELETE /applications/{applicationName}/subscription
-func (c *Client) UnsubscribeApplication(applicationName string, eventSource string) (Application, error) {
-	var m Application
-
-	// TODO: handle Error Responses individually
-
-	// Make the request
-	err := c.Delete("/applications/"+applicationName+"/subscription", &m, fmt.Sprintf("eventSource=%s", eventSource))
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
+	err = ah.a.Unsubscribe(ah.name, eventSource)
+	return
 }
-
-//Request structure for subscribing or unsubscribing to/from an application. EventSource is required.

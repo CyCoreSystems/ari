@@ -1,0 +1,16 @@
+FROM debian:8
+
+RUN apt-get update
+RUN apt-get install -y build-essential openssl libxml2-dev libncurses5-dev uuid-dev sqlite3 libsqlite3-dev pkg-config curl libjansson-dev
+
+RUN curl -s http://downloads.asterisk.org/pub/telephony/certified-asterisk/asterisk-certified-13.8-cert2.tar.gz | tar xz
+
+WORKDIR /asterisk-certified-13.8-cert2
+RUN ./configure; make; make install; make samples
+
+COPY http.conf /etc/asterisk/http.conf
+COPY ari.conf /etc/asterisk/ari.conf
+
+
+CMD ["/usr/sbin/asterisk", "-vvvvvvv"]
+
