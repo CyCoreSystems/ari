@@ -2,8 +2,6 @@ package audio
 
 import "gopkg.in/inconshreveable/log15.v2"
 
-// Logger
-//
 // Logger defaults to a discard handler (null output).
 // If you wish to enable logging, you can set your own
 // handler like so:
