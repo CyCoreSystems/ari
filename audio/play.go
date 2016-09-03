@@ -172,6 +172,6 @@ func (err timeoutErr) Error() string {
 	return err.msg
 }
 
-func (err timeoutErr) IsTimeout() bool {
+func (err timeoutErr) Timeout() bool {
 	return true
 }
