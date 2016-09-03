@@ -79,9 +79,11 @@ func TestPlayTimeoutStart(t *testing.T) {
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for start of playback" {
+	}
+
+	if err != nil && err.Error() != "Timeout waiting for start of playback" {
 		t.Errorf("Expected timeout waiting for start of playback error, got: '%v'", err)
 	}
 }
@@ -103,12 +105,13 @@ func TestPlayTimeoutStop(t *testing.T) {
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for stop of playback" {
-		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
 	}
 
+	if err != nil && err.Error() != "Timeout waiting for stop of playback" {
+		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
+	}
 }
 
 func TestPlaySuccess(t *testing.T) {
@@ -395,12 +398,6 @@ var playbackFinishedDifferentPlaybackID = &v2.PlaybackFinished{
 	},
 }
 
-// timeout support
-
-type timeoutErrI interface {
-	IsTimeout() bool
-}
-
 // test playback ari transport
 
 type testPlayback struct {
@@ -426,4 +423,14 @@ func (p *testPlayback) Control(id string, op string) error {
 
 func (p *testPlayback) Stop(id string) error {
 	panic("not implemented")
+}
+
+func isTimeout(err error) bool {
+
+	type timeout interface {
+		Timeout() bool
+	}
+
+	te, ok := err.(timeout)
+	return ok && te.Timeout()
 }

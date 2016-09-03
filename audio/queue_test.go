@@ -29,9 +29,11 @@ func TestQueueTimeout(t *testing.T) {
 
 	err := q.Play(ctx, player, nil)
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for start of playback" {
+	}
+
+	if err != nil && err.Error() != "Timeout waiting for start of playback" {
 		t.Errorf("Expected timeout waiting for start of playback error, got: '%v'", err)
 	}
 
@@ -65,9 +67,11 @@ func TestQueueTimeoutSecond(t *testing.T) {
 
 	err := q.Play(ctx, player, nil)
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for stop of playback" {
+	}
+
+	if err != nil && err.Error() != "Timeout waiting for stop of playback" {
 		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
 	}
 
@@ -102,9 +106,11 @@ func TestQueueTimeoutThird(t *testing.T) {
 
 	err := q.Play(ctx, player, nil)
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for start of playback" {
+	}
+
+	if err != nil && err.Error() != "Timeout waiting for start of playback" {
 		t.Errorf("Expected timeout waiting for start of playback error, got: '%v'", err)
 	}
 
@@ -141,9 +147,11 @@ func TestQueueTimeoutFourth(t *testing.T) {
 
 	err := q.Play(ctx, player, nil)
 
-	if te, ok := err.(timeoutErrI); !ok || !te.IsTimeout() {
+	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
-	} else if err.Error() != "Timeout waiting for stop of playback" {
+	}
+
+	if err != nil && err.Error() != "Timeout waiting for stop of playback" {
 		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
 	}
 
