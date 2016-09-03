@@ -182,6 +182,7 @@ type Subscription struct {
 	events []string     // list of events to listen for
 	C      chan Eventer // channel for sending events to the subscriber
 	mu     sync.Mutex
+	Closed bool
 }
 
 // NewSubscription creates a new, unattached subscription
@@ -222,6 +223,7 @@ func (s *Subscription) closeChan() {
 		close(s.C)
 		s.C = nil
 	}
+	s.Closed = true
 	s.mu.Unlock()
 }
 
