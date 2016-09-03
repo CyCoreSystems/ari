@@ -1,3 +1,1 @@
-// +build test
-
 package testutils
