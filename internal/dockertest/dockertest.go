@@ -1,8 +1,8 @@
+// +build test
+
 package dockertest
 
 // from https://divan.github.io/posts/integration_testing/
-
-// build: +test
 
 import (
 	"bytes"
