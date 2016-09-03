@@ -6,27 +6,11 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/internal/testutils"
 	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"golang.org/x/net/context"
 )
-
-type dummySubscriber struct {
-	S *v2.Subscription
-}
-
-func (dm *dummySubscriber) Subscribe(n ...string) *v2.Subscription {
-	return dm.S
-}
-
-type dummyPlayer struct {
-	H   *ari.PlaybackHandle
-	Err error
-}
-
-func (dp *dummyPlayer) Play(mediaURI string) (*ari.PlaybackHandle, error) {
-	return dp.H, dp.Err
-}
 
 func TestPlayAsync(t *testing.T) {
 
@@ -35,11 +19,10 @@ func TestPlayAsync(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	pb, err := PlayAsync(ctx, bus, player, "audio:hello-world")
 	if err != nil {
@@ -89,11 +72,10 @@ func TestPlayTimeoutStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
@@ -110,14 +92,13 @@ func TestPlayTimeoutStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- playbackStartedGood("pb1")
+		bus.Send(playbackStartedGood("pb1"))
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -136,18 +117,14 @@ func TestPlaySuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- playbackStartedGood("pb1")
-
-		<-time.After(1 * time.Second)
-
-		bus.S.C <- playbackFinishedGood("pb1")
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -163,18 +140,17 @@ func TestPlayNilEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- nil
-		bus.S.C <- playbackStartedGood("pb1")
-		bus.S.C <- nil
-		<-time.After(1 * time.Second)
-		bus.S.C <- playbackFinishedGood("pb1")
+		bus.SendTo("PlaybackStarted", nil)
+		bus.Send(playbackStartedGood("pb1"))
+		bus.SendTo("PlaybackStarted", nil)
+		bus.SendTo("PlaybackFinished", nil)
+		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -190,24 +166,22 @@ func TestPlayUnrelatedEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- playbackStartedBadMessageType
-		bus.S.C <- playbackFinishedDifferentPlaybackID
-		bus.S.C <- playbackStartedDifferentPlaybackID
-		bus.S.C <- playbackStartedGood("pb1")
+		bus.SendTo("PlaybackStarted", playbackStartedBadMessageType)
+		bus.Send(playbackFinishedDifferentPlaybackID)
+		bus.Send(playbackStartedDifferentPlaybackID)
+		bus.Send(playbackStartedGood("pb1"))
 
 		<-time.After(1 * time.Second)
 
-		bus.S.C <- playbackFinishedBadMessageType
-		bus.S.C <- playbackFinishedDifferentPlaybackID
-		bus.S.C <- playbackFinishedGood("pb1")
-
+		bus.SendTo("PlaybackFinished", playbackFinishedBadMessageType)
+		bus.Send(playbackFinishedDifferentPlaybackID)
+		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -223,14 +197,13 @@ func TestPlayStopBeforeStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- playbackFinishedGood("pb1")
+		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -246,11 +219,10 @@ func TestContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	cancel()
 
@@ -275,14 +247,13 @@ func TestContextCancellationAfterStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.S.C <- playbackStartedGood("pb1")
+		bus.Send(playbackStartedGood("pb1"))
 		cancel()
 	}()
 
@@ -307,17 +278,10 @@ func TestErrorInPlayer(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-		Err: errors.New("Dummy error playing to dummy player"),
-	}
+	bus := testutils.NewBus()
 
-	go func() {
-		bus.S.C <- playbackStartedGood("pb1")
-		<-time.After(1 * time.Second)
-		cancel()
-	}()
+	player := testutils.NewPlayer()
+	player.Append(nil, errors.New("Dummy error playing to dummy player"))
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
@@ -334,17 +298,10 @@ func TestErrorInDataFetch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &dummySubscriber{v2.NewSubscription("")}
-	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}),
-		Err: nil,
-	}
+	bus := testutils.NewBus()
 
-	go func() {
-		bus.S.C <- playbackStartedGood("pb1")
-		<-time.After(1 * time.Second)
-		cancel()
-	}()
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 

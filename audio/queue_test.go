@@ -1,38 +1,15 @@
 package audio
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/internal/testutils"
 	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"golang.org/x/net/context"
 )
-
-type multiDummyPlayer struct {
-	players []dummyPlayer
-	C       chan struct{}
-}
-
-func (mdp *multiDummyPlayer) Play(mediaURI string) (h *ari.PlaybackHandle, err error) {
-	h = mdp.players[0].H
-	err = mdp.players[0].Err
-	mdp.players = mdp.players[1:]
-	mdp.C <- struct{}{}
-	return
-}
-
-type multiDummySubscriber struct {
-	subs map[string]*v2.Subscription
-}
-
-func (mdm *multiDummySubscriber) Subscribe(n ...string) *v2.Subscription {
-	a := v2.NewSubscription("")
-	mdm.subs[strings.Join(n, ";")] = a
-	return a
-}
 
 func TestQueueTimeout(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
@@ -40,23 +17,11 @@ func TestQueueTimeout(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
@@ -83,31 +48,19 @@ func TestQueueTimeoutSecond(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
 	q.Add("sound:2")
 
 	go func() {
-		<-player.C // wait for play request
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
+		<-player.Next // wait for play request
+		bus.Send(playbackStartedGood("pb1"))
 	}()
 
 	err := q.Play(ctx, player, nil)
@@ -130,34 +83,21 @@ func TestQueueTimeoutThird(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
 	q.Add("sound:2")
 
 	go func() {
-		<-player.C // wait for play request
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for play request
+		<-player.Next // wait for play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for play request
 	}()
 
 	err := q.Play(ctx, player, nil)
@@ -181,39 +121,22 @@ func TestQueueTimeoutFourth(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
 	q.Add("sound:2")
 
 	go func() {
-
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
 	}()
 
 	err := q.Play(ctx, player, nil)
@@ -237,40 +160,23 @@ func TestQueueSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
 	q.Add("sound:2")
 
 	go func() {
-
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb2")
-
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
+		bus.Send(playbackFinishedGood("pb2"))
 	}()
 
 	err := q.Play(ctx, player, nil)
@@ -292,23 +198,11 @@ func TestQueueSuccessWithEmpty(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
@@ -316,17 +210,12 @@ func TestQueueSuccessWithEmpty(t *testing.T) {
 	q.Add("sound:2")
 
 	go func() {
-
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb2")
-
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
+		bus.Send(playbackFinishedGood("pb2"))
 	}()
 
 	err := q.Play(ctx, player, nil)
@@ -348,23 +237,11 @@ func TestQueueExitOnDTMF(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	opts := &Options{
 		ExitOnDTMF: "3",
@@ -376,17 +253,13 @@ func TestQueueExitOnDTMF(t *testing.T) {
 
 	go func() {
 
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("2")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("3")
-		//bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb2")
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(channelDtmf("2"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
+		bus.Send(channelDtmf("3"))
 	}()
 
 	err := q.Play(ctx, player, opts)
@@ -414,23 +287,11 @@ func TestQueueDoneTrigger(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	done := make(chan struct{})
 
@@ -444,17 +305,14 @@ func TestQueueDoneTrigger(t *testing.T) {
 
 	go func() {
 
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("2")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("3")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb2")
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(channelDtmf("2"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
+		bus.Send(channelDtmf("3"))
+		bus.Send(playbackFinishedGood("pb2"))
 	}()
 
 	var err error
@@ -484,23 +342,11 @@ func TestQueueDTMF(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	dtmfChan := make(chan *v2.ChannelDtmfReceived, 2)
 
@@ -513,18 +359,14 @@ func TestQueueDTMF(t *testing.T) {
 	q.Add("sound:2")
 
 	go func() {
-
-		<-player.C // wait for first play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("2")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		<-player.C // wait for second play request
-
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb2")
-		bus.subs["ChannelDtmfReceived"].C <- channelDtmf("3")
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb2")
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
+		bus.Send(channelDtmf("2"))
+		bus.Send(playbackFinishedGood("pb1"))
+		<-player.Next // wait for second play request
+		bus.Send(playbackStartedGood("pb2"))
+		bus.Send(channelDtmf("3"))
+		bus.Send(playbackFinishedGood("pb2"))
 	}()
 
 	err := q.Play(ctx, player, opts)
@@ -569,23 +411,11 @@ func TestQueueFlush(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
@@ -593,24 +423,23 @@ func TestQueueFlush(t *testing.T) {
 
 	go func() {
 
-		<-player.C // wait for first play request
+		<-player.Next // wait for first play request
 
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
+		bus.Send(playbackStartedGood("pb1"))
 		q.Flush()
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackFinishedGood("pb1")
-
-		select {
-		case <-player.C: // wait for second play request
-			t.Errorf("Unexpected second play after flush")
-		case <-time.After(1 * time.Second):
-		}
-
+		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
 	err := q.Play(ctx, player, nil)
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
+	}
+
+	select {
+	case <-player.Next: // wait for second play request
+		t.Errorf("Unexpected second play after flush")
+	default:
 	}
 
 	dtmf := q.ReceivedDTMF()
@@ -626,31 +455,19 @@ func TestQueueCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := &multiDummySubscriber{
-		subs: make(map[string]*v2.Subscription),
-	}
+	bus := testutils.NewBus()
 
-	player := &multiDummyPlayer{
-		C: make(chan struct{}, 10),
-		players: []dummyPlayer{
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
-				Err: nil,
-			},
-			dummyPlayer{
-				H:   ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}),
-				Err: nil,
-			},
-		},
-	}
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	q := NewQueue(bus)
 	q.Add("sound:1")
 	q.Add("sound:2")
 
 	go func() {
-		<-player.C // wait for first play request
-		bus.subs["PlaybackStarted;PlaybackFinished"].C <- playbackStartedGood("pb1")
+		<-player.Next // wait for first play request
+		bus.Send(playbackStartedGood("pb1"))
 		cancel()
 	}()
 
