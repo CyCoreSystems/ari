@@ -60,8 +60,6 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	pb.startCh = make(chan struct{})
 	pb.ctx, pb.cancel = context.WithCancel(ctx) //TODO: use deadline for timeout?
 
-	ctx = pb.ctx
-
 	// get playback data/identifier
 
 	// NOTE: this is where we may want to be able to access handle.ID directly?
@@ -83,7 +81,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	PlaybackStartLoop:
 		for {
 			select {
-			case <-ctx.Done():
+			case <-pb.ctx.Done():
 				close(pb.startCh)
 				close(pb.stopCh)
 				pb.err = pb.ctx.Err()
@@ -97,10 +95,10 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 				case "PlaybackStarted":
 					e := v.(*v2.PlaybackStarted)
 					if e.Playback.ID != id {
-						Logger.Debug("Ignoring unrelated playback")
+						Logger.Debug("Ignoring unrelated playback", "expected", id, "got", e.Playback.ID)
 						continue PlaybackStartLoop
 					}
-					Logger.Debug("Playback started")
+					Logger.Debug("Playback started", "h", h)
 					break PlaybackStartLoop
 				case "PlaybackFinished":
 					e := v.(*v2.PlaybackFinished)
@@ -108,7 +106,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 						Logger.Debug("Ignoring unrelated playback")
 						continue PlaybackStartLoop
 					}
-					Logger.Debug("Playback stopped (before PlaybackStated received)")
+					Logger.Debug("Playback stopped (before PlaybackStated received)", "h", h)
 					close(pb.startCh)
 					close(pb.stopCh)
 					return
@@ -117,7 +115,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 					continue PlaybackStartLoop
 				}
 			case <-startTimer:
-				Logger.Error("Playback timed out")
+				Logger.Error("Playback timed out", "h", h)
 				pb.err = timeoutErr{"Timeout waiting for start of playback"}
 				close(pb.startCh)
 				close(pb.stopCh)
@@ -134,7 +132,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	PlaybackStopLoop:
 		for {
 			select {
-			case <-ctx.Done():
+			case <-pb.ctx.Done():
 				pb.err = pb.ctx.Err()
 				return
 			case v := <-s.C:
@@ -149,14 +147,14 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 						Logger.Debug("Ignoring unrelated playback")
 						continue PlaybackStopLoop
 					}
-					Logger.Debug("Playback stopped")
+					Logger.Debug("Playback stopped", "h", h)
 					return
 				default:
 					Logger.Debug("Unhandled e.Type", v.GetType())
 					continue PlaybackStopLoop
 				}
 			case <-stopTimer:
-				Logger.Error("Playback timed out")
+				Logger.Error("Playback timed out", "h", h)
 				pb.err = timeoutErr{"Timeout waiting for stop of playback"}
 				return
 			}

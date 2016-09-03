@@ -37,7 +37,7 @@ func TestPlayAsync(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
@@ -91,7 +91,7 @@ func TestPlayTimeoutStart(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
@@ -112,12 +112,12 @@ func TestPlayTimeoutStop(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
 	go func() {
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -138,16 +138,16 @@ func TestPlaySuccess(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
 	go func() {
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 
 		<-time.After(1 * time.Second)
 
-		bus.S.C <- playbackFinishedGood
+		bus.S.C <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -165,16 +165,16 @@ func TestPlayNilEvents(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
 	go func() {
 		bus.S.C <- nil
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 		bus.S.C <- nil
 		<-time.After(1 * time.Second)
-		bus.S.C <- playbackFinishedGood
+		bus.S.C <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -192,7 +192,7 @@ func TestPlayUnrelatedEvents(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
@@ -200,13 +200,13 @@ func TestPlayUnrelatedEvents(t *testing.T) {
 		bus.S.C <- playbackStartedBadMessageType
 		bus.S.C <- playbackFinishedDifferentPlaybackID
 		bus.S.C <- playbackStartedDifferentPlaybackID
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 
 		<-time.After(1 * time.Second)
 
 		bus.S.C <- playbackFinishedBadMessageType
 		bus.S.C <- playbackFinishedDifferentPlaybackID
-		bus.S.C <- playbackFinishedGood
+		bus.S.C <- playbackFinishedGood("pb1")
 
 	}()
 
@@ -225,12 +225,12 @@ func TestPlayStopBeforeStart(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
 	go func() {
-		bus.S.C <- playbackFinishedGood
+		bus.S.C <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -248,13 +248,11 @@ func TestContextCancellation(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
-	go func() {
-		cancel()
-	}()
+	cancel()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
@@ -279,13 +277,12 @@ func TestContextCancellationAfterStart(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: nil,
 	}
 
 	go func() {
-		bus.S.C <- playbackStartedGood
-		<-time.After(1 * time.Second)
+		bus.S.C <- playbackStartedGood("pb1")
 		cancel()
 	}()
 
@@ -298,6 +295,12 @@ func TestContextCancellationAfterStart(t *testing.T) {
 	}
 }
 
+func TestContextCancellationAfterStart100(t *testing.T) {
+	for i := 0; i != 100; i++ {
+		TestContextCancellationAfterStart(t)
+	}
+}
+
 func TestErrorInPlayer(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
@@ -306,12 +309,12 @@ func TestErrorInPlayer(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}),
 		Err: errors.New("Dummy error playing to dummy player"),
 	}
 
 	go func() {
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 		<-time.After(1 * time.Second)
 		cancel()
 	}()
@@ -333,12 +336,12 @@ func TestErrorInDataFetch(t *testing.T) {
 
 	bus := &dummySubscriber{v2.NewSubscription("")}
 	player := &dummyPlayer{
-		H:   ari.NewPlaybackHandle("pb1", &testPlayback{failData: true}),
+		H:   ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}),
 		Err: nil,
 	}
 
 	go func() {
-		bus.S.C <- playbackStartedGood
+		bus.S.C <- playbackStartedGood("pb1")
 		<-time.After(1 * time.Second)
 		cancel()
 	}()
@@ -353,26 +356,42 @@ func TestErrorInDataFetch(t *testing.T) {
 }
 
 // messages
-var playbackStartedGood = &v2.PlaybackStarted{
-	Event: v2.Event{
-		Message: v2.Message{
-			Type: "PlaybackStarted",
+
+var channelDtmf = func(dtmf string) v2.Eventer {
+	return &v2.ChannelDtmfReceived{
+		Event: v2.Event{
+			Message: v2.Message{
+				Type: "ChannelDtmfReceived",
+			},
 		},
-	},
-	Playback: v2.Playback{
-		ID: "pb1",
-	},
+		Digit: dtmf,
+	}
 }
 
-var playbackFinishedGood = &v2.PlaybackFinished{
-	Event: v2.Event{
-		Message: v2.Message{
-			Type: "PlaybackFinished",
+var playbackStartedGood = func(id string) v2.Eventer {
+	return &v2.PlaybackStarted{
+		Event: v2.Event{
+			Message: v2.Message{
+				Type: "PlaybackStarted",
+			},
 		},
-	},
-	Playback: v2.Playback{
-		ID: "pb1",
-	},
+		Playback: v2.Playback{
+			ID: id,
+		},
+	}
+}
+
+var playbackFinishedGood = func(id string) v2.Eventer {
+	return &v2.PlaybackFinished{
+		Event: v2.Event{
+			Message: v2.Message{
+				Type: "PlaybackFinished",
+			},
+		},
+		Playback: v2.Playback{
+			ID: id,
+		},
+	}
 }
 
 var playbackStartedBadMessageType = &v2.PlaybackStarted{
@@ -428,6 +447,7 @@ type timeoutErrI interface {
 // test playback ari transport
 
 type testPlayback struct {
+	id       string
 	failData bool
 }
 
@@ -439,7 +459,7 @@ func (p *testPlayback) Data(id string) (pd ari.PlaybackData, err error) {
 	if p.failData {
 		err = errors.New("Dummy error getting playback data")
 	}
-	pd.ID = "pb1"
+	pd.ID = p.id
 	return
 }
 
