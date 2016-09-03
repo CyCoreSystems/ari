@@ -1,8 +1,7 @@
 
 
 all:
-	go build ./
-	go build ./client/native
+	go build -v ./...
 
 build_test:
 	docker build -t test-asterisk:13.8 ./internal/dockertest
