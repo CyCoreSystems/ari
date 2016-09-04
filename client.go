@@ -12,9 +12,10 @@ type Client struct {
 	Playback    Playback
 	Mailbox     Mailbox
 	Endpoint    Endpoint
-	TextMessage TextMessage
-	Bus         Bus
 	DeviceState DeviceState
+	TextMessage TextMessage
+	Sound       Sound
+	Bus         Bus
 
 	// TODO: other interfaces
 }
