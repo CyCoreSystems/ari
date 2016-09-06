@@ -6,9 +6,6 @@ import "time"
 // server for live recording resources
 type LiveRecording interface {
 
-	// List lists the recordings
-	List() ([]*LiveRecordingHandle, error)
-
 	// Get gets the Recording by type
 	Get(name string) *LiveRecordingHandle
 

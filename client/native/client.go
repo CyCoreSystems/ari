@@ -49,7 +49,7 @@ func New(opts *Options) (*ari.Client, error) {
 		Sound:       &nativeSound{conn},
 		Bus:         conn.Bus,
 		Recording: &ari.Recording{
-			Live:   nil,
+			Live:   &nativeLiveRecording{conn},
 			Stored: &nativeStoredRecording{conn},
 		},
 	}, nil
