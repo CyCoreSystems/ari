@@ -15,6 +15,7 @@ type Client struct {
 	DeviceState DeviceState
 	TextMessage TextMessage
 	Sound       Sound
+	Recording   *Recording
 	Bus         Bus
 
 	// TODO: other interfaces
