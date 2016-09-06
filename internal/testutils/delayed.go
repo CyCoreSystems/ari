@@ -20,6 +20,11 @@ func NewDelayedBus(delay time.Duration) *DelayedBus {
 	}
 }
 
+// Expect returns a channel that will be closed when a subscription occurs
+func (bus *DelayedBus) Expect(n string) chan struct{} {
+	return bus.bus.Expect(n)
+}
+
 // Subscribe returns a subscription to the given list of events
 func (bus *DelayedBus) Subscribe(nx ...string) (a *v2.Subscription) {
 	a = bus.bus.Subscribe(nx...)
