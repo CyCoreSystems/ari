@@ -1,9 +1,13 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/generic"
+	"golang.org/x/net/context"
+)
 
 // Options describes the options for connecting to
-// a native Asterisk ARI server.
+// a generic. Asterisk ARI server.
 type Options struct {
 	// Application is the the name of this ARI application
 	Application string
@@ -24,33 +28,33 @@ type Options struct {
 	Password string
 }
 
-// New creates a new ari.Client connected to a native ARI server
+// New creates a new ari.Client connected to a generic. ARI server
 func New(opts *Options) (*ari.Client, error) {
 
 	conn := newConn(opts)
 
-	if err := conn.Listen(nil); err != nil {
+	if err := conn.Listen(context.Background()); err != nil {
 		conn.Close()
 		return nil, err
 	}
 
-	playback := &nativePlayback{conn}
+	playback := &generic.Playback{conn}
 
 	return &ari.Client{
 		Playback:    playback,
-		Channel:     &nativeChannel{conn, playback},
-		Bridge:      &nativeBridge{conn, playback},
-		Asterisk:    &nativeAsterisk{conn},
-		Application: &nativeApplication{conn},
-		Mailbox:     &nativeMailbox{conn},
-		Endpoint:    &nativeEndpoint{conn},
-		DeviceState: &nativeDeviceState{conn},
-		TextMessage: &nativeTextMessage{conn},
-		Sound:       &nativeSound{conn},
+		Channel:     &generic.Channel{conn, playback},
+		Bridge:      &generic.Bridge{conn, playback},
+		Asterisk:    &generic.Asterisk{conn},
+		Application: &generic.Application{conn},
+		Mailbox:     &generic.Mailbox{conn},
+		Endpoint:    &generic.Endpoint{conn},
+		DeviceState: &generic.DeviceState{conn},
+		TextMessage: &generic.TextMessage{conn},
+		Sound:       &generic.Sound{conn},
 		Bus:         conn.Bus,
 		Recording: &ari.Recording{
-			Live:   &nativeLiveRecording{conn},
-			Stored: &nativeStoredRecording{conn},
+			Live:   &generic.LiveRecording{conn},
+			Stored: &generic.StoredRecording{conn},
 		},
 	}, nil
 }

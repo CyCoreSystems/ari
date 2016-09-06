@@ -1,27 +1,27 @@
-package native
+package generic
 
 import "github.com/CyCoreSystems/ari"
 
-type nativePlayback struct {
-	conn *Conn
+type Playback struct {
+	Conn Conn
 }
 
-func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
+func (a *Playback) Get(id string) (ph *ari.PlaybackHandle) {
 	ph = ari.NewPlaybackHandle(id, a)
 	return
 }
 
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
-func (a *nativePlayback) Data(id string) (p ari.PlaybackData, err error) {
-	err = Get(a.conn, "/playbacks/"+id, &p)
+func (a *Playback) Data(id string) (p ari.PlaybackData, err error) {
+	err = a.Conn.Get("/playbacks/%s", []interface{}{id}, &p)
 	return
 }
 
 // Control allows the user to manipulate an in-process playback.
 // TODO: list available operations.
 // (Equivalent to POST /playbacks/{playbackID}/control)
-func (a *nativePlayback) Control(id string, op string) (err error) {
+func (a *Playback) Control(id string, op string) (err error) {
 
 	//Request structure for controlling playback. Operation is required.
 	type request struct {
@@ -29,13 +29,13 @@ func (a *nativePlayback) Control(id string, op string) (err error) {
 	}
 
 	req := request{op}
-	err = Post(a.conn, "/playbacks/"+id+"/control", nil, &req)
+	err = a.Conn.Post("/playbacks/%s/control", []interface{}{id}, nil, &req)
 	return
 }
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
-func (a *nativePlayback) Stop(id string) (err error) {
-	err = Delete(a.conn, "/playbacks/"+id, nil, "")
+func (a *Playback) Stop(id string) (err error) {
+	err = a.Conn.Delete("/playbacks/%s", []interface{}{id}, nil, "")
 	return
 }
