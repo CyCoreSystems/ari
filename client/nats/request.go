@@ -2,6 +2,7 @@ package nats
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -10,43 +11,75 @@ import (
 // for a response to any request.
 var RequestTimeout = 2 * time.Second
 
-// Get calls the ARI server with a GET request
-func (conn *Conn) Get(url string, items []interface{}, ret interface{}) error {
+func convertURL(requestURL string, method string, items ...interface{}) string {
 
 	r := make([]interface{}, len(items))
 	for i := range items {
 		r[i] = ""
 	}
 
-	url = fmt.Sprintf(url, r...)
+	requestURL = fmt.Sprintf(requestURL, r...)
 
-	newUrl := ""
-	for _, s := range strings.Split(url, "/") {
+	new := ""
+	for _, s := range strings.Split(requestURL, "/") {
 		if s == "" {
 			continue
 		}
-
-		newUrl = newUrl + "." + s
+		new = new + "." + s
 	}
 
-	err := conn.c.Request(newUrl+".get", "", &ret, RequestTimeout)
+	if len(items) == 0 {
+		return new[1:] + "." + method
+	}
+
+	var itemsStr []string
+	for _, i := range items {
+
+		if i.(string)[0] == '?' {
+			u, err := url.ParseQuery(i.(string)[1:])
+			if err != nil {
+				panic(err)
+			}
+
+			for key, val := range u {
+				for _, v := range val {
+					itemsStr = append(itemsStr, key)
+					itemsStr = append(itemsStr, v)
+				}
+			}
+			continue
+		}
+
+		itemsStr = append(itemsStr, fmt.Sprintf("%v", i))
+	}
+
+	return new[1:] + "." + method + "." + strings.Join(itemsStr, ".")
+}
+
+// Get calls the ARI server with a GET request
+func (conn *Conn) Get(url string, items []interface{}, ret interface{}) error {
+	url = convertURL(url, "get", items...)
+	err := conn.c.Request(url, "", &ret, RequestTimeout)
 	return err
 }
 
 // Post calls the ARI server with a POST request.
 func (conn *Conn) Post(url string, items []interface{}, ret interface{}, req interface{}) error {
-	err := conn.c.Request(url+".post", &req, &ret, RequestTimeout)
+	url = convertURL(url, "post", items...)
+	err := conn.c.Request(url, &req, &ret, RequestTimeout)
 	return err
 }
 
 // Put calls the ARI server with a PUT request.
 func (conn *Conn) Put(url string, items []interface{}, ret interface{}, req interface{}) error {
-	err := conn.c.Request(url+".put", &req, &ret, RequestTimeout)
+	url = convertURL(url, "put", items...)
+	err := conn.c.Request(url, &req, &ret, RequestTimeout)
 	return err
 }
 
 // Delete calls the ARI server with a DELETE request
 func (conn *Conn) Delete(url string, items []interface{}, ret interface{}, req string) error {
-	err := conn.c.Request(url+".delete", &req, &ret, RequestTimeout)
+	url = convertURL(url, "delete", items...)
+	err := conn.c.Request(url, &req, &ret, RequestTimeout)
 	return err
 }

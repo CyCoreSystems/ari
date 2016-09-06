@@ -30,11 +30,14 @@ func main() {
 
 func server(cl *ari.Client, e *nats.EncodedConn) {
 
-	e.Subscribe("get./applications", func(_ string, reply string, _ string) {
-		e.Publish(reply, cl.Application.List())
+	e.Subscribe("applications.get", func(_ string, reply string, _ string) {
+		cl, err := cl.Application.List()
+		for _, c := range cl {
+
+		}
 	})
 
-	e.Subscribe("get./applications/.>", func(subj string, reply string, _ string) {
+	e.Subscribe("applications.get.>", func(subj string, reply string, _ string) {
 		id := strings.Join(strings.Split(subj, ".")[3:], ".")
 		e.Publish(reply, cl.Application.Data(id))
 	})
