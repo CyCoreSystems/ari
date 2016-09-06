@@ -2,6 +2,7 @@ package ari
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 )
 
@@ -26,14 +27,11 @@ func (dt *DateTime) UnmarshalJSON(data []byte) error {
 	var stringDate string
 	err := json.Unmarshal(data, &stringDate)
 	if err != nil {
-		//	Logger.Error("Failed to unmarshal asterisk timestamp", err)
-		//	fmt.Printf("data: %s\nstringDate: %s\n", data, stringDate)
 		return err
 	}
 
 	t, err := time.Parse(DateFormat, stringDate)
 	if err != nil {
-		//	Logger.Error("Failed to parse asterisk date format", stringDate)
 		return err
 	}
 	*dt = (DateTime)(t)
@@ -43,4 +41,25 @@ func (dt *DateTime) UnmarshalJSON(data []byte) error {
 func (dt DateTime) String() string {
 	t := (time.Time)(dt)
 	return t.String()
+}
+
+// Duration support functions
+
+// DurationSec is a JSON type for duration in seconds
+type DurationSec time.Duration
+
+// MarshalJSON converts the duration into a JSON friendly format
+func (ds DurationSec) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Itoa(int(time.Duration(ds) / time.Second))), nil
+}
+
+// UnmarshalJSON parses the data into the duration seconds object
+func (ds *DurationSec) UnmarshalJSON(data []byte) error {
+	s, err := strconv.Atoi(string(data))
+	if err != nil {
+		return err
+	}
+
+	*ds = DurationSec(time.Duration(s) * time.Second)
+	return nil
 }
