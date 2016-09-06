@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/inconshreveable/log15.v2"
-
 	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/CyCoreSystems/ari"
@@ -599,14 +597,7 @@ func TestPromptPostPromptHangup(t *testing.T) {
 	}
 
 	if res.Data != "" {
-		t.Errorf("Expected Data to be empty, got, got '%v'", res.Data)
-	}
-}
-
-func TestPromptNoSound100(t *testing.T) {
-	Logger.SetHandler(log15.DiscardHandler())
-	for i := 0; i != 100; i++ {
-		TestPromptNoSound(t)
+		t.Errorf("Expected Data to be empty, got '%v'", res.Data)
 	}
 }
 
@@ -620,7 +611,15 @@ func TestPromptNoSound(t *testing.T) {
 
 	player := testutils.NewPlayer()
 
+	exp := bus.Expect("ChannelDtmfReceived")
+
 	go func() {
+		select {
+		case <-exp:
+		case <-time.After(1 * time.Millisecond):
+			t.Errorf("expected subscription to occur")
+		}
+
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
 		bus.Send(channelDtmf("1"))
@@ -648,7 +647,6 @@ func TestPromptNoSound(t *testing.T) {
 
 func TestPromptInterDigitTimeout(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
-	audio.Logger = log15.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -697,7 +695,6 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 
 func TestPromptInterDigitTimeout2(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
-	audio.Logger = log15.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -747,7 +744,6 @@ func TestPromptInterDigitTimeout2(t *testing.T) {
 func TestPromptOverrallTimeout(t *testing.T) {
 	DefaultOverallTimeout = 3 * time.Second
 	audio.MaxPlaybackTime = 3 * time.Second
-	audio.Logger = log15.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -793,7 +789,6 @@ func TestPromptOverrallTimeout(t *testing.T) {
 func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 	DefaultOverallTimeout = 3 * time.Second
 	audio.MaxPlaybackTime = 3 * time.Second
-	audio.Logger = log15.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -101,20 +101,20 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 	hangupSub := bus.Subscribe("ChannelHangupRequest", "ChannelDestroyed")
 	defer hangupSub.Cancel()
 
-	// Make a play context so that the playback can
-	// be separately canceled. NOTE: if we make
-	// playCtx fork our parent context, then timeout errors
-	// can get propagated up when we don't really care about them.
-	playCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	// Play the prompt, if we have one
 	var promptComplete bool
-	var errChan chan error
+
+	var pb *audio.Playback
+
 	if sounds != nil {
 		q := audio.NewQueue(bus)
 		q.Add(sounds...)
-		errChan = playAsync(q, playCtx, p, nil)
+		pb, err = q.PlayAsync(p, nil)
+		if err != nil {
+			ret.Status = Failed
+			return
+		}
+		defer pb.Cancel()
 	} else {
 		// If we have no prompt, it is complete
 		promptComplete = true
@@ -135,16 +135,20 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 		case e := <-dtmfSub.C:
 			ret.Data += e.(*v2.ChannelDtmfReceived).Digit
 			Logger.Debug("DTMF received", "digits", ret.Data)
-			cancel() // cancel remaining playback
+
+			// cancel audio
+			pb.Cancel()
+
 			match, res := opts.MatchFunc(ret.Data)
 			ret.Data = match
 			if res > 0 {
 				ret.Status = res
 				return
 			}
-		case err = <-errChan:
-			if err != nil {
+		case <-pb.StopCh():
+			if pb.Err() != nil {
 				ret.Status = Failed
+				err = pb.Err()
 				return
 			}
 			Logger.Debug("Prompt playback complete")
@@ -241,20 +245,4 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 			return
 		}
 	}
-}
-
-// playAsync plays the queue, returing immediately with an error channel,
-// which will pass any errors and be closed on completion of the queue.
-func playAsync(pq *audio.Queue, ctx context.Context, p audio.Player, opts *audio.Options) chan error {
-	errChan := make(chan error)
-	go func() {
-		err := pq.Play(ctx, p, opts)
-		if err != nil && err.Error() != "context canceled" {
-			errChan <- err
-		}
-		close(errChan)
-		return
-	}()
-
-	return errChan
 }
