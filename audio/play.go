@@ -23,7 +23,7 @@ var MaxPlaybackTime = 10 * time.Minute
 
 // Play plays the audio to the given Player, waiting for the playback to finish or an error to be generated
 func Play(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) error {
-	pb, err := PlayAsync(ctx, bus, p, mediaURI)
+	pb, err := PlayAsync(bus, p, mediaURI)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func Play(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) er
 }
 
 // PlayAsync plays audio to the given Player, returning a Playback object
-func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) (*Playback, error) {
+func PlayAsync(bus ari.Subscriber, p Player, mediaURI string) (*Playback, error) {
 
 	var pb Playback
 
@@ -55,10 +55,12 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 
 	// build return value
 
+	quitCh := make(chan struct{})
+
 	pb.handle = h
 	pb.stopCh = make(chan struct{})
 	pb.startCh = make(chan struct{})
-	pb.ctx, pb.cancel = context.WithCancel(ctx) //TODO: use deadline for timeout?
+	pb.quitCh = quitCh
 
 	// get playback data/identifier
 
@@ -72,7 +74,6 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	go func() {
 
 		defer s.Cancel()
-		defer pb.cancel()
 
 		id := data.ID
 
@@ -81,10 +82,9 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	PlaybackStartLoop:
 		for {
 			select {
-			case <-pb.ctx.Done():
+			case <-quitCh:
 				close(pb.startCh)
 				close(pb.stopCh)
-				pb.err = pb.ctx.Err()
 				return
 			case v := <-s.C:
 				if v == nil {
@@ -132,8 +132,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	PlaybackStopLoop:
 		for {
 			select {
-			case <-pb.ctx.Done():
-				pb.err = pb.ctx.Err()
+			case <-quitCh:
 				return
 			case v := <-s.C:
 				if v == nil {

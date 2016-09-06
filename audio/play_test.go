@@ -12,19 +12,16 @@ import (
 	"golang.org/x/net/context"
 )
 
-func TestPlayAsync(t *testing.T) {
+func TestPlayAsyncWithTimeout(t *testing.T) {
 
 	MaxPlaybackTime = 3 * time.Second
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
-	pb, err := PlayAsync(ctx, bus, player, "audio:hello-world")
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
 	}
@@ -61,8 +58,99 @@ func TestPlayAsync(t *testing.T) {
 		t.Errorf("Expected trigger of stop channel after MaxPlaybackTime")
 	}
 
-	if err := pb.Err(); err == nil {
-		t.Errorf("Expected non-nil error")
+	if !isTimeout(pb.Err()) {
+		t.Errorf("Expected timeout error, got: '%v'", pb.Err())
+	}
+
+}
+
+func TestPlayAsyncQuit(t *testing.T) {
+
+	MaxPlaybackTime = 3 * time.Second
+
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
+	if err != nil {
+		t.Errorf("Unexpected error: '%v'", err)
+	}
+
+	if pb == nil {
+		t.Errorf("Expected playback object to be non-nil")
+		return
+	}
+	if pb.Handle() == nil {
+		t.Errorf("Expected playback.Handle to be non-nil")
+	}
+
+	pb.Cancel()
+
+	select {
+	case <-pb.StartCh():
+	case <-time.After(1 * time.Second):
+		t.Errorf("Expected trigger of Start channel")
+	}
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(1 * time.Second):
+		t.Errorf("Expected trigger of Stop channel")
+	}
+
+	// wait for timeout
+	<-time.After(MaxPlaybackTime)
+
+	if err := pb.Err(); err != nil {
+		t.Errorf("Unexpected error: '%v'", err)
+	}
+}
+
+func TestPlayAsyncQuitAfterStart(t *testing.T) {
+
+	MaxPlaybackTime = 3 * time.Second
+
+	bus := testutils.NewBus()
+
+	player := testutils.NewPlayer()
+	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
+	if err != nil {
+		t.Errorf("Unexpected error: '%v'", err)
+	}
+
+	if pb == nil {
+		t.Errorf("Expected playback object to be non-nil")
+		return
+	}
+
+	if pb.Handle() == nil {
+		t.Errorf("Expected playback.Handle to be non-nil")
+	}
+
+	bus.Send(playbackStartedGood("pb1"))
+	pb.Cancel()
+
+	select {
+	case <-pb.StartCh():
+	case <-time.After(1 * time.Second):
+		t.Errorf("Expected trigger of Start channel")
+	}
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(1 * time.Second):
+		t.Errorf("Expected trigger of Stop channel")
+	}
+
+	// wait for timeout
+	<-time.After(MaxPlaybackTime)
+
+	if err := pb.Err(); err != nil {
+		t.Errorf("Unexpected error: '%v'", err)
 	}
 }
 
@@ -89,107 +177,149 @@ func TestPlayTimeoutStart(t *testing.T) {
 }
 
 func TestPlayTimeoutStop(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	MaxPlaybackTime = 3 * time.Millisecond
 
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
-	go func() {
-		bus.Send(playbackStartedGood("pb1"))
-	}()
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
+	if err != nil {
+		t.Errorf("Unexpected error playing audio: '%v'", err)
+	}
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	bus.Send(playbackStartedGood("pb1"))
 
-	if !isTimeout(err) {
+	select {
+	case <-pb.StopCh():
+	case <-time.After(3 * time.Second):
+		t.Errorf("Expected Stop channel to trigger")
+	}
+
+	if !isTimeout(pb.Err()) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
 	}
 
-	if err != nil && err.Error() != "Timeout waiting for stop of playback" {
-		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
+	if pb.Err() != nil && pb.Err().Error() != "Timeout waiting for stop of playback" {
+		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", pb.Err())
+	}
+}
+
+func TestPlayTimeoutStop100(t *testing.T) {
+	for i := 0; i != 100; i++ {
+		TestPlayTimeoutStop(t)
 	}
 }
 
 func TestPlaySuccess(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
-	go func() {
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
-	}()
-
-	err := Play(ctx, bus, player, "audio:hello-world")
-
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
+	}
+	defer pb.Cancel()
+
+	bus.Send(playbackStartedGood("pb1"))
+	bus.Send(playbackFinishedGood("pb1"))
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(3 * time.Second):
+		t.Errorf("Expected Stop channel to trigger")
+	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected error: '%v'", pb.Err())
 	}
 }
 
 func TestPlayNilEvents(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
-	go func() {
-		bus.SendTo("PlaybackStarted", nil)
-		bus.Send(playbackStartedGood("pb1"))
-		bus.SendTo("PlaybackStarted", nil)
-		bus.SendTo("PlaybackFinished", nil)
-		bus.Send(playbackFinishedGood("pb1"))
-	}()
-
-	err := Play(ctx, bus, player, "audio:hello-world")
-
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
+	}
+	defer pb.Cancel()
+
+	bus.SendTo("PlaybackStarted", nil)
+	bus.Send(playbackStartedGood("pb1"))
+
+	select {
+	case <-pb.StartCh():
+	case <-time.After(3 * time.Second):
+		t.Errorf("Expected Start channel to trigger")
+	}
+
+	bus.SendTo("PlaybackStarted", nil)
+	bus.SendTo("PlaybackFinished", nil)
+	bus.Send(playbackFinishedGood("pb1"))
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(3 * time.Second):
+		t.Errorf("Expected Stop channel to trigger")
+	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected error: '%v'", pb.Err())
 	}
 }
 
 func TestPlayUnrelatedEvents(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
-	go func() {
-		bus.SendTo("PlaybackStarted", playbackStartedBadMessageType)
-		bus.Send(playbackFinishedDifferentPlaybackID)
-		bus.Send(playbackStartedDifferentPlaybackID)
-		bus.Send(playbackStartedGood("pb1"))
-
-		<-time.After(1 * time.Second)
-
-		bus.SendTo("PlaybackFinished", playbackFinishedBadMessageType)
-		bus.Send(playbackFinishedDifferentPlaybackID)
-		bus.Send(playbackFinishedGood("pb1"))
-	}()
-
-	err := Play(ctx, bus, player, "audio:hello-world")
-
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
 	if err != nil {
+		t.Errorf("Unexpected error: '%v'", err)
+	}
+
+	bus.SendTo("PlaybackStarted", playbackStartedBadMessageType)
+	bus.Send(playbackFinishedDifferentPlaybackID)
+	bus.Send(playbackStartedDifferentPlaybackID)
+	bus.Send(playbackStartedGood("pb1"))
+
+	select {
+	case <-pb.StartCh():
+	case <-time.After(1 * time.Millisecond):
+		t.Errorf("Expected start channel to trigger")
+	}
+
+	bus.SendTo("PlaybackFinished", playbackFinishedBadMessageType)
+	bus.Send(playbackFinishedDifferentPlaybackID)
+
+	select {
+	case <-pb.StopCh():
+		t.Errorf("Unexpected stop channel trigger ")
+	default:
+	}
+
+	bus.Send(playbackFinishedGood("pb1"))
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(1 * time.Millisecond):
+		t.Errorf("Expected stop channel to trigger")
+	}
+
+	if err = pb.Err(); err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
 	}
 }
@@ -197,9 +327,6 @@ func TestPlayUnrelatedEvents(t *testing.T) {
 func TestPlayStopBeforeStart(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	bus := testutils.NewBus()
 
 	player := testutils.NewPlayer()
@@ -209,10 +336,19 @@ func TestPlayStopBeforeStart(t *testing.T) {
 		bus.Send(playbackFinishedGood("pb1"))
 	}()
 
-	err := Play(ctx, bus, player, "audio:hello-world")
-
+	pb, err := PlayAsync(bus, player, "audio:hello-world")
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
+	}
+
+	select {
+	case <-pb.StopCh():
+	case <-time.After(1 * time.Second):
+		t.Errorf("Expected trigger of stop channel")
+	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected error: '%v'", pb.Err())
 	}
 }
 

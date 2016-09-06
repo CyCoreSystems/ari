@@ -85,11 +85,48 @@ func (pq *Queue) ReceivedDTMF() string {
 	return pq.receivedDTMF
 }
 
-// Play starts the playback of the queue to the Player.
-func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
+func (pq *Queue) dtmfHandler(quitCh chan struct{}, opts *Options) chan *v2.ChannelDtmfReceived {
+
+	dtmfChan := make(chan *v2.ChannelDtmfReceived, 10) // include a buffer in case opts.DTMF blocks
+
+	go func() {
+		// Listen for DTMF, if we were asked to do so
+		switch opts.DTMF {
+		case nil:
+			for {
+				select {
+				case <-quitCh:
+					return
+				case <-dtmfChan:
+				}
+			}
+		default:
+			for {
+				select {
+				case <-quitCh:
+					return
+				case e := <-dtmfChan:
+					opts.DTMF <- e
+				}
+			}
+		}
+	}()
+
+	return dtmfChan
+}
+
+// PlayAsync starts the playback of the queue, asynchronously
+func (pq *Queue) PlayAsync(p Player, opts *Options) (*Playback, error) {
 	if opts == nil {
 		opts = &Options{}
 	}
+
+	quitCh := make(chan struct{})
+
+	pb := &Playback{}
+	pb.startCh = make(chan struct{})
+	pb.stopCh = make(chan struct{})
+	pb.quitCh = quitCh
 
 	// NOTE: this code used to call Subscribe("ChannelDtmfReceived") twice. This
 	// was /fine/ until trying to unit test. We use one subscription
@@ -97,88 +134,85 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 	// This simplifies the workflow and ensures we have a 1-1 correlation between
 	// a subscription and a Queue
 
-	dtmfChan := make(chan *v2.ChannelDtmfReceived)
+	dtmfChan := pq.dtmfHandler(quitCh, opts)
 	dtmfSub := pq.s.Subscribe("ChannelDtmfReceived")
-
-	handlingDTMF := false
-
-	// Handle any options we were given
-	if opts != nil {
-		// Close the done channel when we finish,
-		// if we were given one.
-		if opts.Done != nil {
-			defer close(opts.Done)
-		}
-
-		// Listen for DTMF, if we were asked to do so
-		if opts.DTMF != nil {
-			handlingDTMF = true
-			go func() {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case e := <-dtmfChan:
-						opts.DTMF <- e
-					}
-				}
-			}()
-		}
-	}
-
-	// if we aren't forwarding to opts.DTMF, then discard DTMF messages
-	if !handlingDTMF {
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-				case <-dtmfChan:
-				}
-			}
-		}()
-	}
 
 	// Record any DTMF (this is separate from opts.DTMF) so that we can
 	//  - Service ReceivedDTMF requests
 	//  - Exit if we were given an ExitOnDTMF list
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
 	go func() {
 		defer dtmfSub.Cancel()
 		for {
 			select {
-			case <-ctx.Done():
+			case <-quitCh:
 				return
 			case e := <-dtmfSub.C:
 				if e == nil {
 					return
 				}
+
+				// forward to our (optional) dtmf handler
 				dtmfChan <- e.(*v2.ChannelDtmfReceived)
+
+				// record digits and handle ExitOnDTMF
 				digit := e.(*v2.ChannelDtmfReceived).Digit
 				pq.receivedDTMF += digit
 				if strings.Contains(opts.ExitOnDTMF, digit) {
-					cancel()
+					pb.Cancel()
 				}
 			}
 		}
 	}()
 
-	// Start the playback
-	for i := 0; len(pq.queue) > i; i++ {
-		// Make sure our context isn't closed
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+	go func() {
+
+		close(pb.startCh)      // trigger start
+		defer close(pb.stopCh) // trigger stop
+
+		// Close the done channel when we finish, if we were given one.
+		if opts.Done != nil {
+			defer close(opts.Done)
 		}
 
-		// Get the next clip
-		err := Play(ctx, pq.s, p, pq.queue[i])
-		if err != nil {
-			return err
-		}
+		// Start the playback
+		for i := 0; len(pq.queue) > i; i++ {
 
+			// Get the next clip
+			pb1, err := PlayAsync(pq.s, p, pq.queue[i])
+			if err != nil {
+				pb.err = err
+				return
+			}
+
+			select {
+			case <-pb1.StopCh():
+			case <-quitCh:
+				return
+			}
+
+			if err := pb1.Err(); err != nil {
+				pb.err = pb1.err
+				return
+			}
+		}
+	}()
+
+	return pb, nil
+}
+
+// Play plays the playback of the queue to the Player.
+func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
+	pb, err := pq.PlayAsync(p, opts)
+	if err != nil {
+		return err
+	}
+	defer pb.Cancel()
+
+	select {
+	case <-pb.StopCh():
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	return nil
+	return pb.Err()
 }

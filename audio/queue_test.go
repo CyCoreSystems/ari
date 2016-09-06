@@ -272,8 +272,8 @@ func TestQueueExitOnDTMF(t *testing.T) {
 
 	err := q.Play(ctx, player, opts)
 
-	if err == nil || err.Error() != "context canceled" {
-		t.Errorf("Expected error 'context canceled', got '%v'", err)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
 	}
 
 	dtmf := q.ReceivedDTMF()
