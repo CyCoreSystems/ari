@@ -19,7 +19,7 @@ func TestPromptPlayError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
@@ -55,7 +55,7 @@ func TestPromptCancelBeforePromptComplete(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -89,7 +89,7 @@ func TestPromptNoInput(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -126,7 +126,7 @@ func TestPromptHangup(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -159,7 +159,9 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	// 1 millisecond between events may not sound like much but
+	// every "wait" causes other goroutines to wake up.
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -179,22 +181,17 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
 
-		<-time.After(1 * time.Second)
-
 		bus.Send(channelDtmf("2"))
-		<-time.After(50 * time.Millisecond)
 
 		bus.Send(playbackStartedGood("d1"))
 		bus.Send(playbackFinishedGood("d1"))
 
 		bus.Send(channelDtmf("3"))
-		<-time.After(50 * time.Millisecond)
 
 		bus.Send(playbackStartedGood("d2"))
 		bus.Send(playbackFinishedGood("d2"))
 
 		bus.Send(channelDtmf("1"))
-		<-time.After(50 * time.Millisecond)
 
 		bus.Send(playbackStartedGood("d3"))
 		bus.Send(playbackFinishedGood("d3"))
@@ -204,7 +201,6 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 		bus.Send(playbackStartedGood("d4"))
 		bus.Send(playbackFinishedGood("d4"))
 
-		<-time.After(50 * time.Millisecond)
 		bus.Send(channelDtmf("#"))
 
 		bus.Send(playbackStartedGood("d5"))
@@ -237,7 +233,7 @@ func TestPromptMatchHash(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -250,8 +246,6 @@ func TestPromptMatchHash(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -284,7 +278,7 @@ func TestPromptMatchAny(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -297,8 +291,6 @@ func TestPromptMatchAny(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -331,7 +323,7 @@ func TestPromptMatchLenFunc(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -344,8 +336,6 @@ func TestPromptMatchLenFunc(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -378,7 +368,7 @@ func TestPromptMatchLenOrTerminatorFuncTerm(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -391,8 +381,6 @@ func TestPromptMatchLenOrTerminatorFuncTerm(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -425,7 +413,7 @@ func TestPromptMatchLenOrTerminatorFunc(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -438,8 +426,6 @@ func TestPromptMatchLenOrTerminatorFunc(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -472,7 +458,7 @@ func TestPromptMatchTerminatorFunc(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -485,8 +471,6 @@ func TestPromptMatchTerminatorFunc(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(channelDtmf("2"))
 		bus.Send(channelDtmf("3"))
@@ -519,7 +503,7 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -567,7 +551,7 @@ func TestPromptPostPromptHangup(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -580,8 +564,6 @@ func TestPromptPostPromptHangup(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		bus.Send(&v2.ChannelHangupRequest{Event: v2.Event{Message: v2.Message{Type: "ChannelHangupRequest"}}})
 	}()
@@ -607,7 +589,7 @@ func TestPromptNoSound(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 
@@ -651,7 +633,7 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -699,7 +681,7 @@ func TestPromptInterDigitTimeout2(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -748,7 +730,7 @@ func TestPromptOverrallTimeout(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -793,7 +775,7 @@ func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := testutils.NewDelayedBus(1 * time.Millisecond)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -809,8 +791,6 @@ func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 		<-player.Next
 		bus.Send(playbackStartedGood("pb2"))
 		bus.Send(playbackFinishedGood("pb2"))
-
-		<-time.After(1 * time.Second)
 
 		cancel()
 	}()
