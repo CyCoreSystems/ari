@@ -47,6 +47,7 @@ func New(opts *Options) (*ari.Client, error) {
 		DeviceState: &nativeDeviceState{conn},
 		TextMessage: &nativeTextMessage{conn},
 		Sound:       &nativeSound{conn},
+		Event:       &nativeEvent{conn},
 		Bus:         conn.Bus,
 	}, nil
 }
