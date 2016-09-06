@@ -48,5 +48,9 @@ func New(opts *Options) (*ari.Client, error) {
 		TextMessage: &nativeTextMessage{conn},
 		Sound:       &nativeSound{conn},
 		Bus:         conn.Bus,
+		Recording: &ari.Recording{
+			Live:   nil,
+			Stored: &nativeStoredRecording{conn},
+		},
 	}, nil
 }
