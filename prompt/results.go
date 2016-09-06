@@ -1,5 +1,7 @@
 package prompt
 
+//go:generate stringer --type=Status results.go
+
 // Status indicates the status of the prompt
 // operation.
 type Status int
