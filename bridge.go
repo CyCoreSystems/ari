@@ -51,6 +51,11 @@ type BridgeHandle struct {
 	b  Bridge
 }
 
+// ID returns the identifier for the bridge
+func (bh *BridgeHandle) ID() string {
+	return bh.id
+}
+
 // AddChannel adds a channel to the bridge
 func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
 	err = bh.b.AddChannel(bh.id, channelID)
