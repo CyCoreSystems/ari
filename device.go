@@ -32,6 +32,11 @@ type DeviceStateHandle struct {
 	d    DeviceState
 }
 
+// ID returns the identifier for the device
+func (dsh *DeviceStateHandle) ID() string {
+	return dsh.name
+}
+
 // Data gets the device state
 func (dsh *DeviceStateHandle) Data() (d DeviceStateData, err error) {
 	d, err = dsh.d.Data(dsh.name)
