@@ -1,4 +1,4 @@
-package native
+package generic
 
 import (
 	"errors"
@@ -8,13 +8,13 @@ import (
 
 var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
 
-type nativeAsterisk struct {
-	conn *Conn
+type Asterisk struct {
+	Conn Conn
 }
 
 // Info returns various data about the Asterisk system
 // Equivalent to GET /asterisk/info
-func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
+func (a *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	var m ari.AsteriskInfo
 	path := "/asterisk/info"
 
@@ -31,21 +31,21 @@ func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	// That means we should probably break this
 	// method into multiple submethods
 
-	err := Get(a.conn, path, &m)
+	err := a.Conn.Get(path, nil, &m)
 	return &m, err
 }
 
 // GetVariable returns the value of the given global variable
 // Equivalent to GET /asterisk/variable
-func (a *nativeAsterisk) GetVariable(key string) (string, error) {
+func (a *Asterisk) GetVariable(key string) (string, error) {
 	type variable struct {
 		Value string `json:"value"`
 	}
 
 	var m variable
 
-	path := "/asterisk/variable?variable=" + key
-	err := Get(a.conn, path, &m)
+	path := "/asterisk/variable?variable=%s"
+	err := a.Conn.Get(path, []interface{}{key}, &m)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +54,7 @@ func (a *nativeAsterisk) GetVariable(key string) (string, error) {
 
 // SetVariable sets a global channel variable
 // (Equivalent to POST /asterisk/variable)
-func (a *nativeAsterisk) SetVariable(key string, value string) error {
+func (a *Asterisk) SetVariable(key string, value string) error {
 	path := "/asterisk/variable"
 
 	type request struct {
@@ -63,12 +63,12 @@ func (a *nativeAsterisk) SetVariable(key string, value string) error {
 	}
 	req := request{key, value}
 
-	err := Post(a.conn, path, nil, &req)
+	err := a.Conn.Post(path, nil, nil, &req)
 	return err
 }
 
 // ReloadModule tells asterisk to load the given module
-func (a *nativeAsterisk) ReloadModule(name string) error {
-	err := Put(a.conn, "/asterisk/modules/"+name, nil, nil)
+func (a *Asterisk) ReloadModule(name string) error {
+	err := a.Conn.Put("/asterisk/modules/%s", []interface{}{name}, nil, nil)
 	return err
 }

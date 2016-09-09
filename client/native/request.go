@@ -67,9 +67,9 @@ type MissingParams struct {
 }
 
 // Get calls the ARI server with a GET request
-func Get(conn *Conn, url string, ret interface{}) error {
+func (conn *Conn) Get(url string, items []interface{}, ret interface{}) error {
 
-	finalURL := conn.Options.URL + url
+	finalURL := conn.Options.URL + fmt.Sprintf(url, items...)
 
 	httpReq, err := buildRequest(conn, "GET", finalURL, "", nil)
 	if err != nil {
@@ -92,9 +92,9 @@ func Get(conn *Conn, url string, ret interface{}) error {
 }
 
 // Post calls the ARI server with a POST request.
-func Post(conn *Conn, requestURL string, ret interface{}, req interface{}) error {
+func (conn *Conn) Post(requestURL string, items []interface{}, ret interface{}, req interface{}) error {
 
-	finalURL := conn.Options.URL + requestURL
+	finalURL := conn.Options.URL + fmt.Sprintf(requestURL, items...)
 
 	requestBody, contentType, err := structToRequestBody(req)
 	if err != nil {
@@ -122,9 +122,9 @@ func Post(conn *Conn, requestURL string, ret interface{}, req interface{}) error
 }
 
 // Put calls the ARI server with a PUT request.
-func Put(conn *Conn, url string, ret interface{}, req interface{}) error {
+func (conn *Conn) Put(url string, items []interface{}, ret interface{}, req interface{}) error {
 
-	finalURL := conn.Options.URL + url
+	finalURL := conn.Options.URL + fmt.Sprintf(url, items...)
 
 	requestBody, contentType, err := structToRequestBody(req)
 	if err != nil {
@@ -152,9 +152,10 @@ func Put(conn *Conn, url string, ret interface{}, req interface{}) error {
 }
 
 // Delete calls the ARI server with a DELETE request
-func Delete(conn *Conn, url string, ret interface{}, req string) error {
+func (conn *Conn) Delete(url string, items []interface{}, ret interface{}, req string) error {
 
-	finalURL := conn.Options.URL + url
+	finalURL := conn.Options.URL + fmt.Sprintf(url, items...)
+
 	if req != "" {
 		finalURL = finalURL + "?" + req
 	}
