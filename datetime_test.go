@@ -3,18 +3,13 @@ package ari
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 )
 
-type dtTest struct {
-	Date DateTime `json:"dt"`
-}
-
-func (dt *dtTest) Equal(o *dtTest) bool {
-	return time.Time(dt.Date).Equal(time.Time(o.Date))
-}
+// test data
 
 var dtMarshalTests = []struct {
 	Input    dtTest
@@ -22,22 +17,6 @@ var dtMarshalTests = []struct {
 	HasError bool
 }{
 	{dtTest{DateTime(time.Date(2005, 02, 04, 13, 12, 6, 0, time.UTC))}, `{"dt":"2005-02-04T13:12:06.000+0000"}`, false},
-}
-
-func TestDateTimeMarshal(t *testing.T) {
-	for _, tx := range dtMarshalTests {
-		var buf bytes.Buffer
-		err := json.NewEncoder(&buf).Encode(tx.Input)
-		out := strings.TrimSpace(buf.String())
-
-		failed := false
-		failed = failed || (err == nil && tx.HasError)
-		failed = failed || (out != tx.Output)
-
-		if failed {
-			t.Errorf("Marshal(%s) => '%s', 'err != nil => %v'; expected '%s', 'err != nil => %v'.", tx.Input, out, err != nil, tx.Output, tx.HasError)
-		}
-	}
 }
 
 var dtUnmarshalTests = []struct {
@@ -48,54 +27,6 @@ var dtUnmarshalTests = []struct {
 	{`{"dt":"2005-02-04T13:12:06.000+0000"}`, dtTest{DateTime(time.Date(2005, 02, 04, 13, 12, 6, 0, time.UTC))}, false},
 	{`{"dt":"2x05-02-04T13:12:06.000+0000"}`, dtTest{}, true},
 	{`{"dt": 0 }`, dtTest{}, true},
-}
-
-func TestDateTimeUnmarshal(t *testing.T) {
-	for _, tx := range dtUnmarshalTests {
-		var out dtTest
-		err := json.NewDecoder(strings.NewReader(tx.Input)).Decode(&out)
-
-		failed := false
-		failed = failed || (err == nil && tx.HasError)
-		failed = failed || (!out.Equal(&tx.Output))
-
-		if failed {
-			t.Errorf("Unmarshal(%s) => '%s', 'err != nil => %v'; expected '%s', 'err != nil => %v'.", tx.Input, out, err != nil, tx.Output, tx.HasError)
-		}
-	}
-}
-
-type dsTest struct {
-	Duration DurationSec `json:"ds"`
-}
-
-func (ds *dsTest) Equal(o *dsTest) bool {
-	return time.Duration(ds.Duration) == time.Duration(o.Duration)
-}
-
-var dsMarshalTests = []struct {
-	Input    dsTest
-	Output   string
-	HasError bool
-}{
-	{dsTest{DurationSec(4 * time.Second)}, `{"ds":4}`, false},
-	{dsTest{DurationSec(40 * time.Second)}, `{"ds":40}`, false},
-}
-
-func TestDurationSecsMarshal(t *testing.T) {
-	for _, tx := range dsMarshalTests {
-		var buf bytes.Buffer
-		err := json.NewEncoder(&buf).Encode(tx.Input)
-		out := strings.TrimSpace(buf.String())
-
-		failed := false
-		failed = failed || (err == nil && tx.HasError)
-		failed = failed || (out != tx.Output)
-
-		if failed {
-			t.Errorf("Marshal(%v) => '%s', 'err != nil => %v'; expected '%s', 'err != nil => %v'.", tx.Input, out, err != nil, tx.Output, tx.HasError)
-		}
-	}
 }
 
 var dsUnmarshalTests = []struct {
@@ -110,17 +41,104 @@ var dsUnmarshalTests = []struct {
 	{`{"ds":"xzsad"}`, dsTest{}, true},
 }
 
+var dsMarshalTests = []struct {
+	Input    dsTest
+	Output   string
+	HasError bool
+}{
+	{dsTest{DurationSec(4 * time.Second)}, `{"ds":4}`, false},
+	{dsTest{DurationSec(40 * time.Second)}, `{"ds":40}`, false},
+}
+
+// test runners
+func TestDateTimeMarshal(t *testing.T) {
+	for _, tx := range dtMarshalTests {
+		ret := runTestMarshal(tx.Input, tx.Output, tx.HasError)
+		if ret != "" {
+			t.Errorf(ret)
+		}
+	}
+}
+func TestDateTimeUnmarshal(t *testing.T) {
+	for _, tx := range dtUnmarshalTests {
+		var out dtTest
+		ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError)
+		if ret != "" {
+			t.Errorf(ret)
+		}
+	}
+}
+
+func TestDurationSecsMarshal(t *testing.T) {
+	for _, tx := range dsMarshalTests {
+		ret := runTestMarshal(tx.Input, tx.Output, tx.HasError)
+		if ret != "" {
+			t.Errorf(ret)
+		}
+	}
+}
 func TestDurationSecsUnmarshal(t *testing.T) {
 	for _, tx := range dsUnmarshalTests {
 		var out dsTest
-		err := json.NewDecoder(strings.NewReader(tx.Input)).Decode(&out)
-
-		failed := false
-		failed = failed || (err == nil && tx.HasError)
-		failed = failed || (!out.Equal(&tx.Output))
-
-		if failed {
-			t.Errorf("Unmarshal(%s) => '%v', 'err != nil => %v'; expected '%v', 'err != nil => %v'.", tx.Input, out, err != nil, tx.Output, tx.HasError)
+		ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError)
+		if ret != "" {
+			t.Errorf(ret)
 		}
 	}
+}
+
+// generalized test functions
+
+func runTestMarshal(input interface{}, output string, hasError bool) (ret string) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(input)
+	out := strings.TrimSpace(buf.String())
+
+	failed := false
+	failed = failed || (err == nil && hasError)
+	failed = failed || (out != output)
+
+	if failed {
+		ret = fmt.Sprintf("Marshal(%s) => '%s', 'err != nil => %v'; expected '%s', 'err != nil => %v'.", input, out, err != nil, output, hasError)
+	}
+
+	return
+}
+
+func runTestUnmarshal(out eq, input string, output eq, hasError bool) (ret string) {
+	err := json.NewDecoder(strings.NewReader(input)).Decode(&out)
+
+	failed := false
+	failed = failed || (err == nil && hasError)
+	failed = failed || (!out.Equal(output))
+
+	if failed {
+		ret = fmt.Sprintf("Unmarshal(%s) => '%s', 'err != nil => %v'; expected '%s', 'err != nil => %v'.", input, out, err != nil, output, hasError)
+	}
+
+	return
+}
+
+// test structures
+
+type dtTest struct {
+	Date DateTime `json:"dt"`
+}
+
+func (dt *dtTest) Equal(i interface{}) bool {
+	o, ok := i.(*dtTest)
+	return ok && time.Time(dt.Date).Equal(time.Time(o.Date))
+}
+
+type eq interface {
+	Equal(i interface{}) bool
+}
+
+type dsTest struct {
+	Duration DurationSec `json:"ds"`
+}
+
+func (ds *dsTest) Equal(i interface{}) bool {
+	o, ok := i.(*dsTest)
+	return ok && time.Duration(ds.Duration) == time.Duration(o.Duration)
 }
