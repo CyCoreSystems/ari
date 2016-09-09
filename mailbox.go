@@ -42,6 +42,11 @@ type MailboxHandle struct {
 	m    Mailbox
 }
 
+// ID returns the identifier for the mailbox handle
+func (mh *MailboxHandle) ID() string {
+	return mh.name
+}
+
 // Data gets the current state of the mailbox
 func (mh *MailboxHandle) Data() (MailboxData, error) {
 	return mh.m.Data(mh.name)
