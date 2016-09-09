@@ -20,6 +20,7 @@ func New(url string) (cl *ari.Client, err error) {
 
 	cl = &ari.Client{
 		Cleanup:     func() error { nc.Close(); return nil },
+		Application: &natsApplication{nc},
 	}
 
 	return
