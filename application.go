@@ -51,6 +51,11 @@ type ApplicationHandle struct {
 	a    Application
 }
 
+// ID returns the identifier for the application
+func (ah *ApplicationHandle) ID() string {
+	return ah.name
+}
+
 // Data retrives the data for the application
 func (ah *ApplicationHandle) Data() (ad ApplicationData, err error) {
 	ad, err = ah.a.Data(ah.name)
