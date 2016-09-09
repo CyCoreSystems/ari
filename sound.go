@@ -1,5 +1,7 @@
 package ari
 
+// Sound represents a communication path to
+// the asterisk server for Sound resources
 type Sound interface {
 
 	// List returns available sounds limited by the provided filters.
