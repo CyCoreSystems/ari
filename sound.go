@@ -22,6 +22,11 @@ type SoundHandle struct {
 	s    Sound
 }
 
+// ID returns the identifier for the sound
+func (sh *SoundHandle) ID() string {
+	return sh.name
+}
+
 // SoundData describes a media file which may be played back
 type SoundData struct {
 	Formats []FormatLangPair `json:"formats"`
