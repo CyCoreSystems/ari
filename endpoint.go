@@ -1,5 +1,13 @@
 package ari
 
+import (
+	"errors"
+	"strings"
+)
+
+// EndpointIDSeparator seperates the ID components of the endpoint ID
+const EndpointIDSeparator = "|" //TODO: confirm separator isn't terrible
+
 // Endpoint represents a communication path to an Asterisk server
 // for endpoint resources
 type Endpoint interface {
@@ -45,7 +53,32 @@ type EndpointHandle struct {
 	e        Endpoint
 }
 
+// ID returns the identifier for the endpoint
+func (eh *EndpointHandle) ID() string {
+	return eh.tech + "/" + eh.resource
+}
+
 // Data returns the state of the endpoint
 func (eh *EndpointHandle) Data() (EndpointData, error) {
 	return eh.e.Data(eh.tech, eh.resource)
+}
+
+// FromEndpointID converts the endpoint ID to the tech, resource pair.
+func FromEndpointID(id string) (tech string, resource string, err error) {
+	items := strings.Split(id, EndpointIDSeparater)
+	if len(items) < 2 {
+		err = errors.New("Endpoint ID is not in tech" + EndpointIDSeparater + "resource format")
+		return
+	}
+
+	if len(items) > 2 {
+		// huge programmer error here, we want to handle it
+		// tempted to panic here...
+		err = errors.New("EndpointIDSeparator is conflicting with tech and resource identifiers")
+		return
+	}
+
+	tech = items[0]
+	resource = items[1]
+	return
 }
