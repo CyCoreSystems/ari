@@ -44,7 +44,7 @@ func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (
 	var msg *nats.Msg
 	select {
 	case <-time.After(DefaultRequestTimeout):
-		err = errors.New("timeout") //TODO: timeout error type
+		err = timeoutErr("Timeout waiting for response")
 		return
 	case msg = <-ch:
 	}
@@ -65,4 +65,18 @@ func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (
 	}
 
 	return
+}
+
+type timeoutErr string
+
+func (err timeoutErr) Error() string {
+	return string(err)
+}
+
+func (err timeoutErr) Timeout() bool {
+	return true
+}
+
+func (err timeoutErr) Temporary() bool {
+	return true
 }
