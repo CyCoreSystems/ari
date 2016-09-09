@@ -61,7 +61,7 @@ type LiveRecordingHandle struct {
 
 // ID returns the identifier of the live recording
 func (s *LiveRecordingHandle) ID() string {
-	return s.Name
+	return s.name
 }
 
 // Data gets the data for the stored recording

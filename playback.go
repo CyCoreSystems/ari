@@ -41,7 +41,7 @@ type PlaybackHandle struct {
 }
 
 // ID returns the identifier for the playback
-func (ph *PlaybackHandle) ID() {
+func (ph *PlaybackHandle) ID() string {
 	return ph.id
 }
 
