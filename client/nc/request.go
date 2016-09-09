@@ -16,7 +16,8 @@ func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (
 	replyID := uuid.NewV1().String()
 	ch := make(chan *nats.Msg, 2)
 	var sub *nats.Subscription
-	sub, err = conn.ChanSubscribe(subj+":>", ch)
+
+	sub, err = conn.ChanSubscribe(replyID+".>", ch)
 	if err != nil {
 		return
 	}
@@ -50,7 +51,9 @@ func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (
 
 	// handle error sent from server
 
-	if msg.Subject[len(subj)+1:] == "err" {
+	msgType := msg.Subject[len(replyID)+1:]
+
+	if msgType == "err" {
 		err = errors.New(string(msg.Data))
 		return
 	}
