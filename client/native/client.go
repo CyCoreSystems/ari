@@ -37,6 +37,7 @@ func New(opts *Options) (*ari.Client, error) {
 	playback := &nativePlayback{conn}
 
 	return &ari.Client{
+		Cleanup:     conn.Close,
 		Playback:    playback,
 		Channel:     &nativeChannel{conn, playback},
 		Bridge:      &nativeBridge{conn, playback},

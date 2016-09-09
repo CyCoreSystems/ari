@@ -43,10 +43,11 @@ func newConn(opts *Options) *Conn {
 /////// ARI v2 port
 
 // Close closes the ARI client
-func (c *Conn) Close() {
+func (c *Conn) Close() error {
 	if c.cancel != nil {
 		c.cancel()
 	}
+	return nil
 }
 
 // Listen maintains and listens to a websocket connection until told to stop.
