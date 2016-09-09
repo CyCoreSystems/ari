@@ -40,6 +40,11 @@ type PlaybackHandle struct {
 	p  Playback
 }
 
+// ID returns the identifier for the playback
+func (ph *PlaybackHandle) ID() {
+	return ph.id
+}
+
 // Data gets the playback data
 func (ph *PlaybackHandle) Data() (pd PlaybackData, err error) {
 	pd, err = ph.p.Data(ph.id)
