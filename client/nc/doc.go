@@ -1,6 +1,7 @@
 package nc
 
-const documentation = []struct {
+// Documentation is the list of nats endpoints, their request and response types, and their descriptions.
+var Documentation = []struct {
 	Endpoint    string
 	Request     string
 	Response    string
