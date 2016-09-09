@@ -40,6 +40,11 @@ type StoredRecordingHandle struct {
 	s    StoredRecording
 }
 
+// ID returns the identifier for the stored recording
+func (s *StoredRecordingHandle) ID() string {
+	return s.name
+}
+
 // Data gets the data for the stored recording
 func (s *StoredRecordingHandle) Data() (d StoredRecordingData, err error) {
 	d, err = s.s.Data(s.name)
