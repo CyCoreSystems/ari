@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Channel represents a communication path interacting with an Asterisk server.
@@ -99,6 +99,11 @@ func NewChannelHandle(id string, c Channel) *ChannelHandle {
 type ChannelHandle struct {
 	id string  // id of the channel on which we are operating
 	c  Channel // the Channel interface with which we are operating
+}
+
+// ID returns the identifier for the channel handle
+func (ch *ChannelHandle) ID() string {
+	return ch.id
 }
 
 // Data returns the channel's data
