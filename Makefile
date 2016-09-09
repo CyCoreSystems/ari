@@ -4,6 +4,7 @@ all:
 	go build ./
 	go build ./client/native
 	go build ./client/nc
+	go build ./server/natsgw
 	go build ./audio
 	go build ./prompt
 	go build ./record
