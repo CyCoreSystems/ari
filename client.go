@@ -17,6 +17,15 @@ type Client struct {
 	Sound       Sound
 	Recording   *Recording
 	Bus         Bus
-
 	// TODO: other interfaces
+
+	Cleanup func() error
+}
+
+// Close closes the client and calls any implementation specific cleanup code
+func (cl *Client) Close() error {
+	if cl.Cleanup != nil {
+		return cl.Cleanup()
+	}
+	return nil
 }
