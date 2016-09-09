@@ -28,11 +28,11 @@ func (a *natsApplication) Data(name string) (d ari.ApplicationData, err error) {
 }
 
 func (a *natsApplication) Subscribe(name string, eventSource string) (err error) {
-	err = request(a.conn, "ari:applications:subscribe", eventSource, nil)
+	err = request(a.conn, "ari:applications:subscribe:"+name, eventSource, nil)
 	return
 }
 
 func (a *natsApplication) Unsubscribe(name string, eventSource string) (err error) {
-	err = request(a.conn, "ari:applications:unsubscribe", eventSource, nil)
+	err = request(a.conn, "ari:applications:unsubscribe:"+name, eventSource, nil)
 	return
 }
