@@ -18,14 +18,9 @@ func New(url string) (cl *ari.Client, err error) {
 		return
 	}
 
-	var c *nats.EncodedConn
-	c, err = nats.NewEncodedConn(nc, nats.JSON_ENCODER)
-	if err != nil {
-		return
+	cl = &ari.Client{
+		Cleanup:     func() error { nc.Close(); return nil },
 	}
-	c.Close() // close for now, since we aren't using it anywhere
-
-	cl = &ari.Client{}
 
 	return
 }
