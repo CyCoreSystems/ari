@@ -65,9 +65,9 @@ func (eh *EndpointHandle) Data() (EndpointData, error) {
 
 // FromEndpointID converts the endpoint ID to the tech, resource pair.
 func FromEndpointID(id string) (tech string, resource string, err error) {
-	items := strings.Split(id, EndpointIDSeparater)
+	items := strings.Split(id, EndpointIDSeparator)
 	if len(items) < 2 {
-		err = errors.New("Endpoint ID is not in tech" + EndpointIDSeparater + "resource format")
+		err = errors.New("Endpoint ID is not in tech" + EndpointIDSeparator + "resource format")
 		return
 	}
 
