@@ -2,6 +2,7 @@ package ari
 
 type Event interface {
 
+	// TODO(sea):  Delete Get(), Data(), add a Create() function
 	// Get returns a handle pointer to the Event for further interaction
 	Get(name string) *EventHandle
 
@@ -59,7 +60,7 @@ type CreateUserEventRequest struct {
 // BridgeEvent (meta) is an event which affects a bridge
 type BridgeEvent struct {
 	EventData
-	Bridge Bridge `json:"bridge,omitempty"` // Affected bridge
+	BridgeData
 }
 
 // ChannelEvent (meta) is an event which affects a channel
@@ -100,7 +101,7 @@ type BridgeAttendedTransfer struct {
 // BridgeBlindTransfer events signify that a blind transfer has occurred
 type BridgeBlindTransfer struct {
 	EventData
-	Bridge Bridge `json:"bridge,omitempty"`
+	BridgeData
 	ChannelData
 	Context        string  `json:"context"`
 	Extension      string  `json:"exten"`
@@ -113,19 +114,19 @@ type BridgeBlindTransfer struct {
 // BridgeCreated events indicate a bridge has been created
 type BridgeCreated struct {
 	EventData
-	Bridge Bridge `json:"bridge"`
+	BridgeData
 }
 
 // BridgeDestroyed events indicate a bridge has been destroyed
 type BridgeDestroyed struct {
 	EventData
-	Bridge Bridge `json:"bridge"`
+	BridgeData
 }
 
 // BridgeMerged events indicate a bridge has been merged into another (bridge)
 type BridgeMerged struct {
 	EventData
-	Bridge      Bridge `json:"bridge"`      // New bridge
+	BridgeData
 	Bridge_from Bridge `json:"bridge_from"` // Old (independant) bridge -- TODO: verify this assumption
 }
 
@@ -182,7 +183,7 @@ type ChannelDtmfReceived struct {
 // ChannelEngteredBridge events indicate that a channel has joined a bridge
 type ChannelEnteredBridge struct {
 	EventData
-	Bridge Bridge `json:"bridge"`
+	BridgeData
 	ChannelData
 }
 
@@ -207,7 +208,7 @@ type ChannelHold struct {
 // ChannelLeftBridge events indicate that a channel has left a bridge
 type ChannelLeftBridge struct {
 	EventData
-	Bridge Bridge `json:"bridge"`
+	BridgeData
 	ChannelData
 }
 
@@ -243,9 +244,9 @@ type ChannelUnhold struct {
 //   formatted
 type ChannelUserevent struct {
 	EventData
-	Bridge Bridge `json:"bridge,omitempty"`
+	BridgeData
 	ChannelData
-	Endpoint  Endpoint    `json:"endpoint,omitempty"`
+	EndpointData
 	Eventname string      `json:"eventname"` // Name of the user event
 	Userevent interface{} `json:"userevent"` // Custome data sent with the user event
 }
@@ -263,7 +264,7 @@ type ChannelVarset struct {
 // ContactStatusChanged events indicate that a contact state has changed
 type ContactStatusChanged struct {
 	EventData
-	Endpoint    Endpoint    `json:"endpoint"`
+	EndpointData
 	ContactInfo ContactInfo `json:"contact_info"`
 }
 
@@ -287,7 +288,7 @@ type Dial struct {
 // EndpointStateChange events indicate that an endpoint has changed state
 type EndpointStateChange struct {
 	EventData
-	Endpoint Endpoint `json:"endpoint"`
+	EndpointData
 }
 
 /* --------- Peer Events ---------------- */
@@ -295,7 +296,7 @@ type EndpointStateChange struct {
 // PeerStatusChange events indicate that a peer has changed state
 type PeerStatusChange struct {
 	EventData
-	Endpoint Endpoint `json:"endpoint"`
+	EndpointData
 	Peer     Peer     `json:"peer"`
 }
 
@@ -315,25 +316,24 @@ type PlaybackStarted struct {
 
 /* --------- Recording Events ---------------- */
 
-/* These three are commented out until LiveRecording is taken care of
+
 // RecordingFailed events indicate that a recording operation request has failed to complete
 type RecordingFailed struct {
 	EventData
-	Recording LiveRecording `json:"recording"`
+	Recording LiveRecordingData
 }
 
 // RecordingFinished events indicate that a recording operation has completed
 type RecordingFinished struct {
 	EventData
-	Recording LiveRecording `json:"recording"`
+	Recording LiveRecordingData
 }
 
 // RecordingStarted events indicate that a recording operation has begun
 type RecordingStarted struct {
 	EventData
-	Recording LiveRecording `json:"recording"`
+	Recording LiveRecordingData
 }
-*/
 
 /* --------- Stasis Events ---------------- */
 
@@ -366,11 +366,10 @@ return s.Channel
 
 /* --------- TextMessage Events ---------------- */
 
-// R2 - NOTE(sea): Except to change Event -> EventData this is v2
 // TextMessageReceived events indicate that an endpoint has emitted a text message
 type TextMessageReceived struct {
 	EventData
-	Endpoint Endpoint    `json:"endpoint,omitempty"`
+	EndpointData
 	Message  TextMessage `json:"message"`
 }
 
