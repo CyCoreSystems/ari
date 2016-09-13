@@ -9,19 +9,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (err error) {
+var request = standardRequest
 
-	// prepare response channel
-
-	replyID := uuid.NewV1().String()
-	ch := make(chan *nats.Msg, 2)
-	var sub *nats.Subscription
-
-	sub, err = conn.ChanSubscribe(replyID+".>", ch)
-	if err != nil {
-		return
-	}
-	defer sub.Unsubscribe()
+func standardRequest(conn *nats.Conn, subj string, body interface{}, dest interface{}) (err error) {
 
 	// build json request
 
@@ -32,6 +22,18 @@ func request(conn *nats.Conn, subj string, body interface{}, dest interface{}) (
 			return
 		}
 	}
+
+	// prepare response channel
+
+	var sub *nats.Subscription
+
+	replyID := uuid.NewV1().String()
+	ch := make(chan *nats.Msg, 2)
+	sub, err = conn.ChanSubscribe(replyID+".>", ch)
+	if err != nil {
+		return
+	}
+	defer sub.Unsubscribe()
 
 	// send request
 

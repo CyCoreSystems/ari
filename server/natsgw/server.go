@@ -70,6 +70,7 @@ func (srv *Server) Listen() error {
 	srv.asterisk()
 	srv.bridge()
 	srv.channel()
+	srv.device()
 
 	<-srv.ctx.Done()
 

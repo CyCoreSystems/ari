@@ -40,4 +40,9 @@ var Documentation = []struct {
 	{"ari.channels.moh.>", "string", "ignored", "Play the given music on hold to the channel"},
 	{"ari.channels.stopmoh.>", "ignored", "ignored", "Stop all music on hold on the channel"},
 	{"ari.channels.play.>", "nc.PlayRequest", "ignored", "Play the given mediaURI on the channel"},
+
+	{"ari.devices.list", "ignored", "[]string", "List the devices"},
+	{"ari.devices.data.>", "ignored", "ari.DeviceStateData", "Get the device state"},
+	{"ari.devices.update.>", "string", "ignored", "Update the device state"},
+	{"ari.devices.delete.>", "ignored", "ignored", "Delete the device state"},
 }

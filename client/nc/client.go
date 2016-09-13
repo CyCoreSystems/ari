@@ -24,6 +24,7 @@ func New(url string) (cl *ari.Client, err error) {
 		Application: &natsApplication{nc},
 		Bridge:      &natsBridge{nc, nil},  //TODO: inject playback
 		Channel:     &natsChannel{nc, nil}, //TODO: inject playback
+		DeviceState: &natsDeviceState{nc},
 	}
 
 	return
