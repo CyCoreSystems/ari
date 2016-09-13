@@ -22,7 +22,8 @@ func New(url string) (cl *ari.Client, err error) {
 		Cleanup:     func() error { nc.Close(); return nil },
 		Asterisk:    &natsAsterisk{nc},
 		Application: &natsApplication{nc},
-		Bridge:      &natsBridge{nc, nil}, //TODO: inject playback
+		Bridge:      &natsBridge{nc, nil},  //TODO: inject playback
+		Channel:     &natsChannel{nc, nil}, //TODO: inject playback
 	}
 
 	return

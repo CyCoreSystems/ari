@@ -69,6 +69,7 @@ func (srv *Server) Listen() error {
 	go srv.application()
 	go srv.asterisk()
 	go srv.bridge()
+	go srv.channel()
 
 	<-srv.ctx.Done()
 
