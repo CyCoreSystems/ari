@@ -30,6 +30,7 @@ func (srv *Server) application() {
 		var eventSource string
 		if err := json.Unmarshal(data, &eventSource); err != nil {
 			reply(nil, err)
+			return
 		}
 
 		err := srv.upstream.Application.Subscribe(name, eventSource)
@@ -42,6 +43,7 @@ func (srv *Server) application() {
 		var eventSource string
 		if err := json.Unmarshal(data, &eventSource); err != nil {
 			reply(nil, err)
+			return
 		}
 
 		err := srv.upstream.Application.Unsubscribe(name, eventSource)
