@@ -66,10 +66,10 @@ func NewServer(client *ari.Client, opts *Options) (srv *Server, err error) {
 func (srv *Server) Listen() error {
 	defer srv.conn.Close()
 
-	go srv.application()
-	go srv.asterisk()
-	go srv.bridge()
-	go srv.channel()
+	srv.application()
+	srv.asterisk()
+	srv.bridge()
+	srv.channel()
 
 	<-srv.ctx.Done()
 
