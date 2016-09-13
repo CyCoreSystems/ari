@@ -60,6 +60,7 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -104,7 +105,6 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 		}
 	}
 
-	s.Close()
 }
 func TestApplicationsData(t *testing.T) {
 
@@ -151,6 +151,7 @@ func TestApplicationsData(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -177,7 +178,6 @@ func TestApplicationsData(t *testing.T) {
 		}
 	}
 
-	s.Close()
 }
 
 func TestApplicationsList(t *testing.T) {
@@ -222,6 +222,7 @@ func TestApplicationsList(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -237,7 +238,6 @@ func TestApplicationsList(t *testing.T) {
 		t.Errorf("nc.Application.List() => {%v, %v}, expected {%v, %v}", apps, err, "[app1,app2]", "nil")
 	}
 
-	s.Close()
 }
 
 func TestApplicationsListError(t *testing.T) {
@@ -282,6 +282,7 @@ func TestApplicationsListError(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -296,6 +297,4 @@ func TestApplicationsListError(t *testing.T) {
 	if failed {
 		t.Errorf("nc.Application.List() => {%v, %v}, expected {%v, %v}", apps, err, "[]", "err")
 	}
-
-	s.Close()
 }
