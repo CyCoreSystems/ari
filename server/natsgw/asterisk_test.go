@@ -56,6 +56,7 @@ func TestAsteriskModuleReload(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -127,6 +128,7 @@ func TestAsteriskInfo(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -202,6 +204,7 @@ func TestAsteriskVariableGet(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
@@ -278,6 +281,7 @@ func TestAsteriskVariableSet(t *testing.T) {
 	}
 
 	go s.Listen()
+	defer s.Close()
 
 	natsClient, err := nc.New("nats://127.0.0.1:4333")
 
