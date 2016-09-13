@@ -15,7 +15,7 @@ import (
 
 var ServerWaitDelay = 500 * time.Millisecond
 
-func TestApplicationsSubscribe(t *testing.T) {
+func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 
 	//TODO: embed nats?
 
@@ -43,6 +43,9 @@ func TestApplicationsSubscribe(t *testing.T) {
 
 	mockApplication := mock.NewMockApplication(ctrl)
 	mockApplication.EXPECT().Subscribe("app1", "evt1").Return(nil)
+	mockApplication.EXPECT().Subscribe("app2", "evt1").Return(errors.New("Application not found"))
+	mockApplication.EXPECT().Unsubscribe("app1", "evt1").Return(nil)
+	mockApplication.EXPECT().Unsubscribe("app2", "evt1").Return(errors.New("Application not found"))
 
 	cl := &ari.Client{
 		Application: mockApplication,
@@ -65,11 +68,113 @@ func TestApplicationsSubscribe(t *testing.T) {
 		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
-	err = natsClient.Application.Subscribe("app1", "evt1")
+	{
+		err = natsClient.Application.Subscribe("app1", "evt1")
 
-	failed = err != nil
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Application.Subscribe(app1,evt1) => '%v', expected '%v'", err, "nil")
+		}
+	}
+
+	{
+		err = natsClient.Application.Subscribe("app2", "evt1")
+
+		failed = err == nil || err.Error() != "Application not found"
+		if failed {
+			t.Errorf("nc.Application.Subscribe(app2,evt1) => '%v', expected '%v'", err, "nil")
+		}
+	}
+
+	{
+		err = natsClient.Application.Unsubscribe("app1", "evt1")
+
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Application.Unsubscribe(app1,evt1) => '%v', expected '%v'", err, "nil")
+		}
+	}
+
+	{
+		err = natsClient.Application.Unsubscribe("app2", "evt1")
+
+		failed = err == nil || err.Error() != "Application not found"
+		if failed {
+			t.Errorf("nc.Application.Unsubscribe(app2,evt1) => '%v', expected '%v'", err, "nil")
+		}
+	}
+
+	s.Close()
+}
+func TestApplicationsData(t *testing.T) {
+
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+	}()
+
+	<-time.After(ServerWaitDelay)
+
+	// test clientiontruc
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var appData ari.ApplicationData
+
+	mockApplication := mock.NewMockApplication(ctrl)
+	mockApplication.EXPECT().Data("app1").Return(appData, nil)
+	mockApplication.EXPECT().Data("app2").Return(appData, errors.New("Application not found"))
+
+	cl := &ari.Client{
+		Application: mockApplication,
+	}
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
 	if failed {
-		t.Errorf("nc.Application.Subscribe(app1,evt1) => '%v', expected '%v'", err, "nil")
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	go s.Listen()
+
+	natsClient, err := nc.New("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	{
+		appData, err := natsClient.Application.Data("app1")
+
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Application.Data(app1) => '%v', '%v', expected '%v', '%v'", appData, err, "appData", nil)
+		}
+	}
+
+	{
+		appData, err := natsClient.Application.Data("app2")
+
+		failed = err == nil || err.Error() != "Application not found"
+		if failed {
+			t.Errorf("nc.Application.Data(app2) => '%v', '%v', expected '%v', '%v'", appData, err, "appData", "Application not found")
+		}
 	}
 
 	s.Close()

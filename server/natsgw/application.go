@@ -38,7 +38,7 @@ func (srv *Server) application() {
 	})
 
 	srv.subscribe("ari.applications.unsubscribe.>", func(subj string, data []byte, reply Reply) {
-		name := subj[len("ari.applications.subscribe."):]
+		name := subj[len("ari.applications.unsubscribe."):]
 
 		var eventSource string
 		if err := json.Unmarshal(data, &eventSource); err != nil {
