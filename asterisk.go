@@ -7,13 +7,8 @@ type Asterisk interface {
 	// Info gets data about the asterisk system
 	Info(only string) (*AsteriskInfo, error)
 
-	//TODO: move Get/Set variable to a 'Variables' interface
-
-	// GetVariable returns the value of the given global variable
-	GetVariable(variable string) (string, error)
-
-	// SetVariable sets a global channel variable
-	SetVariable(variable string, value string) error
+	// Variables returns the global asterisk variables
+	Variables() Variables
 
 	// ReloadModule tells asterisk to load the given module
 	ReloadModule(name string) error

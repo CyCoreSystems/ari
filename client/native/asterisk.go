@@ -35,9 +35,24 @@ func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	return &m, err
 }
 
-// GetVariable returns the value of the given global variable
+// ReloadModule tells asterisk to load the given module
+func (a *nativeAsterisk) ReloadModule(name string) error {
+	err := Put(a.conn, "/asterisk/modules/"+name, nil, nil)
+	return err
+}
+
+type nativeAsteriskVariables struct {
+	conn *Conn
+}
+
+// Variables returns the variables interface for the Asterisk server
+func (a *nativeAsterisk) Variables() ari.Variables {
+	return &nativeAsteriskVariables{a.conn}
+}
+
+// Get returns the value of the given global variable
 // Equivalent to GET /asterisk/variable
-func (a *nativeAsterisk) GetVariable(key string) (string, error) {
+func (a *nativeAsteriskVariables) Get(key string) (string, error) {
 	type variable struct {
 		Value string `json:"value"`
 	}
@@ -52,9 +67,9 @@ func (a *nativeAsterisk) GetVariable(key string) (string, error) {
 	return m.Value, nil
 }
 
-// SetVariable sets a global channel variable
+// Set sets a global channel variable
 // (Equivalent to POST /asterisk/variable)
-func (a *nativeAsterisk) SetVariable(key string, value string) error {
+func (a *nativeAsteriskVariables) Set(key string, value string) error {
 	path := "/asterisk/variable"
 
 	type request struct {
@@ -64,11 +79,5 @@ func (a *nativeAsterisk) SetVariable(key string, value string) error {
 	req := request{key, value}
 
 	err := Post(a.conn, path, nil, &req)
-	return err
-}
-
-// ReloadModule tells asterisk to load the given module
-func (a *nativeAsterisk) ReloadModule(name string) error {
-	err := Put(a.conn, "/asterisk/modules/"+name, nil, nil)
 	return err
 }
