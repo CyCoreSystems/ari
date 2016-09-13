@@ -67,6 +67,7 @@ func (srv *Server) Listen() error {
 	defer srv.conn.Close()
 
 	go srv.application()
+	go srv.asterisk()
 
 	<-srv.ctx.Done()
 
