@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/CyCoreSystems/ari/client/nc"
+	"github.com/golang/mock/gomock"
 )
 
 func TestApplicationsSubscribe(t *testing.T) {
@@ -32,10 +34,16 @@ func TestApplicationsSubscribe(t *testing.T) {
 
 	<-time.After(4 * time.Second)
 
-	// test clientiontruc
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockApplication := mock.NewMockApplication(ctrl)
+	mockApplication.EXPECT().Subscribe("app1", "evt1").Return(nil)
 
 	cl := &ari.Client{
-		Application: testApplication(0),
+		Application: mockApplication,
 	}
 	s, err := NewServer(cl, &Options{
 		URL: "nats://127.0.0.1:4333",
@@ -88,8 +96,14 @@ func TestApplicationsList(t *testing.T) {
 
 	// test clientiontruc
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockApplication := mock.NewMockApplication(ctrl)
+	mockApplication.EXPECT().List().Return([]*ari.ApplicationHandle{ari.NewApplicationHandle("app1", mockApplication), ari.NewApplicationHandle("app2", mockApplication)}, nil)
+
 	cl := &ari.Client{
-		Application: testApplication(0),
+		Application: mockApplication,
 	}
 	s, err := NewServer(cl, &Options{
 		URL: "nats://127.0.0.1:4333",
@@ -140,10 +154,16 @@ func TestApplicationsListError(t *testing.T) {
 
 	<-time.After(4 * time.Second)
 
-	// test clientiontruc
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockApplication := mock.NewMockApplication(ctrl)
+	mockApplication.EXPECT().List().Return(nil, errors.New("Error getting application list"))
 
 	cl := &ari.Client{
-		Application: testApplicationListError(0),
+		Application: mockApplication,
 	}
 	s, err := NewServer(cl, &Options{
 		URL: "nats://127.0.0.1:4333",
@@ -171,57 +191,4 @@ func TestApplicationsListError(t *testing.T) {
 	}
 
 	s.Close()
-}
-
-type testApplication int
-
-func (a testApplication) List() (ax []*ari.ApplicationHandle, err error) {
-	ax = append(ax, ari.NewApplicationHandle("app1", a))
-	ax = append(ax, ari.NewApplicationHandle("app2", a))
-	return
-}
-
-func (a testApplication) Get(name string) *ari.ApplicationHandle {
-	panic("not implemented")
-}
-
-func (a testApplication) Data(name string) (ari.ApplicationData, error) {
-	panic("not implemented")
-}
-
-func (a testApplication) Subscribe(name string, eventSource string) error {
-	if name != "app1" || eventSource != "evt1" {
-		return errors.New("Not Found")
-	}
-	return nil
-}
-
-func (a testApplication) Unsubscribe(name string, eventSource string) error {
-	if name != "app1" || eventSource != "evt1" {
-		return errors.New("Not Found")
-	}
-	return nil
-}
-
-type testApplicationListError int
-
-func (a testApplicationListError) List() (ax []*ari.ApplicationHandle, err error) {
-	err = errors.New("Dummy Error")
-	return
-}
-
-func (a testApplicationListError) Get(name string) *ari.ApplicationHandle {
-	panic("not implemented")
-}
-
-func (a testApplicationListError) Data(name string) (ari.ApplicationData, error) {
-	panic("not implemented")
-}
-
-func (a testApplicationListError) Subscribe(name string, eventSource string) error {
-	panic("not implemented")
-}
-
-func (a testApplicationListError) Unsubscribe(name string, eventSource string) error {
-	panic("not implemented")
 }
