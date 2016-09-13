@@ -13,6 +13,8 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
+var ServerWaitDelay = 500 * time.Millisecond
+
 func TestApplicationsSubscribe(t *testing.T) {
 
 	//TODO: embed nats?
@@ -32,7 +34,7 @@ func TestApplicationsSubscribe(t *testing.T) {
 		cmd.Process.Signal(syscall.SIGTERM)
 	}()
 
-	<-time.After(4 * time.Second)
+	<-time.After(ServerWaitDelay)
 
 	// test client
 
@@ -92,7 +94,7 @@ func TestApplicationsList(t *testing.T) {
 		cmd.Process.Signal(syscall.SIGTERM)
 	}()
 
-	<-time.After(4 * time.Second)
+	<-time.After(ServerWaitDelay)
 
 	// test clientiontruc
 
@@ -152,7 +154,7 @@ func TestApplicationsListError(t *testing.T) {
 		cmd.Process.Signal(syscall.SIGTERM)
 	}()
 
-	<-time.After(4 * time.Second)
+	<-time.After(ServerWaitDelay)
 
 	// test client
 
