@@ -18,10 +18,13 @@ func (a *natsAsterisk) ReloadModule(name string) (err error) {
 	return
 }
 
-func (a *natsAsterisk) Info(only string) (ai *ari.AsteriskInfo, err error) {
-	ai = &ari.AsteriskInfo{}
-	err = request(a.conn, "ari.asterisk.info", only, ai)
-	return
+func (a *natsAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
+	ai := &ari.AsteriskInfo{}
+	err := request(a.conn, "ari.asterisk.info", only, ai)
+	if err != nil {
+		return nil, err
+	}
+	return ai, nil
 }
 
 func (a *natsAsterisk) Variables() ari.Variables {
