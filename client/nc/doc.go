@@ -17,4 +17,10 @@ var Documentation = []struct {
 
 	{"ari.asterisk.variables.get.>", "ignored", "string", "Get the global asterisk variable"},
 	{"ari.asterisk.variables.set.>", "string", "ignored", "Set the global asterisk variable"},
+
+	{"ari.bridges.all", "ignored", "[]string", "Get all the bridges"},
+	{"ari.bridges.data.>", "ignored", "ari.BridgeData", "Get the bridge data for the bridge"},
+	{"ari.bridges.addChannel.>", "string", "ignored", "Add the channel to the bridge"},
+	{"ari.bridges.removeChannel.>", "string", "ignored", "Remove the channel from the bridge"},
+	{"ari.bridges.play.>", "nc.PlayRequest", "ignored", "Play the media URI to the bridge"},
 }
