@@ -1,12 +1,9 @@
 package nc
 
-import (
-	"github.com/CyCoreSystems/ari"
-	"github.com/nats-io/nats"
-)
+import "github.com/CyCoreSystems/ari"
 
 type natsPlayback struct {
-	conn *nats.Conn
+	conn *Conn
 }
 
 func (p *natsPlayback) Get(id string) *ari.PlaybackHandle {
@@ -14,16 +11,16 @@ func (p *natsPlayback) Get(id string) *ari.PlaybackHandle {
 }
 
 func (p *natsPlayback) Data(id string) (d ari.PlaybackData, err error) {
-	err = request(p.conn, "ari.playback.data."+id, nil, &d)
+	err = p.conn.readRequest("ari.playback.data."+id, nil, &d)
 	return
 }
 
 func (p *natsPlayback) Control(id string, op string) (err error) {
-	err = request(p.conn, "ari.playback.control."+id, &op, nil)
+	err = p.conn.standardRequest("ari.playback.control."+id, &op, nil)
 	return
 }
 
 func (p *natsPlayback) Stop(id string) (err error) {
-	err = request(p.conn, "ari.playback.stop."+id, nil, nil)
+	err = p.conn.standardRequest("ari.playback.stop."+id, nil, nil)
 	return
 }

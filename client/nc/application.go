@@ -1,12 +1,9 @@
 package nc
 
-import (
-	"github.com/CyCoreSystems/ari"
-	"github.com/nats-io/nats"
-)
+import "github.com/CyCoreSystems/ari"
 
 type natsApplication struct {
-	conn *nats.Conn
+	conn *Conn
 }
 
 func (a *natsApplication) Get(name string) *ari.ApplicationHandle {
@@ -15,7 +12,7 @@ func (a *natsApplication) Get(name string) *ari.ApplicationHandle {
 
 func (a *natsApplication) List() (ax []*ari.ApplicationHandle, err error) {
 	var apps []string
-	err = request(a.conn, "ari.applications.all", nil, &apps)
+	err = a.conn.readRequest("ari.applications.all", nil, &apps)
 	for _, app := range apps {
 		ax = append(ax, a.Get(app))
 	}
@@ -23,16 +20,16 @@ func (a *natsApplication) List() (ax []*ari.ApplicationHandle, err error) {
 }
 
 func (a *natsApplication) Data(name string) (d ari.ApplicationData, err error) {
-	err = request(a.conn, "ari.applications.data."+name, nil, &d)
+	err = a.conn.readRequest("ari.applications.data."+name, nil, &d)
 	return
 }
 
 func (a *natsApplication) Subscribe(name string, eventSource string) (err error) {
-	err = request(a.conn, "ari.applications.subscribe."+name, eventSource, nil)
+	err = a.conn.standardRequest("ari.applications.subscribe."+name, eventSource, nil)
 	return
 }
 
 func (a *natsApplication) Unsubscribe(name string, eventSource string) (err error) {
-	err = request(a.conn, "ari.applications.unsubscribe."+name, eventSource, nil)
+	err = a.conn.standardRequest("ari.applications.unsubscribe."+name, eventSource, nil)
 	return
 }

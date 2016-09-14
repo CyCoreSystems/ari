@@ -1,9 +1,6 @@
 package nc
 
-import (
-	"github.com/CyCoreSystems/ari"
-	"github.com/nats-io/nats"
-)
+import "github.com/CyCoreSystems/ari"
 
 // ContinueRequest is the request body for continuing over the message queue
 type ContinueRequest struct {
@@ -13,7 +10,7 @@ type ContinueRequest struct {
 }
 
 type natsChannel struct {
-	conn     *nats.Conn
+	conn     *Conn
 	playback ari.Playback
 }
 
@@ -23,7 +20,7 @@ func (c *natsChannel) Get(id string) *ari.ChannelHandle {
 
 func (c *natsChannel) List() (cx []*ari.ChannelHandle, err error) {
 	var channels []string
-	err = request(c.conn, "ari.channels.all", nil, &channels)
+	err = c.conn.readRequest("ari.channels.all", nil, &channels)
 	for _, ch := range channels {
 		cx = append(cx, c.Get(ch))
 	}
@@ -32,7 +29,7 @@ func (c *natsChannel) List() (cx []*ari.ChannelHandle, err error) {
 
 func (c *natsChannel) Create(req ari.OriginateRequest) (h *ari.ChannelHandle, err error) {
 	var channelID string
-	err = request(c.conn, "ari.channels.create", &req, &channelID)
+	err = c.conn.standardRequest("ari.channels.create", &req, &channelID)
 	if err != nil {
 		return
 	}
@@ -41,12 +38,12 @@ func (c *natsChannel) Create(req ari.OriginateRequest) (h *ari.ChannelHandle, er
 }
 
 func (c *natsChannel) Data(id string) (cd ari.ChannelData, err error) {
-	err = request(c.conn, "ari.channels.data."+id, nil, &cd)
+	err = c.conn.readRequest("ari.channels.data."+id, nil, &cd)
 	return
 }
 
 func (c *natsChannel) Continue(id string, context string, extension string, priority string) (err error) {
-	err = request(c.conn, "ari.channels.continue."+id, &ContinueRequest{
+	err = c.conn.standardRequest("ari.channels.continue."+id, &ContinueRequest{
 		Context:   context,
 		Extension: extension,
 		Priority:  priority,
@@ -65,72 +62,72 @@ func (c *natsChannel) Congestion(id string) (err error) {
 }
 
 func (c *natsChannel) Hangup(id string, reason string) (err error) {
-	err = request(c.conn, "ari.channels.hangup."+id, &reason, nil)
+	err = c.conn.standardRequest("ari.channels.hangup."+id, &reason, nil)
 	return
 }
 
 func (c *natsChannel) Answer(id string) (err error) {
-	err = request(c.conn, "ari.channels.answer."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.answer."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) Ring(id string) (err error) {
-	err = request(c.conn, "ari.channels.ring."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.ring."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) StopRing(id string) (err error) {
-	err = request(c.conn, "ari.channels.stopring."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.stopring."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) SendDTMF(id string, dtmf string) (err error) {
-	err = request(c.conn, "ari.channels.senddtmf."+id, &dtmf, nil)
+	err = c.conn.standardRequest("ari.channels.senddtmf."+id, &dtmf, nil)
 	return
 }
 
 func (c *natsChannel) Hold(id string) (err error) {
-	err = request(c.conn, "ari.channels.hold."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.hold."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) StopHold(id string) (err error) {
-	err = request(c.conn, "ari.channels.stophold."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.stophold."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) Mute(id string, dir string) (err error) {
-	err = request(c.conn, "ari.channels.mute."+id, &dir, nil)
+	err = c.conn.standardRequest("ari.channels.mute."+id, &dir, nil)
 	return
 }
 
 func (c *natsChannel) Unmute(id string, dir string) (err error) {
-	err = request(c.conn, "ari.channels.unmute."+id, &dir, nil)
+	err = c.conn.standardRequest("ari.channels.unmute."+id, &dir, nil)
 	return
 }
 
 func (c *natsChannel) MOH(id string, moh string) (err error) {
-	err = request(c.conn, "ari.channels.moh."+id, &moh, nil)
+	err = c.conn.standardRequest("ari.channels.moh."+id, &moh, nil)
 	return
 }
 
 func (c *natsChannel) StopMOH(id string) (err error) {
-	err = request(c.conn, "ari.channels.stopmoh."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.stopmoh."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) Silence(id string) (err error) {
-	err = request(c.conn, "ari.channels.silence."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.silence."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) StopSilence(id string) (err error) {
-	err = request(c.conn, "ari.channels.stopsilence."+id, nil, nil)
+	err = c.conn.standardRequest("ari.channels.stopsilence."+id, nil, nil)
 	return
 }
 
 func (c *natsChannel) Play(id string, playbackID string, mediaURI string) (p *ari.PlaybackHandle, err error) {
-	err = request(c.conn, "ari.channels.play."+id, &PlayRequest{
+	err = c.conn.standardRequest("ari.channels.play."+id, &PlayRequest{
 		PlaybackID: playbackID,
 		MediaURI:   mediaURI,
 	}, nil)
