@@ -13,6 +13,13 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
+func newNatsClient(url string) (*ari.Client, error) {
+	return nc.New(nc.Options{
+		URL: url,
+		ReadOperationRetryCount: 5,
+	})
+}
+
 var ServerWaitDelay = 500 * time.Millisecond
 
 func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
@@ -63,11 +70,11 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -155,11 +162,11 @@ func TestApplicationsData(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -227,11 +234,11 @@ func TestApplicationsList(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	apps, err := natsClient.Application.List()
@@ -288,11 +295,11 @@ func TestApplicationsListError(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	apps, err := natsClient.Application.List()

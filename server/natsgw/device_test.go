@@ -9,7 +9,6 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/CyCoreSystems/ari/client/nc"
 	"github.com/golang/mock/gomock"
 )
 
@@ -58,11 +57,11 @@ func TestDeviceStateUpdate(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -124,11 +123,11 @@ func TestDeviceStateData(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -199,11 +198,11 @@ func TestDeviceStateList(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	devices, err := natsClient.DeviceState.List()

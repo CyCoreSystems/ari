@@ -9,7 +9,6 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/CyCoreSystems/ari/client/nc"
 	"github.com/golang/mock/gomock"
 )
 
@@ -64,11 +63,11 @@ func TestBridgeList(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -141,11 +140,11 @@ func TestBridgeData(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -218,11 +217,11 @@ func TestBridgeAddChannel(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -295,11 +294,11 @@ func TestBridgeRemoveChannel(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
@@ -372,11 +371,11 @@ func TestBridgeDelete(t *testing.T) {
 	go s.Listen()
 	defer s.Close()
 
-	natsClient, err := nc.New("nats://127.0.0.1:4333")
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
 
 	failed = natsClient == nil || err != nil
 	if failed {
-		t.Errorf("nc.New(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
