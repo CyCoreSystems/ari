@@ -18,13 +18,16 @@ func New(url string) (cl *ari.Client, err error) {
 		return
 	}
 
+	playback := natsPlayback{nc}
+
 	cl = &ari.Client{
 		Cleanup:     func() error { nc.Close(); return nil },
 		Asterisk:    &natsAsterisk{nc},
 		Application: &natsApplication{nc},
-		Bridge:      &natsBridge{nc, nil},  //TODO: inject playback
-		Channel:     &natsChannel{nc, nil}, //TODO: inject playback
+		Bridge:      &natsBridge{nc, &playback},
+		Channel:     &natsChannel{nc, &playback},
 		DeviceState: &natsDeviceState{nc},
+		Playback:    &playback,
 	}
 
 	return

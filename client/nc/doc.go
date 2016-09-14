@@ -45,4 +45,8 @@ var Documentation = []struct {
 	{"ari.devices.data.>", "ignored", "ari.DeviceStateData", "Get the device state"},
 	{"ari.devices.update.>", "string", "ignored", "Update the device state"},
 	{"ari.devices.delete.>", "ignored", "ignored", "Delete the device state"},
+
+	{"ari.playback.data.>", "ignored", "ari.PlaybackData", "Get the playback data"},
+	{"ari.playback.control.>", "string", "ignored", "Send the control command to the playback"},
+	{"ari.playback.stop.>", "ignored", "ignored", "Stop the playback"},
 }

@@ -71,6 +71,7 @@ func (srv *Server) Listen() error {
 	srv.bridge()
 	srv.channel()
 	srv.device()
+	srv.playback()
 
 	<-srv.ctx.Done()
 
