@@ -32,6 +32,7 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -123,6 +124,7 @@ func TestApplicationsData(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -197,6 +199,7 @@ func TestApplicationsList(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -257,6 +260,7 @@ func TestApplicationsListError(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)

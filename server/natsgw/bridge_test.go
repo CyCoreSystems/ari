@@ -30,6 +30,7 @@ func TestBridgeList(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -108,6 +109,7 @@ func TestBridgeData(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -186,6 +188,7 @@ func TestBridgeAddChannel(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -262,6 +265,7 @@ func TestBridgeRemoveChannel(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -338,6 +342,7 @@ func TestBridgeDelete(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)

@@ -50,6 +50,7 @@ func TestNewServer(t *testing.T) {
 
 		defer func() {
 			cmd.Process.Signal(syscall.SIGTERM)
+			cmd.Wait()
 		}()
 
 		<-time.After(4 * time.Second)
@@ -88,6 +89,7 @@ func TestListen(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(4 * time.Second)

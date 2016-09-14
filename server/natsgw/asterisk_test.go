@@ -30,6 +30,7 @@ func TestAsteriskModuleReload(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -98,6 +99,7 @@ func TestAsteriskInfo(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -174,6 +176,7 @@ func TestAsteriskVariableGet(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
@@ -251,6 +254,7 @@ func TestAsteriskVariableSet(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)

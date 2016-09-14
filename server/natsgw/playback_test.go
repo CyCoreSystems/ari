@@ -30,6 +30,7 @@ func TestPlaybackData(t *testing.T) {
 
 	defer func() {
 		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
 	}()
 
 	<-time.After(ServerWaitDelay)
