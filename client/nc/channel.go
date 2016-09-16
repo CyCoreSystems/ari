@@ -164,7 +164,6 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 				ariMessage.Type = eventType
 
 				evt := v2.Parse(&ariMessage)
-				Logger.Debug("Got event message", "event", evt)
 
 				//TODO: channel ID comparisons
 				//	do we compare based on id;N, where id == id and the N's aren't different

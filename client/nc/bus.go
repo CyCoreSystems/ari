@@ -34,7 +34,6 @@ func (b *natsBus) Subscribe(nx ...string) ari.Subscription {
 				ariMessage.Type = eventType
 
 				evt := v2.Parse(&ariMessage)
-				Logger.Debug("Got event message", "event", evt)
 				ns.events <- evt
 			})
 			if err != nil {
