@@ -18,11 +18,6 @@ extensions:
 	go build ./prompt
 	go build ./record
 
-examples:
-	mkdir -p bin/
-	go build -o bin/helloworld ./_examples/helloworld/
-	go build -o bin/stasisStart ./_examples/stasisStart
-
 mock:
 	go generate ./client/mock
 
