@@ -21,6 +21,10 @@ func (c *Conn) readRequest(subj string, body interface{}, dest interface{}) (err
 
 	maxRetries := c.opts.ReadOperationRetryCount
 
+	if maxRetries == 0 {
+		maxRetries = 1
+	}
+
 	for i := 0; i != maxRetries; i++ {
 
 		err = c.standardRequest(subj, body, dest)
