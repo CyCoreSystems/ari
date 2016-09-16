@@ -243,6 +243,10 @@ type ChannelStateChange struct {
 	Channel Channel `json:"channel"`
 }
 
+func (c *ChannelStateChange) ChannelID() string {
+	return c.Channel.Id
+}
+
 // ChannelTalkingFinished events indicate that previously-detected talking on
 // a channel is now absent
 type ChannelTalkingFinished struct {
