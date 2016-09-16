@@ -48,6 +48,15 @@ func (srv *Server) channel() {
 		reply(&d, err)
 	})
 
+	srv.subscribe("ari.channels.answer.>", func(subj string, _ []byte, reply Reply) {
+		name := subj[len("ari.channels.answer."):]
+		srv.log.Debug("answering channel", "subj", subj)
+		err := srv.upstream.Channel.Answer(name)
+		srv.log.Debug("answered channel", "subj", subj, "name", name, "error", err)
+
+		reply(nil, err)
+	})
+
 	srv.subscribe("ari.channels.hangup.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.hangup."):]
 
