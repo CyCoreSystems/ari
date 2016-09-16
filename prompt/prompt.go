@@ -128,11 +128,11 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 			ret.Status = Canceled
 			err = ctx.Err()
 			return
-		case <-hangupSub.C:
+		case <-hangupSub.Events():
 			Logger.Debug("Hangup during prompt play")
 			ret.Status = Hangup
 			return
-		case e := <-dtmfSub.C:
+		case e := <-dtmfSub.Events():
 			ret.Data += e.(*v2.ChannelDtmfReceived).Digit
 			Logger.Debug("DTMF received", "digits", ret.Data)
 			cancel() // cancel remaining playback
@@ -198,11 +198,11 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 			ret.Status = Canceled
 			err = ctx.Err()
 			return
-		case <-hangupSub.C:
+		case <-hangupSub.Events():
 			Logger.Debug("Hangup after prompt playback")
 			ret.Status = Hangup
 			return
-		case e := <-dtmfSub.C:
+		case e := <-dtmfSub.Events():
 			ret.Data += e.(*v2.ChannelDtmfReceived).Digit
 			Logger.Debug("DTMF received", "digits", ret.Data)
 			match, res := opts.MatchFunc(ret.Data)

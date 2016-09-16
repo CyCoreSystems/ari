@@ -66,20 +66,20 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 				rec.status = Failed
 				rec.err = timeoutErr{"Timeout waiting for recording to start"}
 				return
-			case e := <-startSub.C:
+			case e := <-startSub.Events():
 				r := e.(*v2.RecordingStarted).Recording
 				if r.Name == name {
 					Logger.Debug("Recording started.")
 					startTimer.Stop()
 				}
-			case e := <-failedSub.C:
+			case e := <-failedSub.Events():
 				r := e.(*v2.RecordingFailed).Recording
 				if r.Name == name {
 					rec.status = Failed
 					rec.err = fmt.Errorf("Recording failed: %s", r.Cause)
 					return
 				}
-			case e := <-finishedSub.C:
+			case e := <-finishedSub.Events():
 				r := e.(*v2.RecordingFinished).Recording
 				if r.Name == name {
 					Logger.Debug("Recording stopped")

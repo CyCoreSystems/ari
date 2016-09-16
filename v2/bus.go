@@ -202,6 +202,11 @@ func (b *Bus) Subscribe(eTypes ...string) *Subscription {
 	return s
 }
 
+// Events returns the events channel
+func (s *Subscription) Events() chan Eventer {
+	return s.C
+}
+
 // Next blocks for the next event in the subscription,
 // returning that event when it arrives or nil if
 // the subscription is canceled.

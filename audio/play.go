@@ -86,7 +86,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 				close(pb.stopCh)
 				pb.err = pb.ctx.Err()
 				return
-			case v := <-s.C:
+			case v := <-s.Events():
 				if v == nil {
 					Logger.Debug("Nil event received")
 					continue PlaybackStartLoop
@@ -135,7 +135,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 			case <-pb.ctx.Done():
 				pb.err = pb.ctx.Err()
 				return
-			case v := <-s.C:
+			case v := <-s.Events():
 				if v == nil {
 					Logger.Debug("Nil event received")
 					continue PlaybackStopLoop

@@ -149,7 +149,7 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 			select {
 			case <-ctx.Done():
 				return
-			case e := <-dtmfSub.C:
+			case e := <-dtmfSub.Events():
 				if e == nil {
 					return
 				}

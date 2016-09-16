@@ -82,7 +82,7 @@ func listenApp(ctx context.Context, cl *ari.Client, handler func(cl *ari.Client,
 	sub := cl.Bus.Subscribe("StasisStart")
 
 	select {
-	case e := <-sub.C:
+	case e := <-sub.Events():
 		log.Info("Got stasis start")
 		stasisStartEvent := e.(*v2.StasisStart)
 		go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.Id))
