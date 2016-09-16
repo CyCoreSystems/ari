@@ -94,7 +94,7 @@ func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) 
 			err = errors.New(string(msg.Data))
 			return
 		case "ok":
-			requestTimeout = 2 * requestTimeout // after acknowledgement, double the timeout
+			requestTimeout = 2 * time.Second
 			continue
 		default:
 			// write into destination, if it isn't nil
