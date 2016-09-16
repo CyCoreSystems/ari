@@ -106,7 +106,7 @@ func TestListen(t *testing.T) {
 		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
 	}
 
-	go s.Listen()
+	s.Start()
 
 	<-time.After(4 * time.Second)
 

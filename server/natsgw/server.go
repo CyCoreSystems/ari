@@ -11,6 +11,8 @@ import (
 
 // Server is the nats gateway server
 type Server struct {
+	readyCh chan struct{}
+
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -44,6 +46,7 @@ func NewServer(client *ari.Client, opts *Options) (srv *Server, err error) {
 	}
 
 	srv = &Server{}
+	srv.readyCh = make(chan struct{})
 	defer func() {
 		if err != nil {
 			srv = nil // don't return and garbage collect srv on error
@@ -62,22 +65,27 @@ func NewServer(client *ari.Client, opts *Options) (srv *Server, err error) {
 	return
 }
 
-// Listen listens for nats requests and delegates them to the upstream ARI client
-func (srv *Server) Listen() error {
-	defer srv.conn.Close()
+// Start starts the service and listens for nats requests and delegates them to the upstream ARI client
+func (srv *Server) Start() {
 
-	srv.application()
-	srv.asterisk()
-	srv.bridge()
-	srv.channel()
-	srv.device()
-	srv.playback()
-	srv.events()
-	srv.mailbox()
+	go func() {
+		defer srv.conn.Close()
 
-	<-srv.ctx.Done()
+		srv.application()
+		srv.asterisk()
+		srv.bridge()
+		srv.channel()
+		srv.device()
+		srv.playback()
+		srv.events()
+		srv.mailbox()
 
-	return nil
+		close(srv.readyCh)
+
+		<-srv.ctx.Done()
+	}()
+
+	<-srv.readyCh
 }
 
 // Close closes the gateway server

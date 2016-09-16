@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/native"
 	"github.com/CyCoreSystems/ari/server/natsgw"
@@ -10,6 +12,8 @@ import (
 )
 
 func main() {
+
+	ctx := context.Background()
 
 	<-time.After(5 * time.Second)
 
@@ -31,7 +35,9 @@ func main() {
 	}
 	defer srv.Close()
 
-	srv.Listen()
+	srv.Start()
+
+	<-ctx.Done()
 }
 
 func connect() (cl *ari.Client, err error) {

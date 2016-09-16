@@ -67,7 +67,7 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
 	}
 
-	go s.Listen()
+	s.Start()
 	defer s.Close()
 
 	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
@@ -159,7 +159,7 @@ func TestApplicationsData(t *testing.T) {
 		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
 	}
 
-	go s.Listen()
+	s.Start()
 	defer s.Close()
 
 	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
@@ -231,7 +231,7 @@ func TestApplicationsList(t *testing.T) {
 		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
 	}
 
-	go s.Listen()
+	s.Start()
 	defer s.Close()
 
 	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
@@ -292,7 +292,7 @@ func TestApplicationsListError(t *testing.T) {
 		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
 	}
 
-	go s.Listen()
+	s.Start()
 	defer s.Close()
 
 	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
