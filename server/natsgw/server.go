@@ -72,6 +72,7 @@ func (srv *Server) Listen() error {
 	srv.channel()
 	srv.device()
 	srv.playback()
+	srv.events()
 
 	<-srv.ctx.Done()
 

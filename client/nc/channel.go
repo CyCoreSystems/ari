@@ -155,10 +155,35 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 
 	go func() {
 		for _, n := range nx {
-			subj := fmt.Sprintf("ari.channels.events.%s.%s", n, id)
+			subj := fmt.Sprintf("ari.events.%s", n)
 			sub, err := c.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
-				//TODO: convert from nats messages to ARI events
-				//TODO: send ari event to ns.events
+				eventType := msg.Subject[len("ari.events."):]
+
+				var ariMessage v2.Message
+				ariMessage.SetRaw(&msg.Data)
+				ariMessage.Type = eventType
+
+				evt := v2.Parse(&ariMessage)
+				Logger.Debug("Got event message", "event", evt)
+
+				//TODO: channel ID comparisons
+				//	do we compare based on id;N, where id == id and the N's aren't different
+				//		 -> this happens in Local channels
+
+				ce, ok := evt.(ari.ChannelEvent)
+				if !ok {
+					// ignore non-channel events
+					return
+				}
+
+				Logger.Debug("Got channel event", "channelid", ce.ChannelID(), "eventtype", evt.GetType())
+
+				if ce.ChannelID() != id {
+					// ignore unrelated channel events
+					return
+				}
+
+				ns.events <- evt
 			})
 			if err != nil {
 				//TODO: handle error
@@ -172,19 +197,4 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 	}()
 
 	return &ns
-}
-
-type natsSubscription struct {
-	closeChan chan struct{}
-	events    chan v2.Eventer
-}
-
-func (ns *natsSubscription) Events() chan v2.Eventer {
-	return ns.events
-}
-
-func (ns *natsSubscription) Cancel() {
-	if ns.closeChan != nil {
-		close(ns.closeChan)
-	}
 }

@@ -42,6 +42,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 	}
 
 	playback := natsPlayback{conn}
+	bus := &natsBus{conn}
 
 	cl = &ari.Client{
 		Cleanup:     func() error { nc.Close(); return nil },
@@ -51,6 +52,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Channel:     &natsChannel{conn, &playback},
 		DeviceState: &natsDeviceState{conn},
 		Playback:    &playback,
+		Bus:         bus,
 	}
 
 	return

@@ -47,7 +47,8 @@ func (b *Bus) Send(msg *Message) {
 	b.send(msg)
 }
 
-func (b *Bus) send(msg *Message) {
+// Parse parses the message into the specific eventer
+func Parse(msg *Message) Eventer {
 	var e Eventer
 	switch msg.Type {
 	case "BridgeAttendedTransfer":
@@ -125,8 +126,15 @@ func (b *Bus) send(msg *Message) {
 	err := msg.DecodeAs(e)
 	if err != nil {
 		Logger.Error("Failed to decode message", "error", err)
-		return
+		return e
 	}
+
+	return e
+}
+
+func (b *Bus) send(msg *Message) {
+	e := Parse(msg)
+
 	Logger.Debug("Received event", "event", e)
 
 	// Disseminate the message to the subscribers
