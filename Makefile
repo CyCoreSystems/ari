@@ -1,6 +1,6 @@
 
 
-all: api clients server extensions examples
+all: api clients server extensions
 
 api:
 	go build ./
