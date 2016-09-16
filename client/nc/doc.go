@@ -46,6 +46,11 @@ var Documentation = []struct {
 	{"ari.devices.update.>", "string", "ignored", "Update the device state"},
 	{"ari.devices.delete.>", "ignored", "ignored", "Delete the device state"},
 
+	{"ari.mailboxes.all", "ignored", "[]string", "List the mailboxes"},
+	{"ari.mailboxes.data.>", "ignored", "ari.MailboxData", "Get the mailbox data"},
+	{"ari.mailboxes.update.>", "ignored", "nc.UpdateMailboxRequest", "Update the mailbox state"},
+	{"ari.mailboxes.delete.>", "ignored", "delete", "Delete the mailbox state"},
+
 	{"ari.playback.data.>", "ignored", "ari.PlaybackData", "Get the playback data"},
 	{"ari.playback.control.>", "string", "ignored", "Send the control command to the playback"},
 	{"ari.playback.stop.>", "ignored", "ignored", "Stop the playback"},

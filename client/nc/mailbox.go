@@ -24,12 +24,14 @@ func (m *natsMailbox) Data(name string) (d ari.MailboxData, err error) {
 	return
 }
 
+// UpdateMailboxRequest is the encoded request for updating the mailbox
+type UpdateMailboxRequest struct {
+	Old int `json:"old"`
+	New int `json:"new"`
+}
+
 func (m *natsMailbox) Update(name string, oldMessages int, newMessages int) (err error) {
-	type req struct {
-		Old int `json:"old"`
-		New int `json:"new"`
-	}
-	request := req{oldMessages, newMessages}
+	request := UpdateMailboxRequest{Old: oldMessages, New: newMessages}
 	err = m.conn.standardRequest("ari.mailboxes.update."+name, &request, nil)
 	return
 }
