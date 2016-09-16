@@ -14,6 +14,8 @@ func (srv *Server) subscribe(endpoint string, h Handler) {
 		data := msg.Data
 		subj := msg.Subject
 
+		srv.conn.Publish(reply+".ok", []byte(""))
+
 		h(subj, data, func(i interface{}, err error) {
 
 			if err != nil {

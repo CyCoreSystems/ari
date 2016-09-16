@@ -73,32 +73,38 @@ func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) 
 		return
 	}
 
-	// listen for response
+	requestTimeout := c.opts.RequestTimeout
 
-	var msg *nats.Msg
-	select {
-	case <-time.After(c.opts.RequestTimeout):
-		err = timeoutErr("Timeout waiting for response")
-		return
-	case msg = <-ch:
+	for {
+		// listen for response
+
+		var msg *nats.Msg
+		select {
+		case msg = <-ch:
+		case <-time.After(requestTimeout):
+			err = timeoutErr("Timeout waiting for response")
+			return
+		}
+
+		// handle err or "OK, keep waiting" from server
+		msgType := msg.Subject[len(replyID)+1:]
+
+		switch msgType {
+		case "err":
+			err = errors.New(string(msg.Data))
+			return
+		case "ok":
+			requestTimeout = 2 * requestTimeout // after acknowledgement, double the timeout
+			continue
+		default:
+			// write into destination, if it isn't nil
+			if dest != nil {
+				err = json.Unmarshal(msg.Data, dest)
+			}
+
+			return
+		}
 	}
-
-	// handle error sent from server
-
-	msgType := msg.Subject[len(replyID)+1:]
-
-	if msgType == "err" {
-		err = errors.New(string(msg.Data))
-		return
-	}
-
-	// write into destination, if it isn't nil
-
-	if dest != nil {
-		err = json.Unmarshal(msg.Data, dest)
-	}
-
-	return
 }
 
 type temp interface {
