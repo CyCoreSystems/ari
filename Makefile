@@ -9,6 +9,10 @@ all: mock
 	go build ./prompt
 	go build ./record
 
+examples:
+	mkdir -p bin/
+	go build -o bin/helloworld ./_examples/helloworld/
+
 mock:
 	go generate ./client/mock
 
