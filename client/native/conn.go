@@ -19,7 +19,7 @@ import (
 
 // Conn is a connection to a native ARI server
 type Conn struct {
-	Options *Options // client options
+	Options Options // client options
 
 	WSConfig *websocket.Config // websocket connection configuration
 
@@ -30,14 +30,26 @@ type Conn struct {
 
 	httpClient http.Client
 
+	ctx    context.Context
 	cancel context.CancelFunc
 	mu     sync.Mutex
 }
 
-func newConn(opts *Options) *Conn {
-	return &Conn{
-		Options: opts,
+func newConn(opts Options) (c *Conn) {
+
+	if opts.Context == nil {
+		opts.Context = context.Background()
 	}
+
+	if opts.MaxRetries == 0 {
+		opts.MaxRetries = 1
+	}
+
+	c = &Conn{}
+	c.Options = opts
+	c.ctx, c.cancel = context.WithCancel(opts.Context)
+
+	return
 }
 
 /////// ARI v2 port
@@ -51,10 +63,7 @@ func (c *Conn) Close() error {
 }
 
 // Listen maintains and listens to a websocket connection until told to stop.
-func (c *Conn) Listen(ctx context.Context) (err error) {
-	if c.cancel == nil {
-		ctx, c.cancel = context.WithCancel(ctx)
-	}
+func (c *Conn) Listen() (err error) {
 
 	// Construct the websocket config, if we don't already have one
 	if c.WSConfig == nil {
@@ -82,7 +91,7 @@ func (c *Conn) Listen(ctx context.Context) (err error) {
 
 	// Make sure the bus is set up
 	if c.Bus == nil {
-		c.Bus = v2.StartBus(ctx)
+		c.Bus = v2.StartBus(c.ctx)
 	}
 
 	// Make sure we have a readychan to signal the websocket is up
@@ -97,19 +106,24 @@ func (c *Conn) Listen(ctx context.Context) (err error) {
 	//	return nil
 	//}
 
+	errChan := make(chan error, 1)
+
 	// Setup and listen on the websocket
-	go c.listen(ctx)
+	go c.listen(c.ctx, errChan)
 
 	// Wait for the websocket connection to connect or for the context to be cancelled
 	select {
 	case <-c.ReadyChan:
-	case <-ctx.Done():
+	case err := <-errChan:
+		return err
+	case <-c.ctx.Done():
+		return c.ctx.Err()
 	}
 
 	return nil
 }
 
-func (c *Conn) listen(ctx context.Context) {
+func (c *Conn) listen(ctx context.Context, errChan chan error) {
 	var ws *websocket.Conn
 	var err error
 
@@ -122,7 +136,8 @@ func (c *Conn) listen(ctx context.Context) {
 		}
 	}()
 
-	for {
+	for i := 0; i <= c.Options.MaxRetries; i++ {
+
 		select {
 		case <-ctx.Done():
 			return
@@ -132,7 +147,7 @@ func (c *Conn) listen(ctx context.Context) {
 		Logger.Debug("Connecting to websocket")
 		ws, err = websocket.DialConfig(c.WSConfig)
 		if err != nil {
-			Logger.Error("Failed to create websocket connection to Asterisk:", err.Error())
+			Logger.Error("Failed to create websocket connection to Asterisk", "error", err.Error())
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -140,7 +155,7 @@ func (c *Conn) listen(ctx context.Context) {
 
 		err = c.wsRead(ws)
 		if err != nil {
-			Logger.Error("Failure reading from websocket:", "error", err.Error())
+			Logger.Error("Failure reading from websocket", "error", err.Error())
 		}
 
 		// Clean up
@@ -153,6 +168,8 @@ func (c *Conn) listen(ctx context.Context) {
 		Logger.Info("Waiting 10ms to restart websocket")
 		time.Sleep(10 * time.Millisecond)
 	}
+
+	errChan <- err
 }
 
 // wsRead loops for the duration of a websocket connection,

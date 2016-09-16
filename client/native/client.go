@@ -1,6 +1,9 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"github.com/CyCoreSystems/ari"
+	"golang.org/x/net/context"
+)
 
 // Options describes the options for connecting to
 // a native Asterisk ARI server.
@@ -22,14 +25,20 @@ type Options struct {
 
 	// Password for ARI authentication
 	Password string
+
+	// Optional context to act as parent
+	Context context.Context
+
+	// MaxRetries is the maximum number of times to dial the connection
+	MaxRetries int
 }
 
 // New creates a new ari.Client connected to a native ARI server
-func New(opts *Options) (*ari.Client, error) {
+func New(opts Options) (*ari.Client, error) {
 
 	conn := newConn(opts)
 
-	if err := conn.Listen(nil); err != nil {
+	if err := conn.Listen(); err != nil {
 		conn.Close()
 		return nil, err
 	}
