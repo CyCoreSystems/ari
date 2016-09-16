@@ -104,7 +104,7 @@ func createCall(cl *ari.Client) (h *ari.ChannelHandle, err error) {
 func connect(ctx context.Context) (cl *ari.Client, err error) {
 
 	opts := native.Options{
-		Application:  "stasis-start",
+		Application:  "example",
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
