@@ -109,7 +109,6 @@ func connect(ctx context.Context) (cl *ari.Client, err error) {
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
 		WebsocketURL: "ws://localhost:8088/ari/events",
-		MaxRetries:   5,
 		Context:      ctx,
 	}
 

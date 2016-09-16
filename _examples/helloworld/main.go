@@ -26,7 +26,6 @@ func run() int {
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
 		WebsocketURL: "ws://localhost:8088/ari/events",
-		MaxRetries:   5,
 	}
 
 	log.Info("Connecting")

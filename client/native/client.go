@@ -28,9 +28,6 @@ type Options struct {
 
 	// Optional context to act as parent
 	Context context.Context
-
-	// MaxRetries is the maximum number of times to dial the connection
-	MaxRetries int
 }
 
 // New creates a new ari.Client connected to a native ARI server

@@ -41,10 +41,6 @@ func newConn(opts Options) (c *Conn) {
 		opts.Context = context.Background()
 	}
 
-	if opts.MaxRetries == 0 {
-		opts.MaxRetries = 1
-	}
-
 	c = &Conn{}
 	c.Options = opts
 	c.ctx, c.cancel = context.WithCancel(opts.Context)
@@ -106,16 +102,12 @@ func (c *Conn) Listen() (err error) {
 	//	return nil
 	//}
 
-	errChan := make(chan error, 1)
-
 	// Setup and listen on the websocket
-	go c.listen(c.ctx, errChan)
+	go c.listen(c.ctx)
 
 	// Wait for the websocket connection to connect or for the context to be cancelled
 	select {
 	case <-c.ReadyChan:
-	case err := <-errChan:
-		return err
 	case <-c.ctx.Done():
 		return c.ctx.Err()
 	}
@@ -123,7 +115,7 @@ func (c *Conn) Listen() (err error) {
 	return nil
 }
 
-func (c *Conn) listen(ctx context.Context, errChan chan error) {
+func (c *Conn) listen(ctx context.Context) {
 	var ws *websocket.Conn
 	var err error
 
@@ -136,7 +128,7 @@ func (c *Conn) listen(ctx context.Context, errChan chan error) {
 		}
 	}()
 
-	for i := 0; i <= c.Options.MaxRetries; i++ {
+	for {
 
 		select {
 		case <-ctx.Done():
@@ -145,12 +137,13 @@ func (c *Conn) listen(ctx context.Context, errChan chan error) {
 		}
 
 		Logger.Debug("Connecting to websocket")
+
 		ws, err = websocket.DialConfig(c.WSConfig)
 		if err != nil {
 			Logger.Error("Failed to create websocket connection to Asterisk", "error", err.Error())
 			time.Sleep(1 * time.Second)
-			continue
 		}
+
 		close(c.ReadyChan)
 
 		err = c.wsRead(ws)
@@ -169,7 +162,6 @@ func (c *Conn) listen(ctx context.Context, errChan chan error) {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	errChan <- err
 }
 
 // wsRead loops for the duration of a websocket connection,
