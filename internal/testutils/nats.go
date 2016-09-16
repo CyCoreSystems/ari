@@ -34,7 +34,7 @@ func LaunchNatsServer() (*ari.Client, context.CancelFunc, error) {
 
 	<-time.After(500 * time.Millisecond)
 
-	cl, err := nc.New("nats://127.0.0.1:4333")
+	cl, err := nc.New(nc.Options{URL: "nats://127.0.0.1:4333"})
 	if err != nil {
 		cancel()
 		return nil, cancel, nil

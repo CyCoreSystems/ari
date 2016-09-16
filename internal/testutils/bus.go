@@ -3,6 +3,7 @@ package testutils
 import (
 	"sync"
 
+	"github.com/CyCoreSystems/ari"
 	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
@@ -33,7 +34,7 @@ func (bus *Bus) Expect(n string) (ch chan struct{}) {
 }
 
 // Subscribe returns a subscription to the given list of events
-func (bus *Bus) Subscribe(nx ...string) (a *v2.Subscription) {
+func (bus *Bus) Subscribe(nx ...string) (a ari.Subscription) {
 
 	a = v2.NewSubscription("")
 
@@ -43,7 +44,7 @@ func (bus *Bus) Subscribe(nx ...string) (a *v2.Subscription) {
 		if _, ok := bus.subs[n]; !ok {
 			bus.subs[n] = make([]*v2.Subscription, 0)
 		}
-		bus.subs[n] = append(bus.subs[n], a)
+		bus.subs[n] = append(bus.subs[n], a.(*v2.Subscription))
 
 		if ch, ok := bus.expects[n]; ok {
 			close(ch)

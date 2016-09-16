@@ -3,6 +3,7 @@ package testutils
 import (
 	"time"
 
+	"github.com/CyCoreSystems/ari"
 	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
@@ -26,7 +27,7 @@ func (bus *DelayedBus) Expect(n string) chan struct{} {
 }
 
 // Subscribe returns a subscription to the given list of events
-func (bus *DelayedBus) Subscribe(nx ...string) (a *v2.Subscription) {
+func (bus *DelayedBus) Subscribe(nx ...string) (a ari.Subscription) {
 	a = bus.bus.Subscribe(nx...)
 	return
 }
