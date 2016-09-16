@@ -21,7 +21,7 @@ func run() int {
 	log := log15.New()
 
 	opts := native.Options{
-		Application:  "hello-world",
+		Application:  "example",
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
