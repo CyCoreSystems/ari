@@ -8,6 +8,12 @@ import (
 
 func (srv *Server) events() {
 
+	if srv.upstream.Bus == nil {
+		// useful for tests
+		srv.log.Warn("No Upstream Bus in nats event forwarding")
+		return
+	}
+
 	go func() {
 		sub := srv.upstream.Bus.Subscribe(v2.ALL)
 		defer sub.Cancel()
