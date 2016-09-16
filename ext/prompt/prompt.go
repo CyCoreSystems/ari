@@ -3,11 +3,12 @@ package prompt
 import (
 	"time"
 
+	"github.com/CyCoreSystems/ari/ext/audio"
+	"github.com/CyCoreSystems/ari/ext/audio/audiouri"
+
 	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/audio"
-	"github.com/CyCoreSystems/ari/audio/audiouri"
 
 	"golang.org/x/net/context"
 )

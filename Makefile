@@ -14,9 +14,9 @@ server:
 	go build ./server/natsgw
 
 extensions:
-	go build ./audio
-	go build ./prompt
-	go build ./record
+	go build ./ext/audio
+	go build ./ext/prompt
+	go build ./ext/record
 
 mock:
 	go generate ./client/mock
