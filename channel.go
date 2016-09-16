@@ -72,6 +72,9 @@ type Channel interface {
 
 	// Play plays the media URI to the channel
 	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
+
+	// Subscribe subscribes on the channel events
+	Subscribe(id string, n ...string) Subscription
 }
 
 // ChannelData is the data for a specific channel
@@ -257,5 +260,14 @@ func (ch *ChannelHandle) StopSilence() error {
 }
 
 // ----
+
+// --
+// Subscription
+// --
+
+// Subscribe subscribes the list of channel events
+func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
+	return ch.c.Subscribe(ch.id, n...)
+}
 
 // TODO: rest of ChannelHandle

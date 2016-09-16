@@ -233,6 +233,21 @@ func (_mr *_MockChannelRecorder) StopSilence(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "StopSilence", arg0)
 }
 
+func (_m *MockChannel) Subscribe(_param0 string, _param1 ...string) ari.Subscription {
+	_s := []interface{}{_param0}
+	for _, _x := range _param1 {
+		_s = append(_s, _x)
+	}
+	ret := _m.ctrl.Call(_m, "Subscribe", _s...)
+	ret0, _ := ret[0].(ari.Subscription)
+	return ret0
+}
+
+func (_mr *_MockChannelRecorder) Subscribe(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	_s := append([]interface{}{arg0}, arg1...)
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Subscribe", _s...)
+}
+
 func (_m *MockChannel) Unmute(_param0 string, _param1 string) error {
 	ret := _m.ctrl.Call(_m, "Unmute", _param0, _param1)
 	ret0, _ := ret[0].(error)

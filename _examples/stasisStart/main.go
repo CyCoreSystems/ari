@@ -27,6 +27,17 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
 	defer wg.Done()
 
+	// TODO: this subscription /should/ be channel specific. Not all Channel events are setup this way yet
+	sub := h.Subscribe("ChannelHangupRequest")
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		log.Info("Waiting for channel hangup request")
+		<-sub.Events()
+		log.Info("Got Channel hangup request")
+	}()
+
 	h.Answer()
 
 	data, err := h.Data()

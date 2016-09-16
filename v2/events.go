@@ -217,6 +217,11 @@ type ChannelHangupRequest struct {
 	Soft    bool    `json:"soft,omitempty"` // Whether the request was "soft"
 }
 
+// ChannelID gets the channel ID
+func (chr *ChannelHangupRequest) ChannelID() string {
+	return chr.Channel.Id
+}
+
 // ChannelHold events indicate that a channel has been put on hold
 type ChannelHold struct {
 	Event

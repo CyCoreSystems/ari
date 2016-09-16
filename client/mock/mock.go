@@ -7,3 +7,4 @@ package mock
 //go:generate mockgen -package mock -destination channel.go github.com/CyCoreSystems/ari Channel
 //go:generate mockgen -package mock -destination device.go github.com/CyCoreSystems/ari DeviceState
 //go:generate mockgen -package mock -destination playback.go github.com/CyCoreSystems/ari Playback
+//go:generate mockgen -package mock -destination subscription.go github.com/CyCoreSystems/ari Subscription

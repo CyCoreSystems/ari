@@ -4,12 +4,15 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari"
+	v2 "github.com/CyCoreSystems/ari/v2"
+
 	"github.com/satori/go.uuid"
 )
 
 type nativeChannel struct {
-	conn     *Conn
-	playback ari.Playback
+	conn       *Conn
+	subscriber ari.Subscriber
+	playback   ari.Playback
 }
 
 func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
@@ -162,4 +165,61 @@ func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph 
 	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, resp, &req)
 	ph = c.playback.Get(playbackID)
 	return
+}
+
+func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
+	var ns nativeSubscription
+
+	ns.events = make(chan v2.Eventer, 10)
+	ns.closeChan = make(chan struct{})
+
+	go func() {
+		sub := c.subscriber.Subscribe(n...)
+		defer sub.Cancel()
+		for {
+
+			select {
+			case <-ns.closeChan:
+				ns.closeChan = nil
+				return
+			case evt := <-sub.Events():
+
+				//TODO: channel ID comparisons
+				//	do we compare based on id;N, where id == id and the N's aren't different
+				//		 -> this happens in Local channels
+
+				ce, ok := evt.(ari.ChannelEvent)
+				if !ok {
+					// ignore non-channel events
+					continue
+				}
+
+				Logger.Debug("Got channel event", "channelid", ce.ChannelID(), "eventtype", evt.GetType())
+
+				if ce.ChannelID() != id {
+					// ignore unrelated channel events
+					continue
+				}
+
+				ns.events <- evt
+			}
+		}
+	}()
+
+	return &ns
+}
+
+type nativeSubscription struct {
+	closeChan chan struct{}
+	events    chan v2.Eventer
+}
+
+func (ns *nativeSubscription) Events() chan v2.Eventer {
+	return ns.events
+}
+
+func (ns *nativeSubscription) Cancel() {
+	if ns.closeChan != nil {
+		close(ns.closeChan)
+	}
 }
