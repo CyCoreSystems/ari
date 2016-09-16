@@ -172,8 +172,10 @@ func (c *Conn) wsRead(ws *websocket.Conn) (err error) {
 		var msg v2.Message
 		err = v2.AsteriskCodec.Receive(ws, &msg)
 		if err != nil {
+			Logger.Error("Error decoding websocket message", "error", err)
 			return
 		}
+
 		c.Bus.Send(&msg)
 	}
 }
