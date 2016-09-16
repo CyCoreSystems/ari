@@ -8,7 +8,7 @@ import (
 )
 
 // DefaultRequestTimeout is the default timeout for a NATS request
-const DefaultRequestTimeout = 20 * time.Millisecond
+const DefaultRequestTimeout = 200 * time.Millisecond
 
 // Options is the list options
 type Options struct {
