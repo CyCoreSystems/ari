@@ -73,6 +73,7 @@ func (srv *Server) Listen() error {
 	srv.device()
 	srv.playback()
 	srv.events()
+	srv.mailbox()
 
 	<-srv.ctx.Done()
 

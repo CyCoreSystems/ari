@@ -51,6 +51,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Bridge:      &natsBridge{conn, &playback},
 		Channel:     &natsChannel{conn, &playback},
 		DeviceState: &natsDeviceState{conn},
+		Mailbox:     &natsMailbox{conn},
 		Playback:    &playback,
 		Bus:         bus,
 	}
