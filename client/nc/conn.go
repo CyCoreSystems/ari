@@ -25,7 +25,7 @@ func (c *Conn) readRequest(subj string, body interface{}, dest interface{}) (err
 		maxRetries = 1
 	}
 
-	for i := 0; i != maxRetries; i++ {
+	for i := 0; i <= maxRetries; i++ {
 
 		err = c.standardRequest(subj, body, dest)
 		if err == nil {
