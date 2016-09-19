@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/CyCoreSystems/ari/v2"
+
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
@@ -47,8 +49,16 @@ func TestChannelListTest(t *testing.T) {
 
 	mockChannel.EXPECT().List().Return([]*ari.ChannelHandle{}, errors.New("Error getting channels"))
 
+	mockSubscription := mock.NewMockSubscription(ctrl)
+	mockSubscription.EXPECT().Cancel().AnyTimes() //cancel is in a defer, so it may not always be called
+	mockSubscription.EXPECT().Events().Return(make(chan v2.Eventer))
+
+	mockBus := mock.NewMockBus(ctrl)
+	mockBus.EXPECT().Subscribe(v2.ALL).Return(mockSubscription)
+
 	cl := &ari.Client{
 		Channel: mockChannel,
+		Bus:     mockBus,
 	}
 
 	s, err := NewServer(cl, &Options{
