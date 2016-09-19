@@ -28,29 +28,49 @@ func main() {
 
 func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
-	defer wg.Done()
 
-	// TODO: this subscription /should/ be channel specific. Not all Channel events are setup this way yet
-	sub := h.Subscribe("ChannelHangupRequest")
-	wg.Add(1)
+	stateChange := h.Subscribe("ChannelStateChange")
+	defer stateChange.Cancel()
 
-	go func() {
-		defer wg.Done()
-		log.Info("Waiting for channel hangup request")
-		<-sub.Events()
-		log.Info("Got Channel hangup request")
-	}()
+	hangup := h.Subscribe("ChannelHangupRequest")
+	defer hangup.Cancel()
 
 	data, err := h.Data()
 	if err != nil {
 		log.Error("Error getting data", "error", err)
 		return
 	}
-	log.Info("Channel Data", "data", data)
+	log.Info("Channel State", "state", data.State)
+
+	go func() {
+		log.Info("Waiting for channel events")
+
+		defer wg.Done()
+
+		for {
+			select {
+			case <-hangup.Events():
+				log.Info("Got hangup")
+				return
+			case <-stateChange.Events():
+				log.Info("Got state change request")
+
+				data, err = h.Data()
+				if err != nil {
+					log.Error("Error getting data", "error", err)
+					return
+				}
+				log.Info("New Channel State", "state", data.State)
+
+				h.Hangup()
+			}
+		}
+
+	}()
 
 	h.Answer()
 
-	h.Hangup()
+	wg.Wait()
 }
 
 func run() int {
@@ -80,7 +100,6 @@ func run() int {
 
 	wg.Add(1)
 	log.Info("Make sample call")
-
 	_, err = createCall(cl)
 	if err != nil {
 		log.Error("Failed to create call", "error", err)
