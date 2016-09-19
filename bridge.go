@@ -6,6 +6,9 @@ import "github.com/satori/go.uuid"
 // Asterisk server for working with bridge resources
 type Bridge interface {
 
+	// Get gets the BridgeHandle
+	Get(id string) *BridgeHandle
+
 	// Lists returns the lists of bridges in asterisk
 	List() ([]*BridgeHandle, error)
 

@@ -7,11 +7,15 @@ type natsBridge struct {
 	playback ari.Playback
 }
 
+func (b *natsBridge) Get(id string) *ari.BridgeHandle {
+	return ari.NewBridgeHandle(id, b)
+}
+
 func (b *natsBridge) List() (bx []*ari.BridgeHandle, err error) {
 	var bridges []string
 	err = b.conn.readRequest("ari.bridges.all", nil, &bridges)
 	for _, bridge := range bridges {
-		bx = append(bx, ari.NewBridgeHandle(bridge, b)) // TODO: replace NewBridgeHandle with b.Get
+		bx = append(bx, b.Get(bridge))
 	}
 	return
 }
