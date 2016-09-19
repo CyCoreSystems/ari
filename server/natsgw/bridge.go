@@ -31,6 +31,24 @@ func (srv *Server) bridge() {
 		return
 	})
 
+	srv.subscribe("ari.bridges.create", func(subj string, data []byte, reply Reply) {
+
+		var req nc.CreateBridgeRequest
+		if err := json.Unmarshal(data, &req); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		bh, err := srv.upstream.Bridge.Create(req.ID, req.Type, req.Name)
+
+		if err != nil {
+			reply(nil, err)
+			return
+		}
+
+		reply(bh.ID(), err)
+	})
+
 	srv.subscribe("ari.bridges.addChannel.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.bridges.addChannel."):]
 

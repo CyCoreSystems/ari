@@ -396,3 +396,80 @@ func TestBridgeDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestBridgeCreate(t *testing.T) {
+
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
+	}()
+
+	<-time.After(ServerWaitDelay)
+
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockBridge := mock.NewMockBridge(ctrl)
+	mockBridge.EXPECT().Create("b1", "", "").Return(ari.NewBridgeHandle("b1", mockBridge), nil)
+	mockBridge.EXPECT().Create("b2", "", "").Return(nil, errors.New("Error creating bridge"))
+
+	cl := &ari.Client{
+		Bridge: mockBridge,
+	}
+
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
+	if failed {
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	s.Start()
+	defer s.Close()
+
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	{
+		bh, err := natsClient.Bridge.Create("b1", "", "")
+
+		failed = err != nil || bh == nil || bh.ID() != "b1"
+		if failed {
+			t.Errorf("nc.Bridge.Create('b1','','') => '%v', '%v', expected '%v', '%v'",
+				bh, err,
+				"bridgeHandle{b1}", nil)
+		}
+	}
+
+	{
+		bh, err := natsClient.Bridge.Create("b2", "", "")
+
+		failed = bh != nil || err == nil || errors.Cause(err).Error() != "Error creating bridge"
+		if failed {
+			t.Errorf("nc.Bridge.Create('b2','','') => '%v', '%v', expected '%v', '%v'",
+				bh, err,
+				nil, "Error creating bridge")
+		}
+	}
+}

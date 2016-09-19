@@ -14,6 +14,24 @@ type natsBridge struct {
 	playback ari.Playback
 }
 
+// CreateBridgeRequest is the request for creating bridges
+type CreateBridgeRequest struct {
+	ID   string `json:"bridgeId,omitempty"`
+	Type string `json:"type,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+func (b *natsBridge) Create(id string, t string, name string) (h *ari.BridgeHandle, err error) {
+	var bridgeID string
+	req := CreateBridgeRequest{id, t, name}
+	err = b.conn.standardRequest("ari.bridges.create", &req, &bridgeID)
+	if err != nil {
+		return
+	}
+	h = b.Get(bridgeID)
+	return
+}
+
 func (b *natsBridge) Get(id string) *ari.BridgeHandle {
 	return ari.NewBridgeHandle(id, b)
 }
