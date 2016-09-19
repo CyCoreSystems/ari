@@ -10,6 +10,11 @@ type natsAsteriskVariables struct {
 	conn *Conn
 }
 
+// tests and other advanced utility functions can cast to an interface to get the NatsConnection object out
+func (a *natsAsterisk) NatsConnection() *Conn {
+	return a.conn
+}
+
 func (a *natsAsterisk) ReloadModule(name string) (err error) {
 	err = a.conn.standardRequest("ari.asterisk.reload."+name, nil, nil)
 	return

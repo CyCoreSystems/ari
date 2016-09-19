@@ -15,9 +15,11 @@ type Conn struct {
 	conn *nats.Conn
 }
 
-// a read request is a request that is a read operation. It is less about
-// "read" operations and more about operations which are repeatable/idempotent.
-func (c *Conn) readRequest(subj string, body interface{}, dest interface{}) (err error) {
+// ReadRequest sends a request that is a "read"... a request
+// which can be retried as needed without consequence.
+// NOTE: It is less about "read" operations and more about
+// operations which are repeatable/idempotent.
+func (c *Conn) ReadRequest(subj string, body interface{}, dest interface{}) (err error) {
 
 	maxRetries := c.opts.ReadOperationRetryCount
 
@@ -40,10 +42,9 @@ func (c *Conn) readRequest(subj string, body interface{}, dest interface{}) (err
 	return
 }
 
-// a standard request
-func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) (err error) {
-
-	conn := c.conn
+// StandardRequest is a request that sends JSON and receives JSON (on success)
+// OR receives an error from the remote server
+func (c *Conn) StandardRequest(subj string, body interface{}, dest interface{}) (err error) {
 
 	// build json request
 
@@ -54,6 +55,26 @@ func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) 
 			return
 		}
 	}
+
+	// make request
+
+	var msg *nats.Msg
+	msg, err = c.RawRequest(subj, data)
+
+	// parse json response
+
+	if msg != nil && dest != nil {
+		err = json.Unmarshal(msg.Data, dest)
+	}
+
+	return
+}
+
+// RawRequest sends a tiered request, with an initial OK to acknowledge receipt,
+// followed by either a response or an error.
+func (c *Conn) RawRequest(subj string, data []byte) (msg *nats.Msg, err error) {
+
+	conn := c.conn
 
 	// prepare response channel
 
@@ -78,7 +99,6 @@ func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) 
 	for {
 		// listen for response
 
-		var msg *nats.Msg
 		select {
 		case msg = <-ch:
 		case <-time.After(requestTimeout):
@@ -92,20 +112,28 @@ func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) 
 		switch msgType {
 		case "err":
 			err = errors.New(string(msg.Data))
+			msg = nil // zero out msg on error
 			return
 		case "ok":
 			requestTimeout = 2 * time.Second
 			continue
 		default:
-			// write into destination, if it isn't nil
-			if dest != nil {
-				err = json.Unmarshal(msg.Data, dest)
-			}
-
 			return
 		}
 	}
 }
+
+// compatibility stubs
+
+func (c *Conn) readRequest(subj string, body interface{}, dest interface{}) (err error) {
+	return c.ReadRequest(subj, body, dest)
+}
+
+func (c *Conn) standardRequest(subj string, body interface{}, dest interface{}) (err error) {
+	return c.StandardRequest(subj, body, dest)
+}
+
+// --
 
 type temp interface {
 	Temporary() bool
