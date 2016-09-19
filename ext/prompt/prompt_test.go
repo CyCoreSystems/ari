@@ -10,7 +10,7 @@ import (
 	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/audio"
+	"github.com/CyCoreSystems/ari/ext/audio"
 	"github.com/CyCoreSystems/ari/internal/testutils"
 	"golang.org/x/net/context"
 )
