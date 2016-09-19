@@ -12,3 +12,8 @@ package ari
 type ChannelEvent interface {
 	ChannelID() string
 }
+
+// A BridgeEvent is an event with a Bridge ID
+type BridgeEvent interface {
+	BridgeID() string
+}

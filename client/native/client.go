@@ -46,7 +46,7 @@ func New(opts Options) (*ari.Client, error) {
 		Cleanup:     conn.Close,
 		Playback:    playback,
 		Channel:     &nativeChannel{conn, conn.Bus, playback},
-		Bridge:      &nativeBridge{conn, playback},
+		Bridge:      &nativeBridge{conn, conn.Bus, playback},
 		Asterisk:    &nativeAsterisk{conn},
 		Application: &nativeApplication{conn},
 		Mailbox:     &nativeMailbox{conn},

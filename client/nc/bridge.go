@@ -1,6 +1,13 @@
 package nc
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"fmt"
+
+	"github.com/CyCoreSystems/ari"
+	v2 "github.com/CyCoreSystems/ari/v2"
+
+	"github.com/nats-io/nats"
+)
 
 type natsBridge struct {
 	conn     *Conn
@@ -52,4 +59,52 @@ func (b *natsBridge) Play(id string, playbackID string, mediaURI string) (h *ari
 		h = b.playback.Get(playbackID)
 	}
 	return
+}
+
+func (b *natsBridge) Subscribe(id string, nx ...string) ari.Subscription {
+
+	var ns natsSubscription
+
+	ns.events = make(chan v2.Eventer, 10)
+	ns.closeChan = make(chan struct{})
+
+	go func() {
+		for _, n := range nx {
+			subj := fmt.Sprintf("ari.events.%s", n)
+			sub, err := b.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
+				eventType := msg.Subject[len("ari.events."):]
+
+				var ariMessage v2.Message
+				ariMessage.SetRaw(&msg.Data)
+				ariMessage.Type = eventType
+
+				evt := v2.Parse(&ariMessage)
+
+				be, ok := evt.(ari.BridgeEvent)
+				if !ok {
+					// ignore non-channel events
+					return
+				}
+
+				Logger.Debug("Got bridge event", "bridgeid", be.BridgeID(), "eventtype", evt.GetType())
+
+				if be.BridgeID() != id {
+					// ignore unrelated channel events
+					return
+				}
+
+				ns.events <- evt
+			})
+			if err != nil {
+				//TODO: handle error
+				panic(err)
+			}
+			defer sub.Unsubscribe()
+		}
+
+		<-ns.closeChan
+		ns.closeChan = nil
+	}()
+
+	return &ns
 }

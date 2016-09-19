@@ -26,6 +26,9 @@ type Bridge interface {
 
 	// Play plays the media URI to the bridge
 	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
+
+	// Subscribe subscribes the given bridge events events
+	Subscribe(id string, n ...string) Subscription
 }
 
 // BridgeData describes an Asterisk Bridge, the entity which merges media from
@@ -89,4 +92,9 @@ func (bh *BridgeHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
 	id := uuid.NewV1().String()
 	ph, err = bh.b.Play(bh.id, id, mediaURI)
 	return
+}
+
+// Subscribe creates a subscription to the list of events
+func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
+	return bh.b.Subscribe(bh.id, n...)
 }
