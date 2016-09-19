@@ -32,7 +32,7 @@ func (srv *Server) device() {
 
 		var state string
 		if err := json.Unmarshal(data, &state); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

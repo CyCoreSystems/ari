@@ -15,7 +15,7 @@ func (srv *Server) playback() {
 
 		var command string
 		if err := json.Unmarshal(data, &command); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func TestDeviceStateUpdate(t *testing.T) {
@@ -142,7 +142,7 @@ func TestDeviceStateData(t *testing.T) {
 	{
 		dsData, err := natsClient.DeviceState.Data("ds2")
 
-		failed = err == nil || err.Error() != "DeviceState not found"
+		failed = err == nil || errors.Cause(err).Error() != "DeviceState not found"
 		if failed {
 			t.Errorf("nc.DeviceState.Data(ds2) => '%v', '%v', expected '%v', '%v'", dsData, err, "dsData", "DeviceState not found")
 		}

@@ -36,7 +36,7 @@ func (srv *Server) bridge() {
 
 		var channelID string
 		if err := json.Unmarshal(data, &channelID); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 
@@ -49,7 +49,7 @@ func (srv *Server) bridge() {
 
 		var channelID string
 		if err := json.Unmarshal(data, &channelID); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 
@@ -68,7 +68,7 @@ func (srv *Server) bridge() {
 
 		var pr nc.PlayRequest
 		if err := json.Unmarshal(data, &pr); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

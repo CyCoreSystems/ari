@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func TestBridgeList(t *testing.T) {
@@ -82,7 +82,7 @@ func TestBridgeList(t *testing.T) {
 	{
 		bx, err := natsClient.Bridge.List()
 
-		failed = err == nil || err.Error() != "Error getting bridges"
+		failed = err == nil || errors.Cause(err).Error() != "Error getting bridges"
 		failed = failed || len(bx) != 0
 		if failed {
 			t.Errorf("nc.Bridge.List() => '%v', '%v', expected '%v', '%v'", bx, err, "", "Error getting bridges")
@@ -161,7 +161,7 @@ func TestBridgeData(t *testing.T) {
 
 		ret, err := natsClient.Bridge.Data("b2")
 
-		failed = err == nil || err.Error() != "Bridge not found"
+		failed = err == nil || errors.Cause(err).Error() != "Bridge not found"
 		if failed {
 			t.Errorf("nc.Bridge.Data('%v') => '%v', '%v', expected '%v', '%v'", "b2",
 				ret, err,
@@ -238,7 +238,7 @@ func TestBridgeAddChannel(t *testing.T) {
 
 		err := natsClient.Bridge.AddChannel("b2", "c2")
 
-		failed = err == nil || err.Error() != "Bridge not found"
+		failed = err == nil || errors.Cause(err).Error() != "Bridge not found"
 		if failed {
 			t.Errorf("nc.Bridge.AddChannel('%v', '%v') => '%v', expected '%v'",
 				"b2", "c2",
@@ -315,7 +315,7 @@ func TestBridgeRemoveChannel(t *testing.T) {
 
 		err := natsClient.Bridge.RemoveChannel("b2", "c2")
 
-		failed = err == nil || err.Error() != "Bridge not found"
+		failed = err == nil || errors.Cause(err).Error() != "Bridge not found"
 		if failed {
 			t.Errorf("nc.Bridge.RemoveChannel('%v', '%v') => '%v', expected '%v'",
 				"b2", "c2",
@@ -390,7 +390,7 @@ func TestBridgeDelete(t *testing.T) {
 
 		err := natsClient.Bridge.Delete("b2")
 
-		failed = err == nil || err.Error() != "Bridge not found"
+		failed = err == nil || errors.Cause(err).Error() != "Bridge not found"
 		if failed {
 			t.Errorf("nc.Bridge.Delete('%v') => '%v', expected '%v'", "b2", err, "Bridge not found")
 		}

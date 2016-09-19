@@ -3,6 +3,7 @@ package natsgw
 import (
 	"encoding/json"
 
+	"github.com/CyCoreSystems/ari/client/nc"
 	"github.com/nats-io/nats"
 )
 
@@ -19,7 +20,8 @@ func (srv *Server) subscribe(endpoint string, h Handler) {
 		h(subj, data, func(i interface{}, err error) {
 
 			if err != nil {
-				resp := []byte(err.Error())
+				respMap := nc.ErrorToMap(err, "")
+				resp, _ := json.Marshal(respMap)
 				//			resp := append([]byte{nc.MagicRespErr}, resp...)
 				if err2 := srv.conn.Publish(reply+".err", resp); err2 != nil {
 					srv.log.Error("Error sending error reply", "reply", reply, "error", err2, "body", err)

@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func TestAsteriskModuleReload(t *testing.T) {
@@ -74,7 +74,7 @@ func TestAsteriskModuleReload(t *testing.T) {
 
 	err = natsClient.Asterisk.ReloadModule("module2")
 
-	failed = err == nil || err.Error() != "Can't find module"
+	failed = err == nil || errors.Cause(err).Error() != "Can't find module"
 	if failed {
 		t.Errorf("nc.Asterisk.ReloadModule(%s) => %v, expected %v", "module2", err, "Can't find module")
 	}
@@ -150,7 +150,7 @@ func TestAsteriskInfo(t *testing.T) {
 
 		ret, err = natsClient.Asterisk.Info("")
 
-		failed = err == nil || err.Error() != "Err getting info"
+		failed = err == nil || errors.Cause(err).Error() != "Err getting info"
 		if failed {
 			t.Errorf("nc.Asterisk.Info(%s) => %v, %v, expected %v, %v", "", ret, err, nil, "Err getting info")
 		}
@@ -304,7 +304,7 @@ func TestAsteriskVariableSet(t *testing.T) {
 
 		err = natsClient.Asterisk.Variables().Set("var2", "val2")
 
-		failed = err == nil || err.Error() != "Malformed variable name"
+		failed = err == nil || errors.Cause(err).Error() != "Malformed variable name"
 		if failed {
 			t.Errorf("nc.Asterisk.Variables().Set(%s, %s) => %v, expected %v", "var2", "val2", err, "Malformed variable name")
 		}

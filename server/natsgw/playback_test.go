@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func TestPlaybackData(t *testing.T) {
@@ -80,7 +80,7 @@ func TestPlaybackData(t *testing.T) {
 
 	{
 		ret, err := natsClient.Playback.Data("pb2")
-		failed = err == nil || err.Error() != playbackErrorMessage
+		failed = err == nil || errors.Cause(err).Error() != playbackErrorMessage
 		if failed {
 			t.Errorf("nc.Playback.Data('pb2') => ('%v','%v'), expected ('%v','%v')",
 				ret, err,

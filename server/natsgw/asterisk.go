@@ -25,7 +25,7 @@ func (srv *Server) asterisk() {
 		NamedHandler(len("ari.asterisk.variables.set."), func(name string, data []byte, reply Reply) {
 			var value string
 			if err := json.Unmarshal(data, &value); err != nil {
-				reply(nil, err)
+				reply(nil, &decodingError{"ari.asterisk.variables.set." + name, err})
 				return
 			}
 

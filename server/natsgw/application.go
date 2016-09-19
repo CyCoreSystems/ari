@@ -29,7 +29,7 @@ func (srv *Server) application() {
 
 		var eventSource string
 		if err := json.Unmarshal(data, &eventSource); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 
@@ -42,7 +42,7 @@ func (srv *Server) application() {
 
 		var eventSource string
 		if err := json.Unmarshal(data, &eventSource); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

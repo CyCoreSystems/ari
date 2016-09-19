@@ -24,11 +24,11 @@ func (srv *Server) channel() {
 		reply(channels, nil)
 	})
 
-	srv.subscribe("ari.channels.create", func(_ string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.create", func(subj string, data []byte, reply Reply) {
 		var req ari.OriginateRequest
 
 		if err := json.Unmarshal(data, &req); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 
@@ -62,7 +62,7 @@ func (srv *Server) channel() {
 
 		var reason string
 		if err := json.Unmarshal(data, &reason); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 
@@ -99,7 +99,7 @@ func (srv *Server) channel() {
 
 		var dir string
 		if err := json.Unmarshal(data, &dir); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 		}
 
 		err := srv.upstream.Channel.Mute(name, dir)
@@ -111,7 +111,7 @@ func (srv *Server) channel() {
 
 		var dir string
 		if err := json.Unmarshal(data, &dir); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 		}
 
 		err := srv.upstream.Channel.Unmute(name, dir)
@@ -135,7 +135,7 @@ func (srv *Server) channel() {
 
 		var music string
 		if err := json.Unmarshal(data, &music); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 		}
 
 		err := srv.upstream.Channel.MOH(name, music)
@@ -153,7 +153,7 @@ func (srv *Server) channel() {
 
 		var pr nc.PlayRequest
 		if err := json.Unmarshal(data, &pr); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

@@ -34,7 +34,7 @@ func (srv *Server) mailbox() {
 
 		var request req
 		if err := json.Unmarshal(data, &request); err != nil {
-			reply(nil, err)
+			reply(nil, &decodingError{subj, err})
 			return
 		}
 

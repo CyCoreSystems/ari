@@ -2,10 +2,10 @@ package nc
 
 import (
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/nats-io/nats"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -111,8 +111,14 @@ func (c *Conn) RawRequest(subj string, data []byte) (msg *nats.Msg, err error) {
 
 		switch msgType {
 		case "err":
-			err = errors.New(string(msg.Data))
+			data := msg.Data
 			msg = nil // zero out msg on error
+			m := make(map[string]interface{})
+			if err2 := json.Unmarshal(data, &m); err2 != nil {
+				err = errors.Wrap(err2, "Error decoding remote error")
+			} else {
+				err = &remoteError{subj, MapToError(m)}
+			}
 			return
 		case "ok":
 			requestTimeout = 2 * time.Second

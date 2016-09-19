@@ -1,13 +1,13 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
 	"time"
 
 	v2 "github.com/CyCoreSystems/ari/v2"
+	"github.com/pkg/errors"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
@@ -92,7 +92,7 @@ func TestChannelListTest(t *testing.T) {
 	{
 		cx, err := natsClient.Channel.List()
 
-		failed = err == nil || err.Error() != "Error getting channels"
+		failed = err == nil || errors.Cause(err).Error() != "Error getting channels"
 		failed = failed || len(cx) != 0
 		if failed {
 			t.Errorf("nc.Channel.List() => '%v', '%v', expected '%v', '%v'", cx, err, "", "Error getting channels")

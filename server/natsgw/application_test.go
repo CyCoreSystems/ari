@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/CyCoreSystems/ari/client/nc"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func newNatsClient(url string) (*ari.Client, error) {
@@ -89,7 +89,7 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 	{
 		err = natsClient.Application.Subscribe("app2", "evt1")
 
-		failed = err == nil || err.Error() != "Application not found"
+		failed = err == nil || errors.Cause(err).Error() != "Application not found"
 		if failed {
 			t.Errorf("nc.Application.Subscribe(app2,evt1) => '%v', expected '%v'", err, "nil")
 		}
@@ -107,7 +107,7 @@ func TestApplicationsSubscribeUnsubscribe(t *testing.T) {
 	{
 		err = natsClient.Application.Unsubscribe("app2", "evt1")
 
-		failed = err == nil || err.Error() != "Application not found"
+		failed = err == nil || errors.Cause(err).Error() != "Application not found"
 		if failed {
 			t.Errorf("nc.Application.Unsubscribe(app2,evt1) => '%v', expected '%v'", err, "nil")
 		}
@@ -181,7 +181,7 @@ func TestApplicationsData(t *testing.T) {
 	{
 		appData, err := natsClient.Application.Data("app2")
 
-		failed = err == nil || err.Error() != "Application not found"
+		failed = err == nil || errors.Cause(err).Error() != "Application not found"
 		if failed {
 			t.Errorf("nc.Application.Data(app2) => '%v', '%v', expected '%v', '%v'", appData, err, "appData", "Application not found")
 		}

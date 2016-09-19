@@ -1,7 +1,6 @@
 package natsgw
 
 import (
-	"errors"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 )
 
 func TestMailboxList(t *testing.T) {
@@ -82,7 +82,7 @@ func TestMailboxList(t *testing.T) {
 
 	{
 		l, err := natsClient.Mailbox.List()
-		failed = err == nil || err.Error() != "Failed getting mailbox list"
+		failed = err == nil || errors.Cause(err).Error() != "Failed getting mailbox list"
 		if failed {
 			t.Errorf("nc.Mailbox.List() => '%v', '%v'; expected '%v', %v'",
 				l, err,
@@ -161,7 +161,7 @@ func TestMailboxData(t *testing.T) {
 
 	{
 		d, err := natsClient.Mailbox.Data("mb2")
-		failed = err == nil || err.Error() != "Failed to get mailbox data"
+		failed = err == nil || errors.Cause(err).Error() != "Failed to get mailbox data"
 		if failed {
 			t.Errorf("nc.Mailbox.Data('%v') => '%v', '%v'; expected '%v', %v'",
 				"mb2",
