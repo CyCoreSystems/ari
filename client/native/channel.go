@@ -2,6 +2,7 @@ package native
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/CyCoreSystems/ari"
 	v2 "github.com/CyCoreSystems/ari/v2"
@@ -123,11 +124,38 @@ func (c *nativeChannel) Unmute(id string, dir string) (err error) {
 	return
 }
 
-func (c *nativeChannel) SendDTMF(id string, dtmf string) (err error) {
+func (c *nativeChannel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err error) {
+
 	type request struct {
-		//TODO: populate request
+		Dtmf     string `json:"dtmf,omitempty"`
+		Before   *int   `json:"before,omitempty"`
+		Between  *int   `json:"between,omitempty"`
+		Duration *int   `json:"duration,omitempty"`
+		After    *int   `json:"after,omitempty"`
 	}
 	req := request{}
+
+	if opts != nil {
+		if opts.Before != 0 {
+			req.Before = new(int)
+			*req.Before = int(opts.Before / time.Millisecond)
+		}
+		if opts.After != 0 {
+			req.After = new(int)
+			*req.After = int(opts.After / time.Millisecond)
+		}
+		if opts.Duration != 0 {
+			req.Duration = new(int)
+			*req.Duration = int(opts.Duration / time.Millisecond)
+		}
+		if opts.Between != 0 {
+			req.Between = new(int)
+			*req.Between = int(opts.Between / time.Millisecond)
+		}
+	}
+
+	req.Dtmf = dtmf
+
 	err = Post(c.conn, "/channels/"+id+"/dtmf", nil, &req)
 	return
 }

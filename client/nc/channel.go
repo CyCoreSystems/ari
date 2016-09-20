@@ -88,8 +88,19 @@ func (c *natsChannel) StopRing(id string) (err error) {
 	return
 }
 
-func (c *natsChannel) SendDTMF(id string, dtmf string) (err error) {
-	err = c.conn.standardRequest("ari.channels.senddtmf."+id, &dtmf, nil)
+func (c *natsChannel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err error) {
+	if opts == nil {
+		opts = &ari.DTMFOptions{}
+	}
+
+	type request struct {
+		Dtmf string           `json:"dtmf,omitempty"`
+		Opts *ari.DTMFOptions `json:"options,omitempty"`
+	}
+
+	req := request{dtmf, opts}
+
+	err = c.conn.standardRequest("ari.channels.dtmf."+id, &req, nil)
 	return
 }
 

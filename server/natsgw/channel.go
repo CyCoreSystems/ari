@@ -161,4 +161,22 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
+	srv.subscribe("ari.channels.dtmf.>", func(subj string, data []byte, reply Reply) {
+		name := subj[len("ari.channels.dtmf."):]
+
+		type request struct {
+			Dtmf string           `json:"dtmf,omitempty"`
+			Opts *ari.DTMFOptions `json:"options,omitempty"`
+		}
+
+		var req request
+		if err := json.Unmarshal(data, &req); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		err := srv.upstream.Channel.SendDTMF(name, req.Dtmf, req.Opts)
+		reply(nil, err)
+	})
+
 }

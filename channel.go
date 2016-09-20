@@ -44,7 +44,7 @@ type Channel interface {
 	StopRing(id string) error
 
 	// SendDTMF sends DTMF to the channel
-	SendDTMF(id string, dtmf string) error
+	SendDTMF(id string, dtmf string, opts *DTMFOptions) error
 
 	// Hold puts the channel on hold
 	Hold(id string) error
@@ -277,6 +277,6 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 // --
 
 // SendDTMF sends the DTMF information to the server
-func (ch *ChannelHandle) SendDTMF(dtmf string) error {
-	return ch.c.SendDTMF(ch.id, dtmf)
+func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
+	return ch.c.SendDTMF(ch.id, dtmf, opts)
 }
