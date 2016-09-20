@@ -2,6 +2,7 @@ package native
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
@@ -224,9 +225,17 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 
 				Logger.Debug("Got channel event", "channelid", ce.ChannelID(), "eventtype", evt.GetType())
 
-				if ce.ChannelID() != id {
+				//channel ID comparisons
+				//	do we compare based on id;N, where id == id and the N's aren't different
+				//		 -> this happens in Local channels
+				// NOTE: this code handles local channels
+
+				leftChannel := strings.Split(id, ";")[0]
+				rightChannel := strings.Split(ce.ChannelID(), ";")[0]
+
+				if leftChannel != rightChannel {
 					// ignore unrelated channel events
-					continue
+					return
 				}
 
 				ns.events <- evt

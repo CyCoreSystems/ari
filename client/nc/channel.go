@@ -2,6 +2,7 @@ package nc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/CyCoreSystems/ari"
 	v2 "github.com/CyCoreSystems/ari/v2"
@@ -176,19 +177,23 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 
 				evt := v2.Parse(&ariMessage)
 
-				//TODO: channel ID comparisons
-				//	do we compare based on id;N, where id == id and the N's aren't different
-				//		 -> this happens in Local channels
-
 				ce, ok := evt.(ari.ChannelEvent)
 				if !ok {
 					// ignore non-channel events
 					return
 				}
 
-				Logger.Debug("Got channel event", "channelid", ce.ChannelID(), "eventtype", evt.GetType())
+				Logger.Debug("Got channel event", "currentid", id, "channelid", ce.ChannelID(), "eventtype", evt.GetType())
 
-				if ce.ChannelID() != id {
+				//channel ID comparisons
+				//	do we compare based on id;N, where id == id and the N's aren't different
+				//		 -> this happens in Local channels
+				// NOTE: this code handles local channels
+
+				leftChannel := strings.Split(id, ";")[0]
+				rightChannel := strings.Split(ce.ChannelID(), ";")[0]
+
+				if leftChannel != rightChannel {
 					// ignore unrelated channel events
 					return
 				}
