@@ -4,17 +4,27 @@ services:
   asterisk:
     build: ./asterisk
     ports:
-     - "8088:8088"
+      - "8088:8088"
   nats:
     image: nats
     ports:
-     - "4222:4222"
+      - "4222:4222"
   natsgw:
     build: ./natsgw
     links:
       - asterisk
       - nats
-  senddtmf-start:
-    build: ./sendDtmf-nats
+
+#  senddtmf-nats:
+#    build: ./sendDtmf-nats
+#    links:
+#      - nats
+#    ports:
+#      - "9991:9991"
+
+  stasisstart-nats:
+    build: ./stasisStart-nats
     links:
       - nats
+    ports:
+      - "9990:9990"

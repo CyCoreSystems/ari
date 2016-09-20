@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"net/http"
+
 	"golang.org/x/net/context"
 
 	log15 "gopkg.in/inconshreveable/log15.v2"
@@ -15,11 +17,10 @@ import (
 )
 
 var log = log15.New()
-var wg sync.WaitGroup
 
 func main() {
 
-	<-time.After(20 * time.Second)
+	<-time.After(1 * time.Second)
 
 	if i := run(); i != 0 {
 		os.Exit(i)
@@ -42,6 +43,9 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	}
 	log.Info("Channel State", "state", data.State)
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
 		log.Info("Waiting for channel events")
 
@@ -49,7 +53,7 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 
 		for {
 			select {
-			case <-time.After(500 * time.Millisecond):
+			case <-time.After(5 * time.Second):
 				log.Error("Timeout waiting for channel UP and all 4 DTMF digits")
 				return
 			case <-stateChange.Events():
@@ -63,6 +67,7 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 				log.Info("New Channel State", "state", data.State)
 
 				if data.State == "Up" {
+					stateChange.Cancel() // stop subscription to state change events
 					log.Info("Sending DTMF to channel")
 					h.SendDTMF("1234", nil)
 				}
@@ -77,11 +82,12 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 
 	}()
 
-	h.Answer()
+	log.Info("Answering call", "error", h.Answer())
 
 	wg.Wait()
 
-	h.Hangup()
+	log.Info("Hangup up call", "error", h.Hangup())
+	log.Info("Leaving channel handler")
 }
 
 func run() int {
@@ -107,16 +113,27 @@ func run() int {
 
 	go listenApp(ctx, cl, channelHandler)
 
-	// make sample call
+	// start call start listener
 
-	wg.Add(1)
-	log.Info("Make sample call")
-	_, err = createCall(cl)
-	if err != nil {
-		log.Error("Failed to create call", "error", err)
-	}
+	log.Info("Starting HTTP Handler")
 
-	wg.Wait()
+	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		// make call
+		log.Info("Make sample call")
+		h, err := createCall(cl)
+		if err != nil {
+			log.Error("Failed to create call", "error", err)
+			w.WriteHeader(500)
+			w.Write([]byte("Failed to create call: " + err.Error()))
+			return
+		}
+
+		w.WriteHeader(200)
+		w.Write([]byte(h.ID()))
+	}))
+
+	log.Info("Listening for requests on port 9991")
+	http.ListenAndServe(":9991", nil)
 
 	return 0
 }
