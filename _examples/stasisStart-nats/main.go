@@ -34,7 +34,7 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 
 	defer func() {
 		log.Info("Leaving channel handler and Continuing")
-		if err := h.Continue("default", "", ""); err != nil {
+		if err := h.Continue("default", "1001", "1"); err != nil {
 			log.Error("Error trying to continue channel", "error", err)
 		}
 	}()
@@ -68,7 +68,6 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 
 				if data.State == "Up" {
 					stateChange.Cancel() // stop subscription to state change events
-					h.Hangup()
 					return
 				}
 			}

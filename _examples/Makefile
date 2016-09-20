@@ -13,6 +13,10 @@ all:
 		go build -a -installsuffix cgo \
 			-ldflags '-w -extld ld -extldflags -static' \
 			-a -o sendDtmf-nats/app.static sendDtmf-nats/main.go
+	CGO_ENABLED=0 GOOS=linux \
+		go build -a -installsuffix cgo \
+			-ldflags '-w -extld ld -extldflags -static' \
+			-a -o stasisStart/app.static stasisStart/main.go
 
 
 build: all
