@@ -271,3 +271,12 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 }
 
 // TODO: rest of ChannelHandle
+
+// --
+// DTMF
+// --
+
+// SendDTMF sends the DTMF information to the server
+func (ch *ChannelHandle) SendDTMF(dtmf string) error {
+	return ch.c.SendDTMF(ch.id, dtmf)
+}
