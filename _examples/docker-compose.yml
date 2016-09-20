@@ -14,7 +14,7 @@ services:
     links:
       - asterisk
       - nats
-  stasis-start:
-    build: ./stasisStart-nats
+  senddtmf-start:
+    build: ./sendDtmf-nats
     links:
       - nats
