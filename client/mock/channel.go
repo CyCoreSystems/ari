@@ -173,14 +173,14 @@ func (_mr *_MockChannelRecorder) Ring(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Ring", arg0)
 }
 
-func (_m *MockChannel) SendDTMF(_param0 string, _param1 string) error {
-	ret := _m.ctrl.Call(_m, "SendDTMF", _param0, _param1)
+func (_m *MockChannel) SendDTMF(_param0 string, _param1 string, _param2 *ari.DTMFOptions) error {
+	ret := _m.ctrl.Call(_m, "SendDTMF", _param0, _param1, _param2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockChannelRecorder) SendDTMF(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "SendDTMF", arg0, arg1)
+func (_mr *_MockChannelRecorder) SendDTMF(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "SendDTMF", arg0, arg1, arg2)
 }
 
 func (_m *MockChannel) Silence(_param0 string) error {
