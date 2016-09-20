@@ -199,6 +199,11 @@ type ChannelDtmfReceived struct {
 	Duration_ms int     `json:"duration_ms"` // The duration of the DTMF tone, in milliseconds
 }
 
+// ChannelID returns the channel Id that this event is operating on
+func (evt *ChannelDtmfReceived) ChannelID() string {
+	return evt.Channel.Id
+}
+
 // ChannelEngteredBridge events indicate that a channel has joined a bridge
 type ChannelEnteredBridge struct {
 	Event
