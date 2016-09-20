@@ -79,6 +79,8 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	h.Answer()
 
 	wg.Wait()
+
+	h.Hangup()
 }
 
 func run() int {
@@ -133,15 +135,17 @@ func listenApp(ctx context.Context, cl *ari.Client, handler func(cl *ari.Client,
 	sub := cl.Bus.Subscribe("StasisStart")
 	end := cl.Bus.Subscribe("StasisEnd")
 
-	select {
-	case e := <-sub.Events():
-		log.Info("Got stasis start")
-		stasisStartEvent := e.(*v2.StasisStart)
-		go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.Id))
-	case <-end.Events():
-		log.Info("Got stasis end")
-	case <-ctx.Done():
-		return
+	for {
+		select {
+		case e := <-sub.Events():
+			log.Info("Got stasis start")
+			stasisStartEvent := e.(*v2.StasisStart)
+			go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.Id))
+		case <-end.Events():
+			log.Info("Got stasis end")
+		case <-ctx.Done():
+			return
+		}
 	}
 
 }
