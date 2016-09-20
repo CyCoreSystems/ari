@@ -23,7 +23,7 @@ type Channel interface {
 	Data(id string) (ChannelData, error)
 
 	// Continue tells Asterisk to return a channel to the dialplan
-	Continue(id, context, extension, priority string) error
+	Continue(id, context, extension string, priority int) error
 
 	// Busy hangs up the channel with the "busy" cause code
 	Busy(id string) error
@@ -115,7 +115,7 @@ func (ch *ChannelHandle) Data() (ChannelData, error) {
 }
 
 // Continue tells Asterisk to return the channel to the dialplan
-func (ch *ChannelHandle) Continue(context, extension, priority string) error {
+func (ch *ChannelHandle) Continue(context, extension string, priority int) error {
 	return ch.c.Continue(ch.id, context, extension, priority)
 }
 

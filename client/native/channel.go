@@ -61,11 +61,13 @@ func (c *nativeChannel) Create(req ari.OriginateRequest) (*ari.ChannelHandle, er
 	return h, err
 }
 
-func (c *nativeChannel) Continue(id string, context, extension, priority string) (err error) {
+func (c *nativeChannel) Continue(id string, context, extension string, priority int) (err error) {
 	type request struct {
-		//TODO: populate request
+		Context   string `json:"context"`
+		Extension string `json:"extension"`
+		Priority  int    `json:"priority"`
 	}
-	req := request{}
+	req := request{Context: context, Extension: extension, Priority: priority}
 	err = Post(c.conn, "/channels/"+id+"/continue", nil, &req)
 	return
 }

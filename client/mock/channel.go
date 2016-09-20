@@ -59,7 +59,7 @@ func (_mr *_MockChannelRecorder) Congestion(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Congestion", arg0)
 }
 
-func (_m *MockChannel) Continue(_param0 string, _param1 string, _param2 string, _param3 string) error {
+func (_m *MockChannel) Continue(_param0 string, _param1 string, _param2 string, _param3 int) error {
 	ret := _m.ctrl.Call(_m, "Continue", _param0, _param1, _param2, _param3)
 	ret0, _ := ret[0].(error)
 	return ret0

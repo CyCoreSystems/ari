@@ -14,7 +14,7 @@ import (
 type ContinueRequest struct {
 	Context   string `json:"context"`
 	Extension string `json:"extension"`
-	Priority  string `json:"priority"`
+	Priority  int    `json:"priority"`
 }
 
 type natsChannel struct {
@@ -50,7 +50,7 @@ func (c *natsChannel) Data(id string) (cd ari.ChannelData, err error) {
 	return
 }
 
-func (c *natsChannel) Continue(id string, context string, extension string, priority string) (err error) {
+func (c *natsChannel) Continue(id string, context string, extension string, priority int) (err error) {
 	err = c.conn.standardRequest("ari.channels.continue."+id, &ContinueRequest{
 		Context:   context,
 		Extension: extension,

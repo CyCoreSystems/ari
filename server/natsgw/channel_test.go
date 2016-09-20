@@ -254,7 +254,7 @@ func TestChannelContinue(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().Continue("c1", "1", "2", "3").Return(nil)
+	mockChannel.EXPECT().Continue("c1", "1", "2", 3).Return(nil)
 
 	cl := &ari.Client{
 		Channel: mockChannel,
@@ -280,7 +280,7 @@ func TestChannelContinue(t *testing.T) {
 	}
 
 	{
-		err = natsClient.Channel.Continue("c1", "1", "2", "3")
+		err = natsClient.Channel.Continue("c1", "1", "2", 3)
 
 		failed = err != nil
 		if failed {
