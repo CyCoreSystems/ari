@@ -225,3 +225,66 @@ func TestChannelSendDTMF(t *testing.T) {
 		}
 	}
 }
+
+func TestChannelContinue(t *testing.T) {
+
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
+	}()
+
+	<-time.After(ServerWaitDelay)
+
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockChannel := mock.NewMockChannel(ctrl)
+	mockChannel.EXPECT().Continue("c1", "1", "2", "3").Return(nil)
+
+	cl := &ari.Client{
+		Channel: mockChannel,
+	}
+
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
+	if failed {
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	s.Start()
+	defer s.Close()
+
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	{
+		err = natsClient.Channel.Continue("c1", "1", "2", "3")
+
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Channel.Continue('c1', '1', '2', '3') => '%v', expected '%v'", err, nil)
+		}
+	}
+}

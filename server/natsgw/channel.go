@@ -179,4 +179,17 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
+	srv.subscribe("ari.channels.continue.>", func(subj string, data []byte, reply Reply) {
+		name := subj[len("ari.channels.continue."):]
+
+		var req nc.ContinueRequest
+		if err := json.Unmarshal(data, &req); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		err := srv.upstream.Channel.Continue(name, req.Context, req.Extension, req.Priority)
+		reply(nil, err)
+	})
+
 }
