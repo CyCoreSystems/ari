@@ -1,6 +1,6 @@
 
 
-all: api clients server extensions
+all: api clients extensions gateway
 
 api:
 	go build ./
@@ -10,13 +10,13 @@ clients:
 	go build ./client/nc
 	go build ./client/mock
 
-server:
-	go build ./server/natsgw
-
 extensions:
 	go build ./ext/audio
 	go build ./ext/prompt
 	go build ./ext/record
+
+gateway:
+	go build ./server/natsgw
 
 mock:
 	go generate ./client/mock
