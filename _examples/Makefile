@@ -14,3 +14,9 @@ all:
 			-ldflags '-w -extld ld -extldflags -static' \
 			-a -o sendDtmf-nats/app.static sendDtmf-nats/main.go
 
+
+build: all
+	docker-compose build
+
+run: build
+	docker-compose up
