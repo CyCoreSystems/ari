@@ -6,13 +6,36 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/CyCoreSystems/ari/internal/testutils"
-	v2 "github.com/CyCoreSystems/ari/v2"
+	"github.com/golang/mock/gomock"
 )
 
 func TestRecordTimeout(t *testing.T) {
+	RecordingStartTimeout = 100 * time.Millisecond
 
-	bus := testutils.NewDelayedBus(1 * time.Millisecond)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+	startedSub := mock.NewMockSubscription(ctrl)
+	startedCh := make(chan ari.Event)
+	startedSub.EXPECT().Events().Return(startedCh)
+	startedSub.EXPECT().Cancel()
+
+	finishedSub := mock.NewMockSubscription(ctrl)
+	finishedCh := make(chan ari.Event)
+	finishedSub.EXPECT().Events().Return(finishedCh)
+	finishedSub.EXPECT().Cancel()
+
+	failedSub := mock.NewMockSubscription(ctrl)
+	failedCh := make(chan ari.Event)
+	failedSub.EXPECT().Events().Return(failedCh)
+	failedSub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.RecordingStarted).Return(startedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFinished).Return(finishedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFailed).Return(failedSub)
 
 	recorder := testutils.NewRecorder()
 	recorder.Append(ari.NewLiveRecordingHandle("rc1", &testRecording{"rc1", false}), nil)
@@ -38,33 +61,39 @@ func TestRecordTimeout(t *testing.T) {
 
 func TestRecord(t *testing.T) {
 
-	bus := testutils.NewDelayedBus(1 * time.Millisecond)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+	startedSub := mock.NewMockSubscription(ctrl)
+	startedCh := make(chan ari.Event)
+	startedSub.EXPECT().Events().MinTimes(1).Return(startedCh)
+	startedSub.EXPECT().Cancel()
+
+	finishedSub := mock.NewMockSubscription(ctrl)
+	finishedCh := make(chan ari.Event)
+	finishedSub.EXPECT().Events().MinTimes(1).Return(finishedCh)
+	finishedSub.EXPECT().Cancel()
+
+	failedSub := mock.NewMockSubscription(ctrl)
+	failedCh := make(chan ari.Event)
+	failedSub.EXPECT().Events().MinTimes(1).Return(failedCh)
+	failedSub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.RecordingStarted).Return(startedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFinished).Return(finishedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFailed).Return(failedSub)
 
 	recorder := testutils.NewRecorder()
 	recorder.Append(ari.NewLiveRecordingHandle("rc1", &testRecording{"rc1", false}), nil)
-
-	exp := bus.Expect("RecordingStarted")
-	exp2 := bus.Expect("RecordingFinished")
 
 	var rec *Recording
 	var err error
 
 	rec = Record(bus, recorder, "rc1", nil)
 
-	select {
-	case <-exp:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingStarted' subscription")
-	}
-
-	select {
-	case <-exp2:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingFinished' subscription")
-	}
-
-	bus.Send(recordingStarted("rc1"))
-	bus.Send(recordingFinished("rc1"))
+	startedCh <- recordingStarted("rc1")
+	finishedCh <- recordingFinished("rc1")
 
 	<-rec.Done()
 
@@ -81,27 +110,33 @@ func TestRecord(t *testing.T) {
 
 func TestRecordCancel(t *testing.T) {
 
-	bus := testutils.NewDelayedBus(1 * time.Millisecond)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+	startedSub := mock.NewMockSubscription(ctrl)
+	startedCh := make(chan ari.Event)
+	startedSub.EXPECT().Events().Return(startedCh)
+	startedSub.EXPECT().Cancel()
+
+	finishedSub := mock.NewMockSubscription(ctrl)
+	finishedCh := make(chan ari.Event)
+	finishedSub.EXPECT().Events().Return(finishedCh)
+	finishedSub.EXPECT().Cancel()
+
+	failedSub := mock.NewMockSubscription(ctrl)
+	failedCh := make(chan ari.Event)
+	failedSub.EXPECT().Events().Return(failedCh)
+	failedSub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.RecordingStarted).Return(startedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFinished).Return(finishedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFailed).Return(failedSub)
 
 	recorder := testutils.NewRecorder()
 	recorder.Append(ari.NewLiveRecordingHandle("rc1", &testRecording{"rc1", false}), nil)
 
-	exp := bus.Expect("RecordingStarted")
-	exp2 := bus.Expect("RecordingFinished")
-
 	rec := Record(bus, recorder, "rc1", nil)
-
-	select {
-	case <-exp:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingStarted' subscription")
-	}
-
-	select {
-	case <-exp2:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingFinished' subscription")
-	}
 
 	rec.Cancel()
 
@@ -119,27 +154,27 @@ func TestRecordCancel(t *testing.T) {
 
 func TestRecordFailOnRecord(t *testing.T) {
 
-	bus := testutils.NewDelayedBus(1 * time.Millisecond)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+	startedSub := mock.NewMockSubscription(ctrl)
+	startedSub.EXPECT().Cancel()
+
+	finishedSub := mock.NewMockSubscription(ctrl)
+	finishedSub.EXPECT().Cancel()
+
+	failedSub := mock.NewMockSubscription(ctrl)
+	failedSub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.RecordingStarted).Return(startedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFinished).Return(finishedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFailed).Return(failedSub)
 
 	recorder := testutils.NewRecorder()
 	recorder.Append(nil, errors.New("Dummy record error"))
 
-	exp := bus.Expect("RecordingStarted")
-	exp2 := bus.Expect("RecordingFinished")
-
 	rec := Record(bus, recorder, "rc1", nil)
-
-	select {
-	case <-exp:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingStarted' subscription")
-	}
-
-	select {
-	case <-exp2:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingFinished' subscription")
-	}
 
 	<-rec.Done()
 
@@ -158,36 +193,36 @@ func TestRecordFailEvent(t *testing.T) {
 
 	RecordingStartTimeout = 10 * time.Second
 
-	bus := testutils.NewDelayedBus(1 * time.Millisecond)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
 
 	recorder := testutils.NewRecorder()
 	recorder.Append(ari.NewLiveRecordingHandle("rc1", &testRecording{"rc1", false}), nil)
 
-	exp := bus.Expect("RecordingStarted")
-	exp2 := bus.Expect("RecordingFinished")
-	exp3 := bus.Expect("RecordingFailed")
+	startedSub := mock.NewMockSubscription(ctrl)
+	startedCh := make(chan ari.Event)
+	startedSub.EXPECT().Events().Return(startedCh)
+	startedSub.EXPECT().Cancel()
+
+	finishedSub := mock.NewMockSubscription(ctrl)
+	finishedCh := make(chan ari.Event)
+	finishedSub.EXPECT().Events().Return(finishedCh)
+	finishedSub.EXPECT().Cancel()
+
+	failedSub := mock.NewMockSubscription(ctrl)
+	failedCh := make(chan ari.Event)
+	failedSub.EXPECT().Events().Return(failedCh)
+	failedSub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.RecordingStarted).Return(startedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFinished).Return(finishedSub)
+	bus.EXPECT().Subscribe(ari.Events.RecordingFailed).Return(failedSub)
 
 	rec := Record(bus, recorder, "rc1", nil)
 
-	select {
-	case <-exp:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingStarted' subscription")
-	}
-
-	select {
-	case <-exp2:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingFinished' subscription")
-	}
-
-	select {
-	case <-exp3:
-	case <-time.After(10 * time.Second):
-		t.Errorf("Expected 'RecordingFailed' subscription")
-	}
-
-	bus.Send(recordingFailed("rc1"))
+	failedCh <- recordingFailed("rc1")
 
 	<-rec.Done()
 
@@ -253,40 +288,40 @@ func isTimeout(err error) bool {
 	return ok && te.Timeout()
 }
 
-var recordingStarted = func(id string) v2.Eventer {
-	return &v2.RecordingStarted{
-		Event: v2.Event{
-			Message: v2.Message{
+var recordingStarted = func(id string) ari.Event {
+	return &ari.RecordingStarted{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "RecordingStarted",
 			},
 		},
-		Recording: v2.LiveRecording{
+		Recording: ari.LiveRecordingData{
 			Name: id,
 		},
 	}
 }
 
-var recordingFinished = func(id string) v2.Eventer {
-	return &v2.RecordingFinished{
-		Event: v2.Event{
-			Message: v2.Message{
+var recordingFinished = func(id string) ari.Event {
+	return &ari.RecordingFinished{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "RecordingFinished",
 			},
 		},
-		Recording: v2.LiveRecording{
+		Recording: ari.LiveRecordingData{
 			Name: id,
 		},
 	}
 }
 
-var recordingFailed = func(id string) v2.Eventer {
-	return &v2.RecordingFailed{
-		Event: v2.Event{
-			Message: v2.Message{
+var recordingFailed = func(id string) ari.Event {
+	return &ari.RecordingFailed{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "RecordingFailed",
 			},
 		},
-		Recording: v2.LiveRecording{
+		Recording: ari.LiveRecordingData{
 			Name:  id,
 			Cause: "Dummy Failure Error",
 		},

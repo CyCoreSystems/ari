@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/CyCoreSystems/ari/internal/testutils"
-	v2 "github.com/CyCoreSystems/ari/v2"
+	"github.com/golang/mock/gomock"
 
 	"golang.org/x/net/context"
 )
@@ -19,7 +20,17 @@ func TestPlayAsync(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -72,7 +83,17 @@ func TestPlayTimeoutStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -94,13 +115,23 @@ func TestPlayTimeoutStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.Send(playbackStartedGood("pb1"))
+		ch <- playbackStartedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -120,14 +151,24 @@ func TestPlaySuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch <- playbackStartedGood("pb1")
+		ch <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -143,17 +184,27 @@ func TestPlayNilEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.SendTo("PlaybackStarted", nil)
-		bus.Send(playbackStartedGood("pb1"))
-		bus.SendTo("PlaybackStarted", nil)
-		bus.SendTo("PlaybackFinished", nil)
-		bus.Send(playbackFinishedGood("pb1"))
+		ch <- nil
+		ch <- playbackStartedGood("pb1")
+		ch <- nil
+		ch <- nil
+		ch <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -169,22 +220,30 @@ func TestPlayUnrelatedEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.SendTo("PlaybackStarted", playbackStartedBadMessageType)
-		bus.Send(playbackFinishedDifferentPlaybackID)
-		bus.Send(playbackStartedDifferentPlaybackID)
-		bus.Send(playbackStartedGood("pb1"))
+		ch <- playbackFinishedDifferentPlaybackID
+		ch <- playbackStartedDifferentPlaybackID
+		ch <- playbackStartedGood("pb1")
 
 		<-time.After(1 * time.Second)
 
-		bus.SendTo("PlaybackFinished", playbackFinishedBadMessageType)
-		bus.Send(playbackFinishedDifferentPlaybackID)
-		bus.Send(playbackFinishedGood("pb1"))
+		ch <- playbackFinishedDifferentPlaybackID
+		ch <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -200,13 +259,23 @@ func TestPlayStopBeforeStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+
 	go func() {
-		bus.Send(playbackFinishedGood("pb1"))
+		ch <- playbackFinishedGood("pb1")
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
@@ -216,13 +285,23 @@ func TestPlayStopBeforeStart(t *testing.T) {
 	}
 }
 
-func TestContextCancellation(t *testing.T) {
+func TestPlayContextCancellation(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -231,6 +310,8 @@ func TestContextCancellation(t *testing.T) {
 
 	err := Play(ctx, bus, player, "audio:hello-world")
 
+	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
+
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	} else if err.Error() != "context canceled" { //TODO: should be an interface to cast to here instead of string comparison
@@ -238,29 +319,41 @@ func TestContextCancellation(t *testing.T) {
 	}
 }
 
-func TestContextCancellation100(t *testing.T) {
+func TestPlayContextCancellation100(t *testing.T) {
 	for i := 0; i != 100; i++ {
-		TestContextCancellation(t)
+		TestPlayContextCancellation(t)
 	}
 }
 
-func TestContextCancellationAfterStart(t *testing.T) {
+func TestPlayContextCancellationAfterStart(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().AnyTimes().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 
 	go func() {
-		bus.Send(playbackStartedGood("pb1"))
+		ch <- playbackStartedGood("pb1")
 		cancel()
 	}()
 
 	err := Play(ctx, bus, player, "audio:hello-world")
+
+	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
 
 	if err == nil {
 		t.Errorf("Expected error, got nil")
@@ -269,9 +362,9 @@ func TestContextCancellationAfterStart(t *testing.T) {
 	}
 }
 
-func TestContextCancellationAfterStart100(t *testing.T) {
+func TestPlayContextCancellationAfterStart100(t *testing.T) {
 	for i := 0; i != 100; i++ {
-		TestContextCancellationAfterStart(t)
+		TestPlayContextCancellationAfterStart(t)
 	}
 }
 
@@ -281,12 +374,22 @@ func TestErrorInPlayer(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(nil, errors.New("Dummy error playing to dummy player"))
 
 	err := Play(ctx, bus, player, "audio:hello-world")
+
+	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
 
 	if err == nil {
 		t.Errorf("Expected error, got nil")
@@ -301,12 +404,22 @@ func TestErrorInDataFetch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
 
 	err := Play(ctx, bus, player, "audio:hello-world")
+
+	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
 
 	if err == nil {
 		t.Errorf("Expected error, got nil")
@@ -317,10 +430,10 @@ func TestErrorInDataFetch(t *testing.T) {
 
 // messages
 
-var channelDtmf = func(dtmf string) v2.Eventer {
-	return &v2.ChannelDtmfReceived{
-		Event: v2.Event{
-			Message: v2.Message{
+var channelDtmf = func(dtmf string) ari.Event {
+	return &ari.ChannelDtmfReceived{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "ChannelDtmfReceived",
 			},
 		},
@@ -328,72 +441,72 @@ var channelDtmf = func(dtmf string) v2.Eventer {
 	}
 }
 
-var playbackStartedGood = func(id string) v2.Eventer {
-	return &v2.PlaybackStarted{
-		Event: v2.Event{
-			Message: v2.Message{
+var playbackStartedGood = func(id string) ari.Event {
+	return &ari.PlaybackStarted{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "PlaybackStarted",
 			},
 		},
-		Playback: v2.Playback{
+		Playback: ari.PlaybackData{
 			ID: id,
 		},
 	}
 }
 
-var playbackFinishedGood = func(id string) v2.Eventer {
-	return &v2.PlaybackFinished{
-		Event: v2.Event{
-			Message: v2.Message{
+var playbackFinishedGood = func(id string) ari.Event {
+	return &ari.PlaybackFinished{
+		EventData: ari.EventData{
+			Message: ari.Message{
 				Type: "PlaybackFinished",
 			},
 		},
-		Playback: v2.Playback{
+		Playback: ari.PlaybackData{
 			ID: id,
 		},
 	}
 }
 
-var playbackStartedBadMessageType = &v2.PlaybackStarted{
-	Event: v2.Event{
-		Message: v2.Message{
+var playbackStartedBadMessageType = &ari.PlaybackStarted{
+	EventData: ari.EventData{
+		Message: ari.Message{
 			Type: "PlaybackStarted2",
 		},
 	},
-	Playback: v2.Playback{
+	Playback: ari.PlaybackData{
 		ID: "pb1",
 	},
 }
 
-var playbackFinishedBadMessageType = &v2.PlaybackFinished{
-	Event: v2.Event{
-		Message: v2.Message{
+var playbackFinishedBadMessageType = &ari.PlaybackFinished{
+	EventData: ari.EventData{
+		Message: ari.Message{
 			Type: "PlaybackFinished2",
 		},
 	},
-	Playback: v2.Playback{
+	Playback: ari.PlaybackData{
 		ID: "pb1",
 	},
 }
 
-var playbackStartedDifferentPlaybackID = &v2.PlaybackStarted{
-	Event: v2.Event{
-		Message: v2.Message{
+var playbackStartedDifferentPlaybackID = &ari.PlaybackStarted{
+	EventData: ari.EventData{
+		Message: ari.Message{
 			Type: "PlaybackStarted",
 		},
 	},
-	Playback: v2.Playback{
+	Playback: ari.PlaybackData{
 		ID: "pb2",
 	},
 }
 
-var playbackFinishedDifferentPlaybackID = &v2.PlaybackFinished{
-	Event: v2.Event{
-		Message: v2.Message{
+var playbackFinishedDifferentPlaybackID = &ari.PlaybackFinished{
+	EventData: ari.EventData{
+		Message: ari.Message{
 			Type: "PlaybackFinished",
 		},
 	},
-	Playback: v2.Playback{
+	Playback: ari.PlaybackData{
 		ID: "pb2",
 	},
 }
