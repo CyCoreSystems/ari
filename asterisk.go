@@ -1,6 +1,18 @@
 package ari
 
-import "fmt"
+// Asterisk represents a communication path for
+// the Asterisk server for system-level resources
+type Asterisk interface {
+
+	// Info gets data about the asterisk system
+	Info(only string) (*AsteriskInfo, error)
+
+	// Variables returns the global asterisk variables
+	Variables() Variables
+
+	// ReloadModule tells asterisk to load the given module
+	ReloadModule(name string) error
+}
 
 // AsteriskInfo describes a running asterisk system
 type AsteriskInfo struct {
@@ -38,74 +50,12 @@ type SetID struct {
 
 // StatusInfo describes the state of an Asterisk system
 type StatusInfo struct {
-	LastReloadTime AsteriskDate `json:"last_reload_time"`
-	StartupTime    AsteriskDate `json:"startup_time"`
+	LastReloadTime DateTime `json:"last_reload_time"`
+	StartupTime    DateTime `json:"startup_time"`
 }
 
 // SystemInfo describes information about the Asterisk system
 type SystemInfo struct {
 	EntityID string `json:"entity_id"`
 	Version  string `json:"version"`
-}
-
-// GetAsteriskInfo returns various data about the Asterisk
-// system
-// Equivalent to GET /asterisk/info
-func (c *Client) GetAsteriskInfo(only string) (*AsteriskInfo, error) {
-	var m AsteriskInfo
-	path := "/asterisk/info"
-
-	// If we are passed an 'only' parameter
-	// pass it on as the 'only' querystring parameter
-	if only != "" {
-		path += "?only=" + only
-		return &m, fmt.Errorf("Only-restricted AsteriskInfo requests are not yet implemented")
-	}
-	// TODO: handle "only" parameter
-	// the problem is that responses with "only" do not
-	// conform to the AsteriskInfo model; they just return
-	// the subobjects requested
-	// That means we should probably break this
-	// method into multiple submethods
-
-	err := c.Get(path, &m)
-	if err != nil {
-		return &m, err
-	}
-	return &m, nil
-}
-
-// GetAsteriskVariable returns the value of the given global variable
-// Equivalent to GET /asterisk/variable
-func (c *Client) GetAsteriskVariable(variable string) (string, error) {
-	var m Variable
-	path := "/asterisk/variable?variable=" + variable
-	err := c.Get(path, &m)
-	if err != nil {
-		return "", err
-	}
-	return m.Value, nil
-}
-
-// SetAsteriskVariable sets a global channel variable
-// (Equivalent to POST /asterisk/variable)
-func (c *Client) SetAsteriskVariable(variable string, value string) error {
-	path := "/asterisk/variable"
-
-	type request struct {
-		Variable string `json:"variable"`
-		Value    string `json:"value,omitempty"`
-	}
-	req := request{variable, value}
-
-	err := c.Post(path, nil, &req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// ReloadModule tells asterisk to load the given module
-func (c *Client) ReloadModule(name string) error {
-	return c.Put("/asterisk/modules/"+name, nil, nil)
 }

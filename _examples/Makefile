@@ -1,0 +1,26 @@
+
+
+all:
+	CGO_ENABLED=0 GOOS=linux \
+		go build -a -installsuffix cgo \
+			-ldflags '-w -extld ld -extldflags -static' \
+			-a -o natsgw/app.static natsgw/main.go
+	CGO_ENABLED=0 GOOS=linux \
+		go build -a -installsuffix cgo \
+			-ldflags '-w -extld ld -extldflags -static' \
+			-a -o stasisStart-nats/app.static stasisStart-nats/main.go
+	CGO_ENABLED=0 GOOS=linux \
+		go build -a -installsuffix cgo \
+			-ldflags '-w -extld ld -extldflags -static' \
+			-a -o sendDtmf-nats/app.static sendDtmf-nats/main.go
+	CGO_ENABLED=0 GOOS=linux \
+		go build -a -installsuffix cgo \
+			-ldflags '-w -extld ld -extldflags -static' \
+			-a -o stasisStart/app.static stasisStart/main.go
+
+
+build: all
+	docker-compose build
+
+run: build
+	docker-compose up

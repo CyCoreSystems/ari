@@ -1,54 +1,63 @@
 package ari
 
-import "strconv"
+// Mailbox is the communication path to an Asterisk server for
+// operating on mailbox resources
+type Mailbox interface {
 
-// Mailbox respresents the state of an Asterisk (voice) mailbox
-type Mailbox struct {
-	Name         string `json:"name"`
-	New_messages int    `json:"new_messages"` // Number of new (unread) messages
-	Old_messages int    `json:"old_messages"` // Number of old (read) messages
+	// Get gets a handle to the mailbox for further operations
+	Get(name string) *MailboxHandle
+
+	// List lists the mailboxes in asterisk
+	List() ([]*MailboxHandle, error)
+
+	// Data gets the current state of the mailbox
+	Data(name string) (MailboxData, error)
+
+	// Update updates the state of the mailbox, or creates if does not exist
+	Update(name string, oldMessages int, newMessages int) error
+
+	// Delete deletes the mailbox
+	Delete(name string) error
 }
 
-//List all mailboxes on asterisk server
-//Equivalent to GET /mailboxes
-func (c *Client) ListMailboxes() ([]Mailbox, error) {
-	var m []Mailbox
-	err := c.Get("/mailboxes", &m)
-	if err != nil {
-		return m, err
+// MailboxData respresents the state of an Asterisk (voice) mailbox
+type MailboxData struct {
+	Name        string `json:"name"`
+	NewMessages int    `json:"new_messages"` // Number of new (unread) messages
+	OldMessages int    `json:"old_messages"` // Number of old (read) messages
+}
+
+// NewMailboxHandle creates a new mailbox handle given the name and mailbox transport
+func NewMailboxHandle(name string, m Mailbox) *MailboxHandle {
+	return &MailboxHandle{
+		name: name,
+		m:    m,
 	}
-	return m, nil
 }
 
-//Retrieve the current state of a specific mailbox
-//Equivalent to GET /mailboxes/{mailboxName}
-func (c *Client) GetMailbox(mailboxName string) (Mailbox, error) {
-	var m Mailbox
-	err := c.Get("/mailboxes/"+mailboxName, &m)
-	if err != nil {
-		return m, err
-	}
-	return m, nil
+// A MailboxHandle is a handle to a mailbox instance attached to an
+// ari transport
+type MailboxHandle struct {
+	name string
+	m    Mailbox
 }
 
-//Change the state of a mailbox. (Note - implicitly creates the mailbox).
-//Equivalent to PUT /mailboxes/{mailboxName}
-func (c *Client) ChangeMailboxState(mailboxName string, oldMessages int, newMessages int) error {
-	req := map[string]string{
-		"oldMessages": strconv.Itoa(oldMessages),
-		"newMessages": strconv.Itoa(newMessages),
-	}
-
-	//send request
-	err := c.Put("/mailboxes/"+mailboxName, nil, &req)
-	return err
+// ID returns the identifier for the mailbox handle
+func (mh *MailboxHandle) ID() string {
+	return mh.name
 }
 
-//Request structure for changing a mailbox state. Both arguments are required.
+// Data gets the current state of the mailbox
+func (mh *MailboxHandle) Data() (MailboxData, error) {
+	return mh.m.Data(mh.name)
+}
 
-//Destroy a mailbox.
-//Equivalent to DELETE /mailboxes/{mailboxName}
-func (c *Client) DeleteMailbox(mailboxName string) error {
-	err := c.Delete("/mailboxes/"+mailboxName, nil, "")
-	return err
+// Update updates the state of the mailbox, or creates if does not exist
+func (mh *MailboxHandle) Update(oldMessages int, newMessages int) error {
+	return mh.m.Update(mh.name, oldMessages, newMessages)
+}
+
+// Delete deletes the mailbox
+func (mh *MailboxHandle) Delete() error {
+	return mh.m.Delete(mh.name)
 }

@@ -1,0 +1,38 @@
+version: '2'
+
+services:
+  asterisk:
+    build: ./asterisk
+    ports:
+      - "8088:8088"
+#  nats:
+#    image: nats
+#    ports:
+#      - "4222:4222"
+#  natsgw:
+#    build: ./natsgw
+#    links:
+#      - asterisk
+#      - nats
+
+#  senddtmf-nats:
+#    build: ./sendDtmf-nats
+#    links:
+#      - nats
+#    ports:
+#      - "9991:9991"
+
+#  stasisstart-nats:
+#    build: ./stasisStart-nats
+#   links:
+#      - nats
+#    ports:
+#      - "9990:9990"
+#
+
+  stasisstart:
+    build: ./stasisStart
+    links:
+      - asterisk
+    ports:
+      - "9990:9990"

@@ -2,7 +2,7 @@ package ari
 
 import "fmt"
 
-func (c *Client) CheckDirection(dir *string) error {
+func normalizeDirection(dir *string) error {
 	if *dir != "in" && *dir != "out" && *dir != "both" {
 		if *dir == "" {
 			*dir = "in"

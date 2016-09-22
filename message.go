@@ -3,51 +3,41 @@ package ari
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"reflect"
-
-	"golang.org/x/net/websocket"
 )
 
-// Marshal is a no-op to implement websocket.Codec.  Asterisk
-// websocket connections should never have the client send any data
-func marshal(v interface{}) (data []byte, payloadType byte, err error) {
-	return
+// Message is the first extension of the RawMessage type,
+// containing only a Type
+type Message struct {
+	RawMessage
+	Type string `json:"type"`
 }
 
-// Unmarshal implements websocket.Codec
-func unmarshal(data []byte, payloadType byte, v interface{}) error {
-	data = append(data, '\n')
+// NewMessage constructs a Message from a byte slice
+func NewMessage(raw []byte) (*Message, error) {
+	var m Message
 
-	e, ok := v.(*Message)
-	if !ok {
-		return fmt.Errorf("Cannot cast receiver to a Message when it is of type %v", reflect.TypeOf(v))
-	}
+	raw = append(raw, '\n')
 
-	err := json.Unmarshal(data, &e)
+	err := json.Unmarshal(raw, &m)
 	if err != nil {
-		return err
+		return &m, err
 	}
 
-	// Store the raw data
-	e.__raw = &data
+	// Set _raw to be our raw bytestream
+	m._raw = &raw
 
-	return nil
+	return &m, nil
 }
 
-// AsteriskCode is a websocket Codec for Asterisk messages
-var AsteriskCodec = websocket.Codec{
-	Marshal:   marshal,
-	Unmarshal: unmarshal,
-}
-
+// MessageRawer provides operations to get raw message data
 type MessageRawer interface {
 	SetRaw(*[]byte)
 	GetRaw() *[]byte
 }
 
+// RawMessage contains the raw bytes
 type RawMessage struct {
-	__raw *[]byte // The raw message
+	_raw *[]byte // The raw message
 }
 
 // DecodeAs converts the current message to
@@ -68,37 +58,12 @@ func (m *RawMessage) DecodeAs(v MessageRawer) error {
 	return nil
 }
 
-// Set the __raw value of this RawMessage
+// SetRaw sets the raw value of this RawMessage
 func (m *RawMessage) SetRaw(raw *[]byte) {
-	m.__raw = raw
+	m._raw = raw
 }
 
-// Get the __raw value of this RawMessage
+// GetRaw gets the raw value of this RawMessage
 func (m *RawMessage) GetRaw() *[]byte {
-	return m.__raw
-}
-
-// Message is the first extension of the RawMessage type,
-// containing only a Type
-type Message struct {
-	RawMessage
-	Type string `json:"type"`
-}
-
-// Construct a Message from a byte slice
-func NewMessage(raw []byte) (*Message, error) {
-	var m Message
-
-	raw = append(raw, '\n')
-
-	err := json.Unmarshal(raw, &m)
-	if err != nil {
-		Logger.Error("Failed to unmarshal new message", err.Error())
-		return &m, err
-	}
-
-	// Set __raw to be our raw bytestream
-	m.__raw = &raw
-
-	return &m, nil
+	return m._raw
 }
