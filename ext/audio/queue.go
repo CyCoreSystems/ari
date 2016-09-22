@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"golang.org/x/net/context"
 )
@@ -21,7 +20,7 @@ type Options struct {
 
 	// DTMF is an optional channel for received DTMF tones received during the playback.
 	// This channel will NOT be closed by the playback.
-	DTMF chan<- *v2.ChannelDtmfReceived
+	DTMF chan<- *ari.ChannelDtmfReceived
 
 	// ExitOnDTMF defines a list of DTMF digits on receipt of which will
 	// terminate the playback of the queue.  You may set this to AllDTMF
@@ -91,14 +90,17 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 		opts = &Options{}
 	}
 
+	ctrlCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// NOTE: this code used to call Subscribe("ChannelDtmfReceived") twice. This
 	// was /fine/ until trying to unit test. We use one subscription
 	// and send out to dtmfChan depending on whether opts.DTMF is not nil.
 	// This simplifies the workflow and ensures we have a 1-1 correlation between
 	// a subscription and a Queue
 
-	dtmfChan := make(chan *v2.ChannelDtmfReceived)
-	dtmfSub := pq.s.Subscribe("ChannelDtmfReceived")
+	dtmfChan := make(chan *ari.ChannelDtmfReceived)
+	dtmfSub := pq.s.Subscribe(ari.Events.ChannelDtmfReceived)
 
 	handlingDTMF := false
 
@@ -116,6 +118,8 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 			go func() {
 				for {
 					select {
+					case <-ctrlCtx.Done():
+						return
 					case <-ctx.Done():
 						return
 					case e := <-dtmfChan:
@@ -131,7 +135,10 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 		go func() {
 			for {
 				select {
+				case <-ctrlCtx.Done():
+					return
 				case <-ctx.Done():
+					return
 				case <-dtmfChan:
 				}
 			}
@@ -141,20 +148,20 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 	// Record any DTMF (this is separate from opts.DTMF) so that we can
 	//  - Service ReceivedDTMF requests
 	//  - Exit if we were given an ExitOnDTMF list
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
 	go func() {
 		defer dtmfSub.Cancel()
 		for {
 			select {
+			case <-ctrlCtx.Done():
+				return
 			case <-ctx.Done():
 				return
 			case e := <-dtmfSub.Events():
 				if e == nil {
 					return
 				}
-				dtmfChan <- e.(*v2.ChannelDtmfReceived)
-				digit := e.(*v2.ChannelDtmfReceived).Digit
+				dtmfChan <- e.(*ari.ChannelDtmfReceived)
+				digit := e.(*ari.ChannelDtmfReceived).Digit
 				pq.receivedDTMF += digit
 				if strings.Contains(opts.ExitOnDTMF, digit) {
 					cancel()
@@ -167,6 +174,8 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 	for i := 0; len(pq.queue) > i; i++ {
 		// Make sure our context isn't closed
 		select {
+		case <-ctrlCtx.Done():
+			return nil
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
@@ -177,7 +186,6 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil

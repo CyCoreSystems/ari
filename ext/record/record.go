@@ -7,7 +7,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
 // RecordingStartTimeout is the amount of time to wait for a recording to start
@@ -16,6 +15,8 @@ var RecordingStartTimeout = 1 * time.Second
 
 // Record starts a recording on the given Recorder.
 func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOptions) (rec *Recording) {
+
+	Logger.Debug("Starting record", "name", name, "opts", opts)
 
 	rec = &Recording{}
 	rec.doneCh = make(chan struct{})
@@ -32,15 +33,23 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 
 	go func() {
 
+		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
+
 		// Listen for start, stop, and failed events
-		startSub := bus.Subscribe("RecordingStarted")
+		startSub := bus.Subscribe(ari.Events.RecordingStarted)
 		defer startSub.Cancel()
 
-		failedSub := bus.Subscribe("RecordingFailed")
+		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
+
+		failedSub := bus.Subscribe(ari.Events.RecordingFailed)
 		defer failedSub.Cancel()
 
-		finishedSub := bus.Subscribe("RecordingFinished")
+		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
+
+		finishedSub := bus.Subscribe(ari.Events.RecordingFinished)
 		defer finishedSub.Cancel()
+
+		Logger.Debug("Calling record on recorder", "name", name, "opts", opts)
 
 		// Start recording
 		handle, err := r.Record(name, opts)
@@ -55,6 +64,8 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 
 		rec.handle = handle
 
+		Logger.Debug("Starting record event loop", "name", name, "opts", opts)
+
 		// Wait for the recording to start
 		startTimer := time.NewTimer(RecordingStartTimeout)
 		for {
@@ -67,20 +78,20 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 				rec.err = timeoutErr{"Timeout waiting for recording to start"}
 				return
 			case e := <-startSub.Events():
-				r := e.(*v2.RecordingStarted).Recording
+				r := e.(*ari.RecordingStarted).Recording
 				if r.Name == name {
 					Logger.Debug("Recording started.")
 					startTimer.Stop()
 				}
 			case e := <-failedSub.Events():
-				r := e.(*v2.RecordingFailed).Recording
+				r := e.(*ari.RecordingFailed).Recording
 				if r.Name == name {
 					rec.status = Failed
 					rec.err = fmt.Errorf("Recording failed: %s", r.Cause)
 					return
 				}
 			case e := <-finishedSub.Events():
-				r := e.(*v2.RecordingFinished).Recording
+				r := e.(*ari.RecordingFinished).Recording
 				if r.Name == name {
 					Logger.Debug("Recording stopped")
 					rec.status = Finished

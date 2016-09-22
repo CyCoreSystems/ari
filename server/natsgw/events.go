@@ -3,7 +3,7 @@ package natsgw
 import (
 	"fmt"
 
-	v2 "github.com/CyCoreSystems/ari/v2"
+	"github.com/CyCoreSystems/ari"
 )
 
 func (srv *Server) events() {
@@ -15,7 +15,7 @@ func (srv *Server) events() {
 	}
 
 	go func() {
-		sub := srv.upstream.Bus.Subscribe(v2.ALL)
+		sub := srv.upstream.Bus.Subscribe(ari.Events.All)
 		defer sub.Cancel()
 
 		for {

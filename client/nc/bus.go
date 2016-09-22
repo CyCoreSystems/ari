@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 	"github.com/nats-io/nats"
 )
 
@@ -12,7 +11,7 @@ type natsBus struct {
 	conn *Conn
 }
 
-func (b *natsBus) Send(msg *v2.Message) {
+func (b *natsBus) Send(msg *ari.Message) {
 	panic("Send unsupported")
 }
 
@@ -20,7 +19,7 @@ func (b *natsBus) Subscribe(nx ...string) ari.Subscription {
 
 	var ns natsSubscription
 
-	ns.events = make(chan v2.Eventer, 10)
+	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
 
 	go func() {
@@ -29,11 +28,11 @@ func (b *natsBus) Subscribe(nx ...string) ari.Subscription {
 			sub, err := b.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
 				eventType := msg.Subject[len("ari.events."):]
 
-				var ariMessage v2.Message
+				var ariMessage ari.Message
 				ariMessage.SetRaw(&msg.Data)
 				ariMessage.Type = eventType
 
-				evt := v2.Parse(&ariMessage)
+				evt := ari.Events.Parse(&ariMessage)
 				ns.events <- evt
 			})
 			if err != nil {
@@ -52,10 +51,10 @@ func (b *natsBus) Subscribe(nx ...string) ari.Subscription {
 
 type natsSubscription struct {
 	closeChan chan struct{}
-	events    chan v2.Eventer
+	events    chan ari.Event
 }
 
-func (ns *natsSubscription) Events() chan v2.Eventer {
+func (ns *natsSubscription) Events() chan ari.Event {
 	return ns.events
 }
 
