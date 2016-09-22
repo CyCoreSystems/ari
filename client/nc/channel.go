@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/nats-io/nats"
 )
@@ -162,7 +161,7 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 
 	var ns natsSubscription
 
-	ns.events = make(chan v2.Eventer, 10)
+	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
 
 	go func() {
@@ -171,11 +170,11 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 			sub, err := c.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
 				eventType := msg.Subject[len("ari.events."):]
 
-				var ariMessage v2.Message
+				var ariMessage ari.Message
 				ariMessage.SetRaw(&msg.Data)
 				ariMessage.Type = eventType
 
-				evt := v2.Parse(&ariMessage)
+				evt := ari.Events.Parse(&ariMessage)
 
 				ce, ok := evt.(ari.ChannelEvent)
 				if !ok {
@@ -183,7 +182,7 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 					return
 				}
 
-				Logger.Debug("Got channel event", "currentid", id, "channelid", ce.ChannelID(), "eventtype", evt.GetType())
+				Logger.Debug("Got channel event", "currentid", id, "channelid", ce.GetChannelID(), "eventtype", evt.GetType())
 
 				//channel ID comparisons
 				//	do we compare based on id;N, where id == id and the N's aren't different
@@ -191,7 +190,7 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 				// NOTE: this code handles local channels
 
 				leftChannel := strings.Split(id, ";")[0]
-				rightChannel := strings.Split(ce.ChannelID(), ";")[0]
+				rightChannel := strings.Split(ce.GetChannelID(), ";")[0]
 
 				if leftChannel != rightChannel {
 					// ignore unrelated channel events

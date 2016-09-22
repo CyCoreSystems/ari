@@ -5,7 +5,6 @@ package mock
 
 import (
 	ari "github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -30,7 +29,7 @@ func (_m *MockBus) EXPECT() *_MockBusRecorder {
 	return _m.recorder
 }
 
-func (_m *MockBus) Send(_param0 *v2.Message) {
+func (_m *MockBus) Send(_param0 *ari.Message) {
 	_m.ctrl.Call(_m, "Send", _param0)
 }
 

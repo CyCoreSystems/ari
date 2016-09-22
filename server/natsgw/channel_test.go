@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	v2 "github.com/CyCoreSystems/ari/v2"
 	"github.com/pkg/errors"
 
 	"github.com/CyCoreSystems/ari"
@@ -51,10 +50,10 @@ func TestChannelListTest(t *testing.T) {
 
 	mockSubscription := mock.NewMockSubscription(ctrl)
 	mockSubscription.EXPECT().Cancel().AnyTimes() //cancel is in a defer, so it may not always be called
-	mockSubscription.EXPECT().Events().Return(make(chan v2.Eventer))
+	mockSubscription.EXPECT().Events().Return(make(chan ari.Event))
 
 	mockBus := mock.NewMockBus(ctrl)
-	mockBus.EXPECT().Subscribe(v2.ALL).Return(mockSubscription)
+	mockBus.EXPECT().Subscribe(ari.Events.All).Return(mockSubscription)
 
 	cl := &ari.Client{
 		Channel: mockChannel,
