@@ -13,7 +13,6 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/nc"
-	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
 var log = log15.New()
@@ -30,10 +29,10 @@ func main() {
 func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
 
-	stateChange := h.Subscribe("ChannelStateChange")
+	stateChange := h.Subscribe(ari.Events.ChannelStateChange)
 	defer stateChange.Cancel()
 
-	dtmfSub := h.Subscribe("ChannelDtmfReceived")
+	dtmfSub := h.Subscribe(ari.Events.ChannelDtmfReceived)
 	defer dtmfSub.Cancel()
 
 	data, err := h.Data()
@@ -72,7 +71,7 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 					h.SendDTMF("1234", nil)
 				}
 			case evt := <-dtmfSub.Events():
-				dtmf := evt.(*v2.ChannelDtmfReceived)
+				dtmf := evt.(*ari.ChannelDtmfReceived)
 				log.Info("Got DTMF digit", "digit", dtmf.Digit)
 				if dtmf.Digit == "4" {
 					return
@@ -145,8 +144,8 @@ func listenApp(ctx context.Context, cl *ari.Client, handler func(cl *ari.Client,
 		select {
 		case e := <-sub.Events():
 			log.Info("Got stasis start")
-			stasisStartEvent := e.(*v2.StasisStart)
-			go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.Id))
+			stasisStartEvent := e.(*ari.StasisStart)
+			go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.ID))
 		case <-ctx.Done():
 			return
 		}
