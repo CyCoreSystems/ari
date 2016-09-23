@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"golang.org/x/net/context"
 )
@@ -44,7 +43,7 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 	var pb Playback
 
 	// subscribe to ARI events
-	s := bus.Subscribe("PlaybackStarted", "PlaybackFinished")
+	s := bus.Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished)
 
 	// start playback
 	h, err := p.Play(mediaURI)
@@ -92,16 +91,16 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 					continue PlaybackStartLoop
 				}
 				switch v.GetType() {
-				case "PlaybackStarted":
-					e := v.(*v2.PlaybackStarted)
+				case ari.Events.PlaybackStarted:
+					e := v.(*ari.PlaybackStarted)
 					if e.Playback.ID != id {
 						Logger.Debug("Ignoring unrelated playback", "expected", id, "got", e.Playback.ID)
 						continue PlaybackStartLoop
 					}
 					Logger.Debug("Playback started", "h", h)
 					break PlaybackStartLoop
-				case "PlaybackFinished":
-					e := v.(*v2.PlaybackFinished)
+				case ari.Events.PlaybackFinished:
+					e := v.(*ari.PlaybackFinished)
 					if e.Playback.ID != id {
 						Logger.Debug("Ignoring unrelated playback")
 						continue PlaybackStartLoop
@@ -141,8 +140,8 @@ func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI strin
 					continue PlaybackStopLoop
 				}
 				switch v.GetType() {
-				case "PlaybackFinished":
-					e := v.(*v2.PlaybackFinished)
+				case ari.Events.PlaybackFinished:
+					e := v.(*ari.PlaybackFinished)
 					if e.Playback.ID != id {
 						Logger.Debug("Ignoring unrelated playback")
 						continue PlaybackStopLoop

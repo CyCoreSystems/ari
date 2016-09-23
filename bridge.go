@@ -101,3 +101,18 @@ func (bh *BridgeHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
 func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	return bh.b.Subscribe(bh.id, n...)
 }
+
+// Match returns true if the event matches the bridge
+func (bh *BridgeHandle) Match(e Event) bool {
+	bridgeEvent, ok := e.(BridgeEvent)
+	if !ok {
+		return false
+	}
+	bridgeIDs := bridgeEvent.GetBridgeIDs()
+	for _, i := range bridgeIDs {
+		if i == bh.id {
+			return true
+		}
+	}
+	return false
+}

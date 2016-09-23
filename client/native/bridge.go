@@ -2,7 +2,6 @@ package native
 
 import (
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
 type nativeBridge struct {
@@ -105,8 +104,10 @@ func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *
 func (b *nativeBridge) Subscribe(id string, n ...string) ari.Subscription {
 	var ns nativeSubscription
 
-	ns.events = make(chan v2.Eventer, 10)
+	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
+
+	bridgeHandle := b.Get(id)
 
 	go func() {
 		sub := b.subscriber.Subscribe(n...)
@@ -118,24 +119,10 @@ func (b *nativeBridge) Subscribe(id string, n ...string) ari.Subscription {
 				ns.closeChan = nil
 				return
 			case evt := <-sub.Events():
-
-				//TODO: do we want to send in events on the bridge
-				// for a specific channel?
-
-				be, ok := evt.(ari.BridgeEvent)
-				if !ok {
-					// ignore non-channel events
-					continue
+				//TODO: do we want to send in events on the bridge for a specific channel?
+				if bridgeHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got bridge event", "bridgeid", be.BridgeID(), "eventtype", evt.GetType())
-
-				if be.BridgeID() != id {
-					// ignore unrelated channel events
-					continue
-				}
-
-				ns.events <- evt
 			}
 		}
 	}()

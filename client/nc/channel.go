@@ -2,10 +2,8 @@ package nc
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/nats-io/nats"
 )
@@ -162,8 +160,10 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 
 	var ns natsSubscription
 
-	ns.events = make(chan v2.Eventer, 10)
+	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
+
+	channelHandle := c.Get(id)
 
 	go func() {
 		for _, n := range nx {
@@ -171,34 +171,15 @@ func (c *natsChannel) Subscribe(id string, nx ...string) ari.Subscription {
 			sub, err := c.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
 				eventType := msg.Subject[len("ari.events."):]
 
-				var ariMessage v2.Message
+				var ariMessage ari.Message
 				ariMessage.SetRaw(&msg.Data)
 				ariMessage.Type = eventType
 
-				evt := v2.Parse(&ariMessage)
+				evt := ari.Events.Parse(&ariMessage)
 
-				ce, ok := evt.(ari.ChannelEvent)
-				if !ok {
-					// ignore non-channel events
-					return
+				if channelHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got channel event", "currentid", id, "channelid", ce.ChannelID(), "eventtype", evt.GetType())
-
-				//channel ID comparisons
-				//	do we compare based on id;N, where id == id and the N's aren't different
-				//		 -> this happens in Local channels
-				// NOTE: this code handles local channels
-
-				leftChannel := strings.Split(id, ";")[0]
-				rightChannel := strings.Split(ce.ChannelID(), ";")[0]
-
-				if leftChannel != rightChannel {
-					// ignore unrelated channel events
-					return
-				}
-
-				ns.events <- evt
 			})
 			if err != nil {
 				//TODO: handle error

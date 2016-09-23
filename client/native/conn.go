@@ -12,7 +12,6 @@ import (
 	"gopkg.in/inconshreveable/log15.v2"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
@@ -27,7 +26,7 @@ type Conn struct {
 	ReadyChan chan struct{}
 
 	Bus    ari.Bus        // event bus
-	events chan *v2.Event // chan on which events are sent
+	events chan ari.Event // chan on which events are sent
 
 	httpClient http.Client
 
@@ -48,8 +47,6 @@ func newConn(opts Options) (c *Conn) {
 
 	return
 }
-
-/////// ARI v2 port
 
 // Close closes the ARI client
 func (c *Conn) Close() error {
@@ -88,7 +85,7 @@ func (c *Conn) Listen() (err error) {
 
 	// Make sure the bus is set up
 	if c.Bus == nil {
-		c.Bus = &busAdaptor{v2.StartBus(c.ctx)}
+		c.Bus = startbus(c.ctx)
 	}
 
 	// Make sure we have a readychan to signal the websocket is up
@@ -170,8 +167,8 @@ func (c *Conn) listen(ctx context.Context) {
 // them to the event bus.
 func (c *Conn) wsRead(ws *websocket.Conn) (err error) {
 	for {
-		var msg v2.Message
-		err = v2.AsteriskCodec.Receive(ws, &msg)
+		var msg ari.Message
+		err = AsteriskCodec.Receive(ws, &msg)
 		if err != nil {
 			Logger.Error("Error decoding websocket message", "error", err)
 			return
@@ -197,17 +194,4 @@ var Logger = log15.New()
 func init() {
 	// Null logger, by default
 	Logger.SetHandler(log15.DiscardHandler())
-}
-
-// adaptor for the v2-v3 bus
-type busAdaptor struct {
-	bus *v2.Bus
-}
-
-func (ba *busAdaptor) Send(m *v2.Message) {
-	ba.bus.Send(m)
-}
-
-func (ba *busAdaptor) Subscribe(n ...string) ari.Subscription {
-	return ba.bus.Subscribe(n...)
 }

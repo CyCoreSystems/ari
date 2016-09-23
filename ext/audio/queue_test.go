@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/CyCoreSystems/ari/internal/testutils"
-	v2 "github.com/CyCoreSystems/ari/v2"
+	"github.com/golang/mock/gomock"
 
 	"golang.org/x/net/context"
 )
@@ -14,10 +15,27 @@ import (
 func TestQueueTimeout(t *testing.T) {
 	MaxPlaybackTime = 3 * time.Second
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Return(ch2)
+	sub2.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -28,6 +46,8 @@ func TestQueueTimeout(t *testing.T) {
 	q.Add("sound:2")
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
@@ -50,7 +70,24 @@ func TestQueueTimeoutSecond(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(2).Return(ch2)
+	sub2.EXPECT().Cancel().Times(1)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -62,10 +99,12 @@ func TestQueueTimeoutSecond(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for play request
-		bus.Send(playbackStartedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
@@ -87,7 +126,25 @@ func TestQueueTimeoutThird(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(3).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -99,12 +156,14 @@ func TestQueueTimeoutThird(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for play request
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
@@ -127,7 +186,25 @@ func TestQueueTimeoutFourth(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2) // one for each Event loop
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -139,13 +216,15 @@ func TestQueueTimeoutFourth(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
+		ch2 <- playbackStartedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if !isTimeout(err) {
 		t.Errorf("Expected timeout error, got: '%v'", err)
@@ -168,7 +247,25 @@ func TestQueueSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -180,14 +277,16 @@ func TestQueueSuccess(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
-		bus.Send(playbackFinishedGood("pb2"))
+		ch2 <- playbackStartedGood("pb2")
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -206,7 +305,24 @@ func TestQueueSuccessWithEmpty(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -219,14 +335,16 @@ func TestQueueSuccessWithEmpty(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
-		bus.Send(playbackFinishedGood("pb2"))
+		ch2 <- playbackStartedGood("pb2")
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -245,7 +363,24 @@ func TestQueueExitOnDTMF(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Times(2).Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -262,18 +397,22 @@ func TestQueueExitOnDTMF(t *testing.T) {
 	go func() {
 
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(channelDtmf("2"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch <- channelDtmf("2")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
-		bus.Send(channelDtmf("3"))
+		ch2 <- playbackStartedGood("pb2")
+		ch <- channelDtmf("3")
+		<-time.After(1 * time.Millisecond)
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, opts)
 
-	if err == nil || err.Error() != "context canceled" {
-		t.Errorf("Expected error 'context canceled', got '%v'", err)
+	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
+
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
 	}
 
 	dtmf := q.ReceivedDTMF()
@@ -283,8 +422,8 @@ func TestQueueExitOnDTMF(t *testing.T) {
 
 }
 
-func TestQueueExitOnDTMF100(t *testing.T) {
-	for i := 0; i != 100; i++ {
+func TestQueueExitOnDTMF10(t *testing.T) {
+	for i := 0; i != 10; i++ {
 		TestQueueExitOnDTMF(t)
 	}
 }
@@ -295,7 +434,24 @@ func TestQueueDoneTrigger(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Times(3).Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -314,19 +470,21 @@ func TestQueueDoneTrigger(t *testing.T) {
 	go func() {
 
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(channelDtmf("2"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch <- channelDtmf("2")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
-		bus.Send(channelDtmf("3"))
-		bus.Send(playbackFinishedGood("pb2"))
+		ch2 <- playbackStartedGood("pb2")
+		ch <- channelDtmf("3")
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	var err error
 	go func() {
 		err = q.Play(ctx, player, opts)
 	}()
+
+	<-time.After(1 * time.Millisecond) // make other routines cleanup
 
 	select {
 	case <-done:
@@ -350,13 +508,30 @@ func TestQueueDTMF(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Times(3).Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(4).Return(ch2)
+	sub2.EXPECT().Cancel().Times(2)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(2).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
-	dtmfChan := make(chan *v2.ChannelDtmfReceived, 2)
+	dtmfChan := make(chan *ari.ChannelDtmfReceived, 2)
 
 	opts := &Options{
 		DTMF: dtmfChan,
@@ -368,16 +543,17 @@ func TestQueueDTMF(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
-		bus.Send(channelDtmf("2"))
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
+		ch <- channelDtmf("2")
+		ch2 <- playbackFinishedGood("pb1")
 		<-player.Next // wait for second play request
-		bus.Send(playbackStartedGood("pb2"))
-		bus.Send(channelDtmf("3"))
-		bus.Send(playbackFinishedGood("pb2"))
+		ch2 <- playbackStartedGood("pb2")
+		ch <- channelDtmf("3")
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, opts)
+	<-time.After(1 * time.Millisecond) // cause other threads to cleanup
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -419,7 +595,24 @@ func TestQueueFlush(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(2).Return(ch2)
+	sub2.EXPECT().Cancel().Times(1)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -433,12 +626,14 @@ func TestQueueFlush(t *testing.T) {
 
 		<-player.Next // wait for first play request
 
-		bus.Send(playbackStartedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
 		q.Flush()
-		bus.Send(playbackFinishedGood("pb1"))
+		ch2 <- playbackFinishedGood("pb1")
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // cause other goroutines to cleanup
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -463,7 +658,24 @@ func TestQueueCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	bus := testutils.NewBus()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bus := mock.NewMockBus(ctrl)
+
+	sub := mock.NewMockSubscription(ctrl)
+	ch := make(chan ari.Event)
+	sub.EXPECT().Events().Return(ch)
+	sub.EXPECT().Cancel()
+
+	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
+
+	sub2 := mock.NewMockSubscription(ctrl)
+	ch2 := make(chan ari.Event)
+	sub2.EXPECT().Events().Times(2).Return(ch2)
+	sub2.EXPECT().Cancel().Times(1)
+
+	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub2)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -475,11 +687,13 @@ func TestQueueCancel(t *testing.T) {
 
 	go func() {
 		<-player.Next // wait for first play request
-		bus.Send(playbackStartedGood("pb1"))
+		ch2 <- playbackStartedGood("pb1")
 		cancel()
 	}()
 
 	err := q.Play(ctx, player, nil)
+
+	<-time.After(1 * time.Millisecond) // cause other goroutines to cleanup
 
 	if err == nil || err.Error() != "context canceled" {
 		t.Errorf("Expected error 'context canceled', got '%v'", err)

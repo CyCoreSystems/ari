@@ -37,6 +37,11 @@ type EndpointData struct {
 	Technology string   `json:"technology"`      // The technology of the endpoint (e.g. SIP, PJSIP, DAHDI, etc)
 }
 
+// ID returns the ID for the endpoint
+func (ed *EndpointData) ID() string {
+	return ed.Technology + "/" + ed.Resource
+}
+
 // NewEndpointHandle creates a new EndpointHandle
 func NewEndpointHandle(tech string, resource string, e Endpoint) *EndpointHandle {
 	return &EndpointHandle{
@@ -81,4 +86,19 @@ func FromEndpointID(id string) (tech string, resource string, err error) {
 	tech = items[0]
 	resource = items[1]
 	return
+}
+
+// Match returns true if the event matches the bridge
+func (eh *EndpointHandle) Match(e Event) bool {
+	en, ok := e.(EndpointEvent)
+	if !ok {
+		return false
+	}
+	ids := en.GetEndpointIDs()
+	for _, i := range ids {
+		if i == eh.ID() {
+			return true
+		}
+	}
+	return false
 }

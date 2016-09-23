@@ -6,8 +6,6 @@ import (
 	"github.com/CyCoreSystems/ari/ext/audio"
 	"github.com/CyCoreSystems/ari/ext/audio/audiouri"
 
-	v2 "github.com/CyCoreSystems/ari/v2"
-
 	"github.com/CyCoreSystems/ari"
 
 	"golang.org/x/net/context"
@@ -95,61 +93,47 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 		opts.SoundHash = "hash"
 	}
 
-	// Listen for DTMF
-	dtmfSub := bus.Subscribe("ChannelDtmfReceived")
-	defer dtmfSub.Cancel()
-
-	hangupSub := bus.Subscribe("ChannelHangupRequest", "ChannelDestroyed")
+	hangupSub := bus.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 	defer hangupSub.Cancel()
 
-	// Make a play context so that the playback can
-	// be separately canceled. NOTE: if we make
-	// playCtx fork our parent context, then timeout errors
-	// can get propagated up when we don't really care about them.
-	playCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	dtmfSub := bus.Subscribe(ari.Events.ChannelDtmfReceived)
+	defer dtmfSub.Cancel()
+
+	playCtx, playCancel := context.WithCancel(context.Background())
+	defer playCancel()
+
+	go func() {
+
+		select {
+		case <-hangupSub.Events():
+			log.Debug("Got hangup")
+			ret.Status = Hangup
+			playCancel()
+		case <-ctx.Done():
+			log.Debug("Got parent cancellation")
+			ret.Status = Canceled
+			playCancel()
+		}
+	}()
 
 	// Play the prompt, if we have one
-	var promptComplete bool
-	var errChan chan error
-	if sounds != nil {
+	if sounds != nil && len(sounds) != 0 {
 		q := audio.NewQueue(bus)
 		q.Add(sounds...)
-		errChan = playAsync(q, playCtx, p, nil)
-	} else {
-		// If we have no prompt, it is complete
-		promptComplete = true
-	}
+		err = q.Play(playCtx, p, &audio.Options{
+			ExitOnDTMF: audio.AllDTMF,
+		})
 
-	// Handle events while waiting for the completion of the prompt
-	// playback
-	for !promptComplete {
-		select {
-		case <-ctx.Done():
-			ret.Status = Canceled
-			err = ctx.Err()
-			return
-		case <-hangupSub.Events():
-			Logger.Debug("Hangup during prompt play")
-			ret.Status = Hangup
-			return
-		case e := <-dtmfSub.Events():
-			ret.Data += e.(*v2.ChannelDtmfReceived).Digit
-			Logger.Debug("DTMF received", "digits", ret.Data)
-			cancel() // cancel remaining playback
-			match, res := opts.MatchFunc(ret.Data)
-			ret.Data = match
-			if res > 0 {
-				ret.Status = res
+		if err != nil {
+			if err.Error() == "context canceled" {
+				if ret.Status == Hangup {
+					err = nil
+				}
 				return
 			}
-		case err = <-errChan:
-			if err != nil {
-				ret.Status = Failed
-				return
-			}
-			Logger.Debug("Prompt playback complete")
-			promptComplete = true
+
+			ret.Status = Failed
+			return
 		}
 	}
 
@@ -204,7 +188,7 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 			ret.Status = Hangup
 			return
 		case e := <-dtmfSub.Events():
-			ret.Data += e.(*v2.ChannelDtmfReceived).Digit
+			ret.Data += e.(*ari.ChannelDtmfReceived).Digit
 			Logger.Debug("DTMF received", "digits", ret.Data)
 			match, res := opts.MatchFunc(ret.Data)
 			ret.Data = match
@@ -242,20 +226,4 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 			return
 		}
 	}
-}
-
-// playAsync plays the queue, returing immediately with an error channel,
-// which will pass any errors and be closed on completion of the queue.
-func playAsync(pq *audio.Queue, ctx context.Context, p audio.Player, opts *audio.Options) chan error {
-	errChan := make(chan error)
-	go func() {
-		err := pq.Play(ctx, p, opts)
-		if err != nil && err.Error() != "context canceled" {
-			errChan <- err
-		}
-		close(errChan)
-		return
-	}()
-
-	return errChan
 }

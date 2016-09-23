@@ -12,7 +12,6 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/nc"
-	v2 "github.com/CyCoreSystems/ari/v2"
 )
 
 var log = log15.New()
@@ -29,15 +28,7 @@ func main() {
 func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
 
-	stateChange := h.Subscribe("ChannelStateChange")
-	defer stateChange.Cancel()
-
-	defer func() {
-		log.Info("Leaving channel handler and Continuing")
-		if err := h.Continue("default", "1001", "1"); err != nil {
-			log.Error("Error trying to continue channel", "error", err)
-		}
-	}()
+	stateChange := h.Subscribe(ari.Events.ChannelStateChange)
 
 	data, err := h.Data()
 	if err != nil {
@@ -78,6 +69,8 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	h.Answer()
 
 	wg.Wait()
+
+	h.Hangup()
 }
 
 func run() int {
@@ -136,8 +129,8 @@ func listenApp(ctx context.Context, cl *ari.Client, handler func(cl *ari.Client,
 		select {
 		case e := <-sub.Events():
 			log.Info("Got stasis start")
-			stasisStartEvent := e.(*v2.StasisStart)
-			go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.Id))
+			stasisStartEvent := e.(*ari.StasisStart)
+			go handler(cl, cl.Channel.Get(stasisStartEvent.Channel.ID))
 		case <-end.Events():
 			log.Info("Got stasis end")
 		case <-ctx.Done():

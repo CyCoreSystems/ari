@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari"
-	v2 "github.com/CyCoreSystems/ari/v2"
 
 	"github.com/nats-io/nats"
 )
@@ -83,8 +82,10 @@ func (b *natsBridge) Subscribe(id string, nx ...string) ari.Subscription {
 
 	var ns natsSubscription
 
-	ns.events = make(chan v2.Eventer, 10)
+	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
+
+	bridgeHandle := b.Get(id)
 
 	go func() {
 		for _, n := range nx {
@@ -92,26 +93,16 @@ func (b *natsBridge) Subscribe(id string, nx ...string) ari.Subscription {
 			sub, err := b.conn.conn.Subscribe(subj, func(msg *nats.Msg) {
 				eventType := msg.Subject[len("ari.events."):]
 
-				var ariMessage v2.Message
+				var ariMessage ari.Message
 				ariMessage.SetRaw(&msg.Data)
 				ariMessage.Type = eventType
 
-				evt := v2.Parse(&ariMessage)
+				evt := ari.Events.Parse(&ariMessage)
 
-				be, ok := evt.(ari.BridgeEvent)
-				if !ok {
-					// ignore non-channel events
-					return
+				//TODO: do we want to send in events on the bridge for a specific channel?
+				if bridgeHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got bridge event", "bridgeid", be.BridgeID(), "eventtype", evt.GetType())
-
-				if be.BridgeID() != id {
-					// ignore unrelated channel events
-					return
-				}
-
-				ns.events <- evt
 			})
 			if err != nil {
 				//TODO: handle error

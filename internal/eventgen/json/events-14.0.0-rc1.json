@@ -1,0 +1,875 @@
+{
+   "_author" : "David M. Lee, II <dlee@digium.com>",
+   "_copyright" : "Copyright (C) 2012 - 2013, Digium, Inc.",
+   "basePath" : "http://localhost:8088/ari",
+   "apiVersion" : "1.7.0",
+   "models" : {
+      "StasisEnd" : {
+         "description" : "Notification that a channel has left a Stasis application.",
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "type" : "Channel"
+            }
+         },
+         "id" : "StasisEnd"
+      },
+      "BridgeAttendedTransfer" : {
+         "id" : "BridgeAttendedTransfer",
+         "description" : "Notification that an attended transfer has occurred.",
+         "properties" : {
+            "destination_link_first_leg" : {
+               "description" : "First leg of a link transfer result",
+               "type" : "Channel"
+            },
+            "destination_threeway_bridge" : {
+               "description" : "Bridge that survived the threeway result",
+               "type" : "Bridge"
+            },
+            "destination_link_second_leg" : {
+               "type" : "Channel",
+               "description" : "Second leg of a link transfer result"
+            },
+            "transferee" : {
+               "required" : false,
+               "description" : "The channel that is being transferred",
+               "type" : "Channel"
+            },
+            "transferer_first_leg_bridge" : {
+               "type" : "Bridge",
+               "description" : "Bridge the transferer first leg is in"
+            },
+            "is_external" : {
+               "required" : true,
+               "type" : "boolean",
+               "description" : "Whether the transfer was externally initiated or not"
+            },
+            "transfer_target" : {
+               "required" : false,
+               "description" : "The channel that is being transferred to",
+               "type" : "Channel"
+            },
+            "result" : {
+               "required" : true,
+               "type" : "string",
+               "description" : "The result of the transfer attempt"
+            },
+            "transferer_second_leg_bridge" : {
+               "type" : "Bridge",
+               "description" : "Bridge the transferer second leg is in"
+            },
+            "transferer_second_leg" : {
+               "description" : "Second leg of the transferer",
+               "type" : "Channel",
+               "required" : true
+            },
+            "destination_application" : {
+               "type" : "string",
+               "description" : "Application that has been transferred into"
+            },
+            "destination_type" : {
+               "required" : true,
+               "description" : "How the transfer was accomplished",
+               "type" : "string"
+            },
+            "transferer_first_leg" : {
+               "description" : "First leg of the transferer",
+               "type" : "Channel",
+               "required" : true
+            },
+            "replace_channel" : {
+               "description" : "The channel that is replacing transferer_first_leg in the swap",
+               "type" : "Channel",
+               "required" : false
+            },
+            "destination_bridge" : {
+               "type" : "string",
+               "description" : "Bridge that survived the merge result"
+            },
+            "destination_threeway_channel" : {
+               "description" : "Transferer channel that survived the threeway result",
+               "type" : "Channel"
+            }
+         }
+      },
+      "Peer" : {
+         "properties" : {
+            "time" : {
+               "required" : false,
+               "type" : "string",
+               "description" : "The last known time the peer was contacted."
+            },
+            "address" : {
+               "description" : "The IP address of the peer.",
+               "type" : "string",
+               "required" : false
+            },
+            "cause" : {
+               "description" : "An optional reason associated with the change in peer_status.",
+               "type" : "string",
+               "required" : false
+            },
+            "peer_status" : {
+               "type" : "string",
+               "description" : "The current state of the peer. Note that the values of the status are dependent on the underlying peer technology.",
+               "required" : true
+            },
+            "port" : {
+               "description" : "The port of the peer.",
+               "type" : "string",
+               "required" : false
+            }
+         },
+         "description" : "Detailed information about a remote peer that communicates with Asterisk.",
+         "id" : "Peer"
+      },
+      "ChannelVarset" : {
+         "properties" : {
+            "channel" : {
+               "type" : "Channel",
+               "description" : "The channel on which the variable was set.\n\nIf missing, the variable is a global variable.",
+               "required" : false
+            },
+            "variable" : {
+               "description" : "The variable that changed.",
+               "type" : "string",
+               "required" : true
+            },
+            "value" : {
+               "required" : true,
+               "description" : "The new value of the variable.",
+               "type" : "string"
+            }
+         },
+         "description" : "Channel variable changed.",
+         "id" : "ChannelVarset"
+      },
+      "Dial" : {
+         "id" : "Dial",
+         "properties" : {
+            "peer" : {
+               "required" : true,
+               "type" : "Channel",
+               "description" : "The dialed channel."
+            },
+            "forwarded" : {
+               "required" : false,
+               "description" : "Channel that the caller has been forwarded to.",
+               "type" : "Channel"
+            },
+            "caller" : {
+               "required" : false,
+               "description" : "The calling channel.",
+               "type" : "Channel"
+            },
+            "forward" : {
+               "required" : false,
+               "type" : "string",
+               "description" : "Forwarding target requested by the original dialed channel."
+            },
+            "dialstring" : {
+               "type" : "string",
+               "description" : "The dial string for calling the peer channel.",
+               "required" : false
+            },
+            "dialstatus" : {
+               "type" : "string",
+               "description" : "Current status of the dialing attempt to the peer.",
+               "required" : true
+            }
+         },
+         "description" : "Dialing state has changed."
+      },
+      "Message" : {
+         "subTypes" : [
+            "MissingParams",
+            "Event"
+         ],
+         "description" : "Base type for errors and events",
+         "properties" : {
+            "type" : {
+               "type" : "string",
+               "description" : "Indicates the type of this message.",
+               "required" : true
+            }
+         },
+         "discriminator" : "type",
+         "id" : "Message"
+      },
+      "ChannelStateChange" : {
+         "description" : "Notification of a channel's state change.",
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "type" : "Channel"
+            }
+         },
+         "id" : "ChannelStateChange"
+      },
+      "DeviceStateChanged" : {
+         "id" : "DeviceStateChanged",
+         "properties" : {
+            "device_state" : {
+               "type" : "DeviceState",
+               "description" : "Device state object",
+               "required" : true
+            }
+         },
+         "description" : "Notification that a device state has changed."
+      },
+      "ChannelUnhold" : {
+         "id" : "ChannelUnhold",
+         "properties" : {
+            "channel" : {
+               "type" : "Channel",
+               "description" : "The channel that initiated the unhold event.",
+               "required" : true
+            }
+         },
+         "description" : "A channel initiated a media unhold."
+      },
+      "ChannelTalkingStarted" : {
+         "id" : "ChannelTalkingStarted",
+         "description" : "Talking was detected on the channel.",
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "description" : "The channel on which talking started.",
+               "type" : "Channel"
+            }
+         }
+      },
+      "StasisStart" : {
+         "id" : "StasisStart",
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "type" : "Channel"
+            },
+            "args" : {
+               "type" : "List[string]",
+               "description" : "Arguments to the application",
+               "required" : true
+            },
+            "replace_channel" : {
+               "type" : "Channel",
+               "required" : false
+            }
+         },
+         "description" : "Notification that a channel has entered a Stasis application."
+      },
+      "RecordingStarted" : {
+         "id" : "RecordingStarted",
+         "properties" : {
+            "recording" : {
+               "description" : "Recording control object",
+               "type" : "LiveRecording",
+               "required" : true
+            }
+         },
+         "description" : "Event showing the start of a recording operation."
+      },
+      "ChannelHangupRequest" : {
+         "id" : "ChannelHangupRequest",
+         "properties" : {
+            "cause" : {
+               "type" : "int",
+               "description" : "Integer representation of the cause of the hangup."
+            },
+            "channel" : {
+               "required" : true,
+               "description" : "The channel on which the hangup was requested.",
+               "type" : "Channel"
+            },
+            "soft" : {
+               "type" : "boolean",
+               "description" : "Whether the hangup request was a soft hangup request."
+            }
+         },
+         "description" : "A hangup was requested on the channel."
+      },
+      "ChannelUserevent" : {
+         "id" : "ChannelUserevent",
+         "properties" : {
+            "channel" : {
+               "description" : "A channel that is signaled with the user event.",
+               "type" : "Channel",
+               "required" : false
+            },
+            "userevent" : {
+               "description" : "Custom Userevent data",
+               "type" : "object",
+               "required" : true
+            },
+            "eventname" : {
+               "type" : "string",
+               "description" : "The name of the user event.",
+               "required" : true
+            },
+            "endpoint" : {
+               "type" : "Endpoint",
+               "description" : "A endpoint that is signaled with the user event.",
+               "required" : false
+            },
+            "bridge" : {
+               "required" : false,
+               "description" : "A bridge that is signaled with the user event.",
+               "type" : "Bridge"
+            }
+         },
+         "description" : "User-generated event with additional user-defined fields in the object."
+      },
+      "ContactStatusChange" : {
+         "properties" : {
+            "contact_info" : {
+               "required" : true,
+               "type" : "ContactInfo"
+            },
+            "endpoint" : {
+               "type" : "Endpoint",
+               "required" : true
+            }
+         },
+         "description" : "The state of a contact on an endpoint has changed.",
+         "id" : "ContactStatusChange"
+      },
+      "PeerStatusChange" : {
+         "id" : "PeerStatusChange",
+         "properties" : {
+            "peer" : {
+               "required" : true,
+               "type" : "Peer"
+            },
+            "endpoint" : {
+               "required" : true,
+               "type" : "Endpoint"
+            }
+         },
+         "description" : "The state of a peer associated with an endpoint has changed."
+      },
+      "PlaybackFinished" : {
+         "description" : "Event showing the completion of a media playback operation.",
+         "properties" : {
+            "playback" : {
+               "type" : "Playback",
+               "description" : "Playback control object",
+               "required" : true
+            }
+         },
+         "id" : "PlaybackFinished"
+      },
+      "BridgeMerged" : {
+         "id" : "BridgeMerged",
+         "properties" : {
+            "bridge" : {
+               "required" : true,
+               "type" : "Bridge"
+            },
+            "bridge_from" : {
+               "required" : true,
+               "type" : "Bridge"
+            }
+         },
+         "description" : "Notification that one bridge has merged into another."
+      },
+      "ChannelCallerId" : {
+         "id" : "ChannelCallerId",
+         "description" : "Channel changed Caller ID.",
+         "properties" : {
+            "caller_presentation" : {
+               "type" : "int",
+               "description" : "The integer representation of the Caller Presentation value.",
+               "required" : true
+            },
+            "caller_presentation_txt" : {
+               "type" : "string",
+               "description" : "The text representation of the Caller Presentation value.",
+               "required" : true
+            },
+            "channel" : {
+               "type" : "Channel",
+               "description" : "The channel that changed Caller ID.",
+               "required" : true
+            }
+         }
+      },
+      "ChannelCreated" : {
+         "id" : "ChannelCreated",
+         "properties" : {
+            "channel" : {
+               "type" : "Channel",
+               "required" : true
+            }
+         },
+         "description" : "Notification that a channel has been created."
+      },
+      "PlaybackStarted" : {
+         "id" : "PlaybackStarted",
+         "properties" : {
+            "playback" : {
+               "description" : "Playback control object",
+               "type" : "Playback",
+               "required" : true
+            }
+         },
+         "description" : "Event showing the start of a media playback operation."
+      },
+      "ChannelDialplan" : {
+         "id" : "ChannelDialplan",
+         "properties" : {
+            "dialplan_app_data" : {
+               "description" : "The data to be passed to the application.",
+               "type" : "string",
+               "required" : true
+            },
+            "channel" : {
+               "required" : true,
+               "description" : "The channel that changed dialplan location.",
+               "type" : "Channel"
+            },
+            "dialplan_app" : {
+               "type" : "string",
+               "description" : "The application about to be executed.",
+               "required" : true
+            }
+         },
+         "description" : "Channel changed location in the dialplan."
+      },
+      "EndpointStateChange" : {
+         "properties" : {
+            "endpoint" : {
+               "required" : true,
+               "type" : "Endpoint"
+            }
+         },
+         "description" : "Endpoint state changed.",
+         "id" : "EndpointStateChange"
+      },
+      "BridgeBlindTransfer" : {
+         "id" : "BridgeBlindTransfer",
+         "description" : "Notification that a blind transfer has occurred.",
+         "properties" : {
+            "context" : {
+               "required" : true,
+               "type" : "string",
+               "description" : "The context transferred to"
+            },
+            "is_external" : {
+               "required" : true,
+               "description" : "Whether the transfer was externally initiated or not",
+               "type" : "boolean"
+            },
+            "transferee" : {
+               "required" : false,
+               "type" : "Channel",
+               "description" : "The channel that is being transferred"
+            },
+            "replace_channel" : {
+               "required" : false,
+               "description" : "The channel that is replacing transferer when the transferee(s) can not be transferred directly",
+               "type" : "Channel"
+            },
+            "result" : {
+               "description" : "The result of the transfer attempt",
+               "type" : "string",
+               "required" : true
+            },
+            "channel" : {
+               "required" : true,
+               "type" : "Channel",
+               "description" : "The channel performing the blind transfer"
+            },
+            "bridge" : {
+               "type" : "Bridge",
+               "description" : "The bridge being transferred"
+            },
+            "exten" : {
+               "description" : "The extension transferred to",
+               "type" : "string",
+               "required" : true
+            }
+         }
+      },
+      "ChannelHold" : {
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "type" : "Channel",
+               "description" : "The channel that initiated the hold event."
+            },
+            "musicclass" : {
+               "required" : false,
+               "description" : "The music on hold class that the initiator requested.",
+               "type" : "string"
+            }
+         },
+         "description" : "A channel initiated a media hold.",
+         "id" : "ChannelHold"
+      },
+      "ChannelEnteredBridge" : {
+         "description" : "Notification that a channel has entered a bridge.",
+         "properties" : {
+            "bridge" : {
+               "required" : true,
+               "type" : "Bridge"
+            },
+            "channel" : {
+               "type" : "Channel"
+            }
+         },
+         "id" : "ChannelEnteredBridge"
+      },
+      "PlaybackContinuing" : {
+         "properties" : {
+            "playback" : {
+               "required" : true,
+               "type" : "Playback",
+               "description" : "Playback control object"
+            }
+         },
+         "description" : "Event showing the continuation of a media playback operation from one media URI to the next in the list.",
+         "id" : "PlaybackContinuing"
+      },
+      "ChannelDtmfReceived" : {
+         "properties" : {
+            "channel" : {
+               "type" : "Channel",
+               "description" : "The channel on which DTMF was received",
+               "required" : true
+            },
+            "digit" : {
+               "required" : true,
+               "type" : "string",
+               "description" : "DTMF digit received (0-9, A-E, # or *)"
+            },
+            "duration_ms" : {
+               "description" : "Number of milliseconds DTMF was received",
+               "type" : "int",
+               "required" : true
+            }
+         },
+         "description" : "DTMF received on a channel.\n\nThis event is sent when the DTMF ends. There is no notification about the start of DTMF",
+         "id" : "ChannelDtmfReceived"
+      },
+      "ChannelTalkingFinished" : {
+         "properties" : {
+            "duration" : {
+               "description" : "The length of time, in milliseconds, that talking was detected on the channel",
+               "type" : "int",
+               "required" : true
+            },
+            "channel" : {
+               "description" : "The channel on which talking completed.",
+               "type" : "Channel",
+               "required" : true
+            }
+         },
+         "description" : "Talking is no longer detected on the channel.",
+         "id" : "ChannelTalkingFinished"
+      },
+      "TextMessageReceived" : {
+         "properties" : {
+            "message" : {
+               "type" : "TextMessage",
+               "required" : true
+            },
+            "endpoint" : {
+               "type" : "Endpoint",
+               "required" : false
+            }
+         },
+         "description" : "A text message was received from an endpoint.",
+         "id" : "TextMessageReceived"
+      },
+      "ChannelDestroyed" : {
+         "id" : "ChannelDestroyed",
+         "properties" : {
+            "cause_txt" : {
+               "required" : true,
+               "description" : "Text representation of the cause of the hangup",
+               "type" : "string"
+            },
+            "cause" : {
+               "description" : "Integer representation of the cause of the hangup",
+               "type" : "int",
+               "required" : true
+            },
+            "channel" : {
+               "required" : true,
+               "type" : "Channel"
+            }
+         },
+         "description" : "Notification that a channel has been destroyed."
+      },
+      "RecordingFailed" : {
+         "properties" : {
+            "recording" : {
+               "type" : "LiveRecording",
+               "description" : "Recording control object",
+               "required" : true
+            }
+         },
+         "description" : "Event showing failure of a recording operation.",
+         "id" : "RecordingFailed"
+      },
+      "BridgeDestroyed" : {
+         "id" : "BridgeDestroyed",
+         "properties" : {
+            "bridge" : {
+               "type" : "Bridge",
+               "required" : true
+            }
+         },
+         "description" : "Notification that a bridge has been destroyed."
+      },
+      "Event" : {
+         "id" : "Event",
+         "description" : "Base type for asynchronous events from Asterisk.",
+         "subTypes" : [
+            "DeviceStateChanged",
+            "PlaybackStarted",
+            "PlaybackContinuing",
+            "PlaybackFinished",
+            "RecordingStarted",
+            "RecordingFinished",
+            "RecordingFailed",
+            "ApplicationReplaced",
+            "BridgeCreated",
+            "BridgeDestroyed",
+            "BridgeMerged",
+            "BridgeBlindTransfer",
+            "BridgeAttendedTransfer",
+            "ChannelCreated",
+            "ChannelDestroyed",
+            "ChannelEnteredBridge",
+            "ChannelLeftBridge",
+            "ChannelStateChange",
+            "ChannelDtmfReceived",
+            "ChannelDialplan",
+            "ChannelCallerId",
+            "ChannelUserevent",
+            "ChannelHangupRequest",
+            "ChannelVarset",
+            "ChannelTalkingStarted",
+            "ChannelTalkingFinished",
+            "ChannelHold",
+            "ChannelUnhold",
+            "ContactStatusChange",
+            "EndpointStateChange",
+            "Dial",
+            "StasisEnd",
+            "StasisStart",
+            "TextMessageReceived",
+            "ChannelConnectedLine",
+            "PeerStatusChange"
+         ],
+         "properties" : {
+            "timestamp" : {
+               "type" : "Date",
+               "description" : "Time at which this event was created.",
+               "required" : false
+            },
+            "application" : {
+               "required" : true,
+               "description" : "Name of the application receiving the event.",
+               "type" : "string"
+            }
+         }
+      },
+      "ChannelConnectedLine" : {
+         "properties" : {
+            "channel" : {
+               "type" : "Channel",
+               "description" : "The channel whose connected line has changed.",
+               "required" : true
+            }
+         },
+         "description" : "Channel changed Connected Line.",
+         "id" : "ChannelConnectedLine"
+      },
+      "RecordingFinished" : {
+         "id" : "RecordingFinished",
+         "description" : "Event showing the completion of a recording operation.",
+         "properties" : {
+            "recording" : {
+               "required" : true,
+               "type" : "LiveRecording",
+               "description" : "Recording control object"
+            }
+         }
+      },
+      "MissingParams" : {
+         "properties" : {
+            "params" : {
+               "required" : true,
+               "description" : "A list of the missing parameters",
+               "type" : "List[string]"
+            }
+         },
+         "description" : "Error event sent when required params are missing.",
+         "id" : "MissingParams"
+      },
+      "ApplicationReplaced" : {
+         "description" : "Notification that another WebSocket has taken over for an application.\n\nAn application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event.",
+         "properties" : {},
+         "id" : "ApplicationReplaced"
+      },
+      "ContactInfo" : {
+         "id" : "ContactInfo",
+         "properties" : {
+            "uri" : {
+               "required" : true,
+               "type" : "string",
+               "description" : "The location of the contact."
+            },
+            "contact_status" : {
+               "required" : true,
+               "allowableValues" : {
+                  "values" : [
+                     "Unreachable",
+                     "Reachable",
+                     "Unknown",
+                     "Created",
+                     "Removed"
+                  ],
+                  "valueType" : "LIST"
+               },
+               "description" : "The current status of the contact.",
+               "type" : "string"
+            },
+            "roundtrip_usec" : {
+               "type" : "string",
+               "description" : "Current round trip time, in microseconds, for the contact.",
+               "required" : false
+            },
+            "aor" : {
+               "required" : true,
+               "type" : "string",
+               "description" : "The Address of Record this contact belongs to."
+            }
+         },
+         "description" : "Detailed information about a contact on an endpoint."
+      },
+      "BridgeCreated" : {
+         "id" : "BridgeCreated",
+         "description" : "Notification that a bridge has been created.",
+         "properties" : {
+            "bridge" : {
+               "type" : "Bridge",
+               "required" : true
+            }
+         }
+      },
+      "ChannelLeftBridge" : {
+         "id" : "ChannelLeftBridge",
+         "properties" : {
+            "channel" : {
+               "required" : true,
+               "type" : "Channel"
+            },
+            "bridge" : {
+               "required" : true,
+               "type" : "Bridge"
+            }
+         },
+         "description" : "Notification that a channel has left a bridge."
+      }
+   },
+   "apis" : [
+      {
+         "operations" : [
+            {
+               "upgrade" : "websocket",
+               "nickname" : "eventWebsocket",
+               "parameters" : [
+                  {
+                     "required" : true,
+                     "name" : "app",
+                     "allowMultiple" : true,
+                     "dataType" : "string",
+                     "description" : "Applications to subscribe to.",
+                     "paramType" : "query"
+                  },
+                  {
+                     "allowMultiple" : false,
+                     "required" : false,
+                     "name" : "subscribeAll",
+                     "description" : "Subscribe to all Asterisk events. If provided, the applications listed will be subscribed to all events, effectively disabling the application specific subscriptions. Default is 'false'.",
+                     "paramType" : "query",
+                     "dataType" : "boolean"
+                  }
+               ],
+               "httpMethod" : "GET",
+               "summary" : "WebSocket connection for events.",
+               "websocketProtocol" : "ari",
+               "responseClass" : "Message"
+            }
+         ],
+         "description" : "Events from Asterisk to applications",
+         "path" : "/events"
+      },
+      {
+         "operations" : [
+            {
+               "nickname" : "userEvent",
+               "errorResponses" : [
+                  {
+                     "code" : 404,
+                     "reason" : "Application does not exist."
+                  },
+                  {
+                     "reason" : "Event source not found.",
+                     "code" : 422
+                  },
+                  {
+                     "reason" : "Invalid even tsource URI or userevent data.",
+                     "code" : 400
+                  }
+               ],
+               "httpMethod" : "POST",
+               "parameters" : [
+                  {
+                     "allowMultiple" : false,
+                     "required" : true,
+                     "name" : "eventName",
+                     "description" : "Event name",
+                     "paramType" : "path",
+                     "dataType" : "string"
+                  },
+                  {
+                     "allowMultiple" : false,
+                     "required" : true,
+                     "name" : "application",
+                     "description" : "The name of the application that will receive this event",
+                     "paramType" : "query",
+                     "dataType" : "string"
+                  },
+                  {
+                     "allowMultiple" : true,
+                     "name" : "source",
+                     "required" : false,
+                     "paramType" : "query",
+                     "description" : "URI for event source (channel:{channelId}, bridge:{bridgeId}, endpoint:{tech}/{resource}, deviceState:{deviceName}",
+                     "dataType" : "string"
+                  },
+                  {
+                     "name" : "variables",
+                     "required" : false,
+                     "allowMultiple" : false,
+                     "dataType" : "containers",
+                     "paramType" : "body",
+                     "description" : "The \"variables\" key in the body object holds custom key/value pairs to add to the user event. Ex. { \"variables\": { \"key\": \"value\" } }"
+                  }
+               ],
+               "summary" : "Generate a user event.",
+               "responseClass" : "void"
+            }
+         ],
+         "description" : "Stasis application user events",
+         "path" : "/events/user/{eventName}"
+      }
+   ],
+   "resourcePath" : "/api-docs/events.{format}",
+   "_svn_revision" : "$Revision$",
+   "swaggerVersion" : "1.2"
+}

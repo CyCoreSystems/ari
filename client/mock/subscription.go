@@ -4,7 +4,7 @@
 package mock
 
 import (
-	v2 "github.com/CyCoreSystems/ari/v2"
+	ari "github.com/CyCoreSystems/ari"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,9 +37,9 @@ func (_mr *_MockSubscriptionRecorder) Cancel() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Cancel")
 }
 
-func (_m *MockSubscription) Events() chan v2.Eventer {
+func (_m *MockSubscription) Events() chan ari.Event {
 	ret := _m.ctrl.Call(_m, "Events")
-	ret0, _ := ret[0].(chan v2.Eventer)
+	ret0, _ := ret[0].(chan ari.Event)
 	return ret0
 }
 
