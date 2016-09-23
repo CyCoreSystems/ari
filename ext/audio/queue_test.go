@@ -370,7 +370,7 @@ func TestQueueExitOnDTMF(t *testing.T) {
 
 	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().Times(3).Return(ch)
+	sub.EXPECT().Events().Times(2).Return(ch)
 	sub.EXPECT().Cancel()
 
 	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(sub)
@@ -403,14 +403,16 @@ func TestQueueExitOnDTMF(t *testing.T) {
 		<-player.Next // wait for second play request
 		ch2 <- playbackStartedGood("pb2")
 		ch <- channelDtmf("3")
+		<-time.After(1 * time.Millisecond)
+		ch2 <- playbackFinishedGood("pb2")
 	}()
 
 	err := q.Play(ctx, player, opts)
 
 	<-time.After(1 * time.Millisecond) // causes cleanup in other threads to happen
 
-	if err == nil || err.Error() != "context canceled" {
-		t.Errorf("Expected error 'context canceled', got '%v'", err)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
 	}
 
 	dtmf := q.ReceivedDTMF()

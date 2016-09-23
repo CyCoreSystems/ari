@@ -165,6 +165,7 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 				pq.receivedDTMF += digit
 				if strings.Contains(opts.ExitOnDTMF, digit) {
 					cancel()
+					return
 				}
 			}
 		}
