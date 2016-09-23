@@ -45,6 +45,8 @@ func TestRecordTimeout(t *testing.T) {
 
 	err := rec.Err()
 
+	<-time.After(1 * time.Millisecond)
+
 	if !isTimeout(err) {
 		t.Errorf("Expected timeout, got '%v'", err)
 	}
