@@ -155,6 +155,7 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 			case <-ctrlCtx.Done():
 				return
 			case <-ctx.Done():
+				cancel()
 				return
 			case e := <-dtmfSub.Events():
 				if e == nil {
@@ -183,8 +184,8 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
 		}
 
 		// Get the next clip
-		err := Play(ctx, pq.s, p, pq.queue[i])
-		if err != nil {
+		err := Play(ctrlCtx, pq.s, p, pq.queue[i])
+		if err != nil && err.Error() != "context canceled" {
 			return err
 		}
 	}

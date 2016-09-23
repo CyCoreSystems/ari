@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	log15 "gopkg.in/inconshreveable/log15.v2"
-
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
 
@@ -100,10 +98,10 @@ func TestPromptCancelBeforePromptComplete(t *testing.T) {
 
 	ch := make(chan ari.Event)
 
-	dtmfA.EXPECT().Events().Times(0) // called in prompt
-	dtmfB.EXPECT().Events().Times(1) // called in play
-	sub3.EXPECT().Events().Times(1)
-	sub.EXPECT().Events().Times(2).Return(ch)
+	dtmfA.EXPECT().Events().MinTimes(0) // called in prompt
+	dtmfB.EXPECT().Events().MinTimes(1) // called in play
+	sub3.EXPECT().Events().MinTimes(1)
+	sub.EXPECT().Events().MinTimes(1).Return(ch)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -785,11 +783,6 @@ func TestPromptMatchTerminatorFunc(t *testing.T) {
 		t.Errorf("Expected Data to be '2314', got, got '%v'", res.Data)
 	}
 }
-func TestPromptMatchHashPrePromptComplete100(t *testing.T) {
-	for i := 0; i != 100; i++ {
-		TestPromptMatchHashPrePromptComplete(t)
-	}
-}
 
 func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
@@ -803,25 +796,30 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 	bus := mock.NewMockBus(ctrl)
 
 	sub := mock.NewMockSubscription(ctrl)
+	dtmfA := mock.NewMockSubscription(ctrl)
+	dtmfB := mock.NewMockSubscription(ctrl)
+	hangup := mock.NewMockSubscription(ctrl)
+
+	sub.EXPECT().Cancel().Times(1)
+	dtmfA.EXPECT().Cancel().Times(1)
+	dtmfB.EXPECT().Cancel().Times(1)
+	hangup.EXPECT().Cancel().Times(1)
+
+	gomock.InOrder(
+		bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(hangup),
+		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfA),
+		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfB),
+		bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub),
+	)
+
+	dtmfAChan := make(chan ari.Event)
+	dtmfBChan := make(chan ari.Event)
 	ch := make(chan ari.Event)
+
+	dtmfA.EXPECT().Events().MinTimes(1).Return(dtmfAChan) // called in prompt
+	dtmfB.EXPECT().Events().MinTimes(1).Return(dtmfBChan) // called in play
+	hangup.EXPECT().Events().MinTimes(1)
 	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
-
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
-
-	sub2 := mock.NewMockSubscription(ctrl)
-	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
-
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
-
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
-
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
 	player := testutils.NewPlayer()
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
@@ -831,22 +829,22 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 
-		<-time.After(40 * time.Millisecond)
+		dtmfBChan <- channelDtmf("2")
+		dtmfAChan <- channelDtmf("2")
 
-		ch2 <- channelDtmf("2")
-		<-time.After(50 * time.Millisecond)
+		<-time.After(1 * time.Millisecond)
 
-		ch2 <- channelDtmf("3")
-		<-time.After(50 * time.Millisecond)
+		dtmfAChan <- channelDtmf("3")
+		<-time.After(1 * time.Millisecond)
 
-		ch2 <- channelDtmf("1")
-		<-time.After(50 * time.Millisecond)
+		dtmfAChan <- channelDtmf("1")
+		<-time.After(1 * time.Millisecond)
 
-		ch2 <- channelDtmf("4")
-		<-time.After(50 * time.Millisecond)
+		dtmfAChan <- channelDtmf("4")
+		<-time.After(1 * time.Millisecond)
 
-		ch2 <- channelDtmf("#")
-		<-time.After(50 * time.Millisecond)
+		dtmfAChan <- channelDtmf("#")
+		<-time.After(1 * time.Millisecond)
 
 		ch <- playbackFinishedGood("pb1")
 
@@ -937,13 +935,6 @@ func TestPromptPostPromptHangup(t *testing.T) {
 
 	if res.Data != "" {
 		t.Errorf("Expected Data to be empty, got, got '%v'", res.Data)
-	}
-}
-
-func TestPromptNoSound100(t *testing.T) {
-	Logger.SetHandler(log15.DiscardHandler())
-	for i := 0; i != 100; i++ {
-		TestPromptNoSound(t)
 	}
 }
 

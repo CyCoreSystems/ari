@@ -103,13 +103,16 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 	defer playCancel()
 
 	go func() {
-		defer playCancel()
 
 		select {
 		case <-hangupSub.Events():
+			log.Debug("Got hangup")
 			ret.Status = Hangup
+			playCancel()
 		case <-ctx.Done():
+			log.Debug("Got parent cancellation")
 			ret.Status = Canceled
+			playCancel()
 		}
 	}()
 
