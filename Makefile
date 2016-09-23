@@ -1,6 +1,6 @@
 
 
-all: api clients extensions gateway
+all: api clients gateway
 
 api:
 	go build ./
