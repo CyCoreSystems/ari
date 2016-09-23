@@ -49,7 +49,7 @@ func (b *bus) Send(msg *ari.Message) {
 func (b *bus) send(msg *ari.Message) {
 	e := ari.Events.Parse(msg)
 
-	Logger.Debug("Received event", "event", e)
+	//	Logger.Debug("Received event", "event", e)
 
 	// Disseminate the message to the subscribers
 	b.mu.Lock()
