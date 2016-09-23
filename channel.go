@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 )
 
 // Channel represents a communication path interacting with an Asterisk server.
@@ -124,9 +123,8 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 //---
 
 // Play initiates playback of the specified media uri
-// to the channel, returning the Playback's ID
-func (ch *ChannelHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
-	id := uuid.NewV1().String()
+// to the channel, returning the Playback handle
+func (ch *ChannelHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
 	ph, err = ch.c.Play(ch.id, id, mediaURI)
 	return
 }
