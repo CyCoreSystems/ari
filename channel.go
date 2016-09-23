@@ -293,11 +293,11 @@ func (ch *ChannelHandle) Match(e Event) bool {
 	//		 -> this happens in Local channels
 
 	// NOTE: this code considers local channels equal
-	leftChannel := strings.Split(ch.id, ";")[0]
+	//leftChannel := strings.Split(ch.id, ";")[0]
 	channelIDs := channelEvent.GetChannelIDs()
 	for _, i := range channelIDs {
-		rightChannel := strings.Split(i, ";")[0]
-		if leftChannel == rightChannel {
+		//rightChannel := strings.Split(i, ";")[0]
+		if ch.id == i {
 			return true
 		}
 	}
