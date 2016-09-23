@@ -25,9 +25,7 @@ var MaxPlaybackTime = 10 * time.Minute
 func Play(ctx context.Context, playback ari.Playback, p Player, mediaURI string) (st Status, err error) {
 	pb := PlayAsync(ctx, playback, p, mediaURI)
 
-	select {
-	case <-pb.Stopped():
-	}
+	<-pb.Stopped()
 
 	st, err = pb.Status(), pb.Err()
 	return
