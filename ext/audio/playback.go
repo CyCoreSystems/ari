@@ -9,10 +9,14 @@ import (
 type Playback struct {
 	startCh chan struct{}
 	stopCh  chan struct{}
-	handle  *ari.PlaybackHandle
-	err     error
-	ctx     context.Context
-	cancel  context.CancelFunc
+
+	handle *ari.PlaybackHandle
+
+	status Status
+	err    error
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // Handle returns the ARI reference to the playback object
@@ -20,14 +24,19 @@ func (p *Playback) Handle() *ari.PlaybackHandle {
 	return p.handle
 }
 
-// StartCh returns the channel that is closed when the playback has started
-func (p *Playback) StartCh() <-chan struct{} {
+// Started returns the channel that is closed when the playback has started
+func (p *Playback) Started() <-chan struct{} {
 	return p.startCh
 }
 
-// StopCh returns the channel that is closed when the playback has stopped
-func (p *Playback) StopCh() <-chan struct{} {
+// Stopped returns the channel that is closed when the playback has stopped
+func (p *Playback) Stopped() <-chan struct{} {
 	return p.stopCh
+}
+
+// Status returns the current status of the playback
+func (p *Playback) Status() Status {
+	return p.status
 }
 
 // Err returns any accumulated errors during playback

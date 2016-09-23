@@ -7,543 +7,526 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/CyCoreSystems/ari/internal/testutils"
 	"github.com/golang/mock/gomock"
 
 	"golang.org/x/net/context"
 )
 
-func TestPlayAsync(t *testing.T) {
-
-	MaxPlaybackTime = 3 * time.Second
+func TestPlaySync(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().Return(ch)
-	sub.EXPECT().Cancel()
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
-	pb, err := PlayAsync(ctx, bus, player, "audio:hello-world")
-	if err != nil {
-		t.Errorf("Unexpected error: '%v'", err)
-	}
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2)
 
-	if pb == nil {
-		t.Errorf("Expected playback object to be non-nil")
-		return
-	}
-
-	if pb.Handle() == nil {
-		t.Errorf("Expected playback.Handle to be non-nil")
-	}
-
-	select {
-	case <-pb.StartCh():
-		t.Errorf("Unexpected trigger of Start channel")
-	case <-pb.StopCh():
-		t.Errorf("Unexpected trigger of Stop channel")
-	case <-time.After(1 * time.Second):
-	}
-
-	// wait for timeout
-	<-time.After(MaxPlaybackTime)
-
-	select {
-	case <-pb.StartCh():
-	default:
-		t.Errorf("Expected trigger of start channel after MaxPlaybackTime")
-	}
-
-	select {
-	case <-pb.StopCh():
-	default:
-		t.Errorf("Expected trigger of stop channel after MaxPlaybackTime")
-	}
-
-	if err := pb.Err(); err == nil {
-		t.Errorf("Expected non-nil error")
-	}
-}
-
-func TestPlayTimeoutStart(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bus := mock.NewMockBus(ctrl)
-
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().Return(ch)
-	sub.EXPECT().Cancel()
-
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
-
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-
-	err := Play(ctx, bus, player, "audio:hello-world")
-
-	if !isTimeout(err) {
-		t.Errorf("Expected timeout error, got: '%v'", err)
-	}
-
-	if err != nil && err.Error() != "Timeout waiting for start of playback" {
-		t.Errorf("Expected timeout waiting for start of playback error, got: '%v'", err)
-	}
-}
-
-func TestPlayTimeoutStop(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bus := mock.NewMockBus(ctrl)
-
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
-
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
-
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
 	go func() {
-		ch <- playbackStartedGood("pb1")
+		playbackStartedChan <- &ari.EventData{}
+		playbackFinishedChan <- &ari.EventData{}
 	}()
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	st, err := Play(ctx, playback, player, "sound:1")
 
-	if !isTimeout(err) {
-		t.Errorf("Expected timeout error, got: '%v'", err)
+	if st != Finished {
+		t.Errorf("Expected playback status to be Finished, got '%v'", st)
 	}
-
-	if err != nil && err.Error() != "Timeout waiting for stop of playback" {
-		t.Errorf("Expected timeout waiting for stop of playback error, got: '%v'", err)
-	}
-}
-
-func TestPlaySuccess(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bus := mock.NewMockBus(ctrl)
-
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
-
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
-
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-
-	go func() {
-		ch <- playbackStartedGood("pb1")
-		ch <- playbackFinishedGood("pb1")
-	}()
-
-	err := Play(ctx, bus, player, "audio:hello-world")
 
 	if err != nil {
-		t.Errorf("Unexpected error: '%v'", err)
+		t.Errorf("Unexpected playback error '%v'", err)
 	}
+
 }
 
-func TestPlayNilEvents(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlay(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
-	go func() {
-		ch <- nil
-		ch <- playbackStartedGood("pb1")
-		ch <- nil
-		ch <- nil
-		ch <- playbackFinishedGood("pb1")
-	}()
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2)
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
-	if err != nil {
-		t.Errorf("Unexpected error: '%v'", err)
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	playbackStartedChan <- &ari.EventData{}
+
+	<-pb.Started()
+
+	if pb.Status() != InProgress {
+		t.Errorf("Expected playback status to be InProgress, got '%v'", pb.Status())
 	}
+
+	playbackFinishedChan <- &ari.EventData{}
+
+	<-pb.Stopped()
+
+	if pb.Status() != Finished {
+		t.Errorf("Expected playback status to be Finished, got '%v'", pb.Status())
+	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected playback error '%v'", pb.Err())
+	}
+
 }
 
-func TestPlayUnrelatedEvents(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlayHangup(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(0).Return(playbackFinishedChan)
 
-	go func() {
-		ch <- playbackFinishedDifferentPlaybackID
-		ch <- playbackStartedDifferentPlaybackID
-		ch <- playbackStartedGood("pb1")
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(1).Return(hangupChan)
 
-		<-time.After(1 * time.Second)
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
-		ch <- playbackFinishedDifferentPlaybackID
-		ch <- playbackFinishedGood("pb1")
-	}()
+	pb := PlayAsync(ctx, playback, player, "sound:1")
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	hangupChan <- &ari.EventData{}
 
-	if err != nil {
-		t.Errorf("Unexpected error: '%v'", err)
+	<-pb.Started()
+
+	<-pb.Stopped()
+
+	if pb.Status() != Hangup {
+		t.Errorf("Expected playback status to be Hangup, got '%v'", pb.Status())
 	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected playback error '%v'", pb.Err())
+	}
+
 }
 
-func TestPlayStopBeforeStart(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlayHangupAfterStart(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(1).Return(playbackFinishedChan)
 
-	go func() {
-		ch <- playbackFinishedGood("pb1")
-	}()
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2).Return(hangupChan)
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
-	if err != nil {
-		t.Errorf("Unexpected error: '%v'", err)
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	playbackStartedChan <- &ari.EventData{}
+
+	<-pb.Started()
+
+	hangupChan <- &ari.EventData{}
+
+	<-pb.Stopped()
+
+	if pb.Status() != Hangup {
+		t.Errorf("Expected playback status to be Hangup, got '%v'", pb.Status())
 	}
+
+	if pb.Err() != nil {
+		t.Errorf("Unexpected playback error '%v'", pb.Err())
+	}
+
 }
 
-func TestPlayContextCancellation(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlayContextCancel(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(0).Return(playbackFinishedChan)
+
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(1).Return(hangupChan)
+
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
+
+	pb := PlayAsync(ctx, playback, player, "sound:1")
 
 	cancel()
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	<-pb.Started()
+	<-pb.Stopped()
 
-	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
-
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	} else if err.Error() != "context canceled" { //TODO: should be an interface to cast to here instead of string comparison
-		t.Errorf("Expected context cancellation error, got '%v'", err)
+	if pb.Status() != Canceled {
+		t.Errorf("Expected playback status to be Canceled, got '%v'", pb.Status())
 	}
+
+	if pb.Err() == nil && pb.Err().Error() != "context canceled" {
+		t.Errorf("Expected playback error 'context canceled', got '%v'", pb.Err())
+	}
+
 }
 
-func TestPlayContextCancellation10(t *testing.T) {
-	for i := 0; i != 10; i++ {
-		TestPlayContextCancellation(t)
-	}
-}
-
-func TestPlayContextCancellationAfterStart(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlayContextCancelAfterStart(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
+
+	handle := ari.NewPlaybackHandle("pb1", playback)
+
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
+
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
+
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(1).Return(playbackFinishedChan)
+
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2).Return(hangupChan)
+
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
+
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	playbackStartedChan <- &ari.EventData{}
+
+	<-pb.Started()
+
+	cancel()
+
+	<-pb.Stopped()
+
+	if pb.Status() != Canceled {
+		t.Errorf("Expected playback status to be Canceled, got '%v'", pb.Status())
+	}
+
+	if pb.Err() == nil && pb.Err().Error() != "context canceled" {
+		t.Errorf("Expected playback error 'context canceled', got '%v'", pb.Err())
+	}
+
+}
+
+func TestPlayCancelCommand(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-	bus := mock.NewMockBus(ctrl)
-
-	sub := mock.NewMockSubscription(ctrl)
-	ch := make(chan ari.Event)
-	sub.EXPECT().Events().AnyTimes().Return(ch)
-	sub.EXPECT().Cancel()
-
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
-
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-
-	go func() {
-		ch <- playbackStartedGood("pb1")
-		cancel()
-	}()
-
-	err := Play(ctx, bus, player, "audio:hello-world")
-
-	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
-
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	} else if err.Error() != "context canceled" { //TODO: should be an interface to cast to here instead of string comparison
-		t.Errorf("Expected context cancellation error, got '%v'", err)
-	}
-}
-
-func TestPlayContextCancellationAfterStart10(t *testing.T) {
-	for i := 0; i != 10; i++ {
-		TestPlayContextCancellationAfterStart(t)
-	}
-}
-
-func TestErrorInPlayer(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus := mock.NewMockBus(ctrl)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	sub := mock.NewMockSubscription(ctrl)
-	sub.EXPECT().Cancel()
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	player := testutils.NewPlayer()
-	player.Append(nil, errors.New("Dummy error playing to dummy player"))
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(1).Return(playbackFinishedChan)
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2).Return(hangupChan)
 
-	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	} else if err.Error() != "Dummy error playing to dummy player" {
-		t.Errorf("Expected dummy error, got '%v'", err)
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	playbackStartedChan <- &ari.EventData{}
+
+	<-pb.Started()
+
+	pb.Cancel()
+
+	<-pb.Stopped()
+
+	if pb.Status() != Canceled {
+		t.Errorf("Expected playback status to be Canceled, got '%v'", pb.Status())
 	}
+
+	if pb.Err() == nil && pb.Err().Error() != "context canceled" {
+		t.Errorf("Expected playback error 'context canceled', got '%v'", pb.Err())
+	}
+
 }
 
-func TestErrorInDataFetch(t *testing.T) {
-	MaxPlaybackTime = 3 * time.Second
+func TestPlayTimeoutStart(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
+
+	handle := ari.NewPlaybackHandle("pb1", playback)
+
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
+
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
+
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(0).Return(playbackFinishedChan)
+
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(1).Return(hangupChan)
+
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
+
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	<-pb.Started()
+	<-pb.Stopped()
+
+	if pb.Status() != Timeout {
+		t.Errorf("Expected playback status to be Timeout, got '%v'", pb.Status())
+	}
+
+	cancel()
+	<-time.After(1 * time.Millisecond)
+}
+
+func TestPlayTimeoutFinished(t *testing.T) {
+	MaxPlaybackTime = 300 * time.Millisecond
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	sub := mock.NewMockSubscription(ctrl)
-	sub.EXPECT().Cancel()
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Return(sub)
+	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
 
-	err := Play(ctx, bus, player, "audio:hello-world")
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
-	<-time.After(1 * time.Millisecond) // causes the other goroutines to 'wake up' and see the cancellation, which causes proper cleanup
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(1).Return(playbackFinishedChan)
 
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	} else if err.Error() != "Dummy error getting playback data" {
-		t.Errorf("Expected dummy error, got '%v'", err)
-	}
-}
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(2).Return(hangupChan)
 
-// messages
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 
-var channelDtmf = func(dtmf string) ari.Event {
-	return &ari.ChannelDtmfReceived{
-		EventData: ari.EventData{
-			Message: ari.Message{
-				Type: "ChannelDtmfReceived",
-			},
-		},
-		Digit: dtmf,
-	}
-}
+	pb := PlayAsync(ctx, playback, player, "sound:1")
 
-var playbackStartedGood = func(id string) ari.Event {
-	return &ari.PlaybackStarted{
-		EventData: ari.EventData{
-			Message: ari.Message{
-				Type: "PlaybackStarted",
-			},
-		},
-		Playback: ari.PlaybackData{
-			ID: id,
-		},
-	}
-}
+	playbackStartedChan <- &ari.EventData{}
+	<-pb.Started()
 
-var playbackFinishedGood = func(id string) ari.Event {
-	return &ari.PlaybackFinished{
-		EventData: ari.EventData{
-			Message: ari.Message{
-				Type: "PlaybackFinished",
-			},
-		},
-		Playback: ari.PlaybackData{
-			ID: id,
-		},
-	}
-}
+	<-pb.Stopped()
 
-var playbackStartedBadMessageType = &ari.PlaybackStarted{
-	EventData: ari.EventData{
-		Message: ari.Message{
-			Type: "PlaybackStarted2",
-		},
-	},
-	Playback: ari.PlaybackData{
-		ID: "pb1",
-	},
-}
-
-var playbackFinishedBadMessageType = &ari.PlaybackFinished{
-	EventData: ari.EventData{
-		Message: ari.Message{
-			Type: "PlaybackFinished2",
-		},
-	},
-	Playback: ari.PlaybackData{
-		ID: "pb1",
-	},
-}
-
-var playbackStartedDifferentPlaybackID = &ari.PlaybackStarted{
-	EventData: ari.EventData{
-		Message: ari.Message{
-			Type: "PlaybackStarted",
-		},
-	},
-	Playback: ari.PlaybackData{
-		ID: "pb2",
-	},
-}
-
-var playbackFinishedDifferentPlaybackID = &ari.PlaybackFinished{
-	EventData: ari.EventData{
-		Message: ari.Message{
-			Type: "PlaybackFinished",
-		},
-	},
-	Playback: ari.PlaybackData{
-		ID: "pb2",
-	},
-}
-
-// test playback ari transport
-
-type testPlayback struct {
-	id       string
-	failData bool
-}
-
-func (p *testPlayback) Get(id string) *ari.PlaybackHandle {
-	panic("not implemented")
-}
-
-func (p *testPlayback) Data(id string) (pd ari.PlaybackData, err error) {
-	if p.failData {
-		err = errors.New("Dummy error getting playback data")
-	}
-	pd.ID = p.id
-	return
-}
-
-func (p *testPlayback) Control(id string, op string) error {
-	panic("not implemented")
-}
-
-func (p *testPlayback) Stop(id string) error {
-	panic("not implemented")
-}
-
-func isTimeout(err error) bool {
-
-	type timeout interface {
-		Timeout() bool
+	if pb.Status() != Timeout {
+		t.Errorf("Expected playback status to be Timeout, got '%v'", pb.Status())
 	}
 
-	te, ok := err.(timeout)
-	return ok && te.Timeout()
+}
+
+func TestPlayFailToPlay(t *testing.T) {
+	MaxPlaybackTime = 300 * time.Millisecond
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	playback := mock.NewMockPlayback(ctrl)
+	player := mock.NewMockPlayer(ctrl)
+
+	handle := ari.NewPlaybackHandle("pb1", playback)
+
+	playback.EXPECT().Get(gomock.Any()).Return(handle)
+
+	playbackStartedChan := make(chan ari.Event)
+	playbackStartedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	playbackStartedSub.EXPECT().Cancel()
+	playbackStartedSub.EXPECT().Events().Times(0).Return(playbackStartedChan)
+
+	playbackFinishedChan := make(chan ari.Event)
+	playbackFinishedSub := mock.NewMockSubscription(ctrl)
+	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	playbackFinishedSub.EXPECT().Cancel()
+	playbackFinishedSub.EXPECT().Events().Times(0).Return(playbackFinishedChan)
+
+	hangupChan := make(chan ari.Event)
+	hangupSub := mock.NewMockSubscription(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	hangupSub.EXPECT().Cancel()
+	hangupSub.EXPECT().Events().Times(0).Return(hangupChan)
+
+	player.EXPECT().Play(gomock.Any(), "sound:1").Return(nil, errors.New("Failed to play"))
+
+	pb := PlayAsync(ctx, playback, player, "sound:1")
+
+	<-pb.Started()
+	<-pb.Stopped()
+
+	if pb.Status() != Failed {
+		t.Errorf("Expected playback status to be Failed, got '%v'", pb.Status())
+	}
+
+	if pb.Err() == nil || pb.Err().Error() != "Failed to play" {
+		t.Errorf("Expected error 'Failed to play', got '%v'", pb.Err())
+	}
+
 }
