@@ -69,3 +69,18 @@ func (_m *MockPlayback) Stop(_param0 string) error {
 func (_mr *_MockPlaybackRecorder) Stop(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Stop", arg0)
 }
+
+func (_m *MockPlayback) Subscribe(_param0 string, _param1 ...string) ari.Subscription {
+	_s := []interface{}{_param0}
+	for _, _x := range _param1 {
+		_s = append(_s, _x)
+	}
+	ret := _m.ctrl.Call(_m, "Subscribe", _s...)
+	ret0, _ := ret[0].(ari.Subscription)
+	return ret0
+}
+
+func (_mr *_MockPlaybackRecorder) Subscribe(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	_s := append([]interface{}{arg0}, arg1...)
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Subscribe", _s...)
+}

@@ -15,6 +15,9 @@ type Playback interface {
 
 	// Stop stops the playback
 	Stop(id string) error
+
+	// Subscribe subscribes on the playback events
+	Subscribe(id string, n ...string) Subscription
 }
 
 // PlaybackData represents the state of a playback
@@ -76,4 +79,9 @@ func (ph *PlaybackHandle) Match(e Event) bool {
 		}
 	}
 	return false
+}
+
+// Subscribe subscribes the list of channel events
+func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
+	return ph.p.Subscribe(ph.id, n...)
 }

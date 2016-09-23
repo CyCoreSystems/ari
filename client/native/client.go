@@ -40,7 +40,7 @@ func New(opts Options) (*ari.Client, error) {
 		return nil, err
 	}
 
-	playback := &nativePlayback{conn}
+	playback := &nativePlayback{conn, conn.Bus}
 
 	return &ari.Client{
 		Cleanup:     conn.Close,

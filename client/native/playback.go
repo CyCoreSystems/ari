@@ -3,7 +3,8 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativePlayback struct {
-	conn *Conn
+	conn       *Conn
+	subscriber ari.Subscriber
 }
 
 func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
@@ -38,4 +39,32 @@ func (a *nativePlayback) Control(id string, op string) (err error) {
 func (a *nativePlayback) Stop(id string) (err error) {
 	err = Delete(a.conn, "/playbacks/"+id, nil, "")
 	return
+}
+
+func (a *nativePlayback) Subscribe(id string, n ...string) ari.Subscription {
+	var ns nativeSubscription
+
+	ns.events = make(chan ari.Event, 10)
+	ns.closeChan = make(chan struct{})
+
+	playbackHandle := a.Get(id)
+
+	go func() {
+		sub := a.subscriber.Subscribe(n...)
+		defer sub.Cancel()
+		for {
+
+			select {
+			case <-ns.closeChan:
+				ns.closeChan = nil
+				return
+			case evt := <-sub.Events():
+				if playbackHandle.Match(evt) {
+					ns.events <- evt
+				}
+			}
+		}
+	}()
+
+	return &ns
 }
