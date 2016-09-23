@@ -63,7 +63,7 @@ func (ph *PlaybackHandle) Stop() (err error) {
 	return
 }
 
-// Match returns true if the event matches the bridge
+// Match returns true if the event matches the playback
 func (ph *PlaybackHandle) Match(e Event) bool {
 	p, ok := e.(PlaybackEvent)
 	if !ok {
