@@ -85,6 +85,8 @@ func (b *natsBridge) Subscribe(id string, nx ...string) ari.Subscription {
 	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
 
+	bridgeHandle := b.Get(id)
+
 	go func() {
 		for _, n := range nx {
 			subj := fmt.Sprintf("ari.events.%s", n)
@@ -97,20 +99,10 @@ func (b *natsBridge) Subscribe(id string, nx ...string) ari.Subscription {
 
 				evt := ari.Events.Parse(&ariMessage)
 
-				be, ok := evt.(ari.BridgeEvent)
-				if !ok {
-					// ignore non-channel events
-					return
+				//TODO: do we want to send in events on the bridge for a specific channel?
+				if bridgeHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got bridge event", "bridgeid", be.GetBridgeID(), "eventtype", evt.GetType())
-
-				if be.GetBridgeID() != id {
-					// ignore unrelated channel events
-					return
-				}
-
-				ns.events <- evt
 			})
 			if err != nil {
 				//TODO: handle error

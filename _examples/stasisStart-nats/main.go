@@ -29,7 +29,6 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
 
 	stateChange := h.Subscribe(ari.Events.ChannelStateChange)
-	defer stateChange.Cancel()
 
 	data, err := h.Data()
 	if err != nil {
@@ -70,6 +69,8 @@ func channelHandler(cl *ari.Client, h *ari.ChannelHandle) {
 	h.Answer()
 
 	wg.Wait()
+
+	h.Hangup()
 }
 
 func run() int {

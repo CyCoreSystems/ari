@@ -2,7 +2,6 @@ package native
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
@@ -203,6 +202,8 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
 
+	channelHandle := c.Get(id)
+
 	go func() {
 		sub := c.subscriber.Subscribe(n...)
 		defer sub.Cancel()
@@ -213,33 +214,9 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 				ns.closeChan = nil
 				return
 			case evt := <-sub.Events():
-
-				//TODO: channel ID comparisons
-				//	do we compare based on id;N, where id == id and the N's aren't different
-				//		 -> this happens in Local channels
-
-				ce, ok := evt.(ari.ChannelEvent)
-				if !ok {
-					// ignore non-channel events
-					continue
+				if channelHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got channel event", "channelid", ce.GetChannelID(), "eventtype", evt.GetType())
-
-				//channel ID comparisons
-				//	do we compare based on id;N, where id == id and the N's aren't different
-				//		 -> this happens in Local channels
-				// NOTE: this code handles local channels
-
-				leftChannel := strings.Split(id, ";")[0]
-				rightChannel := strings.Split(ce.GetChannelID(), ";")[0]
-
-				if leftChannel != rightChannel {
-					// ignore unrelated channel events
-					return
-				}
-
-				ns.events <- evt
 			}
 		}
 	}()

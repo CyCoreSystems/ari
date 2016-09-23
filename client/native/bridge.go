@@ -107,6 +107,8 @@ func (b *nativeBridge) Subscribe(id string, n ...string) ari.Subscription {
 	ns.events = make(chan ari.Event, 10)
 	ns.closeChan = make(chan struct{})
 
+	bridgeHandle := b.Get(id)
+
 	go func() {
 		sub := b.subscriber.Subscribe(n...)
 		defer sub.Cancel()
@@ -117,24 +119,10 @@ func (b *nativeBridge) Subscribe(id string, n ...string) ari.Subscription {
 				ns.closeChan = nil
 				return
 			case evt := <-sub.Events():
-
-				//TODO: do we want to send in events on the bridge
-				// for a specific channel?
-
-				be, ok := evt.(ari.BridgeEvent)
-				if !ok {
-					// ignore non-channel events
-					continue
+				//TODO: do we want to send in events on the bridge for a specific channel?
+				if bridgeHandle.Match(evt) {
+					ns.events <- evt
 				}
-
-				Logger.Debug("Got bridge event", "bridgeid", be.GetBridgeID(), "eventtype", evt.GetType())
-
-				if be.GetBridgeID() != id {
-					// ignore unrelated channel events
-					continue
-				}
-
-				ns.events <- evt
 			}
 		}
 	}()

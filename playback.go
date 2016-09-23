@@ -62,3 +62,18 @@ func (ph *PlaybackHandle) Stop() (err error) {
 	err = ph.p.Stop(ph.id)
 	return
 }
+
+// Match returns true if the event matches the bridge
+func (ph *PlaybackHandle) Match(e Event) bool {
+	p, ok := e.(PlaybackEvent)
+	if !ok {
+		return false
+	}
+	ids := p.GetPlaybackIDs()
+	for _, i := range ids {
+		if i == ph.ID() {
+			return true
+		}
+	}
+	return false
+}

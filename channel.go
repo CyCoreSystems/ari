@@ -280,3 +280,26 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
 	return ch.c.SendDTMF(ch.id, dtmf, opts)
 }
+
+// Match returns true if the event matches the channel
+func (ch *ChannelHandle) Match(e Event) bool {
+	channelEvent, ok := e.(ChannelEvent)
+	if !ok {
+		return false
+	}
+
+	//channel ID comparisons
+	//	do we compare based on id;N, where id == id and the N's are different
+	//		 -> this happens in Local channels
+
+	// NOTE: this code considers local channels equal
+	leftChannel := strings.Split(ch.id, ";")[0]
+	channelIDs := channelEvent.GetChannelIDs()
+	for _, i := range channelIDs {
+		rightChannel := strings.Split(i, ";")[0]
+		if leftChannel == rightChannel {
+			return true
+		}
+	}
+	return false
+}

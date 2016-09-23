@@ -80,3 +80,15 @@ func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
 	err = ah.a.Unsubscribe(ah.name, eventSource)
 	return
 }
+
+// Match returns true fo the event matches the application
+func (ah *ApplicationHandle) Match(evt Event) bool {
+	applicationEvent, ok := evt.(ApplicationEvent)
+	if !ok {
+		return false
+	}
+	if applicationEvent.GetApplication() == ah.name {
+		return true
+	}
+	return false
+}

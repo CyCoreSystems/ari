@@ -45,6 +45,11 @@ type LiveRecordingData struct {
 	TargetURI string      `json:"target_uri"`                 // URI for the channel or bridge which is being recorded (TODO: figure out format for this)
 }
 
+// ID returns the identifier of the live recording
+func (s *LiveRecordingData) ID() string {
+	return s.Name
+}
+
 // NewLiveRecordingHandle creates a new stored recording handle
 func NewLiveRecordingHandle(name string, s LiveRecording) *LiveRecordingHandle {
 	return &LiveRecordingHandle{
@@ -104,4 +109,19 @@ func (s *LiveRecordingHandle) Mute() (err error) {
 func (s *LiveRecordingHandle) Unmute() (err error) {
 	err = s.s.Unmute(s.name)
 	return
+}
+
+// Match returns true if the event matches the bridge
+func (s *LiveRecordingHandle) Match(e Event) bool {
+	r, ok := e.(RecordingEvent)
+	if !ok {
+		return false
+	}
+	rIDs := r.GetRecordingIDs()
+	for _, i := range rIDs {
+		if i == s.ID() {
+			return true
+		}
+	}
+	return false
 }
