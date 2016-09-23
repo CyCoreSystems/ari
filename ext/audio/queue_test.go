@@ -422,8 +422,8 @@ func TestQueueExitOnDTMF(t *testing.T) {
 
 }
 
-func TestQueueExitOnDTMF100(t *testing.T) {
-	for i := 0; i != 100; i++ {
+func TestQueueExitOnDTMF10(t *testing.T) {
+	for i := 0; i != 10; i++ {
 		TestQueueExitOnDTMF(t)
 	}
 }

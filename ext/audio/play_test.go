@@ -319,8 +319,8 @@ func TestPlayContextCancellation(t *testing.T) {
 	}
 }
 
-func TestPlayContextCancellation100(t *testing.T) {
-	for i := 0; i != 100; i++ {
+func TestPlayContextCancellation10(t *testing.T) {
+	for i := 0; i != 10; i++ {
 		TestPlayContextCancellation(t)
 	}
 }
@@ -362,8 +362,8 @@ func TestPlayContextCancellationAfterStart(t *testing.T) {
 	}
 }
 
-func TestPlayContextCancellationAfterStart100(t *testing.T) {
-	for i := 0; i != 100; i++ {
+func TestPlayContextCancellationAfterStart10(t *testing.T) {
+	for i := 0; i != 10; i++ {
 		TestPlayContextCancellationAfterStart(t)
 	}
 }
