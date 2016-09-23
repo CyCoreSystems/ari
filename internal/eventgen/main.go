@@ -24,6 +24,7 @@ func init() {
 	typeMappings["StoredRecording"] = "StoredRecordingData"
 	typeMappings["Endpoint"] = "EndpointData"
 	typeMappings["DeviceState"] = "DeviceStateData"
+	typeMappings["TextMessage"] = "TextMessageData"
 	typeMappings["object"] = "interface{}"
 }
 

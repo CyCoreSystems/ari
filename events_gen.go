@@ -476,6 +476,6 @@ type StasisStart struct {
 // TextMessageReceived - "A text message was received from an endpoint."
 type TextMessageReceived struct {
 	EventData
-	Endpoint EndpointData `json:"endpoint,omitempty"`
-	Message  TextMessage  `json:"message"`
+	Endpoint EndpointData    `json:"endpoint,omitempty"`
+	Message  TextMessageData `json:"message"`
 }
