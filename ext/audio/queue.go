@@ -136,6 +136,9 @@ func (pq *Queue) Play(ctx context.Context, playback ari.Playback, p Player, opts
 			if pb.Status() > Finished {
 				return pb.Status(), pb.Err()
 			}
+		case <-ctx.Done():
+			// should be caught in PlayAsync but just in case..
+			return Canceled, ctx.Err()
 		}
 	}
 
