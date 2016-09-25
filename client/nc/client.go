@@ -49,7 +49,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Cleanup:     func() error { nc.Close(); return nil },
 		Asterisk:    &natsAsterisk{conn},
 		Application: &natsApplication{conn},
-		Bridge:      &natsBridge{conn, &playback},
+		Bridge:      &natsBridge{conn, &playback, liveRecording},
 		Channel:     &natsChannel{conn, &playback},
 		DeviceState: &natsDeviceState{conn},
 		Mailbox:     &natsMailbox{conn},

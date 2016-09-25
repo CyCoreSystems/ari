@@ -23,6 +23,7 @@ var Documentation = []struct {
 	{"ari.bridges.addChannel.>", "string", "ignored", "Add the channel to the bridge"},
 	{"ari.bridges.removeChannel.>", "string", "ignored", "Remove the channel from the bridge"},
 	{"ari.bridges.play.>", "nc.PlayRequest", "ignored", "Play the media URI to the bridge"},
+	{"ari.bridges.record.>", "nc.RecordRequest", "ignored", "Record the bridge and save to the given name"},
 
 	{"ari.channels.all", "ignored", "[]string", "List all the channels"},
 	{"ari.channels.create", "ari.OriginateRequest", "string", "Create a new channel, returning the channel ID"},

@@ -2,6 +2,7 @@ package nc
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/CyCoreSystems/ari"
 
@@ -9,8 +10,9 @@ import (
 )
 
 type natsBridge struct {
-	conn     *Conn
-	playback ari.Playback
+	conn          *Conn
+	playback      ari.Playback
+	liveRecording ari.LiveRecording
 }
 
 // CreateBridgeRequest is the request for creating bridges
@@ -74,6 +76,39 @@ func (b *natsBridge) Play(id string, playbackID string, mediaURI string) (h *ari
 	err = b.conn.standardRequest("ari.bridges.play."+id, &PlayRequest{PlaybackID: playbackID, MediaURI: mediaURI}, nil)
 	if err == nil {
 		h = b.playback.Get(playbackID)
+	}
+	return
+}
+
+// RecordRequest is a request for recording
+type RecordRequest struct {
+	Name        string `json:"name"`
+	Format      string `json:"format"`
+	MaxDuration int    `json:"maxDurationSeconds"`
+	MaxSilence  int    `json:"maxSilenceSeconds"`
+	IfExists    string `json:"ifExists,omitempty"`
+	Beep        bool   `json:"beep"`
+	TerminateOn string `json:"terminateOn,omitempty"`
+}
+
+func (b *natsBridge) Record(id string, name string, opts *ari.RecordingOptions) (h *ari.LiveRecordingHandle, err error) {
+
+	if opts == nil {
+		opts = &ari.RecordingOptions{}
+	}
+
+	req := RecordRequest{
+		Name:        name,
+		Format:      opts.Format,
+		MaxDuration: int(opts.MaxDuration / time.Second),
+		MaxSilence:  int(opts.MaxSilence / time.Second),
+		IfExists:    opts.Exists,
+		Beep:        opts.Beep,
+		TerminateOn: opts.Terminate,
+	}
+	err = b.conn.standardRequest("ari.bridges.record."+id, req, nil)
+	if err == nil {
+		h = b.liveRecording.Get(name)
 	}
 	return
 }

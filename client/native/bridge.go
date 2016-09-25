@@ -1,13 +1,16 @@
 package native
 
 import (
+	"time"
+
 	"github.com/CyCoreSystems/ari"
 )
 
 type nativeBridge struct {
-	conn       *Conn
-	subscriber ari.Subscriber
-	playback   ari.Playback
+	conn          *Conn
+	subscriber    ari.Subscriber
+	playback      ari.Playback
+	liveRecording ari.LiveRecording
 }
 
 func (b *nativeBridge) Create(id string, t string, name string) (bh *ari.BridgeHandle, err error) {
@@ -98,6 +101,38 @@ func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *
 	req := request{mediaURI}
 	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, resp, &req)
 	ph = b.playback.Get(playbackID)
+	return
+}
+
+func (b *nativeBridge) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
+
+	if opts == nil {
+		opts = &ari.RecordingOptions{}
+	}
+
+	resp := make(map[string]interface{})
+	type request struct {
+		Name        string `json:"name"`
+		Format      string `json:"format"`
+		MaxDuration int    `json:"maxDurationSeconds"`
+		MaxSilence  int    `json:"maxSilenceSeconds"`
+		IfExists    string `json:"ifExists,omitempty"`
+		Beep        bool   `json:"beep"`
+		TerminateOn string `json:"terminateOn,omitempty"`
+	}
+	req := request{
+		Name:        name,
+		Format:      opts.Format,
+		MaxDuration: int(opts.MaxDuration / time.Second),
+		MaxSilence:  int(opts.MaxSilence / time.Second),
+		IfExists:    opts.Exists,
+		Beep:        opts.Beep,
+		TerminateOn: opts.Terminate,
+	}
+	err = Post(b.conn, "/bridges/"+id+"/record", resp, &req)
+	if err != nil {
+		rh = b.liveRecording.Get(name)
+	}
 	return
 }
 

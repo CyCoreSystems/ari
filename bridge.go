@@ -30,6 +30,9 @@ type Bridge interface {
 	// Play plays the media URI to the bridge
 	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
+	// Record records the bridge
+	Record(id string, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
+
 	// Subscribe subscribes the given bridge events events
 	Subscribe(id string, n ...string) Subscription
 }
@@ -94,6 +97,12 @@ func (bh *BridgeHandle) Data() (bd BridgeData, err error) {
 func (bh *BridgeHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
 	id := uuid.NewV1().String()
 	ph, err = bh.b.Play(bh.id, id, mediaURI)
+	return
+}
+
+// Record records the bridge to the given filename
+func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
+	rh, err = bh.b.Record(bh.id, name, opts)
 	return
 }
 
