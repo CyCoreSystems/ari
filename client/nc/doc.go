@@ -56,6 +56,15 @@ var Documentation = []struct {
 	{"ari.playback.control.>", "string", "ignored", "Send the control command to the playback"},
 	{"ari.playback.stop.>", "ignored", "ignored", "Stop the playback"},
 
+	{"ari.recording.live.data.>", "ignored", "ari.LiveRecordingData", "Get the live recording data"},
+	{"ari.recording.live.stop.>", "ignored", "ignored", "Stop the recording"},
+	{"ari.recording.live.pause.>", "ignored", "ignored", "Pause the recording"},
+	{"ari.recording.live.resume.>", "ignored", "ignored", "Resume the recording"},
+	{"ari.recording.live.mute.>", "ignored", "ignored", "Mute the recording"},
+	{"ari.recording.live.unmute.>", "ignored", "ignored", "Unmute recording"},
+	{"ari.recording.live.delete.>", "ignored", "ignored", "Delete the recording"},
+	{"ari.recording.live.scrap.>", "ignored", "ignored", "Scrap the recording"},
+
 	{"ari.sounds.all", "map[string]string", "[]string", "List the sounds, optionally by the given filters"},
 	{"ari.sounds.data.>", "ignored", "ari.SoundData", "Get the sound data"},
 }

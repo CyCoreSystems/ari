@@ -80,6 +80,7 @@ func (srv *Server) Start() {
 		srv.events()
 		srv.mailbox()
 		srv.sound()
+		srv.liveRecording()
 
 		close(srv.readyCh)
 

@@ -43,6 +43,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 
 	playback := natsPlayback{conn}
 	bus := &natsBus{conn}
+	liveRecording := &natsLiveRecording{conn}
 
 	cl = &ari.Client{
 		Cleanup:     func() error { nc.Close(); return nil },
@@ -54,7 +55,10 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Mailbox:     &natsMailbox{conn},
 		Sound:       &natsSound{conn},
 		Playback:    &playback,
-		Bus:         bus,
+		Recording: &ari.Recording{
+			Live: liveRecording,
+		},
+		Bus: bus,
 	}
 
 	return
