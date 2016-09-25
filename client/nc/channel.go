@@ -2,6 +2,7 @@ package nc
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/CyCoreSystems/ari"
 
@@ -140,6 +141,20 @@ func (c *natsChannel) Silence(id string) (err error) {
 
 func (c *natsChannel) StopSilence(id string) (err error) {
 	err = c.conn.standardRequest("ari.channels.stopsilence."+id, nil, nil)
+	return
+}
+
+// DialRequest is the request for the channel dial operation
+type DialRequest struct {
+	Caller  string `json:"caller"`
+	Timeout int    `json:"timeout"`
+}
+
+func (c *natsChannel) Dial(id string, caller string, timeout time.Duration) (err error) {
+	//TODO: the dial documentation does not reference the unit of timeout,
+	// second is assumed from similar parameters
+	req := DialRequest{caller, int(timeout / time.Second)}
+	err = c.conn.standardRequest("ari.channels.dial."+id, &req, nil)
 	return
 }
 

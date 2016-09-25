@@ -287,3 +287,76 @@ func TestChannelContinue(t *testing.T) {
 		}
 	}
 }
+
+func TestChannelDial(t *testing.T) {
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
+	}()
+
+	<-time.After(ServerWaitDelay)
+
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockChannel := mock.NewMockChannel(ctrl)
+	mockChannel.EXPECT().Dial("c1", "c2", 3*time.Second).Return(nil)
+	mockChannel.EXPECT().Dial("c2", "c3", 3*time.Second).Return(errors.New("Failed to dial"))
+
+	cl := &ari.Client{
+		Channel: mockChannel,
+	}
+
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
+	if failed {
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	s.Start()
+	defer s.Close()
+
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	{
+		err = natsClient.Channel.Dial("c1", "c2", 3*time.Second)
+
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Channel.Dial('c1', 'c2', 3s) => '%v', expected '%v'", err, nil)
+		}
+	}
+
+	{
+		err = natsClient.Channel.Dial("c2", "c3", 3*time.Second)
+
+		failed = err == nil || errors.Cause(err).Error() != "Failed to dial"
+		if failed {
+			t.Errorf("nc.Channel.Dial('c1', 'c2', 3s) => '%v', expected '%v'", err, "Failed to dial")
+		}
+	}
+
+}

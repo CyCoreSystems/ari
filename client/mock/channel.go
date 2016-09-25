@@ -6,6 +6,7 @@ package mock
 import (
 	ari "github.com/CyCoreSystems/ari"
 	gomock "github.com/golang/mock/gomock"
+	time "time"
 )
 
 // Mock of Channel interface
@@ -89,6 +90,16 @@ func (_m *MockChannel) Data(_param0 string) (ari.ChannelData, error) {
 
 func (_mr *_MockChannelRecorder) Data(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Data", arg0)
+}
+
+func (_m *MockChannel) Dial(_param0 string, _param1 string, _param2 time.Duration) error {
+	ret := _m.ctrl.Call(_m, "Dial", _param0, _param1, _param2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (_mr *_MockChannelRecorder) Dial(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Dial", arg0, arg1, arg2)
 }
 
 func (_m *MockChannel) Get(_param0 string) *ari.ChannelHandle {

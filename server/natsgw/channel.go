@@ -2,6 +2,7 @@ package natsgw
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/nc"
@@ -189,6 +190,20 @@ func (srv *Server) channel() {
 		}
 
 		err := srv.upstream.Channel.Continue(name, req.Context, req.Extension, req.Priority)
+		reply(nil, err)
+	})
+
+	srv.subscribe("ari.channels.dial.>", func(subj string, data []byte, reply Reply) {
+		name := subj[len("ari.channels.dial."):]
+
+		var req nc.DialRequest
+		if err := json.Unmarshal(data, &req); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		//TODO: confirm time is in Seconds, the ARI documentation does not list it for Dial
+		err := srv.upstream.Channel.Dial(name, req.Caller, time.Duration(req.Timeout)*time.Second)
 		reply(nil, err)
 	})
 

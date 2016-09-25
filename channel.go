@@ -2,6 +2,7 @@ package ari
 
 import (
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -72,6 +73,9 @@ type Channel interface {
 
 	// Play plays the media URI to the channel
 	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
+
+	// Dial dials a created channel
+	Dial(id string, caller string, timeout time.Duration) error
 
 	// Subscribe subscribes on the channel events
 	Subscribe(id string, n ...string) Subscription
@@ -241,6 +245,17 @@ func (ch *ChannelHandle) MOH(mohClass string) error {
 // StopMOH stops playing of music on hold to the channel
 func (ch *ChannelHandle) StopMOH() error {
 	return ch.c.StopMOH(ch.id)
+}
+
+// ----
+
+// --
+// Misc
+// --
+
+// Dial dials a created channel
+func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
+	return ch.c.Dial(ch.id, caller, timeout)
 }
 
 // ----

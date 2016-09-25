@@ -196,6 +196,18 @@ func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph 
 	return
 }
 
+func (c *nativeChannel) Dial(id string, caller string, timeout time.Duration) (err error) {
+	type request struct {
+		Caller  string `json:"caller"`
+		Timeout int    `json:"timeout"`
+	}
+	//TODO: the dial documentation does not reference the unit of timeout,
+	// second is assumed from similar parameters
+	req := request{caller, int(timeout / time.Second)}
+	err = Post(c.conn, "/channels/"+id+"/dial", nil, &req)
+	return
+}
+
 func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 	var ns nativeSubscription
 
