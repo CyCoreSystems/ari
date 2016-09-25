@@ -55,4 +55,7 @@ var Documentation = []struct {
 	{"ari.playback.data.>", "ignored", "ari.PlaybackData", "Get the playback data"},
 	{"ari.playback.control.>", "string", "ignored", "Send the control command to the playback"},
 	{"ari.playback.stop.>", "ignored", "ignored", "Stop the playback"},
+
+	{"ari.sounds.all", "map[string]string", "[]string", "List the sounds, optionally by the given filters"},
+	{"ari.sounds.data.>", "ignored", "ari.SoundData", "Get the sound data"},
 }

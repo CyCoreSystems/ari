@@ -79,6 +79,7 @@ func (srv *Server) Start() {
 		srv.playback()
 		srv.events()
 		srv.mailbox()
+		srv.sound()
 
 		close(srv.readyCh)
 
