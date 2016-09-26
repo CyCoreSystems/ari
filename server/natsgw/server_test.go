@@ -27,7 +27,9 @@ func TestNewServer(t *testing.T) {
 
 		failed := s != nil || err == nil
 		if failed {
-			t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "nil", "err")
+			t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}",
+				s, err,
+				"nil", "err")
 		}
 
 		s.Close()
