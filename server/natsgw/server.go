@@ -81,6 +81,7 @@ func (srv *Server) Start() {
 		srv.mailbox()
 		srv.sound()
 		srv.liveRecording()
+		srv.logging()
 
 		close(srv.readyCh)
 

@@ -3,7 +3,8 @@ package nc
 import "github.com/CyCoreSystems/ari"
 
 type natsAsterisk struct {
-	conn *Conn
+	conn    *Conn
+	logging ari.Logging
 }
 
 type natsAsteriskVariables struct {
@@ -13,6 +14,10 @@ type natsAsteriskVariables struct {
 // tests and other advanced utility functions can cast to an interface to get the NatsConnection object out
 func (a *natsAsterisk) NatsConnection() *Conn {
 	return a.conn
+}
+
+func (a *natsAsterisk) Logging() ari.Logging {
+	return a.logging
 }
 
 func (a *natsAsterisk) ReloadModule(name string) (err error) {

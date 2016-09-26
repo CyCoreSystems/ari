@@ -9,7 +9,13 @@ import (
 var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
 
 type nativeAsterisk struct {
-	conn *Conn
+	conn    *Conn
+	logging ari.Logging
+}
+
+// Logging returns the logging resource
+func (a *nativeAsterisk) Logging() ari.Logging {
+	return a.logging
 }
 
 // Info returns various data about the Asterisk system

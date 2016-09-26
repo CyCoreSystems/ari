@@ -10,6 +10,9 @@ type Asterisk interface {
 	// Variables returns the global asterisk variables
 	Variables() Variables
 
+	// Logging returns the interface for working with asterisk logs
+	Logging() Logging
+
 	// ReloadModule tells asterisk to load the given module
 	ReloadModule(name string) error
 }

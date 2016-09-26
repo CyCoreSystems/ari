@@ -44,10 +44,11 @@ func New(opts Options) (cl *ari.Client, err error) {
 	playback := natsPlayback{conn}
 	bus := &natsBus{conn}
 	liveRecording := &natsLiveRecording{conn}
+	logging := &natsLogging{conn}
 
 	cl = &ari.Client{
 		Cleanup:     func() error { nc.Close(); return nil },
-		Asterisk:    &natsAsterisk{conn},
+		Asterisk:    &natsAsterisk{conn, logging},
 		Application: &natsApplication{conn},
 		Bridge:      &natsBridge{conn, &playback, liveRecording},
 		Channel:     &natsChannel{conn, &playback, liveRecording},

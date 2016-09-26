@@ -70,4 +70,9 @@ var Documentation = []struct {
 
 	{"ari.sounds.all", "map[string]string", "[]string", "List the sounds, optionally by the given filters"},
 	{"ari.sounds.data.>", "ignored", "ari.SoundData", "Get the sound data"},
+
+	{"ari.logging.create.>", "string", "ignored", "Create the log, using the given configuration"},
+	{"ari.logging.rotate.>", "ignored", "ignored", "Rotate the log"},
+	{"ari.logging.delete.>", "ignored", "ignored", "Rotate the log"},
+	{"ari.logging.all", "ignored", "[]ari.LogData", "List the logs"},
 }
