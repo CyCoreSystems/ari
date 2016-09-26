@@ -27,7 +27,7 @@ natsgw: .PHONY
 	CGO_ENABLED=0 GOOS=linux \
 		go build -a -installsuffix cgo \
 			-ldflags '-w -extld ld -extldflags -static' \
-			-a -o natsgw/app.static natsgw/main.go
+			-a -o infra/natsgw/app.static ../cmd/ari-natsgw
 
 
 .PHONY:
