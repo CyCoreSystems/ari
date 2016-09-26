@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  asterisk:
+    build: ../asterisk
+    ports:
+      - "8088:8088"
+
+  stasisstart:
+    build: ./
+    links:
+      - asterisk
+    ports:
+      - "9990:9990"
