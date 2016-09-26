@@ -22,5 +22,3 @@ gateway:
 mock:
 	go generate ./client/mock
 
-build_test:
-	docker build -t test-asterisk:13.8 ./internal/dockertest
