@@ -17,6 +17,7 @@ extensions:
 
 gateway:
 	go build ./server/natsgw
+	go build -o bin/ari-nats-gateway ./cmd/ari-natsgw
 
 mock:
 	go generate ./client/mock
