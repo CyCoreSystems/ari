@@ -4,9 +4,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/CyCoreSystems/ari"
-
 	"golang.org/x/net/context"
+
+	"github.com/CyCoreSystems/ari"
 )
 
 // Options describes various options which
@@ -17,10 +17,6 @@ type Options struct {
 	// NOTE that this ID will only be used for the FIRST playback
 	// in a queue.  All subsequent playback IDs will be randomly generated.
 	ID string
-
-	// DTMF is an optional channel for received DTMF tones received during the playback.
-	// This channel will NOT be closed by the playback.
-	DTMF chan<- *ari.ChannelDtmfReceived
 
 	// ExitOnDTMF defines a list of DTMF digits on receipt of which will
 	// terminate the playback of the queue.  You may set this to AllDTMF
@@ -38,15 +34,12 @@ type Options struct {
 type Queue struct {
 	queue        []string // List of mediaURI to be played
 	mu           sync.Mutex
-	s            ari.Subscriber
 	receivedDTMF string // Storage for received DTMF, if we are listening for them
 }
 
 // NewQueue creates (but does not start) a new playback queue.
-func NewQueue(s ari.Subscriber) *Queue {
-	return &Queue{
-		s: s,
-	}
+func NewQueue() *Queue {
+	return &Queue{}
 }
 
 // Add appends one or more mediaURIs to the playback queue
@@ -85,110 +78,69 @@ func (pq *Queue) ReceivedDTMF() string {
 }
 
 // Play starts the playback of the queue to the Player.
-func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) error {
+func (pq *Queue) Play(ctx context.Context, playback ari.Playback, p Player, opts *Options) (Status, error) {
+
 	if opts == nil {
 		opts = &Options{}
 	}
 
-	ctrlCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// NOTE: this code used to call Subscribe("ChannelDtmfReceived") twice. This
-	// was /fine/ until trying to unit test. We use one subscription
-	// and send out to dtmfChan depending on whether opts.DTMF is not nil.
-	// This simplifies the workflow and ensures we have a 1-1 correlation between
-	// a subscription and a Queue
-
-	dtmfChan := make(chan *ari.ChannelDtmfReceived)
-	dtmfSub := pq.s.Subscribe(ari.Events.ChannelDtmfReceived)
-
-	handlingDTMF := false
-
-	// Handle any options we were given
-	if opts != nil {
-		// Close the done channel when we finish,
-		// if we were given one.
-		if opts.Done != nil {
-			defer close(opts.Done)
-		}
-
-		// Listen for DTMF, if we were asked to do so
-		if opts.DTMF != nil {
-			handlingDTMF = true
-			go func() {
-				for {
-					select {
-					case <-ctrlCtx.Done():
-						return
-					case <-ctx.Done():
-						return
-					case e := <-dtmfChan:
-						opts.DTMF <- e
-					}
-				}
-			}()
-		}
+	if opts.Done != nil {
+		defer close(opts.Done)
 	}
 
-	// if we aren't forwarding to opts.DTMF, then discard DTMF messages
-	if !handlingDTMF {
-		go func() {
-			for {
-				select {
-				case <-ctrlCtx.Done():
-					return
-				case <-ctx.Done():
-					return
-				case <-dtmfChan:
-				}
-			}
-		}()
-	}
+	queue := make(chan string)
 
-	// Record any DTMF (this is separate from opts.DTMF) so that we can
-	//  - Service ReceivedDTMF requests
-	//  - Exit if we were given an ExitOnDTMF list
+	dtmfSub := p.Subscribe(ari.Events.ChannelDtmfReceived)
+	defer dtmfSub.Cancel()
+
+	pq.queue = append(pq.queue, "")
+
+	dtmfExit := make(chan struct{})
+
 	go func() {
-		defer dtmfSub.Cancel()
-		for {
+		defer close(queue)
+		for i := 0; i != len(pq.queue); {
 			select {
-			case <-ctrlCtx.Done():
-				return
-			case <-ctx.Done():
-				cancel()
-				return
-			case e := <-dtmfSub.Events():
-				if e == nil {
+			case e := <-dtmfSub.Events(): // read dtmf input
+				d := e.(*ari.ChannelDtmfReceived)
+				pq.receivedDTMF += d.Digit
+
+				if strings.Contains(opts.ExitOnDTMF, d.Digit) {
+					close(dtmfExit)
 					return
 				}
-				dtmfChan <- e.(*ari.ChannelDtmfReceived)
-				digit := e.(*ari.ChannelDtmfReceived).Digit
-				pq.receivedDTMF += digit
-				if strings.Contains(opts.ExitOnDTMF, digit) {
-					cancel()
-					return
-				}
+
+			case queue <- pq.queue[i]: // send next item
+				i++
+				continue
+
+			case <-ctx.Done(): // wait for cancellation
+				return
+
 			}
 		}
 	}()
 
 	// Start the playback
-	for i := 0; len(pq.queue) > i; i++ {
-		// Make sure our context isn't closed
-		select {
-		case <-ctrlCtx.Done():
-			return nil
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+	for q := range queue {
+		if q == "" {
+			break
 		}
+		pb := PlayAsync(ctx, playback, p, q)
 
-		// Get the next clip
-		err := Play(ctrlCtx, pq.s, p, pq.queue[i])
-		if err != nil && err.Error() != "context canceled" {
-			return err
+		select {
+		case <-dtmfExit:
+			pb.Cancel()
+			return Finished, nil
+		case <-pb.Stopped():
+			if pb.Status() > Finished {
+				return pb.Status(), pb.Err()
+			}
+		case <-ctx.Done():
+			// should be caught in PlayAsync but just in case..
+			return Canceled, ctx.Err()
 		}
 	}
 
-	return nil
+	return Finished, nil
 }

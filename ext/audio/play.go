@@ -1,10 +1,11 @@
 package audio
 
 import (
+	"errors"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
-
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -20,157 +21,90 @@ var PlaybackStartTimeout = 1 * time.Second
 // a playback to complete.
 var MaxPlaybackTime = 10 * time.Minute
 
-// Play plays the audio to the given Player, waiting for the playback to finish or an error to be generated
-func Play(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) error {
-	pb, err := PlayAsync(ctx, bus, p, mediaURI)
-	if err != nil {
-		return err
-	}
-	defer pb.Cancel()
+// Play plays the given media URI
+func Play(ctx context.Context, playback ari.Playback, p Player, mediaURI string) (st Status, err error) {
+	pb := PlayAsync(ctx, playback, p, mediaURI)
 
-	select {
-	case <-pb.StopCh():
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	<-pb.Stopped()
 
-	return pb.Err()
+	st, err = pb.Status(), pb.Err()
+	return
 }
 
-// PlayAsync plays audio to the given Player, returning a Playback object
-func PlayAsync(ctx context.Context, bus ari.Subscriber, p Player, mediaURI string) (*Playback, error) {
+// PlayAsync plays the audio asynchronously and returns a playback object
+func PlayAsync(ctx context.Context, playback ari.Playback, p Player, mediaURI string) *Playback {
 
 	var pb Playback
 
-	// subscribe to ARI events
-	s := bus.Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished)
+	id := uuid.NewV1().String()
+	handle := playback.Get(id)
 
-	// start playback
-	h, err := p.Play(mediaURI)
-	if err != nil {
-		s.Cancel()
-		return nil, err
-	}
-
-	// build return value
-
-	pb.handle = h
-	pb.stopCh = make(chan struct{})
+	pb.handle = handle
 	pb.startCh = make(chan struct{})
-	pb.ctx, pb.cancel = context.WithCancel(ctx) //TODO: use deadline for timeout?
+	pb.stopCh = make(chan struct{})
+	pb.status = InProgress
+	pb.err = nil
+	pb.ctx, pb.cancel = context.WithCancel(ctx)
 
-	// get playback data/identifier
+	// register for events on the playback handle
+	playbackStarted := handle.Subscribe(ari.Events.PlaybackStarted)
+	playbackFinished := handle.Subscribe(ari.Events.PlaybackFinished)
 
-	// NOTE: this is where we may want to be able to access handle.ID directly?
-	data, err := h.Data()
-	if err != nil {
-		s.Cancel()
-		return nil, err
-	}
+	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
+	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 
 	go func() {
+		defer func() {
+			playbackStarted.Cancel()
+			playbackFinished.Cancel()
+			hangup.Cancel()
+			close(pb.stopCh)
+		}()
 
-		defer s.Cancel()
-		defer pb.cancel()
-
-		id := data.ID
-
-		// Wait for the playback to start
-		startTimer := time.After(PlaybackStartTimeout)
-	PlaybackStartLoop:
-		for {
-			select {
-			case <-pb.ctx.Done():
-				close(pb.startCh)
-				close(pb.stopCh)
-				pb.err = pb.ctx.Err()
-				return
-			case v := <-s.Events():
-				if v == nil {
-					Logger.Debug("Nil event received")
-					continue PlaybackStartLoop
-				}
-				switch v.GetType() {
-				case ari.Events.PlaybackStarted:
-					e := v.(*ari.PlaybackStarted)
-					if e.Playback.ID != id {
-						Logger.Debug("Ignoring unrelated playback", "expected", id, "got", e.Playback.ID)
-						continue PlaybackStartLoop
-					}
-					Logger.Debug("Playback started", "h", h)
-					break PlaybackStartLoop
-				case ari.Events.PlaybackFinished:
-					e := v.(*ari.PlaybackFinished)
-					if e.Playback.ID != id {
-						Logger.Debug("Ignoring unrelated playback")
-						continue PlaybackStartLoop
-					}
-					Logger.Debug("Playback stopped (before PlaybackStated received)", "h", h)
-					close(pb.startCh)
-					close(pb.stopCh)
-					return
-				default:
-					Logger.Debug("Unhandled e.Type", v.GetType())
-					continue PlaybackStartLoop
-				}
-			case <-startTimer:
-				Logger.Error("Playback timed out", "h", h)
-				pb.err = timeoutErr{"Timeout waiting for start of playback"}
-				close(pb.startCh)
-				close(pb.stopCh)
-				return
-			}
+		pb.handle, pb.err = p.Play(id, mediaURI)
+		if pb.err != nil {
+			close(pb.startCh)
+			pb.status = Failed
+			return
 		}
 
-		// trigger playback start signal and defer playback stop signal
-		close(pb.startCh)
-		defer close(pb.stopCh)
-
-		// Playback has started.  Wait for it to finish
-		stopTimer := time.After(MaxPlaybackTime)
-	PlaybackStopLoop:
-		for {
-			select {
-			case <-pb.ctx.Done():
-				pb.err = pb.ctx.Err()
-				return
-			case v := <-s.Events():
-				if v == nil {
-					Logger.Debug("Nil event received")
-					continue PlaybackStopLoop
-				}
-				switch v.GetType() {
-				case ari.Events.PlaybackFinished:
-					e := v.(*ari.PlaybackFinished)
-					if e.Playback.ID != id {
-						Logger.Debug("Ignoring unrelated playback")
-						continue PlaybackStopLoop
-					}
-					Logger.Debug("Playback stopped", "h", h)
-					return
-				default:
-					Logger.Debug("Unhandled e.Type", v.GetType())
-					continue PlaybackStopLoop
-				}
-			case <-stopTimer:
-				Logger.Error("Playback timed out", "h", h)
-				pb.err = timeoutErr{"Timeout waiting for stop of playback"}
-				return
-			}
+		select {
+		case <-time.After(PlaybackStartTimeout):
+			pb.status = Timeout
+			pb.err = errors.New("Timeout waiting for start of playback")
+			close(pb.startCh)
+			return
+		case <-hangup.Events():
+			pb.status = Hangup
+			close(pb.startCh)
+			return
+		case <-pb.ctx.Done():
+			pb.status = Canceled
+			pb.err = pb.ctx.Err()
+			close(pb.startCh)
+			return
+		case <-playbackStarted.Events():
+			close(pb.startCh)
 		}
+
+		select {
+		case <-time.After(MaxPlaybackTime):
+			pb.status = Timeout
+			pb.err = errors.New("Timeout waiting for stop of playback")
+			return
+		case <-hangup.Events():
+			pb.status = Hangup
+			return
+		case <-pb.ctx.Done():
+			pb.status = Canceled
+			pb.err = pb.ctx.Err()
+			return
+		case <-playbackFinished.Events():
+		}
+
+		pb.status = Finished
+		return
 	}()
 
-	return &pb, err
-}
-
-type timeoutErr struct {
-	msg string
-}
-
-func (err timeoutErr) Error() string {
-	return err.msg
-}
-
-func (err timeoutErr) Timeout() bool {
-	return true
+	return &pb
 }

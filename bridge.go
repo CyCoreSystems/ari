@@ -1,7 +1,5 @@
 package ari
 
-import "github.com/satori/go.uuid"
-
 // Bridge represents a communication path to an
 // Asterisk server for working with bridge resources
 type Bridge interface {
@@ -93,9 +91,8 @@ func (bh *BridgeHandle) Data() (bd BridgeData, err error) {
 }
 
 // Play initiates playback of the specified media uri
-// to the bridge, returning the Playback's ID
-func (bh *BridgeHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
-	id := uuid.NewV1().String()
+// to the bridge, returning the Playback handle
+func (bh *BridgeHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
 	ph, err = bh.b.Play(bh.id, id, mediaURI)
 	return
 }
