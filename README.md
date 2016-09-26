@@ -1,5 +1,5 @@
 # ari
-Golang Asterisk ARI library [![](https://godoc.org/gopkg.in/github.com/CyCoreSystems/ari.v3?status.svg)](http://godoc.org/gopkg.in/github.com/CyCoreSystems/ari.v3)
+Golang Asterisk ARI library [![](https://godoc.org/gopkg.in/CyCoreSystems/ari.v3?status.svg)](http://godoc.org/gopkg.in/CyCoreSystems/ari.v3)
 
 Golang ARI library with support for native ARI interface as well as an ARI-NATS bridge.  Also includes common convenience wrappers for various tasks.
 
