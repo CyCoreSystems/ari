@@ -140,6 +140,7 @@ func (c *Conn) listen(ctx context.Context) {
 		if err != nil {
 			Logger.Error("Failed to create websocket connection to Asterisk", "error", err.Error())
 			time.Sleep(1 * time.Second)
+			continue
 		}
 
 		close(c.ReadyChan)
