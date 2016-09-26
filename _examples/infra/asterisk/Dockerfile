@@ -12,5 +12,5 @@ COPY http.conf /etc/asterisk/http.conf
 COPY ari.conf /etc/asterisk/ari.conf
 COPY extensions.conf /etc/asterisk/extensions.conf
 
-CMD ["/usr/sbin/asterisk", "-vf"]
+CMD ["/usr/sbin/asterisk", "-f"]
 
