@@ -41,6 +41,7 @@ var Documentation = []struct {
 	{"ari.channels.moh.>", "string", "ignored", "Play the given music on hold to the channel"},
 	{"ari.channels.stopmoh.>", "ignored", "ignored", "Stop all music on hold on the channel"},
 	{"ari.channels.play.>", "nc.PlayRequest", "ignored", "Play the given mediaURI on the channel"},
+	{"ari.channels.record.>", "nc.RecordRequest", "ignored", "Record the channel and save to the given name"},
 	{"ari.channels.dial.>", "nc.DialRequest", "ignored", "Dial a created channel"},
 	{"ari.channels.snoop.>", "nc.SnoopRequest", "ignored", "Snoop on a specific channel"},
 

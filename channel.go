@@ -74,6 +74,9 @@ type Channel interface {
 	// Play plays the media URI to the channel
 	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
+	// Record records the channel
+	Record(id string, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
+
 	// Dial dials a created channel
 	Dial(id string, caller string, timeout time.Duration) error
 
@@ -127,7 +130,7 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 }
 
 //---
-// Play operations
+// Play/Record operations
 //---
 
 // Play initiates playback of the specified media uri
@@ -135,6 +138,12 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 func (ch *ChannelHandle) Play(mediaURI string) (ph *PlaybackHandle, err error) {
 	id := uuid.NewV1().String()
 	ph, err = ch.c.Play(ch.id, id, mediaURI)
+	return
+}
+
+// Record records the channel to the given filename
+func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
+	rh, err = ch.c.Record(ch.id, name, opts)
 	return
 }
 

@@ -50,7 +50,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Asterisk:    &natsAsterisk{conn},
 		Application: &natsApplication{conn},
 		Bridge:      &natsBridge{conn, &playback, liveRecording},
-		Channel:     &natsChannel{conn, &playback},
+		Channel:     &natsChannel{conn, &playback, liveRecording},
 		DeviceState: &natsDeviceState{conn},
 		Mailbox:     &natsMailbox{conn},
 		Sound:       &natsSound{conn},

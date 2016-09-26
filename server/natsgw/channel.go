@@ -220,4 +220,26 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
+	srv.subscribe("ari.channels.record.>", func(subj string, data []byte, reply Reply) {
+		name := subj[len("ari.channels.record."):]
+
+		var rr nc.RecordRequest
+		if err := json.Unmarshal(data, &rr); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		var opts ari.RecordingOptions
+
+		opts.Format = rr.Format
+		opts.MaxDuration = time.Duration(rr.MaxDuration) * time.Second
+		opts.MaxSilence = time.Duration(rr.MaxSilence) * time.Second
+		opts.Exists = rr.IfExists
+		opts.Beep = rr.Beep
+		opts.Terminate = rr.TerminateOn
+
+		_, err := srv.upstream.Channel.Record(name, rr.Name, &opts)
+		reply(nil, err)
+	})
+
 }

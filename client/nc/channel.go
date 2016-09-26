@@ -17,8 +17,9 @@ type ContinueRequest struct {
 }
 
 type natsChannel struct {
-	conn     *Conn
-	playback ari.Playback
+	conn          *Conn
+	playback      ari.Playback
+	liveRecording ari.LiveRecording
 }
 
 func (c *natsChannel) Get(id string) *ari.ChannelHandle {
@@ -188,6 +189,28 @@ func (c *natsChannel) Play(id string, playbackID string, mediaURI string) (p *ar
 		p = c.playback.Get(playbackID)
 	}
 
+	return
+}
+
+func (c *natsChannel) Record(id string, name string, opts *ari.RecordingOptions) (h *ari.LiveRecordingHandle, err error) {
+
+	if opts == nil {
+		opts = &ari.RecordingOptions{}
+	}
+
+	req := RecordRequest{
+		Name:        name,
+		Format:      opts.Format,
+		MaxDuration: int(opts.MaxDuration / time.Second),
+		MaxSilence:  int(opts.MaxSilence / time.Second),
+		IfExists:    opts.Exists,
+		Beep:        opts.Beep,
+		TerminateOn: opts.Terminate,
+	}
+	err = c.conn.standardRequest("ari.channels.record."+id, req, nil)
+	if err == nil {
+		h = c.liveRecording.Get(name)
+	}
 	return
 }
 
