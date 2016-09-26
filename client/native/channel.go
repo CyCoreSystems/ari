@@ -196,6 +196,26 @@ func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph 
 	return
 }
 
+func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
+	if opts == nil {
+		opts = &ari.SnoopOptions{}
+	}
+
+	resp := make(map[string]interface{})
+	type request struct {
+		Direction string `json:"spy,omitempty"`
+		Whisper   string `json:"whisper,omitempty"`
+		App       string `json:"app"`
+		AppArgs   string `json:"appArgs"`
+	}
+	req := request{opts.Direction, opts.Whisper, app, opts.AppArgs}
+	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, resp, &req)
+	if err == nil {
+		ch = c.Get(snoopID)
+	}
+	return
+}
+
 func (c *nativeChannel) Dial(id string, caller string, timeout time.Duration) (err error) {
 	type request struct {
 		Caller  string `json:"caller"`

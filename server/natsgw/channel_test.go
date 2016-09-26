@@ -360,3 +360,84 @@ func TestChannelDial(t *testing.T) {
 	}
 
 }
+
+func TestChannelSnoop(t *testing.T) {
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
+	}()
+
+	<-time.After(ServerWaitDelay)
+
+	// test client
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockChannel := mock.NewMockChannel(ctrl)
+	c2 := ari.NewChannelHandle("c1", mockChannel)
+
+	mockChannel.EXPECT().Snoop("c1", "c2", "app1", gomock.Not(gomock.Nil())).Return(c2, nil)
+	mockChannel.EXPECT().Snoop("c3", "c4", "app1", gomock.Not(gomock.Nil())).Return(nil, errors.New("Error snooping"))
+
+	cl := &ari.Client{
+		Channel: mockChannel,
+	}
+
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
+	if failed {
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	s.Start()
+	defer s.Close()
+
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	{
+		handle, err := natsClient.Channel.Snoop("c1", "c2", "app1", &ari.SnoopOptions{})
+
+		failed = err != nil
+		failed = failed || handle == nil || handle.ID() != "c2"
+		if failed {
+			t.Errorf("nc.Channel.Snoop('c1', 'c2', 'app1', {}) => '%v', '%v', expected '%v', '%v'",
+				handle, err,
+				"c2", nil)
+		}
+	}
+
+	{
+		handle, err := natsClient.Channel.Snoop("c3", "c4", "app1", &ari.SnoopOptions{})
+
+		failed = err == nil || errors.Cause(err).Error() != "Error snooping"
+		failed = failed || handle != nil
+		if failed {
+			t.Errorf("nc.Channel.Snoop('c3', 'c4', 'app1', {}) => '%v', '%v', expected '%v', '%v'",
+				handle, err,
+				"nil", "Error snooping")
+		}
+	}
+
+}

@@ -77,6 +77,9 @@ type Channel interface {
 	// Dial dials a created channel
 	Dial(id string, caller string, timeout time.Duration) error
 
+	// Snoop spies on a specific channel, creating a new snooping channel
+	Snoop(id string, snoopID string, app string, opts *SnoopOptions) (*ChannelHandle, error)
+
 	// Subscribe subscribes on the channel events
 	Subscribe(id string, n ...string) Subscription
 }
@@ -256,6 +259,18 @@ func (ch *ChannelHandle) StopMOH() error {
 // Dial dials a created channel
 func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
 	return ch.c.Dial(ch.id, caller, timeout)
+}
+
+// SnoopOptions enumerates the non-required arguments for the snoop operation
+type SnoopOptions struct {
+	Direction string // Direction of audio to spy on (in, out, both)
+	Whisper   string // Direction of audio to whisper into (in, out, both)
+	AppArgs   string // The arguments to pass to the new application.
+}
+
+// Snoop spies on a specific channel, creating a new snooping channel placed into the given app
+func (ch *ChannelHandle) Snoop(snoopID string, app string, opts *SnoopOptions) (*ChannelHandle, error) {
+	return ch.c.Snoop(ch.id, snoopID, app, opts)
 }
 
 // ----

@@ -207,4 +207,17 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
+	srv.subscribe("ari.channels.snoop.>", func(subj string, data []byte, reply Reply) {
+		name := subj[len("ari.channels.snoop."):]
+
+		var req nc.SnoopRequest
+		if err := json.Unmarshal(data, &req); err != nil {
+			reply(nil, &decodingError{subj, err})
+			return
+		}
+
+		_, err := srv.upstream.Channel.Snoop(name, req.SnoopID, req.App, req.Options)
+		reply(nil, err)
+	})
+
 }

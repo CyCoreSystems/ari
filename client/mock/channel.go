@@ -204,6 +204,17 @@ func (_mr *_MockChannelRecorder) Silence(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Silence", arg0)
 }
 
+func (_m *MockChannel) Snoop(_param0 string, _param1 string, _param2 string, _param3 *ari.SnoopOptions) (*ari.ChannelHandle, error) {
+	ret := _m.ctrl.Call(_m, "Snoop", _param0, _param1, _param2, _param3)
+	ret0, _ := ret[0].(*ari.ChannelHandle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockChannelRecorder) Snoop(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Snoop", arg0, arg1, arg2, arg3)
+}
+
 func (_m *MockChannel) StopHold(_param0 string) error {
 	ret := _m.ctrl.Call(_m, "StopHold", _param0)
 	ret0, _ := ret[0].(error)

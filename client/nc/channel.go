@@ -144,6 +144,26 @@ func (c *natsChannel) StopSilence(id string) (err error) {
 	return
 }
 
+// SnoopRequest is the NATs snoop request
+type SnoopRequest struct {
+	SnoopID string
+	App     string
+	Options *ari.SnoopOptions
+}
+
+func (c *natsChannel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
+	req := &SnoopRequest{
+		SnoopID: snoopID,
+		App:     app,
+		Options: opts,
+	}
+	err = c.conn.standardRequest("ari.channels.snoop."+id, &req, nil)
+	if err == nil {
+		ch = c.Get(snoopID)
+	}
+	return
+}
+
 // DialRequest is the request for the channel dial operation
 type DialRequest struct {
 	Caller  string `json:"caller"`
