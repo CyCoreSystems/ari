@@ -68,6 +68,11 @@ var Documentation = []struct {
 	{"ari.recording.live.delete.>", "ignored", "ignored", "Delete the recording"},
 	{"ari.recording.live.scrap.>", "ignored", "ignored", "Scrap the recording"},
 
+	{"ari.recording.stored.all", "ignored", "[]string", "Get the list of stored recordings"},
+	{"ari.recording.stored.data.>", "ignored", "ari.StoredRecordingData", "Get the stored recording data"},
+	{"ari.recording.stored.copy.>", "string", "ignored", "Copy the stored recording to the given place"},
+	{"ari.recording.stored.Delete.>", "ignored", "ignored", "Delete the stored recording"},
+
 	{"ari.sounds.all", "map[string]string", "[]string", "List the sounds, optionally by the given filters"},
 	{"ari.sounds.data.>", "ignored", "ari.SoundData", "Get the sound data"},
 

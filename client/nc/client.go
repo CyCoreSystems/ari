@@ -44,6 +44,7 @@ func New(opts Options) (cl *ari.Client, err error) {
 	playback := natsPlayback{conn}
 	bus := &natsBus{conn}
 	liveRecording := &natsLiveRecording{conn}
+	storedRecording := &natsStoredRecording{conn}
 	logging := &natsLogging{conn}
 
 	cl = &ari.Client{
@@ -57,7 +58,8 @@ func New(opts Options) (cl *ari.Client, err error) {
 		Sound:       &natsSound{conn},
 		Playback:    &playback,
 		Recording: &ari.Recording{
-			Live: liveRecording,
+			Live:   liveRecording,
+			Stored: storedRecording,
 		},
 		Bus: bus,
 	}

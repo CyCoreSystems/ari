@@ -26,6 +26,11 @@ type StoredRecordingData struct {
 	Name   string `json:"name"`
 }
 
+// ID returns the identifier for the stored recording.
+func (d StoredRecordingData) ID() string {
+	return d.Name //TODO: does the identifier include the Format and Name?
+}
+
 // NewStoredRecordingHandle creates a new stored recording handle
 func NewStoredRecordingHandle(name string, s StoredRecording) *StoredRecordingHandle {
 	return &StoredRecordingHandle{
