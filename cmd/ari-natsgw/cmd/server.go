@@ -35,11 +35,16 @@ func runServer(log log15.Logger) int {
 		Logger: log,
 	}
 
-	log.Debug("Connecting to NATS")
+	// FIXME:  hack until environment reads work
+	if os.Getenv("NATS_SERVICE_HOST") != "" {
+		opts.URL = "nats://" + os.Getenv("NATS_SERVICE_HOST") + ":" + os.Getenv("NATS_SERVICE_PORT_CLIENT")
+	}
+
+	log.Debug("Connecting to NATS", "url", opts.URL)
 
 	srv, err := natsgw.NewServer(cl, &opts)
 	if err != nil {
-		log.Error("Failed to connect to NATS", "error", err)
+		log.Error("Failed to connect to NATS", "url", opts.URL, "error", err)
 		return -1
 	}
 	defer srv.Close()
