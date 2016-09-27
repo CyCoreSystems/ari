@@ -13,6 +13,9 @@ type Asterisk interface {
 	// Logging returns the interface for working with asterisk logs
 	Logging() Logging
 
+	// Modules returns the interface for working with asterisk modules
+	Modules() Modules
+
 	// ReloadModule tells asterisk to load the given module
 	ReloadModule(name string) error
 }

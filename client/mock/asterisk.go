@@ -50,6 +50,16 @@ func (_mr *_MockAsteriskRecorder) Logging() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Logging")
 }
 
+func (_m *MockAsterisk) Modules() ari.Modules {
+	ret := _m.ctrl.Call(_m, "Modules")
+	ret0, _ := ret[0].(ari.Modules)
+	return ret0
+}
+
+func (_mr *_MockAsteriskRecorder) Modules() *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Modules")
+}
+
 func (_m *MockAsterisk) ReloadModule(_param0 string) error {
 	ret := _m.ctrl.Call(_m, "ReloadModule", _param0)
 	ret0, _ := ret[0].(error)

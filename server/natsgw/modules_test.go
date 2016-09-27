@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestAsteriskInfo(t *testing.T) {
+func TestModulesList(t *testing.T) {
 
 	//TODO: embed nats?
 
@@ -34,18 +34,79 @@ func TestAsteriskInfo(t *testing.T) {
 
 	<-time.After(ServerWaitDelay)
 
-	// test client
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockModules := mock.NewMockModules(ctrl)
+	mockModules.EXPECT().List().Return([]*ari.ModuleHandle{ari.NewModuleHandle("mod1", mockModules), ari.NewModuleHandle("mod2", mockModules)}, nil)
+
+	mockAsterisk := mock.NewMockAsterisk(ctrl)
+	mockAsterisk.EXPECT().Modules().MinTimes(1).Return(mockModules)
+
+	cl := &ari.Client{
+		Asterisk: mockAsterisk,
+	}
+	s, err := NewServer(cl, &Options{
+		URL: "nats://127.0.0.1:4333",
+	})
+
+	failed := s == nil || err != nil
+	if failed {
+		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
+	}
+
+	s.Start()
+	defer s.Close()
+
+	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
+
+	failed = natsClient == nil || err != nil
+	if failed {
+		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
+	}
+
+	mods, err := natsClient.Asterisk.Modules().List()
+
+	failed = len(mods) != 2 || err != nil
+	if failed {
+		t.Errorf("nc.Asterisk.Modules().List() => {%v, %v}, expected {%v, %v}", mods, err, "[mod1,mod2]", "nil")
+	}
+
+}
+
+func TestModulesData(t *testing.T) {
+
+	//TODO: embed nats?
+
+	bin, err := exec.LookPath("gnatsd")
+	if err != nil {
+		t.Skip("No gnatsd binary in PATH, skipping")
+	}
+
+	cmd := exec.Command(bin, "-p", "4333")
+	if err := cmd.Start(); err != nil {
+		t.Errorf("Unable to run gnatsd: '%v'", err)
+		return
+	}
+
+	defer func() {
+		cmd.Process.Signal(syscall.SIGTERM)
+		cmd.Wait()
+	}()
+
+	<-time.After(ServerWaitDelay)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	info := ari.AsteriskInfo{
-		BuildInfo: ari.BuildInfo{Date: "Date1", Kernel: "kernel1", Machine: "machine1", Options: "o"},
-	}
+	modData := ari.ModuleData{Name: "mod1"}
+
+	mockModules := mock.NewMockModules(ctrl)
+	mockModules.EXPECT().Data("mod1").Return(modData, nil)
+	mockModules.EXPECT().Data("mod2").Return(ari.ModuleData{}, errors.New("Failed to get module"))
 
 	mockAsterisk := mock.NewMockAsterisk(ctrl)
-	mockAsterisk.EXPECT().Info("").Return(&info, nil)
-	mockAsterisk.EXPECT().Info("").Return(nil, errors.New("Err getting info"))
+	mockAsterisk.EXPECT().Modules().MinTimes(1).Return(mockModules)
 
 	cl := &ari.Client{
 		Asterisk: mockAsterisk,
@@ -70,26 +131,29 @@ func TestAsteriskInfo(t *testing.T) {
 	}
 
 	{
-
-		ret, err := natsClient.Asterisk.Info("")
+		md, err := natsClient.Asterisk.Modules().Data("mod1")
 
 		failed = err != nil
-		failed = failed || ret == nil || info.BuildInfo.Kernel != "kernel1"
+		failed = failed || md.Name != "mod1"
 		if failed {
-			t.Errorf("nc.Asterisk.Info(%s) => %v, %v, expected %v, %v", "", ret, err, info, nil)
+			t.Errorf("nc.Asterisk.Modules().Data('mod1') => {%v, %v}, expected {%v, %v}",
+				md, err, "{name='mod1'}", "nil")
 		}
+	}
 
-		ret, err = natsClient.Asterisk.Info("")
+	{
+		md, err := natsClient.Asterisk.Modules().Data("mod2")
 
-		failed = err == nil || errors.Cause(err).Error() != "Err getting info"
+		failed = err == nil || errors.Cause(err).Error() != "Failed to get module"
+		failed = failed || md.Name != ""
 		if failed {
-			t.Errorf("nc.Asterisk.Info(%s) => %v, %v, expected %v, %v", "", ret, err, nil, "Err getting info")
+			t.Errorf("nc.Asterisk.Modules().Data('mod2') => {%v, %v}, expected {%v, %v}",
+				md, err, "{}", "Failed to get module")
 		}
-
 	}
 }
 
-func TestAsteriskVariableGet(t *testing.T) {
+func TestModulesActions(t *testing.T) {
 
 	//TODO: embed nats?
 
@@ -111,18 +175,16 @@ func TestAsteriskVariableGet(t *testing.T) {
 
 	<-time.After(ServerWaitDelay)
 
-	// test client
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockVariables := mock.NewMockVariables(ctrl)
-	mockVariables.EXPECT().Get("var1").Return("val1", nil)
-	mockVariables.EXPECT().Get("var2").Return("", errors.New("Variable not found"))
+	mockModules := mock.NewMockModules(ctrl)
+	mockModules.EXPECT().Reload("mod1").Return(nil)
+	mockModules.EXPECT().Load("mod1").Return(nil)
+	mockModules.EXPECT().Unload("mod1").Return(nil)
 
 	mockAsterisk := mock.NewMockAsterisk(ctrl)
-	mockAsterisk.EXPECT().Variables().Return(mockVariables)
-	mockAsterisk.EXPECT().Variables().Return(mockVariables)
+	mockAsterisk.EXPECT().Modules().AnyTimes().Return(mockModules)
 
 	cl := &ari.Client{
 		Asterisk: mockAsterisk,
@@ -147,98 +209,33 @@ func TestAsteriskVariableGet(t *testing.T) {
 	}
 
 	{
-
-		ret, err := natsClient.Asterisk.Variables().Get("var1")
+		err := natsClient.Asterisk.Modules().Unload("mod1")
 
 		failed = err != nil
-		failed = failed || ret != "val1"
 		if failed {
-			t.Errorf("nc.Asterisk.Variables().Get(%s) => %v, %v, expected %v, %v", "var1", ret, err, "val1", nil)
+			t.Errorf("nc.Asterisk.Modules().Unload('mod1') => {%v}, expected {%v}",
+				err, "nil")
 		}
-
-		ret, err = natsClient.Asterisk.Variables().Get("var2")
-
-		failed = err == nil
-		failed = failed || ret != ""
-		if failed {
-			t.Errorf("nc.Asterisk.Variables().Get(%s) => %v, %v, expected %v, %v", "", ret, err, "", "Variable not found")
-		}
-
-	}
-}
-
-func TestAsteriskVariableSet(t *testing.T) {
-
-	//TODO: embed nats?
-
-	bin, err := exec.LookPath("gnatsd")
-	if err != nil {
-		t.Skip("No gnatsd binary in PATH, skipping")
-	}
-
-	cmd := exec.Command(bin, "-p", "4333")
-	if err := cmd.Start(); err != nil {
-		t.Errorf("Unable to run gnatsd: '%v'", err)
-		return
-	}
-
-	defer func() {
-		cmd.Process.Signal(syscall.SIGTERM)
-		cmd.Wait()
-	}()
-
-	<-time.After(ServerWaitDelay)
-
-	// test client
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockVariables := mock.NewMockVariables(ctrl)
-	mockVariables.EXPECT().Set("var1", "val1").Return(nil)
-	mockVariables.EXPECT().Set("var2", "val2").Return(errors.New("Malformed variable name"))
-
-	mockAsterisk := mock.NewMockAsterisk(ctrl)
-	mockAsterisk.EXPECT().Variables().Return(mockVariables)
-	mockAsterisk.EXPECT().Variables().Return(mockVariables)
-
-	cl := &ari.Client{
-		Asterisk: mockAsterisk,
-	}
-	s, err := NewServer(cl, &Options{
-		URL: "nats://127.0.0.1:4333",
-	})
-
-	failed := s == nil || err != nil
-	if failed {
-		t.Errorf("natsgw.NewServer(cl, nil) => {%v, %v}, expected {%v, %v}", s, err, "cl", "nil")
-	}
-
-	s.Start()
-	defer s.Close()
-
-	natsClient, err := newNatsClient("nats://127.0.0.1:4333")
-
-	failed = natsClient == nil || err != nil
-	if failed {
-		t.Errorf("newNatsClient(url) => {%v, %v}, expected {%v, %v}", natsClient, err, "cl", "nil")
 	}
 
 	{
-
-		err := natsClient.Asterisk.Variables().Set("var1", "val1")
+		err := natsClient.Asterisk.Modules().Reload("mod1")
 
 		failed = err != nil
 		if failed {
-			t.Errorf("nc.Asterisk.Variables().Set(%s, %s) => %v, expected %v", "var1", "val1", err, nil)
+			t.Errorf("nc.Asterisk.Modules().Reload('mod1') => {%v}, expected {%v}",
+				err, "nil")
 		}
-
-		err = natsClient.Asterisk.Variables().Set("var2", "val2")
-
-		failed = err == nil || errors.Cause(err).Error() != "Malformed variable name"
-		if failed {
-			t.Errorf("nc.Asterisk.Variables().Set(%s, %s) => %v, expected %v", "var2", "val2", err, "Malformed variable name")
-		}
-
 	}
+
+	{
+		err := natsClient.Asterisk.Modules().Load("mod1")
+
+		failed = err != nil
+		if failed {
+			t.Errorf("nc.Asterisk.Modules().Load('mod1') => {%v}, expected {%v}",
+				err, "nil")
+		}
+	}
+
 }

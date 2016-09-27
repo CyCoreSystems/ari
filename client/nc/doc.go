@@ -80,4 +80,10 @@ var Documentation = []struct {
 	{"ari.logging.rotate.>", "ignored", "ignored", "Rotate the log"},
 	{"ari.logging.delete.>", "ignored", "ignored", "Rotate the log"},
 	{"ari.logging.all", "ignored", "[]ari.LogData", "List the logs"},
+
+	{"ari.modules.all", "ignored", "[]string", "List the modules"},
+	{"ari.modules.reload.>", "ignored", "ignored", "Reload the module"},
+	{"ari.modules.unload.>", "ignored", "ignored", "Unload the module"},
+	{"ari.modules.load.>", "ignored", "ignored", "Load the module"},
+	{"ari.modules.data.>", "ignored", "ari.ModuleData", "Get the module data"},
 }

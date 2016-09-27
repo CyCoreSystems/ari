@@ -82,7 +82,7 @@ func (srv *Server) Start() {
 		srv.sound()
 		srv.liveRecording()
 		srv.storedRecording()
-
+		srv.modules()
 		srv.logging()
 
 		close(srv.readyCh)

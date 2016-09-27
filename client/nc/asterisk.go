@@ -5,6 +5,7 @@ import "github.com/CyCoreSystems/ari"
 type natsAsterisk struct {
 	conn    *Conn
 	logging ari.Logging
+	modules ari.Modules
 }
 
 type natsAsteriskVariables struct {
@@ -20,8 +21,12 @@ func (a *natsAsterisk) Logging() ari.Logging {
 	return a.logging
 }
 
+func (a *natsAsterisk) Modules() ari.Modules {
+	return a.modules
+}
+
 func (a *natsAsterisk) ReloadModule(name string) (err error) {
-	err = a.conn.standardRequest("ari.asterisk.reload."+name, nil, nil)
+	err = a.Modules().Reload(name)
 	return
 }
 

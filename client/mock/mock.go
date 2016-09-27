@@ -12,6 +12,7 @@ package mock
 //go:generate mockgen -package mock -destination liveRecording.go github.com/CyCoreSystems/ari LiveRecording
 //go:generate mockgen -package mock -destination storedRecording.go github.com/CyCoreSystems/ari StoredRecording
 //go:generate mockgen -package mock -destination logging.go github.com/CyCoreSystems/ari Logging
+//go:generate mockgen -package mock -destination modules.go github.com/CyCoreSystems/ari Modules
 //go:generate mockgen -package mock -destination subscription.go github.com/CyCoreSystems/ari Subscription
 //go:generate mockgen -package mock -destination bus.go github.com/CyCoreSystems/ari Bus
 //go:generate mockgen -package mock -destination audio_player.go github.com/CyCoreSystems/ari/ext/audio Player

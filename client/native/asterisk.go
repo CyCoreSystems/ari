@@ -11,6 +11,12 @@ var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are n
 type nativeAsterisk struct {
 	conn    *Conn
 	logging ari.Logging
+	modules ari.Modules
+}
+
+// Modules returns the modules resource
+func (a *nativeAsterisk) Modules() ari.Modules {
+	return a.modules
 }
 
 // Logging returns the logging resource
@@ -43,8 +49,7 @@ func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
 
 // ReloadModule tells asterisk to load the given module
 func (a *nativeAsterisk) ReloadModule(name string) error {
-	err := Put(a.conn, "/asterisk/modules/"+name, nil, nil)
-	return err
+	return a.Modules().Reload(name)
 }
 
 type nativeAsteriskVariables struct {
