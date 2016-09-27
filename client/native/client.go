@@ -1,7 +1,10 @@
 package native
 
 import (
+	"os"
+
 	"github.com/CyCoreSystems/ari"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -33,8 +36,18 @@ type Options struct {
 // New creates a new ari.Client connected to a native ARI server
 func New(opts Options) (*ari.Client, error) {
 
+	// Make sure we have an Application defined
+	if opts.Application == "" {
+		if os.Getenv("ARI_APPLICATION") != "" {
+			opts.Application = os.Getenv("ARI_APPLICATION")
+		} else {
+			opts.Application = uuid.NewV1().String()
+		}
+	}
+
 	conn := newConn(opts)
 
+	// Connect to Asterisk (websocket)
 	if err := conn.Listen(); err != nil {
 		conn.Close()
 		return nil, err
