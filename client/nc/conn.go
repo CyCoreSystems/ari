@@ -96,13 +96,15 @@ func (c *Conn) RawRequest(subj string, data []byte) (msg *nats.Msg, err error) {
 
 	requestTimeout := c.opts.RequestTimeout
 
+	respType := "ok"
+
 	for {
 		// listen for response
 
 		select {
 		case msg = <-ch:
 		case <-time.After(requestTimeout):
-			err = timeoutErr("Timeout waiting for response")
+			err = timeoutErr("Timeout waiting for response type " + respType)
 			return
 		}
 
@@ -122,6 +124,7 @@ func (c *Conn) RawRequest(subj string, data []byte) (msg *nats.Msg, err error) {
 			return
 		case "ok":
 			requestTimeout = 2 * time.Second
+			respType = "body"
 			continue
 		default:
 			return
