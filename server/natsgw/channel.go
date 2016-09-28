@@ -43,13 +43,13 @@ func (srv *Server) channel() {
 		reply(handle.ID(), nil)
 	})
 
-	srv.subscribe("ari.channels.data.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.data.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.data."):]
 		d, err := srv.upstream.Channel.Data(name)
 		reply(&d, err)
 	})
 
-	srv.subscribe("ari.channels.answer.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.answer.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.answer."):]
 		srv.log.Debug("answering channel", "subj", subj)
 		err := srv.upstream.Channel.Answer(name)
@@ -58,7 +58,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.hangup.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.hangup.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.hangup."):]
 
 		var reason string
@@ -71,31 +71,31 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.ring.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.ring.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.ring."):]
 		err := srv.upstream.Channel.Ring(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.stopring.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.stopring.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.stopring."):]
 		err := srv.upstream.Channel.StopRing(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.hold.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.hold.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.hold."):]
 		err := srv.upstream.Channel.Hold(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.stophold.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.stophold.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.stophold."):]
 		err := srv.upstream.Channel.StopHold(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.mute.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.mute.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.mute."):]
 
 		var dir string
@@ -107,7 +107,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.unmute.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.unmute.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.unmute."):]
 
 		var dir string
@@ -119,19 +119,19 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.silence.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.silence.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.silence."):]
 		err := srv.upstream.Channel.Silence(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.stopsilence.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.stopsilence.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.stopsilence."):]
 		err := srv.upstream.Channel.StopSilence(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.moh.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.moh.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.moh."):]
 
 		var music string
@@ -143,13 +143,13 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.stopmoh.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.channels.stopmoh.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.channels.stopmoh."):]
 		err := srv.upstream.Channel.StopMOH(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.play.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.play.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.play."):]
 
 		var pr nc.PlayRequest
@@ -162,7 +162,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.dtmf.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.dtmf.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.dtmf."):]
 
 		type request struct {
@@ -180,7 +180,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.continue.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.continue.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.continue."):]
 
 		var req nc.ContinueRequest
@@ -193,7 +193,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.dial.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.dial.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.dial."):]
 
 		var req nc.DialRequest
@@ -207,7 +207,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.snoop.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.snoop.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.snoop."):]
 
 		var req nc.SnoopRequest
@@ -220,7 +220,7 @@ func (srv *Server) channel() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.channels.record.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.channels.record.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.channels.record."):]
 
 		var rr nc.RecordRequest
