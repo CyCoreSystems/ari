@@ -50,6 +50,9 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
 	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 
+	id := uuid.NewV1().String()
+	pb.handle, pb.err = p.Play(id, mediaURI)
+
 	go func() {
 		defer func() {
 			playbackStarted.Cancel()
@@ -58,9 +61,8 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 			close(pb.stopCh)
 		}()
 
-		id := uuid.NewV1().String()
-		pb.handle, pb.err = p.Play(id, mediaURI)
-
+		// wait to check error here so
+		// subscriptions are cleaned up
 		if pb.err != nil {
 			close(pb.startCh)
 			pb.status = Failed
