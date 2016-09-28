@@ -85,6 +85,10 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 					pb.status = Canceled
 					pb.err = pb.ctx.Err()
 					return
+				case <-playbackFinished.Events():
+					Logger.Debug("Got playback finished before start")
+					pb.status = Finished
+					return
 				case <-playbackStarted.Events():
 					return
 				}
