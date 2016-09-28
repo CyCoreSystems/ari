@@ -94,6 +94,10 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 
 		<-pb.startCh
 
+		if pb.status != InProgress {
+			return
+		}
+
 		for {
 			select {
 			case <-time.After(MaxPlaybackTime):
