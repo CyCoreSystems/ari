@@ -60,7 +60,7 @@ func (ns *natsSubscription) Events() chan ari.Event {
 
 func (ns *natsSubscription) Cancel() {
 	if ns == nil {
-		return nil
+		return
 	}
 	if ns.closeChan != nil {
 		close(ns.closeChan)
