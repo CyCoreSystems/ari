@@ -99,7 +99,7 @@ func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, resp, &req)
+	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, &resp, &req)
 	ph = b.playback.Get(playbackID)
 	return
 }

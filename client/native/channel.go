@@ -192,7 +192,7 @@ func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph 
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, resp, &req)
+	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, &resp, &req)
 	ph = c.playback.Get(playbackID)
 	return
 }
