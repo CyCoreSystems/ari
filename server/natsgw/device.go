@@ -21,13 +21,13 @@ func (srv *Server) device() {
 		reply(ret, nil)
 	})
 
-	srv.subscribe("ari.devices.data.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.devices.data.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.devices.data."):]
 		data, err := srv.upstream.DeviceState.Data(name)
 		reply(data, err)
 	})
 
-	srv.subscribe("ari.devices.update.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.devices.update.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.devices.update."):]
 
 		var state string
@@ -40,7 +40,7 @@ func (srv *Server) device() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.devices.delete.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.devices.delete.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.devices.delete."):]
 		err := srv.upstream.DeviceState.Delete(name)
 		reply(nil, err)

@@ -18,13 +18,13 @@ func (srv *Server) storedRecording() {
 		reply(ret, nil)
 	})
 
-	srv.subscribe("ari.recording.stored.data.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.recording.stored.data.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.recording.stored.data."):]
 		srd, err := srv.upstream.Recording.Stored.Data(name)
 		reply(srd, err)
 	})
 
-	srv.subscribe("ari.recording.stored.copy.*", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.recording.stored.copy.>", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.recording.stored.copy."):]
 
 		var dest string
@@ -37,7 +37,7 @@ func (srv *Server) storedRecording() {
 		reply(srd, err)
 	})
 
-	srv.subscribe("ari.recording.stored.delete.*", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.recording.stored.delete.>", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.recording.stored.delete."):]
 		err := srv.upstream.Recording.Stored.Delete(name)
 		reply(nil, err)
