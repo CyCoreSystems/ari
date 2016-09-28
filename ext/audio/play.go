@@ -85,7 +85,7 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 					pb.status = Canceled
 					pb.err = pb.ctx.Err()
 					return
-				case evt := <-playbackStarted.Events():
+				case <-playbackStarted.Events():
 					return
 				}
 			}
@@ -110,7 +110,7 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 				pb.status = Canceled
 				pb.err = pb.ctx.Err()
 				return
-			case evt := <-playbackFinished.Events():
+			case <-playbackFinished.Events():
 				pb.status = Finished
 				return
 			}
