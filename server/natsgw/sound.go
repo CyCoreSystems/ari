@@ -31,7 +31,7 @@ func (srv *Server) sound() {
 		reply(sounds, nil)
 	})
 
-	srv.subscribe("ari.sounds.data.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.sounds.data.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.sounds.data."):]
 		sd, err := srv.upstream.Sound.Data(name)
 		reply(&sd, err)

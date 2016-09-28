@@ -18,13 +18,13 @@ func (srv *Server) mailbox() {
 		reply(mailboxes, nil)
 	})
 
-	srv.subscribe("ari.mailboxes.data.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.mailboxes.data.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.mailboxes.data."):]
 		data, err := srv.upstream.Mailbox.Data(name)
 		reply(data, err)
 	})
 
-	srv.subscribe("ari.mailboxes.update.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.mailboxes.update.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.mailboxes.delete."):]
 
 		type req struct {
@@ -42,7 +42,7 @@ func (srv *Server) mailbox() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.mailboxes.delete.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.mailboxes.delete.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.mailboxes.delete."):]
 		err := srv.upstream.Mailbox.Delete(name)
 		reply(nil, err)

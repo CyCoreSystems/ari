@@ -16,25 +16,25 @@ func (srv *Server) modules() {
 		reply(modules, nil)
 	})
 
-	srv.subscribe("ari.modules.data.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.modules.data.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.modules.data."):]
 		data, err := srv.upstream.Asterisk.Modules().Data(name)
 		reply(data, err)
 	})
 
-	srv.subscribe("ari.modules.load.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.modules.load.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.modules.load."):]
 		err := srv.upstream.Asterisk.Modules().Load(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.modules.unload.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.modules.unload.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.modules.unload."):]
 		err := srv.upstream.Asterisk.Modules().Unload(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.modules.reload.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.modules.reload.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.modules.reload."):]
 		err := srv.upstream.Asterisk.Modules().Reload(name)
 		reply(nil, err)
