@@ -46,6 +46,10 @@ func (b *natsBridge) List() (bx []*ari.BridgeHandle, err error) {
 	return
 }
 
+func (b *natsBridge) Playback() ari.Playback {
+	return b.playback
+}
+
 func (b *natsBridge) Data(id string) (d ari.BridgeData, err error) {
 	err = b.conn.readRequest("ari.bridges.data."+id, nil, &d)
 	return

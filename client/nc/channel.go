@@ -22,6 +22,10 @@ type natsChannel struct {
 	liveRecording ari.LiveRecording
 }
 
+func (c *natsChannel) Playback() ari.Playback {
+	return c.playback
+}
+
 func (c *natsChannel) Get(id string) *ari.ChannelHandle {
 	return ari.NewChannelHandle(id, c)
 }

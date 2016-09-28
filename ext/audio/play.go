@@ -36,6 +36,22 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 
 	var pb Playback
 
+	id := uuid.NewV1().String()
+
+	var playbackStarted ari.Subscription
+	var playbackFinished ari.Subscription
+
+	if playbacker, ok := p.(ari.Playbacker); ok {
+		playback := playbacker.Playback()
+		if playback != nil {
+			pb.handle = playback.Get(id)
+			playbackStarted = pb.handle.Subscribe(ari.Events.PlaybackStarted)
+			playbackFinished = pb.handle.Subscribe(ari.Events.PlaybackFinished)
+		}
+	} else {
+		Logger.Warn("Could not convert ari.Player to ari.Playbacker, timing issues may occur")
+	}
+
 	pb.startCh = make(chan struct{})
 	pb.stopCh = make(chan struct{})
 	pb.status = InProgress
@@ -45,13 +61,12 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
 	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 
-	id := uuid.NewV1().String()
 	pb.handle, pb.err = p.Play(id, mediaURI)
 
-	// register for events on the ~~playback~~ player handle. This means
-	// we have to filter the events using the evnentual playback handle.
-	playbackStarted := pb.handle.Subscribe(ari.Events.PlaybackStarted)
-	playbackFinished := pb.handle.Subscribe(ari.Events.PlaybackFinished)
+	if playbackStarted == nil {
+		playbackStarted = pb.handle.Subscribe(ari.Events.PlaybackStarted)
+		playbackFinished = pb.handle.Subscribe(ari.Events.PlaybackFinished)
+	}
 
 	go func() {
 		defer func() {

@@ -20,6 +20,11 @@ type Playback interface {
 	Subscribe(id string, n ...string) Subscription
 }
 
+// Playbacker contains a playback transport
+type Playbacker interface {
+	Playback() Playback
+}
+
 // PlaybackData represents the state of a playback
 type PlaybackData struct {
 	ID        string `json:"id"` // Unique ID for this playback session

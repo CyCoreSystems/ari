@@ -13,6 +13,10 @@ type nativeBridge struct {
 	liveRecording ari.LiveRecording
 }
 
+func (b *nativeBridge) Playback() ari.Playback {
+	return b.playback
+}
+
 func (b *nativeBridge) Create(id string, t string, name string) (bh *ari.BridgeHandle, err error) {
 
 	type request struct {

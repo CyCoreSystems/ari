@@ -145,6 +145,14 @@ func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh *LiveRe
 	return
 }
 
+// Playback returns the playback transport
+func (ch *ChannelHandle) Playback() Playback {
+	if pb, ok := ch.c.(Playbacker); ok {
+		return pb.Playback()
+	}
+	return nil
+}
+
 //---
 // Hangup Operations
 //---

@@ -103,6 +103,14 @@ func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh *LiveRec
 	return
 }
 
+// Playback returns the playback transport
+func (bh *BridgeHandle) Playback() Playback {
+	if pb, ok := bh.b.(Playbacker); ok {
+		return pb.Playback()
+	}
+	return nil
+}
+
 // Subscribe creates a subscription to the list of events
 func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	if bh == nil {

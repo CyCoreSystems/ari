@@ -16,6 +16,10 @@ type nativeChannel struct {
 	liveRecording ari.LiveRecording
 }
 
+func (c *nativeChannel) Playback() ari.Playback {
+	return c.playback
+}
+
 func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
 	var channels = []struct {
 		ID string `json:"id"`
