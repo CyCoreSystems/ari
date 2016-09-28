@@ -129,7 +129,7 @@ func (b *nativeBridge) Record(id string, name string, opts *ari.RecordingOptions
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = Post(b.conn, "/bridges/"+id+"/record", resp, &req)
+	err = Post(b.conn, "/bridges/"+id+"/record", &resp, &req)
 	if err != nil {
 		rh = b.liveRecording.Get(name)
 	}

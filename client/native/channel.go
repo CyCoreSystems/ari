@@ -222,7 +222,7 @@ func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOption
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = Post(c.conn, "/channels/"+id+"/record", resp, &req)
+	err = Post(c.conn, "/channels/"+id+"/record", &resp, &req)
 	if err != nil {
 		rh = c.liveRecording.Get(name)
 	}
@@ -242,7 +242,7 @@ func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.S
 		AppArgs   string `json:"appArgs"`
 	}
 	req := request{opts.Direction, opts.Whisper, app, opts.AppArgs}
-	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, resp, &req)
+	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, &resp, &req)
 	if err == nil {
 		ch = c.Get(snoopID)
 	}
