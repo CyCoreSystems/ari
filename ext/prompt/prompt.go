@@ -70,7 +70,7 @@ var (
 )
 
 // Prompt plays the given sound and waits for user input.
-func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Options, sounds ...string) (ret *Result, err error) {
+func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string) (ret *Result, err error) {
 	ret = &Result{}
 
 	// Handle default options
@@ -93,10 +93,10 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 		opts.SoundHash = "hash"
 	}
 
-	hangupSub := bus.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
+	hangupSub := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 	defer hangupSub.Cancel()
 
-	dtmfSub := bus.Subscribe(ari.Events.ChannelDtmfReceived)
+	dtmfSub := p.Subscribe(ari.Events.ChannelDtmfReceived)
 	defer dtmfSub.Cancel()
 
 	playCtx, playCancel := context.WithCancel(context.Background())
@@ -106,11 +106,9 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 
 		select {
 		case <-hangupSub.Events():
-			log.Debug("Got hangup")
 			ret.Status = Hangup
 			playCancel()
 		case <-ctx.Done():
-			log.Debug("Got parent cancellation")
 			ret.Status = Canceled
 			playCancel()
 		}
@@ -118,20 +116,24 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 
 	// Play the prompt, if we have one
 	if sounds != nil && len(sounds) != 0 {
-		q := audio.NewQueue(bus)
+		q := audio.NewQueue()
 		q.Add(sounds...)
-		err = q.Play(playCtx, p, &audio.Options{
+		var st audio.Status
+		st, err = q.Play(playCtx, p, &audio.Options{
 			ExitOnDTMF: audio.AllDTMF,
 		})
 
-		if err != nil {
-			if err.Error() == "context canceled" {
-				if ret.Status == Hangup {
-					err = nil
-				}
-				return
-			}
-
+		switch st {
+		case audio.Canceled:
+			ret.Status = Canceled
+			return
+		case audio.Hangup:
+			ret.Status = Hangup
+			return
+		case audio.Failed:
+			ret.Status = Failed
+			return
+		case audio.Timeout:
 			ret.Status = Failed
 			return
 		}
@@ -202,10 +204,10 @@ func Prompt(ctx context.Context, bus ari.Subscriber, p audio.Player, opts *Optio
 				go func(currentData string) {
 					Logger.Debug("Echoing digits", "data", currentData)
 
-					digitsQueue := audio.NewQueue(bus)
+					digitsQueue := audio.NewQueue()
 					digitsQueue.Add(audiouri.DigitsURI(ret.Data, opts.SoundHash)...)
 
-					if err := digitsQueue.Play(ctx, p, nil); err != nil {
+					if _, err := digitsQueue.Play(ctx, p, nil); err != nil {
 						Logger.Error("Error saying digits", "error", err)
 					}
 
