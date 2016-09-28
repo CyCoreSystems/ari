@@ -185,9 +185,7 @@ func (c *natsChannel) Play(id string, playbackID string, mediaURI string) (p *ar
 		MediaURI:   mediaURI,
 	}, nil)
 
-	if err == nil {
-		p = c.playback.Get(playbackID)
-	}
+	p = c.playback.Get(playbackID)
 
 	return
 }

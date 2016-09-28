@@ -163,6 +163,9 @@ func (s *subscription) closeChan() {
 // Cancel cancels the subscription and removes it from
 // the event bus.
 func (s *subscription) Cancel() {
+	if s == nil {
+		return
+	}
 	if s.b != nil {
 		s.b.removeSubscription(s)
 	}

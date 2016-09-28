@@ -105,6 +105,9 @@ func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh *LiveRec
 
 // Subscribe creates a subscription to the list of events
 func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
+	if bh == nil {
+		return nil
+	}
 	return bh.b.Subscribe(bh.id, n...)
 }
 

@@ -83,5 +83,8 @@ func (ph *PlaybackHandle) Match(e Event) bool {
 
 // Subscribe subscribes the list of channel events
 func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
+	if ph == nil {
+		return
+	}
 	return ph.p.Subscribe(ph.id, n...)
 }

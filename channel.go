@@ -304,6 +304,9 @@ func (ch *ChannelHandle) StopSilence() error {
 
 // Subscribe subscribes the list of channel events
 func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
+	if ch == nil {
+		return nil
+	}
 	return ch.c.Subscribe(ch.id, n...)
 }
 
