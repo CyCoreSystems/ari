@@ -87,6 +87,7 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 					return
 				case evt := <-playbackStarted.Events():
 					if !pb.handle.Match(evt) { // ignore unrelated playback events
+						Logger.Debug("Ignored unrelated event", "evt", evt, "pb", pb)
 						continue
 					}
 					return
