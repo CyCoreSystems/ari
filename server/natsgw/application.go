@@ -18,13 +18,13 @@ func (srv *Server) application() {
 		reply(apps, nil)
 	})
 
-	srv.subscribe("ari.applications.data.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.applications.data.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.applications.data."):]
 		data, err := srv.upstream.Application.Data(name)
 		reply(data, err)
 	})
 
-	srv.subscribe("ari.applications.subscribe.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.applications.subscribe.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.applications.subscribe."):]
 
 		var eventSource string
@@ -37,7 +37,7 @@ func (srv *Server) application() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.applications.unsubscribe.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.applications.unsubscribe.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.applications.unsubscribe."):]
 
 		var eventSource string
