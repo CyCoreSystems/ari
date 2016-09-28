@@ -42,16 +42,16 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 	pb.err = nil
 	pb.ctx, pb.cancel = context.WithCancel(ctx)
 
-	// register for events on the ~~playback~~ player handle. This means
-	// we have to filter the events using the evnentual playback handle.
-	playbackStarted := p.Subscribe(ari.Events.PlaybackStarted)
-	playbackFinished := p.Subscribe(ari.Events.PlaybackFinished)
-
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
 	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 
 	id := uuid.NewV1().String()
 	pb.handle, pb.err = p.Play(id, mediaURI)
+
+	// register for events on the ~~playback~~ player handle. This means
+	// we have to filter the events using the evnentual playback handle.
+	playbackStarted := pb.handle.Subscribe(ari.Events.PlaybackStarted)
+	playbackFinished := pb.handle.Subscribe(ari.Events.PlaybackFinished)
 
 	go func() {
 		defer func() {
@@ -86,10 +86,6 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 					pb.err = pb.ctx.Err()
 					return
 				case evt := <-playbackStarted.Events():
-					if !pb.handle.Match(evt) { // ignore unrelated playback events
-						Logger.Debug("Ignored unrelated event", "evt", evt, "pb", pb)
-						continue
-					}
 					return
 				}
 			}
@@ -115,10 +111,6 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 				pb.err = pb.ctx.Err()
 				return
 			case evt := <-playbackFinished.Events():
-				if !pb.handle.Match(evt) { // ignore unrelated playback events
-					continue
-				}
-
 				pb.status = Finished
 				return
 			}
