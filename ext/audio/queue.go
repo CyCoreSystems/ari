@@ -78,7 +78,7 @@ func (pq *Queue) ReceivedDTMF() string {
 }
 
 // Play starts the playback of the queue to the Player.
-func (pq *Queue) Play(ctx context.Context, playback ari.Playback, p Player, opts *Options) (Status, error) {
+func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) (Status, error) {
 
 	if opts == nil {
 		opts = &Options{}
@@ -126,7 +126,7 @@ func (pq *Queue) Play(ctx context.Context, playback ari.Playback, p Player, opts
 		if q == "" {
 			break
 		}
-		pb := PlayAsync(ctx, playback, p, q)
+		pb := PlayAsync(ctx, p, q)
 
 		select {
 		case <-dtmfExit:

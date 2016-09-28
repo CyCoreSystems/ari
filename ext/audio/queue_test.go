@@ -22,17 +22,15 @@ func TestQueueSimple(t *testing.T) {
 
 	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel()
 	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 	playbackFinishedSub.EXPECT().Cancel()
 	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
@@ -58,13 +56,14 @@ func TestQueueSimple(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done: doneCh,
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
-	playbackFinishedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
+
+	playbackFinishedChan <- &ari.PlaybackFinished{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	<-doneCh
 
@@ -93,20 +92,17 @@ func TestQueueMultiples(t *testing.T) {
 	handle := ari.NewPlaybackHandle("pb1", playback)
 	handle2 := ari.NewPlaybackHandle("pb2", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-	playback.EXPECT().Get(gomock.Any()).Return(handle2)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
-	playback.EXPECT().Subscribe("pb2", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel().Times(2)
 	playbackStartedSub.EXPECT().Events().Times(2).Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
-	playback.EXPECT().Subscribe("pb2", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 	playbackFinishedSub.EXPECT().Cancel().Times(2)
 	playbackFinishedSub.EXPECT().Events().Times(2).Return(playbackFinishedChan)
 
@@ -133,16 +129,18 @@ func TestQueueMultiples(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1", "", "sound:2")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done: doneCh,
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
-	playbackFinishedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
 
-	playbackStartedChan <- &ari.EventData{}
-	playbackFinishedChan <- &ari.EventData{}
+	playbackFinishedChan <- &ari.PlaybackFinished{Playback: ari.PlaybackData{ID: "pb1"}}
+
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb2"}}
+
+	playbackFinishedChan <- &ari.PlaybackFinished{Playback: ari.PlaybackData{ID: "pb2"}}
 
 	<-doneCh
 
@@ -171,20 +169,17 @@ func TestQueueCancel(t *testing.T) {
 	handle := ari.NewPlaybackHandle("pb1", playback)
 	//handle2 := ari.NewPlaybackHandle("pb2", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-	//playback.EXPECT().Get(gomock.Any()).Return(handle2)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
-	//playback.EXPECT().Subscribe("pb2", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	//player.EXPECT().Subscribe("pb2", ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel().Times(1)
 	playbackStartedSub.EXPECT().Events().Times(1).Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
-	//playback.EXPECT().Subscribe("pb2", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	//player.EXPECT().Subscribe("pb2", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 
 	playbackFinishedSub.EXPECT().Cancel().Times(1)
 	playbackFinishedSub.EXPECT().Events().Times(1).Return(playbackFinishedChan)
@@ -212,12 +207,12 @@ func TestQueueCancel(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1", "", "sound:2")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done: doneCh,
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	cancel()
 
@@ -243,17 +238,15 @@ func TestQueueSimpleDTMF(t *testing.T) {
 
 	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel()
 	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 	playbackFinishedSub.EXPECT().Cancel()
 	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
@@ -280,12 +273,12 @@ func TestQueueSimpleDTMF(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done: doneCh,
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	dtmfChan <- &ari.ChannelDtmfReceived{
 		Digit: "1",
@@ -295,7 +288,7 @@ func TestQueueSimpleDTMF(t *testing.T) {
 		Digit: "3",
 	}
 
-	playbackFinishedChan <- &ari.EventData{}
+	playbackFinishedChan <- &ari.PlaybackFinished{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	<-doneCh
 
@@ -327,17 +320,15 @@ func TestQueueDTMFExit(t *testing.T) {
 
 	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel()
 	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 	playbackFinishedSub.EXPECT().Cancel()
 	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
@@ -364,13 +355,13 @@ func TestQueueDTMFExit(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done:       doneCh,
 			ExitOnDTMF: "4",
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	dtmfChan <- &ari.ChannelDtmfReceived{
 		Digit: "1",
@@ -418,17 +409,15 @@ func TestQueueHangup(t *testing.T) {
 
 	handle := ari.NewPlaybackHandle("pb1", playback)
 
-	playback.EXPECT().Get(gomock.Any()).Return(handle)
-
 	playbackStartedChan := make(chan ari.Event)
 	playbackStartedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackStarted).Return(playbackStartedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackStarted).Return(playbackStartedSub)
 	playbackStartedSub.EXPECT().Cancel()
 	playbackStartedSub.EXPECT().Events().Return(playbackStartedChan)
 
 	playbackFinishedChan := make(chan ari.Event)
 	playbackFinishedSub := mock.NewMockSubscription(ctrl)
-	playback.EXPECT().Subscribe("pb1", ari.Events.PlaybackFinished).Return(playbackFinishedSub)
+	player.EXPECT().Subscribe(ari.Events.PlaybackFinished).Return(playbackFinishedSub)
 	playbackFinishedSub.EXPECT().Cancel()
 	playbackFinishedSub.EXPECT().Events().Return(playbackFinishedChan)
 
@@ -456,13 +445,13 @@ func TestQueueHangup(t *testing.T) {
 
 	go func() {
 		q.Add("sound:1")
-		st, err = q.Play(ctx, playback, player, &Options{
+		st, err = q.Play(ctx, player, &Options{
 			Done:       doneCh,
 			ExitOnDTMF: "4",
 		})
 	}()
 
-	playbackStartedChan <- &ari.EventData{}
+	playbackStartedChan <- &ari.PlaybackStarted{Playback: ari.PlaybackData{ID: "pb1"}}
 
 	hangupChan <- &ari.EventData{}
 
