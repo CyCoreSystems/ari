@@ -26,7 +26,7 @@ func (srv *Server) bridge() {
 		reply(bridges, nil)
 	})
 
-	srv.subscribe("ari.bridges.data.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.bridges.data.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.bridges.data."):]
 		bd, err := srv.upstream.Bridge.Data(name)
 		reply(&bd, err)
@@ -51,7 +51,7 @@ func (srv *Server) bridge() {
 		reply(bh.ID(), err)
 	})
 
-	srv.subscribe("ari.bridges.addChannel.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.bridges.addChannel.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.bridges.addChannel."):]
 
 		var channelID string
@@ -64,7 +64,7 @@ func (srv *Server) bridge() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.bridges.removeChannel.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.bridges.removeChannel.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.bridges.removeChannel."):]
 
 		var channelID string
@@ -77,13 +77,13 @@ func (srv *Server) bridge() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.bridges.delete.>", func(subj string, _ []byte, reply Reply) {
+	srv.subscribe("ari.bridges.delete.*", func(subj string, _ []byte, reply Reply) {
 		name := subj[len("ari.bridges.delete."):]
 		err := srv.upstream.Bridge.Delete(name)
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.bridges.play.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.bridges.play.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.bridges.play."):]
 
 		var pr nc.PlayRequest
@@ -96,7 +96,7 @@ func (srv *Server) bridge() {
 		reply(nil, err)
 	})
 
-	srv.subscribe("ari.bridges.record.>", func(subj string, data []byte, reply Reply) {
+	srv.subscribe("ari.bridges.record.*", func(subj string, data []byte, reply Reply) {
 		name := subj[len("ari.bridges.record."):]
 
 		var rr nc.RecordRequest
