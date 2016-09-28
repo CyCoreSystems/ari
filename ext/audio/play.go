@@ -22,8 +22,8 @@ var PlaybackStartTimeout = 1 * time.Second
 var MaxPlaybackTime = 10 * time.Minute
 
 // Play plays the given media URI
-func Play(ctx context.Context, playback ari.Playback, p Player, mediaURI string) (st Status, err error) {
-	pb := PlayAsync(ctx, playback, p, mediaURI)
+func Play(ctx context.Context, p Player, mediaURI string) (st Status, err error) {
+	pb := PlayAsync(ctx, p, mediaURI)
 
 	<-pb.Stopped()
 
@@ -32,23 +32,20 @@ func Play(ctx context.Context, playback ari.Playback, p Player, mediaURI string)
 }
 
 // PlayAsync plays the audio asynchronously and returns a playback object
-func PlayAsync(ctx context.Context, playback ari.Playback, p Player, mediaURI string) *Playback {
+func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 
 	var pb Playback
 
-	id := uuid.NewV1().String()
-	handle := playback.Get(id)
-
-	pb.handle = handle
 	pb.startCh = make(chan struct{})
 	pb.stopCh = make(chan struct{})
 	pb.status = InProgress
 	pb.err = nil
 	pb.ctx, pb.cancel = context.WithCancel(ctx)
 
-	// register for events on the playback handle
-	playbackStarted := handle.Subscribe(ari.Events.PlaybackStarted)
-	playbackFinished := handle.Subscribe(ari.Events.PlaybackFinished)
+	// register for events on the ~~playback~~ player handle. This means
+	// we have to filter the events using the evnentual playback handle.
+	playbackStarted := p.Subscribe(ari.Events.PlaybackStarted)
+	playbackFinished := p.Subscribe(ari.Events.PlaybackFinished)
 
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
 	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
@@ -61,49 +58,64 @@ func PlayAsync(ctx context.Context, playback ari.Playback, p Player, mediaURI st
 			close(pb.stopCh)
 		}()
 
+		id := uuid.NewV1().String()
 		pb.handle, pb.err = p.Play(id, mediaURI)
+
 		if pb.err != nil {
 			close(pb.startCh)
 			pb.status = Failed
 			return
 		}
 
-		select {
-		case <-time.After(PlaybackStartTimeout):
-			pb.status = Timeout
-			pb.err = errors.New("Timeout waiting for start of playback")
-			close(pb.startCh)
-			return
-		case <-hangup.Events():
-			pb.status = Hangup
-			close(pb.startCh)
-			return
-		case <-pb.ctx.Done():
-			pb.status = Canceled
-			pb.err = pb.ctx.Err()
-			close(pb.startCh)
-			return
-		case <-playbackStarted.Events():
-			close(pb.startCh)
-		}
+		go func() {
+			defer close(pb.startCh)
 
-		select {
-		case <-time.After(MaxPlaybackTime):
-			pb.status = Timeout
-			pb.err = errors.New("Timeout waiting for stop of playback")
-			return
-		case <-hangup.Events():
-			pb.status = Hangup
-			return
-		case <-pb.ctx.Done():
-			pb.status = Canceled
-			pb.err = pb.ctx.Err()
-			return
-		case <-playbackFinished.Events():
-		}
+			for {
+				select {
+				case <-time.After(PlaybackStartTimeout):
+					pb.status = Timeout
+					pb.err = errors.New("Timeout waiting for start of playback")
+					return
+				case <-hangup.Events():
+					pb.status = Hangup
+					return
+				case <-pb.ctx.Done():
+					pb.status = Canceled
+					pb.err = pb.ctx.Err()
+					return
+				case evt := <-playbackStarted.Events():
+					if !pb.handle.Match(evt) { // ignore unrelated playback events
+						continue
+					}
+					return
+				}
+			}
+		}()
 
-		pb.status = Finished
-		return
+		<-pb.startCh
+
+		for {
+			select {
+			case <-time.After(MaxPlaybackTime):
+				pb.status = Timeout
+				pb.err = errors.New("Timeout waiting for stop of playback")
+				return
+			case <-hangup.Events():
+				pb.status = Hangup
+				return
+			case <-pb.ctx.Done():
+				pb.status = Canceled
+				pb.err = pb.ctx.Err()
+				return
+			case evt := <-playbackFinished.Events():
+				if !pb.handle.Match(evt) { // ignore unrelated playback events
+					continue
+				}
+
+				pb.status = Finished
+				return
+			}
+		}
 	}()
 
 	return &pb
