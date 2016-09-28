@@ -125,7 +125,10 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 
 		switch st {
 		case audio.Canceled:
-			ret.Status = Canceled
+			//NOTE: since playCtx doesn't extend the parent context,
+			// any audio cancel is considered a special case
+			// and we don't overwrite the return status
+			err = nil
 			return
 		case audio.Hangup:
 			ret.Status = Hangup
