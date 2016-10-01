@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"io"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 type nativeStoredRecording struct {
 	conn *Conn
@@ -52,5 +56,10 @@ func (sr *nativeStoredRecording) Copy(name string, dest string) (h *ari.StoredRe
 
 func (sr *nativeStoredRecording) Delete(name string) (err error) {
 	err = Delete(sr.conn, "/recordings/stored/"+name+"", nil, "")
+	return
+}
+
+func (sr *nativeStoredRecording) File(name string, w io.Writer) (err error) {
+	err = getCopy(sr.conn, "/recordings/stored/"+name+"/file", w)
 	return
 }

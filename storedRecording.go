@@ -1,5 +1,7 @@
 package ari
 
+import "io"
+
 // StoredRecording represents a communication path interacting with an Asterisk
 // server for stored recording resources
 type StoredRecording interface {
@@ -18,6 +20,9 @@ type StoredRecording interface {
 
 	// Delete deletes the recording
 	Delete(name string) error
+
+	// File writes the raw file contents to the given writer
+	File(name string, dest io.Writer) error
 }
 
 // StoredRecordingData is the data for a stored recording
@@ -65,5 +70,11 @@ func (s *StoredRecordingHandle) Copy(dest string) (h *StoredRecordingHandle, err
 // Delete deletes the recording
 func (s *StoredRecordingHandle) Delete() (err error) {
 	err = s.s.Delete(s.name)
+	return
+}
+
+// File writes the file to the given writer
+func (s *StoredRecordingHandle) File(w io.Writer) (err error) {
+	err = s.s.File(s.name, w)
 	return
 }

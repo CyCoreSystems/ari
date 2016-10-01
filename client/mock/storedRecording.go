@@ -6,6 +6,7 @@ package mock
 import (
 	ari "github.com/CyCoreSystems/ari"
 	gomock "github.com/golang/mock/gomock"
+	io "io"
 )
 
 // Mock of StoredRecording interface
@@ -59,6 +60,16 @@ func (_m *MockStoredRecording) Delete(_param0 string) error {
 
 func (_mr *_MockStoredRecordingRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
+}
+
+func (_m *MockStoredRecording) File(_param0 string, _param1 io.Writer) error {
+	ret := _m.ctrl.Call(_m, "File", _param0, _param1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (_mr *_MockStoredRecordingRecorder) File(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "File", arg0, arg1)
 }
 
 func (_m *MockStoredRecording) Get(_param0 string) *ari.StoredRecordingHandle {

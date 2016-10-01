@@ -91,6 +91,30 @@ func Get(conn *Conn, url string, ret interface{}) error {
 	return maybeRequestError(resp)
 }
 
+// GetCopy calls the ARI server with a GET request, and copies the response to the writer
+func getCopy(conn *Conn, url string, w io.Writer) error {
+
+	finalURL := conn.Options.URL + url
+
+	httpReq, err := buildRequest(conn, "GET", finalURL, "", nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := conn.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("Error making request: %s", err)
+	}
+
+	go func() {
+		defer resp.Body.Close()
+
+		io.Copy(w, resp.Body)
+	}()
+
+	return maybeRequestError(resp)
+}
+
 // Post calls the ARI server with a POST request.
 func Post(conn *Conn, requestURL string, ret interface{}, req interface{}) error {
 
