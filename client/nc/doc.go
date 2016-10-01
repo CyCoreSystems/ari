@@ -86,4 +86,8 @@ var Documentation = []struct {
 	{"ari.modules.unload.>", "ignored", "ignored", "Unload the module"},
 	{"ari.modules.load.>", "ignored", "ignored", "Load the module"},
 	{"ari.modules.data.>", "ignored", "ari.ModuleData", "Get the module data"},
+
+	{"ari.asterisk.config.get.>", "ignored", "[]ari.ConfigTuple", "Get the list of configuration objects"},
+	{"ari.asterisk.config.update.>", "[]ari.ConfigTuple", "ignored", "Create or update new config entries"},
+	{"ari.asterisk.config.delete.>", "ignored", "ignored", "Delete the dynamic configuration object"},
 }

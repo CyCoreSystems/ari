@@ -12,6 +12,12 @@ type nativeAsterisk struct {
 	conn    *Conn
 	logging ari.Logging
 	modules ari.Modules
+	config  ari.Config
+}
+
+// Config returns the config resource
+func (a *nativeAsterisk) Config() ari.Config {
+	return a.config
 }
 
 // Modules returns the modules resource

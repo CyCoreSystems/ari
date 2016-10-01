@@ -84,6 +84,7 @@ func (srv *Server) Start() {
 		srv.storedRecording()
 		srv.modules()
 		srv.logging()
+		srv.config()
 
 		close(srv.readyCh)
 

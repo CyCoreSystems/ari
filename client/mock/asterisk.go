@@ -29,6 +29,16 @@ func (_m *MockAsterisk) EXPECT() *_MockAsteriskRecorder {
 	return _m.recorder
 }
 
+func (_m *MockAsterisk) Config() ari.Config {
+	ret := _m.ctrl.Call(_m, "Config")
+	ret0, _ := ret[0].(ari.Config)
+	return ret0
+}
+
+func (_mr *_MockAsteriskRecorder) Config() *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Config")
+}
+
 func (_m *MockAsterisk) Info(_param0 string) (*ari.AsteriskInfo, error) {
 	ret := _m.ctrl.Call(_m, "Info", _param0)
 	ret0, _ := ret[0].(*ari.AsteriskInfo)

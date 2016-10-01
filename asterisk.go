@@ -16,6 +16,9 @@ type Asterisk interface {
 	// Modules returns the interface for working with asterisk modules
 	Modules() Modules
 
+	// Config returns the interface for working with dynamic configuration
+	Config() Config
+
 	// ReloadModule tells asterisk to load the given module
 	ReloadModule(name string) error
 }

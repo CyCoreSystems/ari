@@ -6,6 +6,11 @@ type natsAsterisk struct {
 	conn    *Conn
 	logging ari.Logging
 	modules ari.Modules
+	config  ari.Config
+}
+
+func (a *natsAsterisk) Config() ari.Config {
+	return a.config
 }
 
 type natsAsteriskVariables struct {

@@ -17,6 +17,7 @@ type Client struct {
 	Sound       Sound
 	Recording   *Recording
 	Bus         Bus
+
 	// TODO: other interfaces
 
 	Cleanup func() error
