@@ -42,7 +42,7 @@ func TestChannelListTest(t *testing.T) {
 
 	mockChannel := mock.NewMockChannel(ctrl)
 	mockChannel.EXPECT().List().Return([]*ari.ChannelHandle{
-		ari.NewChannelHandle("c1", mockChannel),
+		ari.NewChannelHandle("111111.123", mockChannel),
 		ari.NewChannelHandle("c2", mockChannel),
 	}, nil)
 
@@ -85,7 +85,7 @@ func TestChannelListTest(t *testing.T) {
 		failed = err != nil
 		failed = failed || len(cx) != 2
 		if failed {
-			t.Errorf("nc.Channel.List() => '%v', '%v', expected '%v', '%v'", cx, err, "c1,c2", nil)
+			t.Errorf("nc.Channel.List() => '%v', '%v', expected '%v', '%v'", cx, err, "111111.123,c2", nil)
 		}
 	}
 	{
@@ -127,7 +127,7 @@ func TestChannelAnswer(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().Answer("c1").Return(nil)
+	mockChannel.EXPECT().Answer("111111.123").Return(nil)
 
 	cl := &ari.Client{
 		Channel: mockChannel,
@@ -153,7 +153,7 @@ func TestChannelAnswer(t *testing.T) {
 	}
 
 	{
-		err = natsClient.Channel.Answer("c1")
+		err = natsClient.Channel.Answer("111111.123")
 
 		failed = err != nil
 		if failed {
@@ -190,7 +190,7 @@ func TestChannelSendDTMF(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().SendDTMF("c1", "1234", gomock.Not(gomock.Nil())).Return(nil)
+	mockChannel.EXPECT().SendDTMF("111111.123", "1234", gomock.Not(gomock.Nil())).Return(nil)
 
 	cl := &ari.Client{
 		Channel: mockChannel,
@@ -216,11 +216,11 @@ func TestChannelSendDTMF(t *testing.T) {
 	}
 
 	{
-		err = natsClient.Channel.SendDTMF("c1", "1234", nil)
+		err = natsClient.Channel.SendDTMF("111111.123", "1234", nil)
 
 		failed = err != nil
 		if failed {
-			t.Errorf("nc.Channel.SendDTMF('c1', '1234', nil) => '%v', expected '%v'", err, nil)
+			t.Errorf("nc.Channel.SendDTMF('111111.123', '1234', nil) => '%v', expected '%v'", err, nil)
 		}
 	}
 }
@@ -253,7 +253,7 @@ func TestChannelContinue(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().Continue("c1", "1", "2", 3).Return(nil)
+	mockChannel.EXPECT().Continue("111111.123", "1", "2", 3).Return(nil)
 
 	cl := &ari.Client{
 		Channel: mockChannel,
@@ -279,11 +279,11 @@ func TestChannelContinue(t *testing.T) {
 	}
 
 	{
-		err = natsClient.Channel.Continue("c1", "1", "2", 3)
+		err = natsClient.Channel.Continue("111111.123", "1", "2", 3)
 
 		failed = err != nil
 		if failed {
-			t.Errorf("nc.Channel.Continue('c1', '1', '2', '3') => '%v', expected '%v'", err, nil)
+			t.Errorf("nc.Channel.Continue('111111.123', '1', '2', '3') => '%v', expected '%v'", err, nil)
 		}
 	}
 }
@@ -315,7 +315,7 @@ func TestChannelDial(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().Dial("c1", "c2", 3*time.Second).Return(nil)
+	mockChannel.EXPECT().Dial("111111.123", "c2", 3*time.Second).Return(nil)
 	mockChannel.EXPECT().Dial("c2", "c3", 3*time.Second).Return(errors.New("Failed to dial"))
 
 	cl := &ari.Client{
@@ -342,11 +342,11 @@ func TestChannelDial(t *testing.T) {
 	}
 
 	{
-		err = natsClient.Channel.Dial("c1", "c2", 3*time.Second)
+		err = natsClient.Channel.Dial("111111.123", "c2", 3*time.Second)
 
 		failed = err != nil
 		if failed {
-			t.Errorf("nc.Channel.Dial('c1', 'c2', 3s) => '%v', expected '%v'", err, nil)
+			t.Errorf("nc.Channel.Dial('111111.123', 'c2', 3s) => '%v', expected '%v'", err, nil)
 		}
 	}
 
@@ -355,7 +355,7 @@ func TestChannelDial(t *testing.T) {
 
 		failed = err == nil || errors.Cause(err).Error() != "Failed to dial"
 		if failed {
-			t.Errorf("nc.Channel.Dial('c1', 'c2', 3s) => '%v', expected '%v'", err, "Failed to dial")
+			t.Errorf("nc.Channel.Dial('111111.123', 'c2', 3s) => '%v', expected '%v'", err, "Failed to dial")
 		}
 	}
 
@@ -388,9 +388,9 @@ func TestChannelSnoop(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	c2 := ari.NewChannelHandle("c1", mockChannel)
+	c2 := ari.NewChannelHandle("111111.123", mockChannel)
 
-	mockChannel.EXPECT().Snoop("c1", "c2", "app1", gomock.Not(gomock.Nil())).Return(c2, nil)
+	mockChannel.EXPECT().Snoop("111111.123", "c2", "app1", gomock.Not(gomock.Nil())).Return(c2, nil)
 	mockChannel.EXPECT().Snoop("c3", "c4", "app1", gomock.Not(gomock.Nil())).Return(nil, errors.New("Error snooping"))
 
 	cl := &ari.Client{
@@ -417,12 +417,12 @@ func TestChannelSnoop(t *testing.T) {
 	}
 
 	{
-		handle, err := natsClient.Channel.Snoop("c1", "c2", "app1", &ari.SnoopOptions{})
+		handle, err := natsClient.Channel.Snoop("111111.123", "c2", "app1", &ari.SnoopOptions{})
 
 		failed = err != nil
 		failed = failed || handle == nil || handle.ID() != "c2"
 		if failed {
-			t.Errorf("nc.Channel.Snoop('c1', 'c2', 'app1', {}) => '%v', '%v', expected '%v', '%v'",
+			t.Errorf("nc.Channel.Snoop('111111.123', 'c2', 'app1', {}) => '%v', '%v', expected '%v', '%v'",
 				handle, err,
 				"c2", nil)
 		}
@@ -472,7 +472,7 @@ func TestChannelRecord(t *testing.T) {
 	mockLiveRecording := mock.NewMockLiveRecording(ctrl)
 
 	mockChannel := mock.NewMockChannel(ctrl)
-	mockChannel.EXPECT().Record("c1", "name1", gomock.Any()).Return(
+	mockChannel.EXPECT().Record("111111.123", "name1", gomock.Any()).Return(
 		ari.NewLiveRecordingHandle("name1", mockLiveRecording), nil)
 
 	cl := &ari.Client{
@@ -502,11 +502,11 @@ func TestChannelRecord(t *testing.T) {
 	}
 
 	{
-		lrh, err := natsClient.Channel.Record("c1", "name1", nil)
+		lrh, err := natsClient.Channel.Record("111111.123", "name1", nil)
 
 		failed = err != nil || lrh == nil || lrh.ID() != "name1"
 		if failed {
-			t.Errorf("nc.Channel.Record('c1','name',nil) => '%v', '%v', expected '%v', '%v'",
+			t.Errorf("nc.Channel.Record('111111.123','name',nil) => '%v', '%v', expected '%v', '%v'",
 				lrh, err,
 				"liveRecordingHandle{name1}", nil)
 		}
