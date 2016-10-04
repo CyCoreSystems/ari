@@ -12,6 +12,7 @@ import (
 	"gopkg.in/inconshreveable/log15.v2"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/stdbus"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
@@ -85,7 +86,7 @@ func (c *Conn) Listen() (err error) {
 
 	// Make sure the bus is set up
 	if c.Bus == nil {
-		c.Bus = startbus(c.ctx)
+		c.Bus = stdbus.Start(c.ctx)
 	}
 
 	// Make sure we have a readychan to signal the websocket is up

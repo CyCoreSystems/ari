@@ -1,4 +1,4 @@
-package native
+package stdbus
 
 import (
 	"sync"
@@ -66,8 +66,8 @@ func (b *bus) send(msg *ari.Message) {
 	}
 }
 
-// startbus creates and returns the event bus.
-func startbus(ctx context.Context) *bus {
+// Start creates and returns the event bus.
+func Start(ctx context.Context) ari.Bus {
 	b := &bus{
 		subs: []*subscription{},
 	}

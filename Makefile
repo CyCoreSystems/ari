@@ -4,6 +4,7 @@ all: api clients gateway
 
 api:
 	go build ./
+	go build ./stdbus
 
 clients:
 	go build ./client/native
