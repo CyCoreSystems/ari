@@ -9,7 +9,7 @@ type Event interface {
 
 // A Matcher is an entity which can query an event
 type Matcher interface {
-	Matches(evt Event) bool
+	Match(evt Event) bool
 }
 
 // EventData is the base struct for all events
