@@ -1,5 +1,7 @@
 package ari
 
+import "strings"
+
 // Event is the top level event interface
 type Event interface {
 	MessageRawer
@@ -294,9 +296,31 @@ func (evt *PlaybackFinished) GetPlaybackIDs() (sx []string) {
 	return
 }
 
+// Destroyed returns the playbacK ID that was finished by this event.
+// Used by the proxy to route events to dialogs.
+func (evt *PlaybackFinished) Destroyed() (playbackID string) {
+	playbackID = evt.Playback.ID
+	return
+}
+
 // GetPlaybackIDs gets the playback IDs for the event
 func (evt *PlaybackStarted) GetPlaybackIDs() (sx []string) {
 	sx = append(sx, evt.Playback.ID)
+	return
+}
+
+// Created returns the playbacK ID that we created plus the ID that the playback
+// is operating on (a bridge or channel).
+// Used by the proxy to route events to dialogs
+func (evt *PlaybackStarted) Created() (playbackID, otherID string) {
+	playbackID = evt.Playback.ID
+	items := strings.Split(evt.Playback.TargetURI, ":")
+	if len(items) == 1 {
+		otherID = items[0]
+	} else {
+		otherID = items[1]
+	}
+
 	return
 }
 
