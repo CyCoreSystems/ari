@@ -70,6 +70,9 @@ func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
 
 	go func() {
 		defer func() {
+			if pb.handle != nil {
+				pb.handle.Stop()
+			}
 			playbackStarted.Cancel()
 			playbackFinished.Cancel()
 			hangup.Cancel()
