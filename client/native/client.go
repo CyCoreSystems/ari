@@ -61,6 +61,13 @@ func New(opts Options) (*ari.Client, error) {
 		}
 	}
 
+	if opts.Username == "" {
+		opts.Username = os.Getenv("ARI_USERNAME")
+	}
+	if opts.Password == "" {
+		opts.Password = os.Getenv("ARI_PASSWORD")
+	}
+
 	conn := newConn(opts)
 
 	// Connect to Asterisk (websocket)

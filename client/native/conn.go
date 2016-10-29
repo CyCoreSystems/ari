@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 
@@ -77,8 +76,6 @@ func (c *Conn) Listen() (err error) {
 		// Add the authorization header
 		if c.Options.Username != "" && c.Options.Password != "" {
 			c.WSConfig.Header.Set("Authorization", "Basic "+basicAuth(c.Options.Username, c.Options.Password))
-		} else if os.Getenv("ARI_USERNAME") != "" {
-			c.WSConfig.Header.Set("Authorization", "Basic "+basicAuth(os.Getenv("ARI_USERNAME"), os.Getenv("ARI_PASSWORD")))
 		} else {
 			Logger.Warn("No credentials found; expect failure")
 		}
@@ -93,13 +90,6 @@ func (c *Conn) Listen() (err error) {
 	if c.ReadyChan == nil {
 		c.ReadyChan = make(chan struct{})
 	}
-
-	// If we are in test mode, do not connect the websocket, but
-	// return and close the ready channel.
-	//if c.TestMode {
-	//	close(c.ReadyChan)
-	//	return nil
-	//}
 
 	// Setup and listen on the websocket
 	go c.listen(c.ctx)
