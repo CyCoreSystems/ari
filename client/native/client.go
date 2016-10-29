@@ -45,6 +45,22 @@ func New(opts Options) (*ari.Client, error) {
 		}
 	}
 
+	if opts.URL == "" {
+		if os.Getenv("ARI_URL") != "" {
+			opts.URL = os.Getenv("ARI_URL")
+		} else {
+			opts.URL = "http://localhost:8088/ari"
+		}
+	}
+
+	if opts.WebsocketURL == "" {
+		if os.Getenv("ARI_WSURL") != "" {
+			opts.WebsocketURL = os.Getenv("ARI_WSURL")
+		} else {
+			opts.WebsocketURL = "ws://localhost:8088/ari/events"
+		}
+	}
+
 	conn := newConn(opts)
 
 	// Connect to Asterisk (websocket)
