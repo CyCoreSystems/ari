@@ -324,6 +324,11 @@ func (evt *PlaybackStarted) Created() (playbackID, otherID string) {
 	return
 }
 
+// Destroyed returns the item that gets destroyed by this event
+func (evt *RecordingFailed) Destroyed() string {
+	return evt.Recording.ID()
+}
+
 // GetRecordingIDs gets the recording IDs for the event
 func (evt *RecordingFailed) GetRecordingIDs() (sx []string) {
 	sx = append(sx, evt.Recording.ID())
@@ -334,6 +339,11 @@ func (evt *RecordingFailed) GetRecordingIDs() (sx []string) {
 func (evt *RecordingFinished) GetRecordingIDs() (sx []string) {
 	sx = append(sx, evt.Recording.ID())
 	return
+}
+
+// Destroyed returns the item that gets destroyed by this event
+func (evt *RecordingFinished) Destroyed() string {
+	return evt.Recording.ID()
 }
 
 // GetRecordingIDs gets the recording IDs for the event
