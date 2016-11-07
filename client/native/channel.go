@@ -293,6 +293,44 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 	return &ns
 }
 
+type nativeChannelVariables struct {
+	conn      *Conn
+	channelID string
+}
+
+// Variables returns the variables interface for channel
+func (c *nativeChannel) Variables(id string) ari.Variables {
+	return &nativeChannelVariables{c.conn, id}
+}
+
+func (v *nativeChannelVariables) Get(key string) (string, error) {
+	type variable struct {
+		Value string `json:"value"`
+	}
+
+	var m variable
+
+	path := "/channels/" + v.channelID + "/variable?variable=" + key
+	err := Get(v.conn, path, &m)
+	if err != nil {
+		return "", err
+	}
+	return m.Value, nil
+}
+
+func (v *nativeChannelVariables) Set(key string, value string) error {
+	path := "/channels/" + v.channelID + "/variable"
+
+	type request struct {
+		Variable string `json:"variable"`
+		Value    string `json:"value,omitempty"`
+	}
+	req := request{key, value}
+
+	err := Post(v.conn, path, nil, &req)
+	return err
+}
+
 type nativeSubscription struct {
 	closeChan chan struct{}
 	events    chan ari.Event

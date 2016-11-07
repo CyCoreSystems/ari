@@ -84,6 +84,9 @@ type Channel interface {
 
 	// Subscribe subscribes on the channel events
 	Subscribe(id string, n ...string) Subscription
+
+	// Variables gets the channel Variables
+	Variables(id string) Variables
 }
 
 // ChannelData is the data for a specific channel
@@ -266,6 +269,11 @@ func (ch *ChannelHandle) StopMOH() error {
 }
 
 // ----
+
+// Variables returns the channel variables
+func (ch *ChannelHandle) Variables() Variables {
+	return ch.c.Variables(ch.id)
+}
 
 // --
 // Misc
