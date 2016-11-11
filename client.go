@@ -21,6 +21,10 @@ type Client struct {
 	// TODO: other interfaces
 
 	Cleanup func() error
+
+	// Optional application details
+	ApplicationName      string
+	ApplicationArguments []string
 }
 
 // Close closes the client and calls any implementation specific cleanup code

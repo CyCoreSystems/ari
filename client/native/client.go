@@ -99,5 +99,6 @@ func New(opts Options) (*ari.Client, error) {
 			Live:   liveRecording,
 			Stored: &nativeStoredRecording{conn},
 		},
+		ApplicationName: opts.Application,
 	}, nil
 }
