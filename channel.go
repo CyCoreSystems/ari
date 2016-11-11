@@ -17,7 +17,7 @@ type Channel interface {
 
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed
-	Create(OriginateRequest) (*ChannelHandle, error)
+	Create(ChannelCreateRequest) (*ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
 	Data(id string) (ChannelData, error)
@@ -99,6 +99,32 @@ type ChannelData struct {
 	Connected    CallerID    `json:"connected"` // CallerId of the connected line
 	Creationtime DateTime    `json:"creationtime"`
 	Dialplan     DialplanCEP `json:"dialplan"` // Current location in the dialplan
+}
+
+// ChannelCreateRequest describes how a channel should be created, when
+// using the separate Create and Dial calls.
+type ChannelCreateRequest struct {
+	// Endpoint is the target endpoint for the dial
+	Endpoint string `json:"endpoint"`
+
+	// App is the name of the Stasis application to execute on connection
+	App string `json:"app"`
+
+	// Args is the set of (comma-separated) arguments for the Stasis App
+	Args string `json:"appArgs,omitempty"`
+
+	// ChannelID is the ID to give to the newly-created channel
+	ChannelID string `json:"channelId,omitempty"`
+
+	// OtherChannelID is the ID of the second created channel (when creating Local channels)
+	OtherChannelID string `json:"otherChannelId,omitempty"`
+
+	// Originator is the unique ID of the calling channel, for which this new channel-dial is being created
+	Originator string `json:"originator,omitempty"`
+
+	// Formats is the comma-separated list of valid codecs to allow for the new channel, in the case that
+	// the Originator is not specified
+	Formats string `json:"formats,omitempty"`
 }
 
 // NewChannelHandle returns a handle to the given ARI channel

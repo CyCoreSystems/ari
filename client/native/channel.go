@@ -51,16 +51,18 @@ func (c *nativeChannel) Get(id string) *ari.ChannelHandle {
 	return ari.NewChannelHandle(id, c)
 }
 
-func (c *nativeChannel) Create(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	id := uuid.NewV1().String()
-	h := ari.NewChannelHandle(id, c)
+func (c *nativeChannel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+	if req.ChannelID == "" {
+		req.ChannelID = uuid.NewV1().String()
+	}
 
 	var err error
-	err = Post(c.conn, "/channels/"+id, nil, &req)
+	err = Post(c.conn, "/channels/create", nil, &req)
 	if err != nil {
 		return nil, err
 	}
 
+	h := ari.NewChannelHandle(req.ChannelID, c)
 	return h, err
 }
 
@@ -239,13 +241,17 @@ func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.S
 	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Direction string `json:"spy,omitempty"`
 		Whisper   string `json:"whisper,omitempty"`
 		App       string `json:"app"`
 		AppArgs   string `json:"appArgs"`
+	}{
+		Direction: opts.Direction,
+		Whisper:   opts.Whisper,
+		App:       app,
+		AppArgs:   opts.AppArgs,
 	}
-	req := request{opts.Direction, opts.Whisper, app, opts.AppArgs}
 	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, &resp, &req)
 	if err == nil {
 		ch = c.Get(snoopID)
@@ -253,14 +259,14 @@ func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.S
 	return
 }
 
-func (c *nativeChannel) Dial(id string, caller string, timeout time.Duration) (err error) {
-	type request struct {
-		Caller  string `json:"caller"`
-		Timeout int    `json:"timeout"`
+func (c *nativeChannel) Dial(id string, callerid string, timeout time.Duration) (err error) {
+	req := struct {
+		CallerID string `json:"caller"`
+		Timeout  int    `json:"timeout"`
+	}{
+		CallerID: callerid,
+		Timeout:  int(timeout.Seconds()),
 	}
-	//TODO: the dial documentation does not reference the unit of timeout,
-	// second is assumed from similar parameters
-	req := request{caller, int(timeout / time.Second)}
 	err = Post(c.conn, "/channels/"+id+"/dial", nil, &req)
 	return
 }
