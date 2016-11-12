@@ -19,21 +19,22 @@ func (b *nativeBridge) Playback() ari.Playback {
 
 func (b *nativeBridge) Create(id string, t string, name string) (bh *ari.BridgeHandle, err error) {
 
-	type request struct {
+	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
 		Type string `json:"type,omitempty"`
 		Name string `json:"name,omitempty"`
+	}{
+		ID:   id,
+		Type: t,
+		Name: name,
 	}
 
-	req := request{id, t, name}
-	var bd ari.BridgeData
-
-	err = Post(b.conn, "/bridges/"+id, &req, &bd)
+	err = Post(b.conn, "/bridges/"+id, &req, nil)
 	if err != nil {
 		return
 	}
 
-	bh = b.Get(bd.ID)
+	bh = b.Get(id)
 	return
 }
 
