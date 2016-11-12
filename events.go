@@ -132,6 +132,29 @@ func (evt *BridgeBlindTransfer) GetChannelIDs() (sx []string) {
 	return
 }
 
+// Created marks the BridgeCreated event that it created an event
+func (evt *BridgeCreated) Created() (bridgeID string, related string) {
+	bridgeID = evt.Bridge.ID
+	if len(evt.Bridge.ChannelIDs) != 0 {
+		related = evt.Bridge.ChannelIDs[0]
+	} else {
+		related = evt.Bridge.Creator
+	}
+	return
+}
+
+// Destroyed returns the bridge that was finished by this event.
+// Used by the proxy to route events to dialogs.
+func (evt *BridgeDestroyed) Destroyed() string {
+	return evt.Bridge.ID
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *BridgeCreated) GetChannelIDs() (sx []string) {
+	sx = evt.Bridge.ChannelIDs
+	return
+}
+
 // GetBridgeIDs gets the bridge IDs for the event
 func (evt *BridgeCreated) GetBridgeIDs() (sx []string) {
 	sx = append(sx, evt.Bridge.ID)
