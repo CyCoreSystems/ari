@@ -15,6 +15,10 @@ type Channel interface {
 	// List lists the channels in asterisk
 	List() ([]*ChannelHandle, error)
 
+	// Originate creates a new channel, returning a handle to it or an
+	// error, if the creation failed
+	Originate(OriginateRequest) (*ChannelHandle, error)
+
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed
 	Create(ChannelCreateRequest) (*ChannelHandle, error)

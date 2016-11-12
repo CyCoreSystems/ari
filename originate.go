@@ -15,6 +15,17 @@ type OriginateRequest struct {
 	AppArgs string `json:"appArgs,omitempty"` // Arguments to the application
 	// End OneSetOf
 
+	//  The label to dial after the endpoint answers.
+	// Will supersede 'priority' if provided. Mutually exclusive with 'app'.
+	Label string `json:"label,omitempty"`
+
+	// The unique id of the channel which is originating this one.
+	Originator string `json:"originator,omitempty"`
+
+	// The format name capability list to use if originator is not specified.
+	// Ex. "ulaw,slin16". Format names can be found with "core show codecs".
+	Formats string `json:"formats,omitempty"` //
+
 	// Channel ID declarations
 	ChannelID      string `json:"channelId,omitempty"`      // Optionally assign channel id
 	OtherChannelID string `json:"otherChannelId,omitempty"` // Optionally assign second channel's id (only for local channels)

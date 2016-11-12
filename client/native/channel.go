@@ -51,6 +51,24 @@ func (c *nativeChannel) Get(id string) *ari.ChannelHandle {
 	return ari.NewChannelHandle(id, c)
 }
 
+func (c *nativeChannel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+
+	type response struct {
+		ID string `json:"id"`
+	}
+
+	var resp response
+
+	var err error
+	err = Post(c.conn, "/channels", &resp, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	h := ari.NewChannelHandle(resp.ID, c)
+	return h, err
+}
+
 func (c *nativeChannel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
