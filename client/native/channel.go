@@ -277,13 +277,13 @@ func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.S
 	return
 }
 
-func (c *nativeChannel) Dial(id string, callerid string, timeout time.Duration) (err error) {
+func (c *nativeChannel) Dial(id string, callingChannelID string, timeout time.Duration) (err error) {
 	req := struct {
-		CallerID string `json:"caller"`
-		Timeout  int    `json:"timeout"`
+		Caller  string `json:"caller,omitempty"` // the CHANNEL ID (not CallerID) of the channel for whom this dial is being generated
+		Timeout int    `json:"timeout"`
 	}{
-		CallerID: callerid,
-		Timeout:  int(timeout.Seconds()),
+		Caller:  callingChannelID,
+		Timeout: int(timeout.Seconds()),
 	}
 	err = Post(c.conn, "/channels/"+id+"/dial", nil, &req)
 	return

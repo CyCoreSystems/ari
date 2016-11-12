@@ -309,7 +309,10 @@ func (ch *ChannelHandle) Variables() Variables {
 // Misc
 // --
 
-// Dial dials a created channel
+// Dial dials a created channel.  `caller` is the optional
+// channel ID of the calling party (if there is one).  Timeout
+// is the length of time to wait before the dial is answered
+// before aborting.
 func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
 	return ch.c.Dial(ch.id, caller, timeout)
 }
