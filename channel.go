@@ -114,8 +114,8 @@ type ChannelCreateRequest struct {
 	// App is the name of the Stasis application to execute on connection
 	App string `json:"app"`
 
-	// Args is the set of (comma-separated) arguments for the Stasis App
-	Args string `json:"appArgs,omitempty"`
+	// AppArgs is the set of (comma-separated) arguments for the Stasis App
+	AppArgs string `json:"appArgs,omitempty"`
 
 	// ChannelID is the ID to give to the newly-created channel
 	ChannelID string `json:"channelId,omitempty"`
