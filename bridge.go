@@ -38,13 +38,13 @@ type Bridge interface {
 // BridgeData describes an Asterisk Bridge, the entity which merges media from
 // one or more channels into a common audio output
 type BridgeData struct {
-	ID         string   `json:"id"`          // Unique Id for this bridge
-	Class      string   `json:"bridge"`      // Class of the bridge (TODO: huh?)
-	Type       string   `json:"bridge_type"` // Type of bridge (mixing, holding, dtmf_events, proxy_media)
-	ChannelIDs []string `json:"channels"`    // List of pariticipating channel ids
-	Creator    string   `json:"creator"`     // Creating entity of the bridge
-	Name       string   `json:"name"`        // The name of the bridge
-	Technology string   `json:"technology"`  // Name of the bridging technology
+	ID         string   `json:"id"`           // Unique Id for this bridge
+	Class      string   `json:"bridge_class"` // Class of the bridge
+	Type       string   `json:"bridge_type"`  // Type of bridge (mixing, holding, dtmf_events, proxy_media)
+	ChannelIDs []string `json:"channels"`     // List of pariticipating channel ids
+	Creator    string   `json:"creator"`      // Creating entity of the bridge
+	Name       string   `json:"name"`         // The name of the bridge
+	Technology string   `json:"technology"`   // Name of the bridging technology
 }
 
 // NewBridgeHandle creates a new bridge handle
