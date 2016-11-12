@@ -19,9 +19,6 @@ type OriginateRequest struct {
 	// Will supersede 'priority' if provided. Mutually exclusive with 'app'.
 	Label string `json:"label,omitempty"`
 
-	// The unique id of the channel which is originating this one.
-	Originator string `json:"originator,omitempty"`
-
 	// The format name capability list to use if originator is not specified.
 	// Ex. "ulaw,slin16". Format names can be found with "core show codecs".
 	Formats string `json:"formats,omitempty"` //

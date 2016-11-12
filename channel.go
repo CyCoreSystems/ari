@@ -309,6 +309,14 @@ func (ch *ChannelHandle) Variables() Variables {
 // Misc
 // --
 
+// Originate creates (and dials) a new channel using the present channel as its Originator.
+func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error) {
+	if req.Originator == "" {
+		req.Originator = ch.ID()
+	}
+	return ch.c.Originate(req)
+}
+
 // Dial dials a created channel.  `caller` is the optional
 // channel ID of the calling party (if there is one).  Timeout
 // is the length of time to wait before the dial is answered
