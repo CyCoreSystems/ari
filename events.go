@@ -198,6 +198,13 @@ func (evt *ChannelDtmfReceived) GetChannelIDs() (sx []string) {
 	return
 }
 
+// Created marks the event as creating a bridge for a channel and dialog
+func (evt *ChannelEnteredBridge) Created() (o string, related string) {
+	o = evt.Bridge.ID
+	related = evt.Channel.ID
+	return
+}
+
 // GetChannelIDs gets the channel IDs for the event
 func (evt *ChannelEnteredBridge) GetChannelIDs() (sx []string) {
 	sx = append(sx, evt.Channel.ID)
