@@ -12,7 +12,6 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/native"
-	"github.com/CyCoreSystems/ari/client/nc"
 )
 
 var log = log15.New()
@@ -80,10 +79,6 @@ func run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// setup logging
-
-	nc.Logger = log15.New()
-
 	// connect
 
 	cl, err := connect(ctx)
@@ -143,7 +138,7 @@ func listenApp(ctx context.Context, cl *ari.Client, handler func(cl *ari.Client,
 }
 
 func createCall(cl *ari.Client) (h *ari.ChannelHandle, err error) {
-	h, err = cl.Channel.Create(ari.OriginateRequest{
+	h, err = cl.Channel.Create(ari.ChannelCreateRequest{
 		Endpoint: "Local/1000",
 		App:      "example",
 	})
