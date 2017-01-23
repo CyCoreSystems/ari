@@ -12,6 +12,8 @@ semantics.
   go get gopkg.in/CyCoreSystems/ari.v3
 ```
 
+This repository also includes semver tags for version 3 releases.
+
 The latest development version is maintained as the master branch, which you can
 obtain by
 
