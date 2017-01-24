@@ -95,6 +95,7 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 				if r.Name == name {
 					Logger.Debug("Recording stopped")
 					rec.status = Finished
+					rec.data = &r
 					return
 				}
 			}
