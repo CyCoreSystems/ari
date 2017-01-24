@@ -9,6 +9,7 @@ import (
 type Recording struct {
 	doneCh chan struct{}
 
+	data   *ari.LiveRecordingData
 	handle *ari.LiveRecordingHandle
 	status Status
 	err    error
@@ -39,4 +40,9 @@ func (r *Recording) Cancel() {
 // Handle records the live recording handle
 func (r *Recording) Handle() *ari.LiveRecordingHandle {
 	return r.handle
+}
+
+// Data returns the live recording handle data saved at the end of recording event
+func (r *Recording) Data() *ari.LiveRecordingData {
+	return r.data
 }
