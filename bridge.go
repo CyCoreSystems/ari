@@ -79,7 +79,7 @@ func (bh *BridgeHandle) RemoveChannel(channelID string) (err error) {
 }
 
 // Delete deletes the bridge
-func (bh *BridgeHandle) Delete(channelID string) (err error) {
+func (bh *BridgeHandle) Delete() (err error) {
 	err = bh.b.Delete(bh.id)
 	return
 }
