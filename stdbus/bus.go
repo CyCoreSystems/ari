@@ -52,8 +52,6 @@ func (b *bus) send(msg *ari.Message) {
 	//	Logger.Debug("Received event", "event", e)
 
 	// Disseminate the message to the subscribers
-	b.mu.Lock()
-	defer b.mu.Unlock()
 	for _, s := range b.subs {
 		for _, topic := range s.events {
 			if topic == e.GetType() || topic == ari.Events.All {
