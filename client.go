@@ -32,5 +32,6 @@ func (cl *Client) Close() error {
 	if cl.Cleanup != nil {
 		return cl.Cleanup()
 	}
+	cl.Bus.Close()
 	return nil
 }

@@ -41,6 +41,16 @@ func (b *bus) removeSubscription(s *subscription) {
 	}
 }
 
+// Close closes out all subscriptions in the bus.
+func (b *bus) Close() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	for _, s := range b.subs {
+		s.Cancel()
+	}
+	b.subs = nil
+}
+
 // Send sends the message on the bus
 func (b *bus) Send(msg *ari.Message) {
 	b.send(msg)

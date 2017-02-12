@@ -3,6 +3,7 @@ package ari
 // Bus is an event bus for ARI events.  It receives and
 // redistributes events based on a subscription model.
 type Bus interface {
+	Close()
 	Sender
 	Subscriber
 }
