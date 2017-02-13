@@ -75,6 +75,12 @@ func (s *LiveRecordingHandle) Data() (d LiveRecordingData, err error) {
 	return
 }
 
+// Stop stops and saves the recording
+func (s *LiveRecordingHandle) Stop() (err error) {
+	err = s.s.Stop(s.name)
+	return
+}
+
 // Scrap stops and deletes the recording
 func (s *LiveRecordingHandle) Scrap() (err error) {
 	err = s.s.Scrap(s.name)
