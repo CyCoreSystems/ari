@@ -302,13 +302,19 @@ func (evt *Dial) GetChannelIDs() (sx []string) {
 	return
 }
 
-// GetEndpointIDs gets the bridge IDs for the event
+// GetEndpointIDs gets the endpoint IDs for the event
 func (evt *EndpointStateChange) GetEndpointIDs() (sx []string) {
 	sx = append(sx, evt.Endpoint.ID())
 	return
 }
 
-// GetEndpointIDs gets the bridge IDs for the event
+// GetChannelIDs gets the channel IDs for the event
+func (evt *EndpointStateChange) GetChannelIDs() (sx []string) {
+	sx = append(sx, evt.Endpoint.ChannelIDs...)
+	return
+}
+
+// GetEndpointIDs gets the endpoint IDs for the event
 func (evt *PeerStatusChange) GetEndpointIDs() (sx []string) {
 	sx = append(sx, evt.Endpoint.ID())
 	return
@@ -320,9 +326,50 @@ func (evt *PlaybackContinuing) GetPlaybackIDs() (sx []string) {
 	return
 }
 
+// GetChannelIDs gets the channel IDs for the event
+func (evt *PlaybackContinuing) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+
+	sx = append(sx, s)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *PlaybackContinuing) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
 // GetPlaybackIDs gets the playback IDs for the event
 func (evt *PlaybackFinished) GetPlaybackIDs() (sx []string) {
 	sx = append(sx, evt.Playback.ID)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *PlaybackFinished) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *PlaybackFinished) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
 	return
 }
 
@@ -336,6 +383,26 @@ func (evt *PlaybackFinished) Destroyed() (playbackID string) {
 // GetPlaybackIDs gets the playback IDs for the event
 func (evt *PlaybackStarted) GetPlaybackIDs() (sx []string) {
 	sx = append(sx, evt.Playback.ID)
+	return
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *PlaybackStarted) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *PlaybackStarted) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Playback.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
 	return
 }
 
@@ -362,6 +429,66 @@ func (evt *RecordingFailed) Destroyed() string {
 // GetRecordingIDs gets the recording IDs for the event
 func (evt *RecordingFailed) GetRecordingIDs() (sx []string) {
 	sx = append(sx, evt.Recording.ID())
+	return
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *RecordingFailed) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *RecordingStarted) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetChannelIDs gets the channel IDs for the event
+func (evt *RecordingFinished) GetChannelIDs() (sx []string) {
+	s := resolveTarget("channel", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *RecordingFailed) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *RecordingStarted) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
+	return
+}
+
+// GetBridgeIDs gets the bridge IDs for the event
+func (evt *RecordingFinished) GetBridgeIDs() (sx []string) {
+	s := resolveTarget("bridge", evt.Recording.TargetURI)
+	if s == "" {
+		return
+	}
+	sx = append(sx, s)
 	return
 }
 
@@ -401,4 +528,18 @@ func (evt *StasisStart) GetChannelIDs() (sx []string) {
 func (evt *TextMessageReceived) GetEndpointIDs() (sx []string) {
 	sx = append(sx, evt.Endpoint.ID())
 	return
+}
+
+func resolveTarget(typ string, targetURI string) (s string) {
+	items := strings.Split(targetURI, ":")
+	if items[0] != typ {
+		return
+	}
+	if len(items) < 2 {
+		return
+	}
+
+	s = strings.Join(items[1:], ":")
+	return
+
 }
