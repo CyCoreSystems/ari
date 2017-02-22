@@ -66,7 +66,7 @@ func (b *nativeBridge) Data(id string) (bd ari.BridgeData, err error) {
 func (b *nativeBridge) AddChannel(bridgeID string, channelID string, opts *ari.BridgeAddOptions) (err error) {
 
 	if opts == nil {
-		opts = &ari.BridgeAddOptions
+		opts = &ari.BridgeAddOptions{}
 	}
 
 	req := struct {
@@ -76,7 +76,8 @@ func (b *nativeBridge) AddChannel(bridgeID string, channelID string, opts *ari.B
 		Mute       bool   `json:"mute,omitempty"`
 	}{
 		ChannelID:  channelID,
-		AbsorbDMTF: opts.AbsorbDTMF,
+		Role:       opts.Role,
+		AbsorbDTMF: opts.AbsorbDTMF,
 		Mute:       opts.Mute,
 	}
 

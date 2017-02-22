@@ -59,6 +59,10 @@ type BridgeAddOptions struct {
 	// through to the bridge.  This option is optional and it default to false (audio
 	// will pass through).
 	Mute bool `json:"mute,omitempt"`
+
+	// Role is the role for the channel in the bridge.  Valid options are... vague, from Asterisk.
+	// "speaker" is one option, and it is the default.
+	Role string `json:"role,omitempty"`
 }
 
 // NewBridgeHandle creates a new bridge handle
