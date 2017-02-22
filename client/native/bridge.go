@@ -65,14 +65,21 @@ func (b *nativeBridge) Data(id string) (bd ari.BridgeData, err error) {
 // Equivalent to Post /bridges/{id}/addChannel
 func (b *nativeBridge) AddChannel(bridgeID string, channelID string, opts *ari.BridgeAddOptions) (err error) {
 
-	type request struct {
+	if opts == nil {
+		opts = &ari.BridgeAddOptions
+	}
+
+	req := struct {
 		ChannelID  string `json:"channel"`
 		Role       string `json:"role,omitempty"`
 		AbsorbDTMF bool   `json:"absorbDTMF,omitempty"`
 		Mute       bool   `json:"mute,omitempty"`
+	}{
+		ChannelID:  channelID,
+		AbsorbDMTF: opts.AbsorbDTMF,
+		Mute:       opts.Mute,
 	}
 
-	req := request{channelID, ""}
 	err = Post(b.conn, "/bridges/"+bridgeID+"/addChannel", nil, &req)
 	return
 }
