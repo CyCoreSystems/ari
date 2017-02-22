@@ -17,7 +17,7 @@ type Bridge interface {
 	Data(id string) (BridgeData, error)
 
 	// AddChannel adds a channel to the bridge
-	AddChannel(bridgeID string, channelID string) error
+	AddChannel(bridgeID string, channelID string, opts *BridgeAddOptions) error
 
 	// RemoveChannel removes a channel from the bridge
 	RemoveChannel(bridgeID string, channelID string) error
@@ -47,6 +47,20 @@ type BridgeData struct {
 	Technology string   `json:"technology"`   // Name of the bridging technology
 }
 
+// BridgeAddOptions describes the set of options to pass when adding a channel to a bridge.
+// All values are optional.
+type BridgeAddOptions struct {
+	// AbosrbDTMF indicates that DTMF coming from the channel being added to the
+	// bridge should not be passed through to the bridge.  This option is optional
+	// and it defaults to false (DTMF from channel will be passed through to the bridge).
+	AbsorbDTMF bool `json:"absorbDTMF,omitempty"`
+
+	// Mute indicates that audio from the channel should be prevented from flowing
+	// through to the bridge.  This option is optional and it default to false (audio
+	// will pass through).
+	Mute bool `json:"mute,omitempt"`
+}
+
 // NewBridgeHandle creates a new bridge handle
 func NewBridgeHandle(id string, b Bridge) *BridgeHandle {
 	return &BridgeHandle{
@@ -67,8 +81,8 @@ func (bh *BridgeHandle) ID() string {
 }
 
 // AddChannel adds a channel to the bridge
-func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
-	err = bh.b.AddChannel(bh.id, channelID)
+func (bh *BridgeHandle) AddChannel(channelID string, opts *BridgeAddOptions) (err error) {
+	err = bh.b.AddChannel(bh.id, channelID, opts)
 	return
 }
 

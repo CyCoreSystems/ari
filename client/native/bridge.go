@@ -63,11 +63,13 @@ func (b *nativeBridge) Data(id string) (bd ari.BridgeData, err error) {
 
 // AddChannel adds a channel to a bridge
 // Equivalent to Post /bridges/{id}/addChannel
-func (b *nativeBridge) AddChannel(bridgeID string, channelID string) (err error) {
+func (b *nativeBridge) AddChannel(bridgeID string, channelID string, opts *ari.BridgeAddOptions) (err error) {
 
 	type request struct {
-		ChannelID string `json:"channel"`
-		Role      string `json:"role,omitempty"`
+		ChannelID  string `json:"channel"`
+		Role       string `json:"role,omitempty"`
+		AbsorbDTMF bool   `json:"absorbDTMF,omitempty"`
+		Mute       bool   `json:"mute,omitempty"`
 	}
 
 	req := request{channelID, ""}
