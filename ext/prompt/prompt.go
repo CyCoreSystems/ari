@@ -100,14 +100,12 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 	hangupSub := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 	defer hangupSub.Cancel()
 
-	var overallTimer <-chan time.Time
-
 	var playPrompt func() stateFn
 	var waitDigit func() stateFn
 	var waitFirstDigit func() stateFn
+	overallTimer := time.NewTimer(opts.OverallTimeout)
 
 	playPrompt = func() stateFn {
-
 		playCtx, playCancel := context.WithCancel(context.Background())
 		defer playCancel()
 
@@ -129,9 +127,6 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 					}
 				case <-ctx.Done():
 					ret.Status = Canceled
-					return
-				case <-overallTimer:
-					ret.Status = Timeout
 					return
 				case <-doneCh:
 					return
@@ -176,6 +171,14 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		doneCh <- struct{}{}
 		<-lockCh
 
+		if !overallTimer.Stop() {
+			select {
+			case <-overallTimer.C:
+			default:
+			}
+		}
+		overallTimer.Reset(opts.OverallTimeout)
+
 		if ret.Data == "" {
 			return waitFirstDigit
 		}
@@ -196,7 +199,7 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		case <-time.After(opts.FirstDigitTimeout):
 			ret.Status = Timeout
 			return nil
-		case <-overallTimer:
+		case <-overallTimer.C:
 			ret.Status = Timeout
 			return nil
 		case e := <-dtmfSub.Events():
@@ -226,7 +229,7 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		case <-time.After(opts.InterDigitTimeout):
 			ret.Status = Timeout
 			return nil
-		case <-overallTimer:
+		case <-overallTimer.C:
 			ret.Status = Timeout
 			return nil
 		case e := <-dtmfSub.Events():
@@ -244,11 +247,10 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 	}
 
 	var st = playPrompt
-	if sounds == nil || len(sounds) == 0 {
+	if len(sounds) == 0 {
 		st = waitFirstDigit
 	}
 
-	overallTimer = time.After(opts.OverallTimeout)
 	for st != nil {
 		st = st()
 	}
