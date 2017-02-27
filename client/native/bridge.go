@@ -29,7 +29,7 @@ func (b *nativeBridge) Create(id string, t string, name string) (bh *ari.BridgeH
 		Name: name,
 	}
 
-	err = Post(b.conn, "/bridges/"+id, &req, nil)
+	err = Post(b.conn, "/bridges/"+id, nil, &req)
 	if err != nil {
 		return
 	}
