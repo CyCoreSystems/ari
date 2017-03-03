@@ -1102,18 +1102,23 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 	//sub3.EXPECT().Cancel().Times(1)
 
 	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
-	player1 = mock.NewMockPlayer(ctrl)
-	dtmfSub = mock.NewMockPlayer(ctrl).Subscribe(ari.Events.ChannelDtmfReceived)
+	dtmfSub := mock.NewMockSubscription(ctrl)
+	dtmfChan := make(chan ari.Event)
+	player := mock.NewMockPlayer(ctrl)
+	dtmfSub.EXPECT().Events().MinTimes(1).Return(dtmfChan)
+	dtmfChan = dtmfSub.Events()
+	player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(dtmfSub)
+	dtmfSub = player.Subscribe(ari.Events.ChannelDtmfReceived)
 	//player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived)
 	//dtmfSub := player.Subscribe(ari.Events.ChannelDtmfReceived)
-	_ = player.Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished)
+	//_ = player1.Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished)
 	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 
 		// complete prompt
-		_, err := player1.Play("sound:1", "sound:2")
+		_, err := player.Play("sound:1", "sound:2")
 		if err != nil {
 			t.Log("Failed to play sound.")
 		}
@@ -1122,7 +1127,7 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 		ch <- playbackFinishedGood("pb1")
 
 		// send initial DTMF
-		dtmfSub.Events() <- channelDtmf("2")
+		dtmfChan <- channelDtmf("2")
 
 		//<-player.Next
 		//ch <- playbackStartedGood("pb2")
