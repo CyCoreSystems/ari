@@ -122,10 +122,10 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		snds:    sounds,
 		retData: &Result{},
 	}
-	//st, err := s.playPrompt(ctx)
+	st := s.playPrompt
 
-	for st, err := s.playPrompt(ctx); st != nil && err == nil; {
-		if err := ctx.Err(); err != nil {
+	for st != nil && err == nil {
+		if err = ctx.Err(); err != nil {
 			break
 		}
 		st, err = st(ctx)
