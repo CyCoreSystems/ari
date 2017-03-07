@@ -67,22 +67,19 @@ var (
 	// regardless of the number of received digits or pattern matching.
 	DefaultOverallTimeout = 3 * time.Minute
 
-	// LastTimeout is set to the timeout being used in the next stateFn to be called.
-	// it is then being reference in Prompt in the st, err = st(.....) call
 	LastTimeout = 0 * time.Second
 )
 
 type stateFn func(ctx context.Context) (stateFn, error)
 
-type promptApp struct {
-	dSub     ari.Subscription
-	hSub     ari.Subscription
-	oTimer   *time.Timer
-	LTimeout time.Duration
-	options  *Options
-	player   audio.Player
-	snds     []string
-	retData  *Result
+type stateObject struct {
+	dSub    ari.Subscription
+	hSub    ari.Subscription
+	oTimer  *time.Timer
+	options *Options
+	player  audio.Player
+	snds    []string
+	retData *Result
 }
 
 // Prompt plays the given sound and waits for user input.
@@ -110,41 +107,37 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		opts.SoundHash = "hash"
 	}
 
-	overallTimer := time.NewTimer(opts.OverallTimeout)
-
 	LastTimeout = 0 * time.Second
 	/*if len(sounds) == 0 {
 		LastTimeout = opts.FirstDigitTimeout
 		st, err = waitDigit(ctx, opts.FirstDigitTimeout, opts, ret)
 	}
 	*/
-	pa := &promptApp{
-		dSub:     p.Subscribe(ari.Events.ChannelDtmfReceived),
-		hSub:     p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
-		oTimer:   overallTimer,
-		LTimeout: LastTimeout,
-		options:  opts,
-		player:   p,
-		snds:     sounds,
-		retData:  &Result{},
+	s := &stateObject{
+		dSub:    p.Subscribe(ari.Events.ChannelDtmfReceived),
+		hSub:    p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		player:  p,
+		snds:    sounds,
+		retData: &Result{},
 	}
-	st, err := pa.playPrompt(ctx)
-	for st != nil && err == nil {
-		st, err = st(ctx)
-		select {
-		case <-ctx.Done():
-			Logger.Debug("Exiting on context closure")
-			st = nil
-		default:
+	//st, err := s.playPrompt(ctx)
+
+	for st, err := s.playPrompt(ctx); st != nil && err == nil; {
+		if err := ctx.Err(); err != nil {
+			break
 		}
+		st, err = st(ctx)
+
 	}
 
-	return pa.retData, err
+	return s.retData, err
 }
 
-func (pa *promptApp) playPrompt(ctx context.Context) (stateFn, error) {
+func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 	playCtx, playCancel := context.WithCancel(context.Background())
-	opts := pa.options
+	opts := s.options
 
 	defer playCancel()
 
@@ -159,23 +152,27 @@ func (pa *promptApp) playPrompt(ctx context.Context) (stateFn, error) {
 
 		for {
 			select {
-			case _, ok := <-pa.hSub.Events():
+			case _, ok := <-s.hSub.Events():
 				if ok {
-					pa.retData.Status = Hangup
+					s.retData.Status = Hangup
 					return
 				}
 			case <-ctx.Done():
-				pa.retData.Status = Canceled
+				s.retData.Status = Canceled
 				return
 			case <-doneCh:
 				return
-			case e := <-pa.dSub.Events():
-				pa.retData.Data += e.(*ari.ChannelDtmfReceived).Digit
-				Logger.Debug("DTMF received", "digits", pa.retData.Data)
-				match, res := opts.MatchFunc(pa.retData.Data)
-				pa.retData.Data = match
+			case e := <-s.dSub.Events():
+				dtmf, ok := e.(*ari.ChannelDtmfReceived)
+				if !ok {
+					continue
+				}
+				s.retData.Data += dtmf.Digit
+				Logger.Debug("DTMF received", "digits", s.retData.Data)
+				match, res := opts.MatchFunc(s.retData.Data)
+				s.retData.Data = match
 				if res > 0 {
-					pa.retData.Status = res
+					s.retData.Status = res
 					playCancel() // cancel playback
 					return
 				}
@@ -184,9 +181,9 @@ func (pa *promptApp) playPrompt(ctx context.Context) (stateFn, error) {
 	}()
 
 	q := audio.NewQueue()
-	q.Add(pa.snds...)
+	q.Add(s.snds...)
 	//var st audio.Status
-	st, err := q.Play(playCtx, pa.player, &audio.Options{ExitOnDTMF: ""})
+	st, err := q.Play(playCtx, s.player, &audio.Options{ExitOnDTMF: ""})
 
 	switch st {
 	case audio.Canceled:
@@ -195,66 +192,62 @@ func (pa *promptApp) playPrompt(ctx context.Context) (stateFn, error) {
 		// and we don't overwrite the return status
 		err = nil
 	case audio.Hangup:
-		pa.retData.Status = Hangup
-	case audio.Failed:
-		pa.retData.Status = Failed
-	case audio.Timeout:
-		pa.retData.Status = Failed
-	}
-
-	if pa.retData.Status > Incomplete {
+		s.retData.Status = Hangup
+		return nil, err
+	case audio.Failed, audio.Timeout:
+		s.retData.Status = Failed
 		return nil, err
 	}
 
-	// helps us destroy the above goroutine and ensure its closure before reading ret.Data
-	doneCh <- struct{}{}
-	<-lockCh
+	if s.retData.Status > Incomplete {
+		return nil, err
+	}
 
-	if pa.oTimer.Stop() {
+	// Stop and reset the overall timer for Prompt
+	if s.oTimer.Stop() {
 		select {
-		case <-pa.oTimer.C:
+		case <-s.oTimer.C:
 		default:
 		}
 	}
-	pa.oTimer.Reset(opts.OverallTimeout)
+	s.oTimer.Reset(opts.OverallTimeout)
 
-	if pa.retData.Data == "" {
-		pa.LTimeout = opts.FirstDigitTimeout
-	} else {
-		pa.LTimeout = opts.InterDigitTimeout
-	}
-
-	return pa.waitDigit, err
+	return s.waitDigit, err
 }
 
-func (pa *promptApp) waitDigit(ctx context.Context) (stateFn, error) {
-	opts := pa.options
+func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
+	//opts := s.options
+	lTimeout := s.options.InterDigitTimeout
+
+	if s.retData.Data == "" {
+		lTimeout = s.options.FirstDigitTimeout
+	}
+
 	select {
-	case _, ok := <-pa.hSub.Events():
+	case _, ok := <-s.hSub.Events():
 		if ok {
-			pa.retData.Status = Hangup
+			s.retData.Status = Hangup
 			return nil, nil
 		}
 	case <-ctx.Done():
-		pa.retData.Status = Canceled
+		s.retData.Status = Canceled
 		return nil, nil
-	case <-time.After(pa.LTimeout):
-		pa.retData.Status = Timeout
+	case <-time.After(lTimeout):
+		s.retData.Status = Timeout
 		return nil, nil
-	case <-pa.oTimer.C:
-		pa.retData.Status = Timeout
+	case <-s.oTimer.C:
+		s.retData.Status = Timeout
 		return nil, nil
-	case e := <-pa.dSub.Events():
-		pa.retData.Data += e.(*ari.ChannelDtmfReceived).Digit
-		Logger.Debug("DTMF received", "digits", pa.retData.Data)
-		match, res := opts.MatchFunc(pa.retData.Data)
-		pa.retData.Data = match
+	case e := <-s.dSub.Events():
+		s.retData.Data += e.(*ari.ChannelDtmfReceived).Digit
+		Logger.Debug("DTMF received", "digits", s.retData.Data)
+		match, res := s.options.MatchFunc(s.retData.Data)
+		s.retData.Data = match
 		if res > 0 {
-			pa.retData.Status = res
+			s.retData.Status = res
 			return nil, nil
 		}
 	}
 
-	LastTimeout = opts.InterDigitTimeout
-	return pa.waitDigit, nil
+	return s.waitDigit, nil
 }
