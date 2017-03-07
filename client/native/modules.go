@@ -45,7 +45,12 @@ func (m *Modules) Unload(name string) (err error) {
 }
 
 // Data retrieves the state of the named asterisk module
-func (m *Modules) Data(name string) (md ari.ModuleData, err error) {
+func (m *Modules) Data(name string) (md *ari.ModuleData, err error) {
+	md = &ari.ModuleData{}
 	err = m.client.conn.Get("/asterisk/modules/"+name, &md)
+	if err != nil {
+		md = nil
+		err = dataGetError(err, "module", "%v", name)
+	}
 	return
 }

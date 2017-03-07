@@ -8,7 +8,7 @@ type LiveRecording interface {
 	Get(name string) *LiveRecordingHandle
 
 	// Data gets the data for the live recording
-	Data(name string) (LiveRecordingData, error)
+	Data(name string) (*LiveRecordingData, error)
 
 	// Stop stops the live recording
 	Stop(name string) error
@@ -70,7 +70,7 @@ func (s *LiveRecordingHandle) ID() string {
 }
 
 // Data gets the data for the stored recording
-func (s *LiveRecordingHandle) Data() (d LiveRecordingData, err error) {
+func (s *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
 	d, err = s.s.Data(s.name)
 	return
 }

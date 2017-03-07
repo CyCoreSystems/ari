@@ -15,8 +15,13 @@ func (a *Playback) Get(id string) (ph *ari.PlaybackHandle) {
 
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
-func (a *Playback) Data(id string) (p ari.PlaybackData, err error) {
-	err = a.client.conn.Get("/playbacks/"+id, &p)
+func (a *Playback) Data(id string) (p *ari.PlaybackData, err error) {
+	p = &ari.PlaybackData{}
+	err = a.client.conn.Get("/playbacks/"+id, p)
+	if err != nil {
+		p = nil
+		err = dataGetError(err, "playback", "%v", id)
+	}
 	return
 }
 

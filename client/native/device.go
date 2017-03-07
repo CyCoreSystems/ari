@@ -29,12 +29,18 @@ func (ds *DeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
 }
 
 // Data retrieves the current state of the device
-func (ds *DeviceState) Data(name string) (d ari.DeviceStateData, err error) {
+func (ds *DeviceState) Data(name string) (d *ari.DeviceStateData, err error) {
 	device := struct {
 		State string `json:"state"`
 	}{}
 	err = ds.client.conn.Get("/deviceStates/"+name, &device)
-	d = ari.DeviceStateData(device.State) //TODO: we can make DeviceStateData implement MarshalJSON/UnmarshalJSON
+	if err != nil {
+		d = nil
+		err = dataGetError(err, "deviceState", "%v", name)
+		return
+	}
+	x := ari.DeviceStateData(device.State) //TODO: we can make DeviceStateData implement MarshalJSON/UnmarshalJSON
+	d = &x
 	return
 }
 

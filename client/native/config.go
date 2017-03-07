@@ -13,11 +13,17 @@ func (c *Config) Get(configClass string, objectType string, id string) *ari.Conf
 }
 
 // Data retrieves the state of a configuration object
-func (c *Config) Data(configClass string, objectType string, id string) (cd ari.ConfigData, err error) {
+func (c *Config) Data(configClass string, objectType string, id string) (cd *ari.ConfigData, err error) {
+	cd = &ari.ConfigData{}
 	cd.ID = id
 	cd.Class = configClass
 	cd.Type = objectType
-	err = c.client.conn.Get("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, &cd.Fields)
+	resourceID := configClass + "/" + objectType + "/" + id
+	err = c.client.conn.Get("/asterisk/config/dynamic/"+resourceID, &cd.Fields)
+	if err != nil {
+		cd = nil
+		err = dataGetError(err, "config", "%v", resourceID)
+	}
 	return
 }
 

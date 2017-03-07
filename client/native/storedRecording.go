@@ -28,8 +28,14 @@ func (sr *StoredRecording) Get(name string) (s *ari.StoredRecordingHandle) {
 }
 
 // Data retrieves the state of the stored recording
-func (sr *StoredRecording) Data(name string) (d ari.StoredRecordingData, err error) {
-	err = sr.client.conn.Get("/recordings/stored/"+name, &d)
+func (sr *StoredRecording) Data(name string) (d *ari.StoredRecordingData, err error) {
+	d = &ari.StoredRecordingData{}
+	err = sr.client.conn.Get("/recordings/stored/"+name, d)
+	if err != nil {
+		d = nil
+		err = dataGetError(err, "storedRecording", "%v", name)
+		return
+	}
 	return
 }
 

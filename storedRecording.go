@@ -11,7 +11,7 @@ type StoredRecording interface {
 	Get(name string) *StoredRecordingHandle
 
 	// data gets the data for the stored recording
-	Data(name string) (StoredRecordingData, error)
+	Data(name string) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
 	Copy(name string, dest string) (*StoredRecordingHandle, error)
@@ -51,7 +51,7 @@ func (s *StoredRecordingHandle) ID() string {
 }
 
 // Data gets the data for the stored recording
-func (s *StoredRecordingHandle) Data() (d StoredRecordingData, err error) {
+func (s *StoredRecordingHandle) Data() (d *StoredRecordingData, err error) {
 	d, err = s.s.Data(s.name)
 	return
 }

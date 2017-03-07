@@ -50,9 +50,9 @@ func (_mr *_MockBridgeRecorder) Create(arg0, arg1, arg2 interface{}) *gomock.Cal
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Create", arg0, arg1, arg2)
 }
 
-func (_m *MockBridge) Data(_param0 string) (ari.BridgeData, error) {
+func (_m *MockBridge) Data(_param0 string) (*ari.BridgeData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.BridgeData)
+	ret0, _ := ret[0].(*ari.BridgeData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

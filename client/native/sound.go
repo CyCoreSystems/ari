@@ -18,9 +18,14 @@ func (s *Sound) Get(name string) *ari.SoundHandle {
 
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
-func (s *Sound) Data(name string) (sd ari.SoundData, err error) {
-	err = s.client.conn.Get("/sounds/"+name, &sd)
-	return sd, err
+func (s *Sound) Data(name string) (sd *ari.SoundData, err error) {
+	sd = &ari.SoundData{}
+	err = s.client.conn.Get("/sounds/"+name, sd)
+	if err != nil {
+		sd = nil
+		err = dataGetError(err, "sound", "%v", name)
+	}
+	return
 }
 
 // List returns available sounds limited by the provided filters.

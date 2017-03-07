@@ -29,9 +29,9 @@ func (_m *MockConfig) EXPECT() *_MockConfigRecorder {
 	return _m.recorder
 }
 
-func (_m *MockConfig) Data(_param0 string, _param1 string, _param2 string) (ari.ConfigData, error) {
+func (_m *MockConfig) Data(_param0 string, _param1 string, _param2 string) (*ari.ConfigData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0, _param1, _param2)
-	ret0, _ := ret[0].(ari.ConfigData)
+	ret0, _ := ret[0].(*ari.ConfigData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

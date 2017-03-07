@@ -10,7 +10,7 @@ type Config interface {
 	Get(configClass, objectType, id string) *ConfigHandle
 
 	// Data gets the data for the config object
-	Data(configClass, objectType, id string) (ConfigData, error)
+	Data(configClass, objectType, id string) (*ConfigData, error)
 
 	// Update creates or updates the given tuples
 	Update(configClass, objectType, id string, tuples []ConfigTuple) error
@@ -45,7 +45,7 @@ func (ch *ConfigHandle) ID() string {
 }
 
 // Data gets the current data for the config handle
-func (ch *ConfigHandle) Data() (ConfigData, error) {
+func (ch *ConfigHandle) Data() (*ConfigData, error) {
 	return ch.c.Data(ch.configClass, ch.objectType, ch.id)
 }
 

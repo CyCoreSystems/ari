@@ -34,7 +34,13 @@ func (e *Endpoint) ListByTech(tech string) (ex []*ari.EndpointHandle, err error)
 }
 
 // Data retrieves the current state of the endpoint
-func (e *Endpoint) Data(tech string, resource string) (ed ari.EndpointData, err error) {
-	err = e.client.conn.Get("/endpoints/"+tech+"/"+resource, &ed)
+func (e *Endpoint) Data(tech string, resource string) (ed *ari.EndpointData, err error) {
+	ed = &ari.EndpointData{}
+	err = e.client.conn.Get("/endpoints/"+tech+"/"+resource, ed)
+	if err != nil {
+		ed = nil
+		err = dataGetError(err, "endpoint", "%v/%v", tech, resource)
+	}
+
 	return
 }

@@ -29,9 +29,9 @@ func (_m *MockApplication) EXPECT() *_MockApplicationRecorder {
 	return _m.recorder
 }
 
-func (_m *MockApplication) Data(_param0 string) (ari.ApplicationData, error) {
+func (_m *MockApplication) Data(_param0 string) (*ari.ApplicationData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.ApplicationData)
+	ret0, _ := ret[0].(*ari.ApplicationData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

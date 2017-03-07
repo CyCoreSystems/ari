@@ -29,9 +29,9 @@ func (_m *MockDeviceState) EXPECT() *_MockDeviceStateRecorder {
 	return _m.recorder
 }
 
-func (_m *MockDeviceState) Data(_param0 string) (ari.DeviceStateData, error) {
+func (_m *MockDeviceState) Data(_param0 string) (*ari.DeviceStateData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.DeviceStateData)
+	ret0, _ := ret[0].(*ari.DeviceStateData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

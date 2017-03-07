@@ -8,7 +8,7 @@ type Playback interface {
 	Get(id string) *PlaybackHandle
 
 	// Data gets the playback data
-	Data(id string) (PlaybackData, error)
+	Data(id string) (*PlaybackData, error)
 
 	// Control performs the given operation on the current playback
 	Control(id string, op string) error
@@ -54,7 +54,7 @@ func (ph *PlaybackHandle) ID() string {
 }
 
 // Data gets the playback data
-func (ph *PlaybackHandle) Data() (pd PlaybackData, err error) {
+func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
 	pd, err = ph.p.Data(ph.id)
 	return
 }

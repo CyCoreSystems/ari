@@ -29,9 +29,9 @@ func (_m *MockLiveRecording) EXPECT() *_MockLiveRecordingRecorder {
 	return _m.recorder
 }
 
-func (_m *MockLiveRecording) Data(_param0 string) (ari.LiveRecordingData, error) {
+func (_m *MockLiveRecording) Data(_param0 string) (*ari.LiveRecordingData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.LiveRecordingData)
+	ret0, _ := ret[0].(*ari.LiveRecordingData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

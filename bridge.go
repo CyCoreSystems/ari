@@ -14,7 +14,7 @@ type Bridge interface {
 	List() ([]*BridgeHandle, error)
 
 	// Data gets the bridge data
-	Data(id string) (BridgeData, error)
+	Data(id string) (*BridgeData, error)
 
 	// AddChannel adds a channel to the bridge
 	AddChannel(bridgeID string, channelID string) error
@@ -85,7 +85,7 @@ func (bh *BridgeHandle) Delete() (err error) {
 }
 
 // Data gets the bridge data
-func (bh *BridgeHandle) Data() (bd BridgeData, err error) {
+func (bh *BridgeHandle) Data() (bd *BridgeData, err error) {
 	bd, err = bh.b.Data(bh.id)
 	return
 }

@@ -11,7 +11,7 @@ type Application interface {
 	Get(name string) *ApplicationHandle
 
 	// Data returns the applications data
-	Data(name string) (ApplicationData, error)
+	Data(name string) (*ApplicationData, error)
 
 	// Subscribe subscribes the given application to an event source
 	// event source may be one of:
@@ -57,7 +57,7 @@ func (ah *ApplicationHandle) ID() string {
 }
 
 // Data retrives the data for the application
-func (ah *ApplicationHandle) Data() (ad ApplicationData, err error) {
+func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
 	ad, err = ah.a.Data(ah.name)
 	return
 }

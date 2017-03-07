@@ -24,7 +24,7 @@ type Channel interface {
 	Create(ChannelCreateRequest) (*ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
-	Data(id string) (ChannelData, error)
+	Data(id string) (*ChannelData, error)
 
 	// Continue tells Asterisk to return a channel to the dialplan
 	Continue(id, context, extension string, priority int) error
@@ -152,7 +152,7 @@ func (ch *ChannelHandle) ID() string {
 }
 
 // Data returns the channel's data
-func (ch *ChannelHandle) Data() (ChannelData, error) {
+func (ch *ChannelHandle) Data() (*ChannelData, error) {
 	return ch.c.Data(ch.id)
 }
 

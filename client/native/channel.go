@@ -38,8 +38,13 @@ func (c *Channel) Hangup(id, reason string) error {
 }
 
 // Data retrieves the current state of the channel
-func (c *Channel) Data(id string) (cd ari.ChannelData, err error) {
-	err = c.client.conn.Get("/channels/"+id, &cd)
+func (c *Channel) Data(id string) (cd *ari.ChannelData, err error) {
+	cd = &ari.ChannelData{}
+	err = c.client.conn.Get("/channels/"+id, cd)
+	if err != nil {
+		cd = nil
+		err = dataGetError(err, "channel", "%v", id)
+	}
 	return
 }
 

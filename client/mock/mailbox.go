@@ -29,9 +29,9 @@ func (_m *MockMailbox) EXPECT() *_MockMailboxRecorder {
 	return _m.recorder
 }
 
-func (_m *MockMailbox) Data(_param0 string) (ari.MailboxData, error) {
+func (_m *MockMailbox) Data(_param0 string) (*ari.MailboxData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.MailboxData)
+	ret0, _ := ret[0].(*ari.MailboxData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

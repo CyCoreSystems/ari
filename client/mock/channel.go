@@ -70,7 +70,7 @@ func (_mr *_MockChannelRecorder) Continue(arg0, arg1, arg2, arg3 interface{}) *g
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Continue", arg0, arg1, arg2, arg3)
 }
 
-func (_m *MockChannel) Create(_param0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
+func (_m *MockChannel) Create(_param0 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	ret := _m.ctrl.Call(_m, "Create", _param0)
 	ret0, _ := ret[0].(*ari.ChannelHandle)
 	ret1, _ := ret[1].(error)
@@ -81,9 +81,9 @@ func (_mr *_MockChannelRecorder) Create(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Create", arg0)
 }
 
-func (_m *MockChannel) Data(_param0 string) (ari.ChannelData, error) {
+func (_m *MockChannel) Data(_param0 string) (*ari.ChannelData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.ChannelData)
+	ret0, _ := ret[0].(*ari.ChannelData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -161,6 +161,17 @@ func (_m *MockChannel) Mute(_param0 string, _param1 string) error {
 
 func (_mr *_MockChannelRecorder) Mute(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Mute", arg0, arg1)
+}
+
+func (_m *MockChannel) Originate(_param0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	ret := _m.ctrl.Call(_m, "Originate", _param0)
+	ret0, _ := ret[0].(*ari.ChannelHandle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockChannelRecorder) Originate(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Originate", arg0)
 }
 
 func (_m *MockChannel) Play(_param0 string, _param1 string, _param2 string) (*ari.PlaybackHandle, error) {
@@ -289,4 +300,14 @@ func (_m *MockChannel) Unmute(_param0 string, _param1 string) error {
 
 func (_mr *_MockChannelRecorder) Unmute(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Unmute", arg0, arg1)
+}
+
+func (_m *MockChannel) Variables(_param0 string) ari.Variables {
+	ret := _m.ctrl.Call(_m, "Variables", _param0)
+	ret0, _ := ret[0].(ari.Variables)
+	return ret0
+}
+
+func (_mr *_MockChannelRecorder) Variables(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Variables", arg0)
 }

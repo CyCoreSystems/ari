@@ -23,7 +23,7 @@ type Endpoint interface {
 	Get(tech string, resource string) *EndpointHandle
 
 	// Data returns the state of the endpoint
-	Data(tech string, resource string) (EndpointData, error)
+	Data(tech string, resource string) (*EndpointData, error)
 }
 
 // EndpointData describes an external device which may offer or accept calls
@@ -64,7 +64,7 @@ func (eh *EndpointHandle) ID() string {
 }
 
 // Data returns the state of the endpoint
-func (eh *EndpointHandle) Data() (EndpointData, error) {
+func (eh *EndpointHandle) Data() (*EndpointData, error) {
 	return eh.e.Data(eh.tech, eh.resource)
 }
 

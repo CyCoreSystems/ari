@@ -40,9 +40,9 @@ func (_mr *_MockStoredRecordingRecorder) Copy(arg0, arg1 interface{}) *gomock.Ca
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Copy", arg0, arg1)
 }
 
-func (_m *MockStoredRecording) Data(_param0 string) (ari.StoredRecordingData, error) {
+func (_m *MockStoredRecording) Data(_param0 string) (*ari.StoredRecordingData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.StoredRecordingData)
+	ret0, _ := ret[0].(*ari.StoredRecordingData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

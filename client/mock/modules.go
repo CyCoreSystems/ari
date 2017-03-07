@@ -29,9 +29,9 @@ func (_m *MockModules) EXPECT() *_MockModulesRecorder {
 	return _m.recorder
 }
 
-func (_m *MockModules) Data(_param0 string) (ari.ModuleData, error) {
+func (_m *MockModules) Data(_param0 string) (*ari.ModuleData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.ModuleData)
+	ret0, _ := ret[0].(*ari.ModuleData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

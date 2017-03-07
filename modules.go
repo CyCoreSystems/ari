@@ -13,7 +13,7 @@ type Modules interface {
 
 	Unload(name string) error
 
-	Data(name string) (ModuleData, error)
+	Data(name string) (*ModuleData, error)
 }
 
 // NewModuleHandle returns a new module handle
@@ -48,7 +48,7 @@ func (mh *ModuleHandle) Load() error {
 }
 
 // Data gets the module data
-func (mh *ModuleHandle) Data() (ModuleData, error) {
+func (mh *ModuleHandle) Data() (*ModuleData, error) {
 	return mh.m.Data(mh.name)
 }
 

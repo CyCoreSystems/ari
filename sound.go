@@ -12,7 +12,7 @@ type Sound interface {
 	Get(name string) *SoundHandle
 
 	// Data returns the Sound's data
-	Data(name string) (SoundData, error)
+	Data(name string) (*SoundData, error)
 }
 
 // SoundHandle provides a wrapper to a Sound interface for
@@ -49,7 +49,7 @@ func NewSoundHandle(name string, snd Sound) *SoundHandle {
 }
 
 // Data retrieves the data for the Sound
-func (sh *SoundHandle) Data() (sd SoundData, err error) {
+func (sh *SoundHandle) Data() (sd *SoundData, err error) {
 	sd, err = sh.s.Data(sh.name)
 	return sd, err
 }

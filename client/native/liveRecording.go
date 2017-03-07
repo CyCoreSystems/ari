@@ -14,8 +14,14 @@ func (lr *LiveRecording) Get(name string) (h *ari.LiveRecordingHandle) {
 }
 
 // Data retrieves the state of the live recording
-func (lr *LiveRecording) Data(name string) (d ari.LiveRecordingData, err error) {
+func (lr *LiveRecording) Data(name string) (d *ari.LiveRecordingData, err error) {
+	d = &ari.LiveRecordingData{}
 	err = lr.client.conn.Get("/recordings/live/"+name, &d)
+	if err != nil {
+		d = nil
+		err = dataGetError(err, "liveRecording", "%v", name)
+		return
+	}
 	return
 }
 

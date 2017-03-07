@@ -32,8 +32,13 @@ func (m *Mailbox) List() (mx []*ari.MailboxHandle, err error) {
 }
 
 // Data retrieves the state of the given mailbox
-func (m *Mailbox) Data(name string) (md ari.MailboxData, err error) {
+func (m *Mailbox) Data(name string) (md *ari.MailboxData, err error) {
+	md = &ari.MailboxData{}
 	err = m.client.conn.Get("/mailboxes/"+name, &md)
+	if err != nil {
+		md = nil
+		err = dataGetError(err, "mailbox", "%v", name)
+	}
 	return
 }
 

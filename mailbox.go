@@ -11,7 +11,7 @@ type Mailbox interface {
 	List() ([]*MailboxHandle, error)
 
 	// Data gets the current state of the mailbox
-	Data(name string) (MailboxData, error)
+	Data(name string) (*MailboxData, error)
 
 	// Update updates the state of the mailbox, or creates if does not exist
 	Update(name string, oldMessages int, newMessages int) error
@@ -48,7 +48,7 @@ func (mh *MailboxHandle) ID() string {
 }
 
 // Data gets the current state of the mailbox
-func (mh *MailboxHandle) Data() (MailboxData, error) {
+func (mh *MailboxHandle) Data() (*MailboxData, error) {
 	return mh.m.Data(mh.name)
 }
 

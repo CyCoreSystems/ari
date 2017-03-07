@@ -53,8 +53,13 @@ func (b *Bridge) List() (bx []*ari.BridgeHandle, err error) {
 
 // Data returns the details of a bridge
 // Equivalent to Get /bridges/{bridgeId}
-func (b *Bridge) Data(id string) (bd ari.BridgeData, err error) {
-	err = b.client.conn.Get("/bridges/"+id, &bd)
+func (b *Bridge) Data(id string) (bd *ari.BridgeData, err error) {
+	bd = &ari.BridgeData{}
+	err = b.client.conn.Get("/bridges/"+id, bd)
+	if err != nil {
+		bd = nil
+		err = dataGetError(err, "bridge", "%v", id)
+	}
 	return
 }
 

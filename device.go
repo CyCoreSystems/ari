@@ -7,7 +7,7 @@ type DeviceState interface {
 
 	List() ([]*DeviceStateHandle, error)
 
-	Data(name string) (DeviceStateData, error)
+	Data(name string) (*DeviceStateData, error)
 
 	Update(name string, state string) error
 
@@ -38,7 +38,7 @@ func (dsh *DeviceStateHandle) ID() string {
 }
 
 // Data gets the device state
-func (dsh *DeviceStateHandle) Data() (d DeviceStateData, err error) {
+func (dsh *DeviceStateHandle) Data() (d *DeviceStateData, err error) {
 	d, err = dsh.d.Data(dsh.name)
 	return
 }

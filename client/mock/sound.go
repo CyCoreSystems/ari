@@ -29,9 +29,9 @@ func (_m *MockSound) EXPECT() *_MockSoundRecorder {
 	return _m.recorder
 }
 
-func (_m *MockSound) Data(_param0 string) (ari.SoundData, error) {
+func (_m *MockSound) Data(_param0 string) (*ari.SoundData, error) {
 	ret := _m.ctrl.Call(_m, "Data", _param0)
-	ret0, _ := ret[0].(ari.SoundData)
+	ret0, _ := ret[0].(*ari.SoundData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
