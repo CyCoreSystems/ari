@@ -77,9 +77,7 @@ func (c *Conn) Get(url string, resp interface{}) error {
 
 // Post calls the ARI server with a POST request.
 func (c *Conn) Post(requestURL string, resp interface{}, req interface{}) error {
-
-	url = c.Options.URL + requestURL
-
+	url := c.Options.URL + requestURL
 	return c.makeRequest("POST", url, resp, req)
 }
 
@@ -102,7 +100,7 @@ func (c *Conn) Delete(url string, resp interface{}, req string) error {
 	return c.makeRequest("DELETE", url, resp, req)
 }
 
-func (c *Conn) makeRequest(method, url, resp interface{}, req interface{}) (err error) {
+func (c *Conn) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
 	var reqBody io.Reader
 	if req != nil {
 		reqBody, err = structToRequestBody(req)
@@ -111,14 +109,15 @@ func (c *Conn) makeRequest(method, url, resp interface{}, req interface{}) (err 
 		}
 	}
 
-	r, err := http.NewRequest(method, url, reqBody)
+	var r *http.Request
+	r, err = http.NewRequest(method, url, reqBody)
 	if err != nil {
-		return nil, err
+		return
 	}
 	r.Header.Set("Content-Type", "application/json")
 
 	if c.Options.Username != "" {
-		req.SetBasicAuth(c.Options.Username, c.Options.Password)
+		r.SetBasicAuth(c.Options.Username, c.Options.Password)
 	}
 
 	ret, err := c.httpClient.Do(r)

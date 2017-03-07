@@ -9,23 +9,18 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type nativeChannel struct {
-	conn          *Conn
-	subscriber    ari.Subscriber
-	playback      ari.Playback
-	liveRecording ari.LiveRecording
+// Channel provides the ARI Channel accessors for the native client
+type Channel struct {
+	client *Client
 }
 
-func (c *nativeChannel) Playback() ari.Playback {
-	return c.playback
-}
-
-func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
+// List lists the current channels and returns the list of channel handles
+func (c *Channel) List() (cx []*ari.ChannelHandle, err error) {
 	var channels = []struct {
 		ID string `json:"id"`
 	}{}
 
-	err = Get(c.conn, "/channels", &channels)
+	err = c.client.conn.Get("/channels", &channels)
 	for _, i := range channels {
 		cx = append(cx, c.Get(i.ID))
 	}
@@ -33,25 +28,30 @@ func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
 	return
 }
 
-func (c *nativeChannel) Hangup(id, reason string) error {
+// Hangup hangs up the given channel using the (optional) reason
+func (c *Channel) Hangup(id, reason string) error {
 	var req string
 	if reason != "" {
 		req = fmt.Sprintf("reason=%s", reason)
 	}
-	return Delete(c.conn, "/channels/"+id, nil, req)
+	return c.client.conn.Delete("/channels/"+id, nil, req)
 }
 
-func (c *nativeChannel) Data(id string) (cd ari.ChannelData, err error) {
-	err = Get(c.conn, "/channels/"+id, &cd)
+// Data retrieves the current state of the channel
+func (c *Channel) Data(id string) (cd ari.ChannelData, err error) {
+	err = c.client.conn.Get("/channels/"+id, &cd)
 	return
 }
 
-func (c *nativeChannel) Get(id string) *ari.ChannelHandle {
+// Get gets the lazy handle for the given channel
+func (c *Channel) Get(id string) *ari.ChannelHandle {
 	//TODO: does Get need to do anything else??
 	return ari.NewChannelHandle(id, c)
 }
 
-func (c *nativeChannel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+// Originate originates a channel and returns the handle TODO: expand
+// differences between originate and create
+func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
 
 	type response struct {
 		ID string `json:"id"`
@@ -60,7 +60,7 @@ func (c *nativeChannel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle,
 	var resp response
 
 	var err error
-	err = Post(c.conn, "/channels", &resp, &req)
+	err = c.client.conn.Post("/channels", &resp, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -69,13 +69,15 @@ func (c *nativeChannel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle,
 	return h, err
 }
 
-func (c *nativeChannel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+// Create creates a channel and returns the handle. TODO: expand
+// differences between originate and create.
+func (c *Channel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}
 
 	var err error
-	err = Post(c.conn, "/channels/create", nil, &req)
+	err = c.client.conn.Post("/channels/create", nil, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -84,73 +86,86 @@ func (c *nativeChannel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle
 	return h, err
 }
 
-func (c *nativeChannel) Continue(id string, context, extension string, priority int) (err error) {
+// Continue tells a channel to process to the given ARI context and extension
+func (c *Channel) Continue(id string, context, extension string, priority int) (err error) {
 	type request struct {
 		Context   string `json:"context"`
 		Extension string `json:"extension"`
 		Priority  int    `json:"priority"`
 	}
 	req := request{Context: context, Extension: extension, Priority: priority}
-	err = Post(c.conn, "/channels/"+id+"/continue", nil, &req)
+	err = c.client.conn.Post("/channels/"+id+"/continue", nil, &req)
 	return
 }
 
-func (c *nativeChannel) Busy(id string) (err error) {
+// Busy sends the busy status code to the channel (TODO: does this play a busy signal too)
+func (c *Channel) Busy(id string) (err error) {
 	err = c.Hangup(id, "busy")
 	return
 }
 
-func (c *nativeChannel) Congestion(id string) (err error) {
+// Congestion sends the congestion status code to the channel (TODO: does this play a tone?)
+func (c *Channel) Congestion(id string) (err error) {
 	err = c.Hangup(id, "congestion")
 	return
 }
 
-func (c *nativeChannel) Answer(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/answer", nil, nil)
+// Answer answers a channel, if ringing (TODO: does this return an error if already answered?)
+func (c *Channel) Answer(id string) (err error) {
+	err = c.client.conn.Post("/channels/"+id+"/answer", nil, nil)
 	return
 }
 
-func (c *nativeChannel) Ring(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/ring", nil, nil)
+// Ring causes a channel to start ringing (TODO: does this return an error if already ringing?)
+func (c *Channel) Ring(id string) (err error) {
+	err = c.client.conn.Post("/channels/"+id+"/ring", nil, nil)
 	return
 }
 
-func (c *nativeChannel) StopRing(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/ring", nil, "")
+// StopRing causes a channel to stop ringing (TODO: does this return an error if not ringing?)
+func (c *Channel) StopRing(id string) (err error) {
+	err = c.client.conn.Delete("/channels/"+id+"/ring", nil, "")
 	return
 }
 
-func (c *nativeChannel) Hold(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/hold", nil, nil)
+// Hold puts a channel on hold (TODO: does this return an error if already on hold?)
+func (c *Channel) Hold(id string) (err error) {
+	err = c.client.conn.Post("/channels/"+id+"/hold", nil, nil)
 	return
 }
 
-func (c *nativeChannel) StopHold(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/hold", nil, "")
+// StopHold removes a channel from hold (TODO: does this return an error if not on hold)
+func (c *Channel) StopHold(id string) (err error) {
+	err = c.client.conn.Delete("/channels/"+id+"/hold", nil, "")
 	return
 }
 
-func (c *nativeChannel) Mute(id string, dir string) (err error) {
+// Mute mutes a channel in the given direction (TODO: does this return an error if already muted)
+// TODO: enumerate direction
+func (c *Channel) Mute(id string, dir string) (err error) {
 	type request struct {
 		Direction string `json:"direction,omitempty"`
 	}
 
 	req := request{dir}
-	err = Post(c.conn, "/channels/"+id+"/mute", nil, &req)
+	err = c.client.conn.Post("/channels/"+id+"/mute", nil, &req)
 	return
 }
 
-func (c *nativeChannel) Unmute(id string, dir string) (err error) {
+// Unmute unmutes a channel in the given direction (TODO: does this return an error if unmuted)
+// TODO: enumerate direction
+func (c *Channel) Unmute(id string, dir string) (err error) {
 	var req string
 	if dir != "" {
 		req = fmt.Sprintf("direction=%s", dir)
 	}
 
-	err = Delete(c.conn, "/channels/"+id+"/mute", nil, req)
+	err = c.client.conn.Delete("/channels/"+id+"/mute", nil, req)
 	return
 }
 
-func (c *nativeChannel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err error) {
+// SendDTMF sends a string of digits and symbols to the channel
+func (c *Channel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err error) {
 
 	type request struct {
 		Dtmf     string `json:"dtmf,omitempty"`
@@ -182,46 +197,54 @@ func (c *nativeChannel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) 
 
 	req.Dtmf = dtmf
 
-	err = Post(c.conn, "/channels/"+id+"/dtmf", nil, &req)
+	err = c.client.conn.Post("/channels/"+id+"/dtmf", nil, &req)
 	return
 }
 
-func (c *nativeChannel) MOH(id string, mohClass string) (err error) {
+// MOH plays the given music on hold class to the channel TODO: does this error when already playing MOH?
+func (c *Channel) MOH(id string, mohClass string) (err error) {
 	type request struct {
 		MohClass string `json:"mohClass,omitempty"`
 	}
 	req := request{mohClass}
-	err = Post(c.conn, "/channels/"+id+"/moh", nil, &req)
+	err = c.client.conn.Post("/channels/"+id+"/moh", nil, &req)
 	return
 }
 
-func (c *nativeChannel) StopMOH(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/moh", nil, "")
+// StopMOH stops any music on hold playing on the channel (TODO: does this error when no MOH is playing?)
+func (c *Channel) StopMOH(id string) (err error) {
+	err = c.client.conn.Delete("/channels/"+id+"/moh", nil, "")
 	return
 }
 
-func (c *nativeChannel) Silence(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/silence", nil, nil)
+// Silence silences a channel (TODO: does this error when already silences)
+func (c *Channel) Silence(id string) (err error) {
+	err = c.client.conn.Post("/channels/"+id+"/silence", nil, nil)
 	return
 }
 
-func (c *nativeChannel) StopSilence(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/silence", nil, "")
+// StopSilence stops the silence on a channel (TODO: does this error when not silenced)
+func (c *Channel) StopSilence(id string) (err error) {
+	err = c.client.conn.Delete("/channels/"+id+"/silence", nil, "")
 	return
 }
 
-func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
+// Play plays the given media URI on the channel, using the playbackID as
+// the identifier of the created ARI Playback entity
+func (c *Channel) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
 	resp := make(map[string]interface{})
 	type request struct {
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, &resp, &req)
-	ph = c.playback.Get(playbackID)
+	err = c.client.conn.Post("/channels/"+id+"/play/"+playbackID, &resp, &req)
+	ph = c.client.Playback().Get(playbackID)
 	return
 }
 
-func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
+// Record records audio on the channel, using the name parameter as the name of the
+// created LiveRecording entity.
+func (c *Channel) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -246,14 +269,15 @@ func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOption
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = Post(c.conn, "/channels/"+id+"/record", &resp, &req)
+	err = c.client.conn.Post("/channels/"+id+"/record", &resp, &req)
 	if err != nil {
-		rh = c.liveRecording.Get(name)
+		rh = c.client.LiveRecording().Get(name)
 	}
 	return
 }
 
-func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
+// Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
+func (c *Channel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
 	if opts == nil {
 		opts = &ari.SnoopOptions{}
 	}
@@ -270,14 +294,15 @@ func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.S
 		App:       app,
 		AppArgs:   opts.AppArgs,
 	}
-	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, &resp, &req)
+	err = c.client.conn.Post("/channels/"+id+"/snoop/"+snoopID, &resp, &req)
 	if err == nil {
 		ch = c.Get(snoopID)
 	}
 	return
 }
 
-func (c *nativeChannel) Dial(id string, callingChannelID string, timeout time.Duration) (err error) {
+// Dial dials the given calling channel identifier
+func (c *Channel) Dial(id string, callingChannelID string, timeout time.Duration) (err error) {
 	req := struct {
 		Caller  string `json:"caller,omitempty"` // the CHANNEL ID (not CallerID) of the channel for whom this dial is being generated
 		Timeout int    `json:"timeout"`
@@ -285,11 +310,12 @@ func (c *nativeChannel) Dial(id string, callingChannelID string, timeout time.Du
 		Caller:  callingChannelID,
 		Timeout: int(timeout.Seconds()),
 	}
-	err = Post(c.conn, "/channels/"+id+"/dial", nil, &req)
+	err = c.client.conn.Post("/channels/"+id+"/dial", nil, &req)
 	return
 }
 
-func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
+// Subscribe creates a new subscription for ARI events related to this channel
+func (c *Channel) Subscribe(id string, n ...string) ari.Subscription {
 	var ns nativeSubscription
 
 	ns.events = make(chan ari.Event, 10)
@@ -298,7 +324,7 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 	channelHandle := c.Get(id)
 
 	go func() {
-		sub := c.subscriber.Subscribe(n...)
+		sub := c.client.Bus().Subscribe(n...)
 		defer sub.Cancel()
 		for {
 
@@ -317,17 +343,19 @@ func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
 	return &ns
 }
 
-type nativeChannelVariables struct {
-	conn      *Conn
+// ChannelVariables provides the ARI Variables accessor scoped to a channel identifier for the native client
+type ChannelVariables struct {
+	client    *Client
 	channelID string
 }
 
 // Variables returns the variables interface for channel
-func (c *nativeChannel) Variables(id string) ari.Variables {
-	return &nativeChannelVariables{c.conn, id}
+func (c *Channel) Variables(id string) ari.Variables {
+	return &ChannelVariables{c.client, id}
 }
 
-func (v *nativeChannelVariables) Get(key string) (string, error) {
+// Get gets the value of the given variable
+func (v *ChannelVariables) Get(key string) (string, error) {
 	type variable struct {
 		Value string `json:"value"`
 	}
@@ -335,14 +363,15 @@ func (v *nativeChannelVariables) Get(key string) (string, error) {
 	var m variable
 
 	path := "/channels/" + v.channelID + "/variable?variable=" + key
-	err := Get(v.conn, path, &m)
+	err := v.client.conn.Get(path, &m)
 	if err != nil {
 		return "", err
 	}
 	return m.Value, nil
 }
 
-func (v *nativeChannelVariables) Set(key string, value string) error {
+// Set sets the value of the given variable
+func (v *ChannelVariables) Set(key string, value string) error {
 	path := "/channels/" + v.channelID + "/variable"
 
 	type request struct {
@@ -351,7 +380,7 @@ func (v *nativeChannelVariables) Set(key string, value string) error {
 	}
 	req := request{key, value}
 
-	err := Post(v.conn, path, nil, &req)
+	err := v.client.conn.Post(path, nil, &req)
 	return err
 }
 

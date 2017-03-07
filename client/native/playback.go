@@ -3,8 +3,7 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativePlayback struct {
-	conn       *Conn
-	subscriber ari.Subscriber
+	client *Client
 }
 
 func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
@@ -15,7 +14,7 @@ func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
 func (a *nativePlayback) Data(id string) (p ari.PlaybackData, err error) {
-	err = Get(a.conn, "/playbacks/"+id, &p)
+	err = a.client.conn.Get("/playbacks/"+id, &p)
 	return
 }
 
@@ -30,14 +29,14 @@ func (a *nativePlayback) Control(id string, op string) (err error) {
 	}
 
 	req := request{op}
-	err = Post(a.conn, "/playbacks/"+id+"/control", nil, &req)
+	err = a.client.conn.Post("/playbacks/"+id+"/control", nil, &req)
 	return
 }
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
 func (a *nativePlayback) Stop(id string) (err error) {
-	err = Delete(a.conn, "/playbacks/"+id, nil, "")
+	err = a.client.conn.Delete("/playbacks/"+id, nil, "")
 	return
 }
 
@@ -50,7 +49,7 @@ func (a *nativePlayback) Subscribe(id string, n ...string) ari.Subscription {
 	playbackHandle := a.Get(id)
 
 	go func() {
-		sub := a.subscriber.Subscribe(n...)
+		sub := a.client.Bus().Subscribe(n...)
 		defer sub.Cancel()
 		for {
 

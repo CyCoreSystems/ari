@@ -1,12 +1,13 @@
 package native
 
 import (
-	"github.com/CyCoreSystems/ari"
 	"net/url"
+
+	"github.com/CyCoreSystems/ari"
 )
 
 type nativeSound struct {
-	conn *Conn
+	client *Client
 }
 
 // Get returns a managed handle to a SoundData
@@ -17,7 +18,7 @@ func (s *nativeSound) Get(name string) *ari.SoundHandle {
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
 func (s *nativeSound) Data(name string) (sd ari.SoundData, err error) {
-	err = Get(s.conn, "/sounds/"+name, &sd)
+	err = s.client.conn.Get("/sounds/"+name, &sd)
 	return sd, err
 }
 
@@ -39,7 +40,7 @@ func (s *nativeSound) List(filters map[string]string) (sh []*ari.SoundHandle, er
 		uri += "?" + v.Encode()
 	}
 
-	err = Get(s.conn, uri, &sounds)
+	err = s.client.conn.Get(uri, &sounds)
 
 	// Store whatever we received, even if incomplete or error
 	for _, i := range sounds {

@@ -76,30 +76,15 @@ func New(opts Options) (ari.Client, error) {
 		return nil, err
 	}
 
-	playback := &nativePlayback{conn, conn.Bus}
-	liveRecording := &nativeLiveRecording{conn}
-	logging := &nativeLogging{conn}
-	modules := &nativeModules{conn}
-	config := &nativeConfig{conn}
+	//playback := &nativePlayback{conn, conn.Bus}
+	//liveRecording := &nativeLiveRecording{conn}
+	//logging := &Logging{conn}
+	//modules := &Modules{conn}
+	//config := &Config{conn}
 
 	return &Client{
-		Cleanup:     conn.Close,
-		Playback:    playback,
-		Channel:     &nativeChannel{conn, conn.Bus, playback, liveRecording},
-		Bridge:      &nativeBridge{conn, conn.Bus, playback, liveRecording},
-		Asterisk:    &nativeAsterisk{conn, logging, modules, config},
-		Application: &nativeApplication{conn},
-		Mailbox:     &nativeMailbox{conn},
-		Endpoint:    &nativeEndpoint{conn},
-		DeviceState: &nativeDeviceState{conn},
-		TextMessage: &nativeTextMessage{conn},
-		Sound:       &nativeSound{conn},
-		Bus:         conn.Bus,
-		Recording: &ari.Recording{
-			Live:   liveRecording,
-			Stored: &nativeStoredRecording{conn},
-		},
-		ApplicationName: opts.Application,
+		appName: opts.Application,
+		conn:    conn,
 	}, nil
 }
 
@@ -123,65 +108,65 @@ func (c *Client) Close() {
 
 // Application returns the ARI Application accessors for this client
 func (c *Client) Application() ari.Application {
-	return &nativeApplication{c}
+	return &Application{c}
 }
 
 // Asterisk returns the ARI Asterisk accessors for this client
 func (c *Client) Asterisk() ari.Asterisk {
-	panic("not implemented")
+	return &Asterisk{c}
 }
 
 // Bridge returns the ARI Bridge accessors for this client
 func (c *Client) Bridge() ari.Bridge {
-	panic("not implemented")
+	return &Bridge{c}
 }
 
 // Bus returns the Bus accessors for this client
 func (c *Client) Bus() ari.Bus {
-	panic("not implemented")
+	return c.conn.Bus
 }
 
 // Channel returns the ARI Channel accessors for this client
 func (c *Client) Channel() ari.Channel {
-	panic("not implemented")
+	return &Channel{c}
 }
 
 // DeviceState returns the ARI DeviceState accessors for this client
 func (c *Client) DeviceState() ari.DeviceState {
-	panic("not implemented")
+	return &nativeDeviceState{c}
 }
 
 // Endpoint returns the ARI Endpoint accessors for this client
 func (c *Client) Endpoint() ari.Endpoint {
-	panic("not implemented")
+	return &nativeEndpoint{c}
 }
 
 // LiveRecording returns the ARI LiveRecording accessors for this client
 func (c *Client) LiveRecording() ari.LiveRecording {
-	panic("not implemented")
+	return &nativeLiveRecording{c}
 }
 
 // Mailbox returns the ARI Mailbox accessors for this client
 func (c *Client) Mailbox() ari.Mailbox {
-	panic("not implemented")
+	return &nativeMailbox{c}
 }
 
 // Playback returns the ARI Playback accessors for this client
 func (c *Client) Playback() ari.Playback {
-	panic("not implemented")
+	return &nativePlayback{c}
 }
 
 // Sound returns the ARI Sound accessors for this client
 func (c *Client) Sound() ari.Sound {
-	panic("not implemented")
+	return &nativeSound{c}
 }
 
 // StoredRecording returns the ARI StoredRecording accessors for this client
 func (c *Client) StoredRecording() ari.StoredRecording {
-	panic("not implemented")
+	return &nativeStoredRecording{c}
 }
 
 // TextMessage returns the ARI TextMessage accessors for this client
 func (c *Client) TextMessage() ari.TextMessage {
-	panic("not implemented")
+	return &nativeTextMessage{c}
 }

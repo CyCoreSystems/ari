@@ -3,7 +3,7 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativeStoredRecording struct {
-	conn *Conn
+	client *Client
 }
 
 func (sr *nativeStoredRecording) List() (sx []*ari.StoredRecordingHandle, err error) {
@@ -11,7 +11,7 @@ func (sr *nativeStoredRecording) List() (sx []*ari.StoredRecordingHandle, err er
 		Name string `json:"name"`
 	}
 
-	err = Get(sr.conn, "/recordings/stored", &recs)
+	err = sr.client.conn.Get("/recordings/stored", &recs)
 	for _, rec := range recs {
 		sx = append(sx, sr.Get(rec.Name))
 	}
@@ -25,7 +25,7 @@ func (sr *nativeStoredRecording) Get(name string) (s *ari.StoredRecordingHandle)
 }
 
 func (sr *nativeStoredRecording) Data(name string) (d ari.StoredRecordingData, err error) {
-	err = Get(sr.conn, "/recordings/stored/"+name, &d)
+	err = sr.client.conn.Get("/recordings/stored/"+name, &d)
 	return
 }
 
@@ -41,7 +41,7 @@ func (sr *nativeStoredRecording) Copy(name string, dest string) (h *ari.StoredRe
 
 	request.Dest = dest
 
-	err = Post(sr.conn, "/recordings/stored/"+name+"/copy", &resp, &request)
+	err = sr.client.conn.Post("/recordings/stored/"+name+"/copy", &resp, &request)
 
 	if err != nil {
 		return nil, err
@@ -51,6 +51,6 @@ func (sr *nativeStoredRecording) Copy(name string, dest string) (h *ari.StoredRe
 }
 
 func (sr *nativeStoredRecording) Delete(name string) (err error) {
-	err = Delete(sr.conn, "/recordings/stored/"+name+"", nil, "")
+	err = sr.client.conn.Delete("/recordings/stored/"+name+"", nil, "")
 	return
 }

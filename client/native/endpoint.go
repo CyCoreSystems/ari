@@ -3,7 +3,7 @@ package native
 import "github.com/CyCoreSystems/ari"
 
 type nativeEndpoint struct {
-	conn *Conn
+	client *Client
 }
 
 func (e *nativeEndpoint) Get(tech string, resource string) *ari.EndpointHandle {
@@ -15,7 +15,7 @@ func (e *nativeEndpoint) List() (ex []*ari.EndpointHandle, err error) {
 		Tech     string `json:"technology"`
 		Resource string `json:"resource"`
 	}{}
-	err = Get(e.conn, "/endpoints", &endpoints)
+	err = e.client.conn.Get("/endpoints", &endpoints)
 	for _, i := range endpoints {
 		ex = append(ex, e.Get(i.Tech, i.Resource))
 	}
@@ -24,11 +24,11 @@ func (e *nativeEndpoint) List() (ex []*ari.EndpointHandle, err error) {
 }
 
 func (e *nativeEndpoint) ListByTech(tech string) (ex []*ari.EndpointHandle, err error) {
-	err = Get(e.conn, "/endpoints/"+tech, &ex)
+	err = e.client.conn.Get("/endpoints/"+tech, &ex)
 	return
 }
 
 func (e *nativeEndpoint) Data(tech string, resource string) (ed ari.EndpointData, err error) {
-	err = Get(e.conn, "/endpoints/"+tech+"/"+resource, &ed)
+	err = e.client.conn.Get("/endpoints/"+tech+"/"+resource, &ed)
 	return
 }

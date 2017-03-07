@@ -3,7 +3,7 @@ package native
 import "net/url"
 
 type nativeTextMessage struct {
-	conn *Conn
+	client *Client
 }
 
 // Send sends a text message to an endpoint
@@ -18,7 +18,7 @@ func (t *nativeTextMessage) Send(from, tech, resource, body string, vars map[str
 		vars = map[string]string{}
 	}
 
-	err := Post(t.conn, "/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
+	err := t.client.conn.Post("/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
 	return err
 }
 
@@ -35,6 +35,6 @@ func (t *nativeTextMessage) SendByURI(from, to, body string, vars map[string]str
 		vars = map[string]string{}
 	}
 
-	err := Post(t.conn, "/endpoints/sendMessage?"+v.Encode(), nil, &vars)
+	err := t.client.conn.Post("/endpoints/sendMessage?"+v.Encode(), nil, &vars)
 	return err
 }

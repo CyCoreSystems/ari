@@ -2,20 +2,23 @@ package native
 
 import "github.com/CyCoreSystems/ari"
 
-type nativeModules struct {
-	conn *Conn
+// Modules provides the ARI modules accessors for a native client
+type Modules struct {
+	client *Client
 }
 
-func (m *nativeModules) Get(name string) *ari.ModuleHandle {
+// Get obtains a lazy handle to an asterisk module
+func (m *Modules) Get(name string) *ari.ModuleHandle {
 	return ari.NewModuleHandle(name, m)
 }
 
-func (m *nativeModules) List() (hx []*ari.ModuleHandle, err error) {
+// List lists the modules and returns lists of handles
+func (m *Modules) List() (hx []*ari.ModuleHandle, err error) {
 	var modules = []struct {
 		Name string `json:"name"`
 	}{}
 
-	err = Get(m.conn, "/asterisk/modules", &modules)
+	err = m.client.conn.Get("/asterisk/modules", &modules)
 	for _, i := range modules {
 		hx = append(hx, m.Get(i.Name))
 	}
@@ -23,22 +26,26 @@ func (m *nativeModules) List() (hx []*ari.ModuleHandle, err error) {
 	return
 }
 
-func (m *nativeModules) Load(name string) (err error) {
-	err = Post(m.conn, "/asterisk/modules/"+name, nil, nil)
+// Load loads the named asterisk module
+func (m *Modules) Load(name string) (err error) {
+	err = m.client.conn.Post("/asterisk/modules/"+name, nil, nil)
 	return
 }
 
-func (m *nativeModules) Reload(name string) (err error) {
-	err = Put(m.conn, "/asterisk/modules/"+name, nil, nil)
+// Reload reloads the named asterisk module
+func (m *Modules) Reload(name string) (err error) {
+	err = m.client.conn.Put("/asterisk/modules/"+name, nil, nil)
 	return
 }
 
-func (m *nativeModules) Unload(name string) (err error) {
-	err = Delete(m.conn, "/asterisk/modules/"+name, nil, "")
+// Unload unloads the named asterisk module
+func (m *Modules) Unload(name string) (err error) {
+	err = m.client.conn.Delete("/asterisk/modules/"+name, nil, "")
 	return
 }
 
-func (m *nativeModules) Data(name string) (md ari.ModuleData, err error) {
-	err = Get(m.conn, "/asterisk/modules/"+name, &md)
+// Data retrieves the state of the named asterisk module
+func (m *Modules) Data(name string) (md ari.ModuleData, err error) {
+	err = m.client.conn.Get("/asterisk/modules/"+name, &md)
 	return
 }

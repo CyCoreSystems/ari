@@ -7,7 +7,7 @@ import (
 )
 
 type nativeMailbox struct {
-	conn *Conn
+	client *Client
 }
 
 func (m *nativeMailbox) Get(name string) *ari.MailboxHandle {
@@ -20,7 +20,7 @@ func (m *nativeMailbox) List() (mx []*ari.MailboxHandle, err error) {
 		Name string `json:"name"`
 	}{}
 
-	err = Get(m.conn, "/mailboxes", &mailboxes)
+	err = m.client.conn.Get("/mailboxes", &mailboxes)
 	for _, i := range mailboxes {
 		mx = append(mx, m.Get(i.Name))
 	}
@@ -29,7 +29,7 @@ func (m *nativeMailbox) List() (mx []*ari.MailboxHandle, err error) {
 }
 
 func (m *nativeMailbox) Data(name string) (md ari.MailboxData, err error) {
-	err = Get(m.conn, "/mailboxes/"+name, &md)
+	err = m.client.conn.Get("/mailboxes/"+name, &md)
 	return
 }
 
@@ -39,11 +39,11 @@ func (m *nativeMailbox) Update(name string, oldMessages int, newMessages int) (e
 		"newMessages": strconv.Itoa(newMessages),
 	}
 
-	err = Put(m.conn, "/mailboxes/"+name, nil, &req)
+	err = m.client.conn.Put("/mailboxes/"+name, nil, &req)
 	return err
 }
 
 func (m *nativeMailbox) Delete(name string) (err error) {
-	err = Delete(m.conn, "/mailboxes/"+name, nil, "")
+	err = m.client.conn.Delete("/mailboxes/"+name, nil, "")
 	return
 }

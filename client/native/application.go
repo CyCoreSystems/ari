@@ -33,10 +33,9 @@ func (a *Application) List() (ax []*ari.ApplicationHandle, err error) {
 
 // Data returns the details of a given ARI application
 // Equivalent to GET /applications/{applicationName}
-func (a *Application) Data(name string) (d *ari.ApplicationData, err error) {
-	var d ari.ApplicationData
+func (a *Application) Data(name string) (d ari.ApplicationData, err error) {
 	err = a.client.conn.Get("/applications/"+name, &d)
-	return &d, err
+	return d, err
 }
 
 // Subscribe subscribes the given application to an event source
