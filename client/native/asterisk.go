@@ -1,9 +1,8 @@
 package native
 
 import (
-	"errors"
-
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
 var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
@@ -38,15 +37,15 @@ func (a *Asterisk) Config() ari.Config {
 
 // Info returns various data about the Asterisk system
 // Equivalent to GET /asterisk/info
-func (a *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
-	var m ari.AsteriskInfo
+func (a *Asterisk) Info(only string) (m *ari.AsteriskInfo, err error) {
+	m = &ari.AsteriskInfo{}
 	path := "/asterisk/info"
 
 	// If we are passed an 'only' parameter
 	// pass it on as the 'only' querystring parameter
 	if only != "" {
 		path += "?only=" + only
-		return &m, errOnlyUnsupported
+		return m, errOnlyUnsupported
 	}
 	// TODO: handle "only" parameter
 	// the problem is that responses with "only" do not
@@ -55,13 +54,16 @@ func (a *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	// That means we should probably break this
 	// method into multiple submethods
 
-	err := a.client.conn.Get(path, &m)
-	return &m, err
+	err = a.client.conn.Get(path, &m)
+	err = errors.Wrap(err, "Error getting asterisk info")
+	return m, err
 }
 
 // ReloadModule tells asterisk to load the given module
-func (a *Asterisk) ReloadModule(name string) error {
-	return a.Modules().Reload(name)
+func (a *Asterisk) ReloadModule(name string) (err error) {
+	err = a.Modules().Reload(name)
+	err = errors.Wrapf(err, "Error reloading asterisk module '%v'", name)
+	return
 }
 
 // AsteriskVariables provides the ARI Variables accessors for server-level variables
@@ -76,7 +78,7 @@ func (a *Asterisk) Variables() ari.Variables {
 
 // Get returns the value of the given global variable
 // Equivalent to GET /asterisk/variable
-func (a *AsteriskVariables) Get(key string) (string, error) {
+func (a *AsteriskVariables) Get(key string) (val string, err error) {
 	type variable struct {
 		Value string `json:"value"`
 	}
@@ -84,16 +86,19 @@ func (a *AsteriskVariables) Get(key string) (string, error) {
 	var m variable
 
 	path := "/asterisk/variable?variable=" + key
-	err := a.client.conn.Get(path, &m)
+
+	err = a.client.conn.Get(path, &m)
 	if err != nil {
-		return "", err
+		err = errors.Wrapf(err, "Error getting asterisk variable '%v'", key)
+		return
 	}
-	return m.Value, nil
+	val = m.Value
+	return
 }
 
 // Set sets a global channel variable
 // (Equivalent to POST /asterisk/variable)
-func (a *AsteriskVariables) Set(key string, value string) error {
+func (a *AsteriskVariables) Set(key string, value string) (err error) {
 	path := "/asterisk/variable"
 
 	type request struct {
@@ -102,6 +107,7 @@ func (a *AsteriskVariables) Set(key string, value string) error {
 	}
 	req := request{key, value}
 
-	err := a.client.conn.Post(path, nil, &req)
+	err = a.client.conn.Post(path, nil, &req)
+	err = errors.Wrapf(err, "Error setting asterisk variable '%v'", key) //TODO: include value?
 	return err
 }

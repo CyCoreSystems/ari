@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
@@ -73,6 +74,7 @@ func New(opts Options) (ari.Client, error) {
 	// Connect to Asterisk (websocket)
 	if err := conn.Listen(); err != nil {
 		conn.Close()
+		err = errors.Wrap(err, "Failed to start websocket listener")
 		return nil, err
 	}
 

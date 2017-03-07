@@ -2,7 +2,6 @@ package native
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/stdbus"
+	"github.com/pkg/errors"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
@@ -70,7 +70,7 @@ func (c *Conn) Listen() (err error) {
 		c.WSConfig, err = websocket.NewConfig(wsurl, "http://localhost/")
 		if err != nil {
 			Logger.Error("Failed to construct a valid websocket config:", err.Error())
-			return fmt.Errorf("Failed to construct websocket config: %s", err.Error())
+			return errors.Wrap(err, "Failed to construct websocket config")
 		}
 
 		// Add the authorization header
@@ -98,7 +98,12 @@ func (c *Conn) Listen() (err error) {
 	select {
 	case <-c.ReadyChan:
 	case <-c.ctx.Done():
-		return c.ctx.Err()
+		err = c.ctx.Err()
+		if err == nil {
+			err = errors.New("Context cancelled before websocket start")
+		}
+		err = errors.Wrap(err, "Failed to start websocket listener")
+		return err
 	}
 
 	return nil
@@ -163,6 +168,7 @@ func (c *Conn) wsRead(ws *websocket.Conn) (err error) {
 		err = AsteriskCodec.Receive(ws, &msg)
 		if err != nil {
 			Logger.Error("Error decoding websocket message", "error", err)
+			err = errors.Wrap(err, "Error decoding websocket message")
 			return
 		}
 

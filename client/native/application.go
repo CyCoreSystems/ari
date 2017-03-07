@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
 // Application is a native implementation of ARI's Application functions
@@ -28,6 +29,7 @@ func (a *Application) List() (ax []*ari.ApplicationHandle, err error) {
 		ax = append(ax, a.Get(i.Name))
 	}
 
+	err = errors.Wrap(err, "Error listing applications")
 	return
 }
 
@@ -51,7 +53,9 @@ func (a *Application) Subscribe(name string, eventSource string) (err error) {
 	}{
 		EventSource: eventSource,
 	}
-	return a.client.conn.Post("/applications/"+name+"/subscription", nil, &req)
+	err = a.client.conn.Post("/applications/"+name+"/subscription", nil, &req)
+	err = errors.Wrapf(err, "Error subscribing application '%v' for event source '%v'", name, eventSource)
+	return
 }
 
 // Unsubscribe unsubscribes (removes a subscription to) a given
@@ -59,5 +63,7 @@ func (a *Application) Subscribe(name string, eventSource string) (err error) {
 // Equivalent to DELETE /applications/{applicationName}/subscription
 func (a *Application) Unsubscribe(name string, eventSource string) (err error) {
 	// TODO: handle Error Responses individually
-	return a.client.conn.Delete("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
+	err = a.client.conn.Delete("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
+	err = errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
+	return
 }
