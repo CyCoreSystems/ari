@@ -8,12 +8,79 @@ import (
 
 var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
 
-type nativeAsterisk struct {
+// Asterisk provides the ARI Asterisk accessors for a native client
+type Asterisk struct {
+	client *Client
+}
+
+// Info returns the intformation about the connected Asterisk system
+func (a *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
+	panic("not implemented")
+}
+
+// Variables provides the ARI Asterisk Variables accessors for a native client
+func (a *Asterisk) Variables() ari.Variables {
+	return &Variables{a.client}
+}
+
+// Variables provides the ARI Asterisk Variables accessors for a native client
+type Variables struct {
+	client *Client
+}
+
+// Get retrieves a global variable
+func (v *Variables) Get(name string) (string, error) {
+	var resp struct {
+		Value string `json:"value"`
+	}
+
+	path := "/asterisk/variable?variable=" + name
+	err := v.client.conn.Get(path, &resp)
+	return resp.Value, nil
+}
+
+// Set sets a global variable
+func (v *Variables) Set(name, val string) error {
+	path := "/asterisk/variable"
+
+	req := struct {
+		Variable string `json:"variable"`
+		Value    string `json:"value,omitempty"`
+	}{
+		Variable: name,
+		Value:    value,
+	}
+
+	return v.client.conn.Post(path, nil, &req)
+}
+
+// Logging provides the ARI Asterisk Logging accessors for a native client
+func (a *Asterisk) Logging() ari.Logging {
+	return &Logging{a.client}
+}
+
+// Modules provides the ARI Asterisk Modules accessors for a native client
+func (a *Asterisk) Modules() ari.Modules {
+	return &Modules{a.client}
+}
+
+// Config provides the ARI Asterisk Config accessors for a native client
+func (a *Asterisk) Config() ari.Config {
+	return &Config{a.client}
+}
+
+// ReloadModule requests a particular Asterisk module to be reloaded
+func (a *Asterisk) ReloadModule(name string) error {
+	panic("not implemented")
+}
+
+/*
 	conn    *Conn
 	logging ari.Logging
 	modules ari.Modules
 	config  ari.Config
 }
+*/
 
 // Config returns the config resource
 func (a *nativeAsterisk) Config() ari.Config {

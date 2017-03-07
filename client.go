@@ -3,35 +3,21 @@ package ari
 // Client represents a set of operations to interact
 // with an Asterisk ARI server.  It is agnostic to transport
 // and implementation.
-type Client struct {
-	// Namespaced Interfaces
-	Application Application
-	Asterisk    Asterisk
-	Channel     Channel
-	Bridge      Bridge
-	Playback    Playback
-	Mailbox     Mailbox
-	Endpoint    Endpoint
-	DeviceState DeviceState
-	TextMessage TextMessage
-	Sound       Sound
-	Recording   *Recording
-	Bus         Bus
+type Client interface {
+	ApplicationName() string
+	Close()
 
-	// TODO: other interfaces
-
-	Cleanup func() error
-
-	// Optional application details
-	ApplicationName      string
-	ApplicationArguments []string
-}
-
-// Close closes the client and calls any implementation specific cleanup code
-func (cl *Client) Close() error {
-	if cl.Cleanup != nil {
-		return cl.Cleanup()
-	}
-	cl.Bus.Close()
-	return nil
+	Application() Application
+	Asterisk() Asterisk
+	Bridge() Bridge
+	Bus() Bus
+	Channel() Channel
+	DeviceState() DeviceState
+	Endpoint() Endpoint
+	LiveRecording() LiveRecording
+	Mailbox() Mailbox
+	Playback() Playback
+	Sound() Sound
+	StoredRecording() StoredRecording
+	TextMessage() TextMessage
 }

@@ -34,7 +34,7 @@ type Options struct {
 }
 
 // New creates a new ari.Client connected to a native ARI server
-func New(opts Options) (*ari.Client, error) {
+func New(opts Options) (ari.Client, error) {
 
 	// Make sure we have an Application defined
 	if opts.Application == "" {
@@ -82,7 +82,7 @@ func New(opts Options) (*ari.Client, error) {
 	modules := &nativeModules{conn}
 	config := &nativeConfig{conn}
 
-	return &ari.Client{
+	return &Client{
 		Cleanup:     conn.Close,
 		Playback:    playback,
 		Channel:     &nativeChannel{conn, conn.Bus, playback, liveRecording},
@@ -101,4 +101,87 @@ func New(opts Options) (*ari.Client, error) {
 		},
 		ApplicationName: opts.Application,
 	}, nil
+}
+
+// Client describes a native ARI client, which connects directly to an Asterisk HTTP-based ARI service.
+type Client struct {
+	appName string
+
+	conn *Conn
+}
+
+// ApplicationName returns the client's ARI Application name
+func (c *Client) ApplicationName() string {
+	return c.appName
+}
+
+// Close shuts down the ARI client
+func (c *Client) Close() {
+	c.Bus().Close()
+	c.conn.Close()
+}
+
+// Application returns the ARI Application accessors for this client
+func (c *Client) Application() ari.Application {
+	return &nativeApplication{c}
+}
+
+// Asterisk returns the ARI Asterisk accessors for this client
+func (c *Client) Asterisk() ari.Asterisk {
+	panic("not implemented")
+}
+
+// Bridge returns the ARI Bridge accessors for this client
+func (c *Client) Bridge() ari.Bridge {
+	panic("not implemented")
+}
+
+// Bus returns the Bus accessors for this client
+func (c *Client) Bus() ari.Bus {
+	panic("not implemented")
+}
+
+// Channel returns the ARI Channel accessors for this client
+func (c *Client) Channel() ari.Channel {
+	panic("not implemented")
+}
+
+// DeviceState returns the ARI DeviceState accessors for this client
+func (c *Client) DeviceState() ari.DeviceState {
+	panic("not implemented")
+}
+
+// Endpoint returns the ARI Endpoint accessors for this client
+func (c *Client) Endpoint() ari.Endpoint {
+	panic("not implemented")
+}
+
+// LiveRecording returns the ARI LiveRecording accessors for this client
+func (c *Client) LiveRecording() ari.LiveRecording {
+	panic("not implemented")
+}
+
+// Mailbox returns the ARI Mailbox accessors for this client
+func (c *Client) Mailbox() ari.Mailbox {
+	panic("not implemented")
+}
+
+// Playback returns the ARI Playback accessors for this client
+func (c *Client) Playback() ari.Playback {
+	panic("not implemented")
+}
+
+// Sound returns the ARI Sound accessors for this client
+func (c *Client) Sound() ari.Sound {
+	panic("not implemented")
+}
+
+// StoredRecording returns the ARI StoredRecording accessors for this client
+func (c *Client) StoredRecording() ari.StoredRecording {
+	panic("not implemented")
+}
+
+// TextMessage returns the ARI TextMessage accessors for this client
+func (c *Client) TextMessage() ari.TextMessage {
+	panic("not implemented")
 }
