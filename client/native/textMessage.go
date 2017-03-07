@@ -2,12 +2,13 @@ package native
 
 import "net/url"
 
-type nativeTextMessage struct {
+// TextMessage provides the ARI TextMessage accessors for the native client
+type TextMessage struct {
 	client *Client
 }
 
 // Send sends a text message to an endpoint
-func (t *nativeTextMessage) Send(from, tech, resource, body string, vars map[string]string) error {
+func (t *TextMessage) Send(from, tech, resource, body string, vars map[string]string) error {
 	// Construct querystring values
 	v := url.Values{}
 	v.Set("from", from)
@@ -23,7 +24,7 @@ func (t *nativeTextMessage) Send(from, tech, resource, body string, vars map[str
 }
 
 // SendByURI sends a text message to an endpoint by free-form URI (rather than tech/resource)
-func (t *nativeTextMessage) SendByURI(from, to, body string, vars map[string]string) error {
+func (t *TextMessage) SendByURI(from, to, body string, vars map[string]string) error {
 	// Construct querystring values
 	v := url.Values{}
 	v.Set("from", from)

@@ -76,12 +76,6 @@ func New(opts Options) (ari.Client, error) {
 		return nil, err
 	}
 
-	//playback := &nativePlayback{conn, conn.Bus}
-	//liveRecording := &nativeLiveRecording{conn}
-	//logging := &Logging{conn}
-	//modules := &Modules{conn}
-	//config := &Config{conn}
-
 	return &Client{
 		appName: opts.Application,
 		conn:    conn,
@@ -133,40 +127,40 @@ func (c *Client) Channel() ari.Channel {
 
 // DeviceState returns the ARI DeviceState accessors for this client
 func (c *Client) DeviceState() ari.DeviceState {
-	return &nativeDeviceState{c}
+	return &DeviceState{c}
 }
 
 // Endpoint returns the ARI Endpoint accessors for this client
 func (c *Client) Endpoint() ari.Endpoint {
-	return &nativeEndpoint{c}
+	return &Endpoint{c}
 }
 
 // LiveRecording returns the ARI LiveRecording accessors for this client
 func (c *Client) LiveRecording() ari.LiveRecording {
-	return &nativeLiveRecording{c}
+	return &LiveRecording{c}
 }
 
 // Mailbox returns the ARI Mailbox accessors for this client
 func (c *Client) Mailbox() ari.Mailbox {
-	return &nativeMailbox{c}
+	return &Mailbox{c}
 }
 
 // Playback returns the ARI Playback accessors for this client
 func (c *Client) Playback() ari.Playback {
-	return &nativePlayback{c}
+	return &Playback{c}
 }
 
 // Sound returns the ARI Sound accessors for this client
 func (c *Client) Sound() ari.Sound {
-	return &nativeSound{c}
+	return &Sound{c}
 }
 
 // StoredRecording returns the ARI StoredRecording accessors for this client
 func (c *Client) StoredRecording() ari.StoredRecording {
-	return &nativeStoredRecording{c}
+	return &StoredRecording{c}
 }
 
 // TextMessage returns the ARI TextMessage accessors for this client
 func (c *Client) TextMessage() ari.TextMessage {
-	return &nativeTextMessage{c}
+	return &TextMessage{c}
 }

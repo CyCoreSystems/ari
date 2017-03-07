@@ -2,15 +2,18 @@ package native
 
 import "github.com/CyCoreSystems/ari"
 
-type nativeEndpoint struct {
+// Endpoint provides the ARI Endpoint accessors for the native client
+type Endpoint struct {
 	client *Client
 }
 
-func (e *nativeEndpoint) Get(tech string, resource string) *ari.EndpointHandle {
+// Get gets a lazy handle for the endpoint entity
+func (e *Endpoint) Get(tech string, resource string) *ari.EndpointHandle {
 	return ari.NewEndpointHandle(tech, resource, e)
 }
 
-func (e *nativeEndpoint) List() (ex []*ari.EndpointHandle, err error) {
+// List lists the current endpoints and returns a list of handles
+func (e *Endpoint) List() (ex []*ari.EndpointHandle, err error) {
 	endpoints := []struct {
 		Tech     string `json:"technology"`
 		Resource string `json:"resource"`
@@ -23,12 +26,15 @@ func (e *nativeEndpoint) List() (ex []*ari.EndpointHandle, err error) {
 	return
 }
 
-func (e *nativeEndpoint) ListByTech(tech string) (ex []*ari.EndpointHandle, err error) {
+// ListByTech lists the current endpoints with the given technology and
+// returns a list of handles.
+func (e *Endpoint) ListByTech(tech string) (ex []*ari.EndpointHandle, err error) {
 	err = e.client.conn.Get("/endpoints/"+tech, &ex)
 	return
 }
 
-func (e *nativeEndpoint) Data(tech string, resource string) (ed ari.EndpointData, err error) {
+// Data retrieves the current state of the endpoint
+func (e *Endpoint) Data(tech string, resource string) (ed ari.EndpointData, err error) {
 	err = e.client.conn.Get("/endpoints/"+tech+"/"+resource, &ed)
 	return
 }

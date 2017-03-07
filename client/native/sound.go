@@ -6,18 +6,19 @@ import (
 	"github.com/CyCoreSystems/ari"
 )
 
-type nativeSound struct {
+// Sound provides the ARI Sound accessors for the native client
+type Sound struct {
 	client *Client
 }
 
 // Get returns a managed handle to a SoundData
-func (s *nativeSound) Get(name string) *ari.SoundHandle {
+func (s *Sound) Get(name string) *ari.SoundHandle {
 	return ari.NewSoundHandle(name, s)
 }
 
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
-func (s *nativeSound) Data(name string) (sd ari.SoundData, err error) {
+func (s *Sound) Data(name string) (sd ari.SoundData, err error) {
 	err = s.client.conn.Get("/sounds/"+name, &sd)
 	return sd, err
 }
@@ -25,7 +26,7 @@ func (s *nativeSound) Data(name string) (sd ari.SoundData, err error) {
 // List returns available sounds limited by the provided filters.
 // valid filters are "lang", "format", and nil (no filter)
 // An empty filter returns all available sounds
-func (s *nativeSound) List(filters map[string]string) (sh []*ari.SoundHandle, err error) {
+func (s *Sound) List(filters map[string]string) (sh []*ari.SoundHandle, err error) {
 
 	var sounds = []struct {
 		Name string `json:"name"`

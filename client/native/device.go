@@ -2,15 +2,18 @@ package native
 
 import "github.com/CyCoreSystems/ari"
 
-type nativeDeviceState struct {
+// DeviceState provides the ARI DeviceState accessors for the native client
+type DeviceState struct {
 	client *Client
 }
 
-func (ds *nativeDeviceState) Get(name string) *ari.DeviceStateHandle {
+// Get returns the lazy handle for the given device name
+func (ds *DeviceState) Get(name string) *ari.DeviceStateHandle {
 	return ari.NewDeviceStateHandle(name, ds)
 }
 
-func (ds *nativeDeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
+// List lists the current devices and returns a list of handles
+func (ds *DeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
 
 	type device struct {
 		Name string `json:"name"`
@@ -25,7 +28,8 @@ func (ds *nativeDeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
 	return
 }
 
-func (ds *nativeDeviceState) Data(name string) (d ari.DeviceStateData, err error) {
+// Data retrieves the current state of the device
+func (ds *DeviceState) Data(name string) (d ari.DeviceStateData, err error) {
 	device := struct {
 		State string `json:"state"`
 	}{}
@@ -34,7 +38,8 @@ func (ds *nativeDeviceState) Data(name string) (d ari.DeviceStateData, err error
 	return
 }
 
-func (ds *nativeDeviceState) Update(name string, state string) (err error) {
+// Update updates the state of the device
+func (ds *DeviceState) Update(name string, state string) (err error) {
 	req := map[string]string{
 		"deviceState": state,
 	}
@@ -42,7 +47,8 @@ func (ds *nativeDeviceState) Update(name string, state string) (err error) {
 	return
 }
 
-func (ds *nativeDeviceState) Delete(name string) (err error) {
+// Delete deletes the device
+func (ds *DeviceState) Delete(name string) (err error) {
 	err = ds.client.conn.Delete("/deviceStates/"+name, nil, "")
 	return
 }

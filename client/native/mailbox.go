@@ -6,15 +6,18 @@ import (
 	"github.com/CyCoreSystems/ari"
 )
 
-type nativeMailbox struct {
+// Mailbox provides the ARI Mailbox accessors for the native client
+type Mailbox struct {
 	client *Client
 }
 
-func (m *nativeMailbox) Get(name string) *ari.MailboxHandle {
+// Get gets a lazy handle for the mailbox name
+func (m *Mailbox) Get(name string) *ari.MailboxHandle {
 	return ari.NewMailboxHandle(name, m)
 }
 
-func (m *nativeMailbox) List() (mx []*ari.MailboxHandle, err error) {
+// List lists the mailboxes and returns a list of handles
+func (m *Mailbox) List() (mx []*ari.MailboxHandle, err error) {
 
 	mailboxes := []struct {
 		Name string `json:"name"`
@@ -28,12 +31,14 @@ func (m *nativeMailbox) List() (mx []*ari.MailboxHandle, err error) {
 	return
 }
 
-func (m *nativeMailbox) Data(name string) (md ari.MailboxData, err error) {
+// Data retrieves the state of the given mailbox
+func (m *Mailbox) Data(name string) (md ari.MailboxData, err error) {
 	err = m.client.conn.Get("/mailboxes/"+name, &md)
 	return
 }
 
-func (m *nativeMailbox) Update(name string, oldMessages int, newMessages int) (err error) {
+// Update updates the new and old message counts of the mailbox
+func (m *Mailbox) Update(name string, oldMessages int, newMessages int) (err error) {
 	req := map[string]string{
 		"oldMessages": strconv.Itoa(oldMessages),
 		"newMessages": strconv.Itoa(newMessages),
@@ -43,7 +48,8 @@ func (m *nativeMailbox) Update(name string, oldMessages int, newMessages int) (e
 	return err
 }
 
-func (m *nativeMailbox) Delete(name string) (err error) {
+// Delete deletes the mailbox
+func (m *Mailbox) Delete(name string) (err error) {
 	err = m.client.conn.Delete("/mailboxes/"+name, nil, "")
 	return
 }
