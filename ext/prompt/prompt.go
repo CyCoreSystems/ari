@@ -6,6 +6,7 @@ import (
 	"github.com/CyCoreSystems/ari/ext/audio"
 
 	"github.com/CyCoreSystems/ari"
+	//"github.com/CyCoreSystems/ari/client/native"
 
 	"golang.org/x/net/context"
 )
@@ -54,6 +55,10 @@ type Options struct {
 	SoundHash string // pound or hash
 }
 
+type Object struct {
+	channel ari.ChannelHandle
+}
+
 var (
 	// DefaultFirstDigitTimeout is the maximum time to wait for the
 	// first digit after a prompt, if not otherwise set.
@@ -84,7 +89,8 @@ type stateObject struct {
 
 // Prompt plays the given sound and waits for user input.
 func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string) (ret *Result, err error) {
-
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	//snds = sounds
 
 	// Handle default options
@@ -122,6 +128,15 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		snds:    sounds,
 		retData: &Result{},
 	}
+
+	h := ari.Channel.Get("ChannelDtmfReceived")
+
+	o := Object{
+		channel: h,
+	}
+
+	go o.monitor(ctx, cancel)
+
 	st := s.playPrompt
 
 	for st != nil && err == nil {
@@ -146,40 +161,6 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 
 	lockCh := make(chan struct{})
 
-	go func() {
-		defer close(lockCh)
-		defer playCancel()
-
-		for {
-			select {
-			case _, ok := <-s.hSub.Events():
-				if ok {
-					s.retData.Status = Hangup
-					return
-				}
-			case <-ctx.Done():
-				s.retData.Status = Canceled
-				return
-			case <-doneCh:
-				return
-			case e := <-s.dSub.Events():
-				dtmf, ok := e.(*ari.ChannelDtmfReceived)
-				if !ok {
-					continue
-				}
-				s.retData.Data += dtmf.Digit
-				Logger.Debug("DTMF received", "digits", s.retData.Data)
-				match, res := opts.MatchFunc(s.retData.Data)
-				s.retData.Data = match
-				if res > 0 {
-					s.retData.Status = res
-					playCancel() // cancel playback
-					return
-				}
-			}
-		}
-	}()
-
 	q := audio.NewQueue()
 	q.Add(s.snds...)
 	//var st audio.Status
@@ -199,10 +180,6 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 		return nil, err
 	}
 
-	if s.retData.Status > Incomplete {
-		return nil, err
-	}
-
 	// Stop and reset the overall timer for Prompt
 	if s.oTimer.Stop() {
 		select {
@@ -213,6 +190,45 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 	s.oTimer.Reset(opts.OverallTimeout)
 
 	return s.waitDigit, err
+}
+
+func (o *Object) monitor(ctx context.Context, cancel context.CancelFunc) {
+	defer cancel()
+
+	dtmfSub, err := o.channel.Subscribe(ari.EventTypes.ChannelDtmfReceived)
+	if err != nil {
+		return
+	}
+	defer dtmfSub.Cancel()
+
+	for {
+		select {
+		case _, ok := <-s.hSub.Events():
+			if ok {
+				s.retData.Status = Hangup
+				return
+			}
+		case <-ctx.Done():
+			s.retData.Status = Canceled
+			return
+		case <-doneCh:
+			return
+		case e := <-s.dSub.Events():
+			dtmf, ok := e.(*ari.ChannelDtmfReceived)
+			if !ok {
+				continue
+			}
+			s.retData.Data += dtmf.Digit
+			Logger.Debug("DTMF received", "digits", s.retData.Data)
+			match, res := opts.MatchFunc(s.retData.Data)
+			s.retData.Data = match
+			if res > 0 {
+				s.retData.Status = res
+				playCancel() // cancel playback
+				return
+			}
+		}
+	}
 }
 
 func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
