@@ -56,7 +56,7 @@ type Options struct {
 }
 
 type Object struct {
-	channel ari.ChannelHandle
+	player audio.Player
 }
 
 var (
@@ -129,13 +129,7 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		retData: &Result{},
 	}
 
-	h := ari.Channel.Get("ChannelDtmfReceived")
-
-	o := Object{
-		channel: h,
-	}
-
-	go o.monitor(ctx, cancel)
+	go s.monitor(ctx, cancel)
 
 	st := s.playPrompt
 
@@ -155,11 +149,6 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 	opts := s.options
 
 	defer playCancel()
-
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	lockCh := make(chan struct{})
 
 	q := audio.NewQueue()
 	q.Add(s.snds...)
@@ -192,14 +181,11 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 	return s.waitDigit, err
 }
 
-func (o *Object) monitor(ctx context.Context, cancel context.CancelFunc) {
+func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 	defer cancel()
 
-	dtmfSub, err := o.channel.Subscribe(ari.EventTypes.ChannelDtmfReceived)
-	if err != nil {
-		return
-	}
-	defer dtmfSub.Cancel()
+	doneCh := make(chan struct{})
+	defer close(doneCh)
 
 	for {
 		select {
@@ -220,11 +206,11 @@ func (o *Object) monitor(ctx context.Context, cancel context.CancelFunc) {
 			}
 			s.retData.Data += dtmf.Digit
 			Logger.Debug("DTMF received", "digits", s.retData.Data)
-			match, res := opts.MatchFunc(s.retData.Data)
+			match, res := s.options.MatchFunc(s.retData.Data)
 			s.retData.Data = match
 			if res > 0 {
 				s.retData.Status = res
-				playCancel() // cancel playback
+				cancel() // cancel playback
 				return
 			}
 		}
