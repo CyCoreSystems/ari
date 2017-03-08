@@ -55,10 +55,6 @@ type Options struct {
 	SoundHash string // pound or hash
 }
 
-type Object struct {
-	player audio.Player
-}
-
 var (
 	// DefaultFirstDigitTimeout is the maximum time to wait for the
 	// first digit after a prompt, if not otherwise set.
