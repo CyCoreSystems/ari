@@ -79,6 +79,10 @@ type stateObject struct {
 	player  audio.Player
 	snds    []string
 	retData *Result
+
+	// digitReceived is a channel on which an event is sent every time a digit is received by the monitor.
+	// It is used by the state functions to step to the next state, where DTMF receipt does so.
+	digitReceived chan struct{}
 }
 
 // Prompt plays the given sound and waits for user input.
@@ -108,13 +112,14 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 	}
 
 	s := &stateObject{
-		dSub:    p.Subscribe(ari.Events.ChannelDtmfReceived),
-		hSub:    p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
-		oTimer:  time.NewTimer(opts.OverallTimeout),
-		options: opts,
-		player:  p,
-		snds:    sounds,
-		retData: &Result{},
+		dSub:          p.Subscribe(ari.Events.ChannelDtmfReceived),
+		hSub:          p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
+		oTimer:        time.NewTimer(opts.OverallTimeout),
+		options:       opts,
+		player:        p,
+		snds:          sounds,
+		retData:       &Result{},
+		digitReceived: make(chan struct{}),
 	}
 
 	// Start with a 'Canceled' status, in order to catch early context cancellations
@@ -198,6 +203,7 @@ func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 			s.retData.Data += dtmf.Digit
 			Logger.Debug("DTMF received", "digit", dtmf.Digit, "digits", s.retData.Data)
 			s.retData.Data, s.retData.Status = s.options.MatchFunc(s.retData.Data + dtmf.Digit)
+			s.digitReceived <- struct{}{}
 			if s.retData.Status > 0 {
 				return
 			}
@@ -226,6 +232,8 @@ func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
 	case <-s.oTimer.C:
 		s.retData.Status = Timeout
 		return nil, nil
+	case <-s.digitReceived:
+		return s.waitDigit, nil
 	}
 
 	return s.waitDigit, nil
