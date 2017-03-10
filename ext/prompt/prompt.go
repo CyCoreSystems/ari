@@ -67,8 +67,6 @@ var (
 	// DefaultOverallTimeout is the maximum time to wait for a response
 	// regardless of the number of received digits or pattern matching.
 	DefaultOverallTimeout = 3 * time.Minute
-
-	LastTimeout = 0 * time.Second
 )
 
 type stateFn func(ctx context.Context) (stateFn, error)
@@ -109,12 +107,6 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		opts.SoundHash = "hash"
 	}
 
-	LastTimeout = 0 * time.Second
-	/*if len(sounds) == 0 {
-		LastTimeout = opts.FirstDigitTimeout
-		st, err = waitDigit(ctx, opts.FirstDigitTimeout, opts, ret)
-	}
-	*/
 	s := &stateObject{
 		dSub:    p.Subscribe(ari.Events.ChannelDtmfReceived),
 		hSub:    p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
@@ -125,16 +117,24 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		retData: &Result{},
 	}
 
+	// Start with a 'Canceled' status, in order to catch early context cancellations
+	s.retData.Status = Canceled
+
+	// Monitor the DTMF input
 	go s.monitor(ctx, cancel)
 
 	st := s.playPrompt
 
-	for st != nil && err == nil {
+	for st != nil {
 		if err = ctx.Err(); err != nil {
 			break
 		}
-		st, err = st(ctx)
 
+		st, err = st(ctx)
+		if err != nil {
+			Logger.Error("failure in prompt state machine", "error", err)
+			break
+		}
 	}
 
 	return s.retData, err
@@ -180,9 +180,6 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 	defer cancel()
 
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
 	for {
 		select {
 		case _, ok := <-s.hSub.Events():
@@ -193,20 +190,15 @@ func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 		case <-ctx.Done():
 			s.retData.Status = Canceled
 			return
-		case <-doneCh:
-			return
 		case e := <-s.dSub.Events():
 			dtmf, ok := e.(*ari.ChannelDtmfReceived)
 			if !ok {
 				continue
 			}
 			s.retData.Data += dtmf.Digit
-			Logger.Debug("DTMF received", "digits", s.retData.Data)
-			match, res := s.options.MatchFunc(s.retData.Data)
-			s.retData.Data = match
-			if res > 0 {
-				s.retData.Status = res
-				cancel() // cancel playback
+			Logger.Debug("DTMF received", "digit", dtmf.Digit, "digits", s.retData.Data)
+			s.retData.Data, s.retData.Status = s.options.MatchFunc(s.retData.Data + dtmf.Digit)
+			if s.retData.Status > 0 {
 				return
 			}
 		}
@@ -214,9 +206,7 @@ func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 }
 
 func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
-	//opts := s.options
 	lTimeout := s.options.InterDigitTimeout
-
 	if s.retData.Data == "" {
 		lTimeout = s.options.FirstDigitTimeout
 	}
@@ -236,15 +226,6 @@ func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
 	case <-s.oTimer.C:
 		s.retData.Status = Timeout
 		return nil, nil
-	case e := <-s.dSub.Events():
-		s.retData.Data += e.(*ari.ChannelDtmfReceived).Digit
-		Logger.Debug("DTMF received", "digits", s.retData.Data)
-		match, res := s.options.MatchFunc(s.retData.Data)
-		s.retData.Data = match
-		if res > 0 {
-			s.retData.Status = res
-			return nil, nil
-		}
 	}
 
 	return s.waitDigit, nil
