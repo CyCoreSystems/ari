@@ -1,19 +1,146 @@
 package prompt
 
 import (
-	"errors"
-	"testing"
-	"time"
-
+	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/mock"
 	"github.com/golang/mock/gomock"
-
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/ext/audio"
-	"github.com/CyCoreSystems/ari/internal/testutils"
 	"golang.org/x/net/context"
+	//"github.com/CyCoreSystems/ari/ext/audio"
+
+	//"github.com/golang/mock/gomock"
+	"testing"
+	"time"
 )
 
+// TestWaitDigitFirstDigitTimeout tests the waitDigit function's first-digit timeout.
+func TestWaitDigitFirstDigitTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 50 * time.Millisecond,
+		InterDigitTimeout: 100 * time.Millisecond,
+		OverallTimeout:    200 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		retData: &Result{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout", s.retData.Status)
+		return
+	}
+
+}
+
+// TestWaitDigitInterDigitTimeout tests the waitDigit function's intermediate digit timeout
+func TestWaitDigitInterDigitTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 50 * time.Millisecond,
+		OverallTimeout:    200 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		retData: &Result{},
+	}
+	s.retData.Data = "1"
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout:", s.retData.Status)
+		return
+	}
+}
+
+// TestWaitDigitOverallTimeout tests the waitDigit function's overall timeout
+func TestWaitDigitOverallTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 200 * time.Millisecond,
+		OverallTimeout:    50 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		retData: &Result{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout", s.retData.Status)
+		return
+	}
+}
+
+// TestWaitDigitReceived tests the waitDigit function's digitReceived loop case
+func TestWaitDigitReceived(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 200 * time.Millisecond,
+		OverallTimeout:    300 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		oTimer:        time.NewTimer(opts.OverallTimeout),
+		options:       opts,
+		retData:       &Result{},
+		digitReceived: make(chan struct{}, 1),
+	}
+
+	s.digitReceived <- struct{}{}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	f, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if f == nil {
+		t.Error("waitDigit did not loop", s.retData.Status)
+		return
+	}
+}
+
+/*
 func TestPromptPlayError(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
 
@@ -47,11 +174,13 @@ func TestPromptPlayError(t *testing.T) {
 	hangup.EXPECT().Events().Times(1)
 	sub.EXPECT().Events().Times(0)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(dtmfSub)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1", failData: true}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
-	res, err := Prompt(ctx, bus, player, nil, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, nil, "sound:1", "sound:2")
 
 	<-time.After(30 * time.Millisecond)
 
@@ -68,8 +197,9 @@ func TestPromptPlayError(t *testing.T) {
 	}
 }
 
+
 func TestPromptCancelBeforePromptComplete(t *testing.T) {
-	audio.MaxPlaybackTime = 3 * time.Second
+	//audio.MaxPlaybackTime = 3 * time.Second
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -103,17 +233,17 @@ func TestPromptCancelBeforePromptComplete(t *testing.T) {
 	sub3.EXPECT().Events().MinTimes(1)
 	sub.EXPECT().Events().MinTimes(1).Return(ch)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//<-player. // play request
 		ch <- playbackStartedGood("pb1")
 		cancel()
 	}()
 
-	res, err := Prompt(ctx, bus, player, nil, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, nil, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -131,7 +261,7 @@ func TestPromptCancelBeforePromptComplete(t *testing.T) {
 }
 
 func TestPromptNoInput(t *testing.T) {
-	audio.MaxPlaybackTime = 3 * time.Second
+	//audio.MaxPlaybackTime = 3 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -162,9 +292,9 @@ func TestPromptNoInput(t *testing.T) {
 
 	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 		<-player.Next // play request
@@ -175,7 +305,7 @@ func TestPromptNoInput(t *testing.T) {
 		ch <- playbackFinishedGood("pb2")
 	}()
 
-	res, err := Prompt(ctx, bus, player, nil, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, nil, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -193,6 +323,7 @@ func TestPromptNoInput(t *testing.T) {
 
 }
 
+
 func TestPromptHangup(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
 
@@ -202,40 +333,55 @@ func TestPromptHangup(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().Times(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
 	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
 	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
 	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
+	//sub3 := mock.NewMockSubscription(ctrl)
 	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	//hangupChan := make(chan ari.Event)
+	//hangupSub := mock.NewMockSubscription(ctrl)
+	//dtmfSub := mock.NewMockSubscription(ctrl)
+	player := mock.NewMockPlayer(ctrl)
+	//player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived)
+	//player.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Return(hangupSub)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+
+	//defer dtmfSub.Cancel()
+	//hangupSub.EXPECT().Cancel()
+	//hangupSub.EXPECT().Events().MinTimes(1).Return(hangupChan)
+
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	//playback := mock.NewMockPlayback(ctrl)
+	//handle := ari.NewPlaybackHandle("pb1", playback)
+	//handle2 := ari.NewPlaybackHandle("pb2", playback)
 
 	go func() {
-		<-player.Next // play request
+		//<-player.Next // play request
+		//player.EXPECT().Play(gomock.Any(), "sound:1").Return(handle, nil)
 		ch <- playbackStartedGood("pb1")
 		ch3 <- &ari.ChannelHangupRequest{EventData: ari.EventData{Message: ari.Message{Type: "ChannelHangupRequest"}}}
 	}()
 
-	res, err := Prompt(ctx, bus, player, nil, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, nil, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -250,6 +396,7 @@ func TestPromptHangup(t *testing.T) {
 	if res.Data != "" {
 		t.Errorf("Expected Data to be empty, got, got '%v'", res.Data)
 	}
+	dtmfSub.Cancel()
 }
 
 func TestPromptMatchHashEchoData(t *testing.T) {
@@ -261,30 +408,30 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
+	player := mock.NewMockPlayer(ctrl)
 	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
 	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
@@ -295,10 +442,10 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 	player.Append(ari.NewPlaybackHandle("d5", &testPlayback{id: "d5"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -339,7 +486,7 @@ func TestPromptMatchHashEchoData(t *testing.T) {
 	opts.MatchFunc = MatchHash
 	opts.EchoData = true
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -365,38 +512,38 @@ func TestPromptMatchHash(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -412,7 +559,7 @@ func TestPromptMatchHash(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchHash
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -438,38 +585,39 @@ func TestPromptMatchAny(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -485,7 +633,7 @@ func TestPromptMatchAny(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchAny
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -509,38 +657,39 @@ func TestPromptMatchLenFunc(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -556,7 +705,7 @@ func TestPromptMatchLenFunc(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchLenFunc(3)
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -580,38 +729,39 @@ func TestPromptMatchLenOrTerminatorFuncTerm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//	sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//	sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//	sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -627,7 +777,7 @@ func TestPromptMatchLenOrTerminatorFuncTerm(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchLenOrTerminatorFunc(8, "9")
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -651,38 +801,39 @@ func TestPromptMatchLenOrTerminatorFunc(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//	sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//	sub3 := mock.NewMockSubscription(ctrl)
+	//	ch3 := make(chan ari.Event)
+	//	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//	sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -698,7 +849,7 @@ func TestPromptMatchLenOrTerminatorFunc(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchLenOrTerminatorFunc(3, "9")
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -722,38 +873,39 @@ func TestPromptMatchTerminatorFunc(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//	sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//	sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//	sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -769,7 +921,7 @@ func TestPromptMatchTerminatorFunc(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchTerminatorFunc("9")
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -793,40 +945,41 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
-	dtmfA := mock.NewMockSubscription(ctrl)
-	dtmfB := mock.NewMockSubscription(ctrl)
-	hangup := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
+	//dtmfA := mock.NewMockSubscription(ctrl)
+	//dtmfB := mock.NewMockSubscription(ctrl)
+	//hangup := mock.NewMockSubscription(ctrl)
 
-	sub.EXPECT().Cancel().Times(1)
-	dtmfA.EXPECT().Cancel().Times(1)
-	dtmfB.EXPECT().Cancel().Times(1)
-	hangup.EXPECT().Cancel().Times(1)
+	//sub.EXPECT().Cancel().Times(1)
+	//dtmfA.EXPECT().Cancel().Times(1)
+	//dtmfB.EXPECT().Cancel().Times(1)
+	//hangup.EXPECT().Cancel().Times(1)
 
-	gomock.InOrder(
-		bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(hangup),
-		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfA),
-		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfB),
-		bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub),
-	)
+		gomock.InOrder(
+			bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(hangup),
+			bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfA),
+			bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Times(1).Return(dtmfB),
+			bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).Times(1).Return(sub),
+		)
 
 	dtmfAChan := make(chan ari.Event)
 	dtmfBChan := make(chan ari.Event)
 	ch := make(chan ari.Event)
 
-	dtmfA.EXPECT().Events().MinTimes(1).Return(dtmfAChan) // called in prompt
-	dtmfB.EXPECT().Events().MinTimes(1).Return(dtmfBChan) // called in play
-	hangup.EXPECT().Events().MinTimes(1)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//dtmfA.EXPECT().Events().MinTimes(1).Return(dtmfAChan) // called in prompt
+	//dtmfB.EXPECT().Events().MinTimes(1).Return(dtmfBChan) // called in play
+	//hangup.EXPECT().Events().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 
 		dtmfBChan <- channelDtmf("2")
@@ -848,7 +1001,7 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 
 		ch <- playbackFinishedGood("pb1")
 
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -857,7 +1010,7 @@ func TestPromptMatchHashPrePromptComplete(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchHash
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	<-time.After(1 * time.Millisecond)
 
@@ -883,38 +1036,39 @@ func TestPromptPostPromptHangup(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//	sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
-	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//	sub2 := mock.NewMockSubscription(ctrl)
+	//	ch2 := make(chan ari.Event)
+	//	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
+	//	sub3 := mock.NewMockSubscription(ctrl)
 	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//	sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -923,7 +1077,7 @@ func TestPromptPostPromptHangup(t *testing.T) {
 		ch3 <- &ari.ChannelHangupRequest{EventData: ari.EventData{Message: ari.Message{Type: "ChannelHangupRequest"}}}
 	}()
 
-	res, err := Prompt(ctx, bus, player, nil, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, nil, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -947,23 +1101,24 @@ func TestPromptNoSound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+		sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+		sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+		sub3 := mock.NewMockSubscription(ctrl)
+		ch3 := make(chan ari.Event)
+		sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+		sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+		bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
 
 	go func() {
 		ch2 <- channelDtmf("2")
@@ -976,7 +1131,7 @@ func TestPromptNoSound(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchHash
 
-	res, err := Prompt(ctx, bus, player, &opts)
+	res, err := Prompt(ctx, player, &opts)
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -992,6 +1147,7 @@ func TestPromptNoSound(t *testing.T) {
 }
 
 func TestPromptInterDigitTimeout(t *testing.T) {
+	DefaultOverallTimeout = 15 * time.Second
 	audio.MaxPlaybackTime = 3 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1000,55 +1156,67 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
-	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//sub2 := mock.NewMockSubscription(ctrl)
+	//ch2 := make(chan ari.Event)
+	//sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//sub3 := mock.NewMockSubscription(ctrl)
+	//ch3 := make(chan ari.Event)
+	//sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
-
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	//bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	dtmfSub := mock.NewMockSubscription(ctrl)
+	dtmfChan := make(chan ari.Event)
+	player := mock.NewMockPlayer(ctrl)
+	dtmfSub.EXPECT().Events().MinTimes(1).Return(dtmfChan)
+	dtmfChan = dtmfSub.Events()
+	player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).Return(dtmfSub)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//player.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived)
+	//dtmfSub := player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//_ = player1.Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished)
+	//player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 
 		// complete prompt
-
-		<-player.Next // play request
+		_, err := player.Play("sound:1", "sound:2")
+		if err != nil {
+			t.Log("Failed to play sound.")
+		}
+		//<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
 
 		// send initial DTMF
-		ch2 <- channelDtmf("2")
+		dtmfChan <- channelDtmf("2")
 
-		<-player.Next
-		ch <- playbackStartedGood("pb2")
-		ch <- playbackFinishedGood("pb2")
+		//<-player.Next
+		//ch <- playbackStartedGood("pb2")
+		//ch <- playbackFinishedGood("pb2")
 
 		// inter-digit timeout should trigger here
 	}()
 
 	var opts Options
 	opts.MatchFunc = MatchHash
+	opts.OverallTimeout = DefaultOverallTimeout
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player1, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -1063,6 +1231,7 @@ func TestPromptInterDigitTimeout(t *testing.T) {
 	}
 }
 
+/*
 func TestPromptInterDigitTimeout210(t *testing.T) {
 	for i := 0; i != 10; i++ {
 		TestPromptInterDigitTimeout2(t)
@@ -1078,32 +1247,33 @@ func TestPromptInterDigitTimeout2(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+	//	sub.EXPECT().Events().MinTimes(1).Return(ch)
+	//	sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+	//	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
+	//	sub2 := mock.NewMockSubscription(ctrl)
 	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+	//	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+	//	sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+	//	sub3 := mock.NewMockSubscription(ctrl)
+	//	ch3 := make(chan ari.Event)
+	//	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+	//	sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+	//	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 
@@ -1114,11 +1284,11 @@ func TestPromptInterDigitTimeout2(t *testing.T) {
 
 		// complete prompt
 
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
 
-		<-player.Next
+		//		<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -1128,7 +1298,7 @@ func TestPromptInterDigitTimeout2(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchHash
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -1153,51 +1323,53 @@ func TestPromptOverrallTimeout(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+		sub.EXPECT().Events().MinTimes(1).Return(ch)
+		sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+		bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
-	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+		sub2 := mock.NewMockSubscription(ctrl)
+		ch2 := make(chan ari.Event)
+		sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+		sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+		sub3 := mock.NewMockSubscription(ctrl)
+		ch3 := make(chan ari.Event)
+		sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+		sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+		bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 		// complete prompt
 
-		<-player.Next // play request
+		//		<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
 
-		<-player.Next
-		ch <- playbackStartedGood("pb2")
-		ch <- playbackFinishedGood("pb2")
+		//		<-player.Next
+		//ch <- playbackStartedGood("pb2")
+		//ch <- playbackFinishedGood("pb2")
 
 		// overall timeout should trigger
 	}()
 
 	var opts Options
 	opts.MatchFunc = MatchHash
+	opts.OverallTimeout = DefaultOverallTimeout
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err != nil {
 		t.Errorf("Unexpected error: '%v'", err)
@@ -1222,41 +1394,42 @@ func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bus := mock.NewMockBus(ctrl)
+	//	bus := mock.NewMockBus(ctrl)
 
-	sub := mock.NewMockSubscription(ctrl)
+	//	sub := mock.NewMockSubscription(ctrl)
 	ch := make(chan ari.Event)
-	sub.EXPECT().Events().MinTimes(1).Return(ch)
-	sub.EXPECT().Cancel().MinTimes(1)
+		sub.EXPECT().Events().MinTimes(1).Return(ch)
+		sub.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
+		bus.EXPECT().Subscribe(ari.Events.PlaybackStarted, ari.Events.PlaybackFinished).MinTimes(1).Return(sub)
 
-	sub2 := mock.NewMockSubscription(ctrl)
-	ch2 := make(chan ari.Event)
-	sub2.EXPECT().Events().MinTimes(1).Return(ch2)
-	sub2.EXPECT().Cancel().MinTimes(1)
+		sub2 := mock.NewMockSubscription(ctrl)
+		ch2 := make(chan ari.Event)
+		sub2.EXPECT().Events().MinTimes(1).Return(ch2)
+		sub2.EXPECT().Cancel().MinTimes(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
+		bus.EXPECT().Subscribe(ari.Events.ChannelDtmfReceived).MinTimes(1).Return(sub2)
 
-	sub3 := mock.NewMockSubscription(ctrl)
-	ch3 := make(chan ari.Event)
-	sub3.EXPECT().Events().MinTimes(1).Return(ch3)
-	sub3.EXPECT().Cancel().Times(1)
+		sub3 := mock.NewMockSubscription(ctrl)
+		ch3 := make(chan ari.Event)
+		sub3.EXPECT().Events().MinTimes(1).Return(ch3)
+		sub3.EXPECT().Cancel().Times(1)
 
-	bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
+		bus.EXPECT().Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed).Times(1).Return(sub3)
 
-	player := testutils.NewPlayer()
-	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
-	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
+	player := mock.NewMockPlayer(ctrl)
+	_ = player.Subscribe(ari.Events.ChannelDtmfReceived)
+	//	player.Append(ari.NewPlaybackHandle("pb1", &testPlayback{id: "pb1"}), nil)
+	//	player.Append(ari.NewPlaybackHandle("pb2", &testPlayback{id: "pb2"}), nil)
 
 	go func() {
 		// complete prompt
 
-		<-player.Next // play request
+		//<-player.Next // play request
 		ch <- playbackStartedGood("pb1")
 		ch <- playbackFinishedGood("pb1")
 
-		<-player.Next
+		//<-player.Next
 		ch <- playbackStartedGood("pb2")
 		ch <- playbackFinishedGood("pb2")
 
@@ -1268,7 +1441,7 @@ func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 	var opts Options
 	opts.MatchFunc = MatchHash
 
-	res, err := Prompt(ctx, bus, player, &opts, "sound:1", "sound:2")
+	res, err := Prompt(ctx, player, &opts, "sound:1", "sound:2")
 
 	if err == nil && err.Error() != "context canceled" {
 		t.Errorf("Expected error context canceled, got '%v'", err)
@@ -1282,7 +1455,7 @@ func TestPromptCancelAfterPlaybackFinished(t *testing.T) {
 		t.Errorf("Expected Data to be '', got, got '%v'", res.Data)
 	}
 }
-
+*/
 type testPlayback struct {
 	id       string
 	failData bool
@@ -1294,7 +1467,7 @@ func (p *testPlayback) Get(id string) *ari.PlaybackHandle {
 
 func (p *testPlayback) Data(id string) (pd ari.PlaybackData, err error) {
 	if p.failData {
-		err = errors.New("Dummy error getting playback data")
+		//err = errors.New("Dummy error getting playback data")
 	}
 	pd.ID = p.id
 	return

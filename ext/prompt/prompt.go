@@ -6,6 +6,7 @@ import (
 	"github.com/CyCoreSystems/ari/ext/audio"
 
 	"github.com/CyCoreSystems/ari"
+	//"github.com/CyCoreSystems/ari/client/native"
 
 	"golang.org/x/net/context"
 )
@@ -68,11 +69,27 @@ var (
 	DefaultOverallTimeout = 3 * time.Minute
 )
 
-type stateFn func() stateFn
+type stateFn func(ctx context.Context) (stateFn, error)
+
+type stateObject struct {
+	dSub    ari.Subscription
+	hSub    ari.Subscription
+	oTimer  *time.Timer
+	options *Options
+	player  audio.Player
+	snds    []string
+	retData *Result
+
+	// digitReceived is a channel on which an event is sent every time a digit is received by the monitor.
+	// It is used by the state functions to step to the next state, where DTMF receipt does so.
+	digitReceived chan struct{}
+}
 
 // Prompt plays the given sound and waits for user input.
 func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string) (ret *Result, err error) {
-	ret = &Result{}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	//snds = sounds
 
 	// Handle default options
 	if opts == nil {
@@ -94,166 +111,123 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 		opts.SoundHash = "hash"
 	}
 
-	dtmfSub := p.Subscribe(ari.Events.ChannelDtmfReceived)
-	defer dtmfSub.Cancel()
-
-	hangupSub := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
-	defer hangupSub.Cancel()
-
-	var playPrompt func() stateFn
-	var waitDigit func() stateFn
-	var waitFirstDigit func() stateFn
-	overallTimer := time.NewTimer(opts.OverallTimeout)
-
-	playPrompt = func() stateFn {
-		playCtx, playCancel := context.WithCancel(context.Background())
-		defer playCancel()
-
-		doneCh := make(chan struct{})
-		defer close(doneCh)
-
-		lockCh := make(chan struct{})
-
-		go func() {
-			defer close(lockCh)
-			defer playCancel()
-
-			for {
-				select {
-				case _, ok := <-hangupSub.Events():
-					if ok {
-						ret.Status = Hangup
-						return
-					}
-				case <-ctx.Done():
-					ret.Status = Canceled
-					return
-				case <-doneCh:
-					return
-				case e := <-dtmfSub.Events():
-					ret.Data += e.(*ari.ChannelDtmfReceived).Digit
-					Logger.Debug("DTMF received", "digits", ret.Data)
-					match, res := opts.MatchFunc(ret.Data)
-					ret.Data = match
-					if res > 0 {
-						ret.Status = res
-						playCancel() // cancel playback
-						return
-					}
-				}
-			}
-		}()
-
-		q := audio.NewQueue()
-		q.Add(sounds...)
-		var st audio.Status
-		st, err = q.Play(playCtx, p, &audio.Options{ExitOnDTMF: ""})
-
-		switch st {
-		case audio.Canceled:
-			//NOTE: since playCtx doesn't extend the parent context,
-			// any audio cancel is considered a special case
-			// and we don't overwrite the return status
-			err = nil
-		case audio.Hangup:
-			ret.Status = Hangup
-		case audio.Failed:
-			ret.Status = Failed
-		case audio.Timeout:
-			ret.Status = Failed
-		}
-
-		if ret.Status > Incomplete {
-			return nil
-		}
-
-		// helps us destroy the above goroutine and ensure its closure before reading ret.Data
-		doneCh <- struct{}{}
-		<-lockCh
-
-		if !overallTimer.Stop() {
-			select {
-			case <-overallTimer.C:
-			default:
-			}
-		}
-		overallTimer.Reset(opts.OverallTimeout)
-
-		if ret.Data == "" {
-			return waitFirstDigit
-		}
-
-		return waitDigit
+	s := &stateObject{
+		dSub:          p.Subscribe(ari.Events.ChannelDtmfReceived),
+		hSub:          p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
+		oTimer:        time.NewTimer(opts.OverallTimeout),
+		options:       opts,
+		player:        p,
+		snds:          sounds,
+		retData:       &Result{},
+		digitReceived: make(chan struct{}),
 	}
 
-	waitFirstDigit = func() stateFn {
-		select {
-		case _, ok := <-hangupSub.Events():
-			if ok {
-				ret.Status = Hangup
-				return nil
-			}
-		case <-ctx.Done():
-			ret.Status = Canceled
-			return nil
-		case <-time.After(opts.FirstDigitTimeout):
-			ret.Status = Timeout
-			return nil
-		case <-overallTimer.C:
-			ret.Status = Timeout
-			return nil
-		case e := <-dtmfSub.Events():
-			ret.Data += e.(*ari.ChannelDtmfReceived).Digit
-			Logger.Debug("DTMF received", "digits", ret.Data)
-			match, res := opts.MatchFunc(ret.Data)
-			ret.Data = match
-			if res > 0 {
-				ret.Status = res
-				return nil
-			}
-		}
+	// Start with a 'Canceled' status, in order to catch early context cancellations
+	s.retData.Status = Canceled
 
-		return waitDigit
-	}
+	// Monitor the DTMF input
+	go s.monitor(ctx, cancel)
 
-	waitDigit = func() stateFn {
-		select {
-		case _, ok := <-hangupSub.Events():
-			if ok {
-				ret.Status = Hangup
-				return nil
-			}
-		case <-ctx.Done():
-			ret.Status = Canceled
-			return nil
-		case <-time.After(opts.InterDigitTimeout):
-			ret.Status = Timeout
-			return nil
-		case <-overallTimer.C:
-			ret.Status = Timeout
-			return nil
-		case e := <-dtmfSub.Events():
-			ret.Data += e.(*ari.ChannelDtmfReceived).Digit
-			Logger.Debug("DTMF received", "digits", ret.Data)
-			match, res := opts.MatchFunc(ret.Data)
-			ret.Data = match
-			if res > 0 {
-				ret.Status = res
-				return nil
-			}
-		}
-
-		return waitDigit
-	}
-
-	var st = playPrompt
-	if len(sounds) == 0 {
-		st = waitFirstDigit
-	}
+	st := s.playPrompt
 
 	for st != nil {
-		st = st()
+		if err = ctx.Err(); err != nil {
+			break
+		}
+
+		st, err = st(ctx)
+		if err != nil {
+			Logger.Error("failure in prompt state machine", "error", err)
+			break
+		}
 	}
 
-	return
+	return s.retData, err
+}
+
+func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
+	playCtx, playCancel := context.WithCancel(context.Background())
+
+	defer playCancel()
+
+	q := audio.NewQueue()
+	q.Add(s.snds...)
+	//var st audio.Status
+	st, err := q.Play(playCtx, s.player, &audio.Options{ExitOnDTMF: ""})
+
+	switch st {
+	case audio.Canceled:
+		//NOTE: since playCtx doesn't extend the parent context,
+		// any audio cancel is considered a special case
+		// and we don't overwrite the return status
+		err = nil
+	case audio.Hangup:
+		s.retData.Status = Hangup
+		return nil, err
+	case audio.Failed, audio.Timeout:
+		s.retData.Status = Failed
+		return nil, err
+	}
+
+	// Stop and reset the overall timer for Prompt
+	if s.oTimer.Stop() {
+		select {
+		case <-s.oTimer.C:
+		default:
+		}
+	}
+	s.oTimer.Reset(s.options.OverallTimeout)
+
+	return s.waitDigit, err
+}
+
+func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
+	defer cancel()
+
+	for {
+		select {
+		case _, ok := <-s.hSub.Events():
+			if ok {
+				s.retData.Status = Hangup
+				return
+			}
+		case <-ctx.Done():
+			return
+		case e := <-s.dSub.Events():
+			v, ok := e.(*ari.ChannelDtmfReceived)
+			if !ok {
+				continue
+			}
+			s.retData.Data += v.Digit
+			Logger.Debug("DTMF received", "digit", v.Digit, "digits", s.retData.Data)
+
+			var status Status
+			s.retData.Data, status = s.options.MatchFunc(s.retData.Data)
+			s.digitReceived <- struct{}{}
+			if status > 0 {
+				s.retData.Status = status
+				return
+			}
+		}
+	}
+}
+
+func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
+	lTimeout := s.options.InterDigitTimeout
+	if s.retData.Data == "" {
+		lTimeout = s.options.FirstDigitTimeout
+	}
+
+	select {
+	case <-ctx.Done():
+		return nil, nil
+	case <-time.After(lTimeout):
+		s.retData.Status = Timeout
+		return nil, nil
+	case <-s.oTimer.C:
+		s.retData.Status = Timeout
+		return nil, nil
+	case <-s.digitReceived:
+	}
+	return s.waitDigit, nil
 }
