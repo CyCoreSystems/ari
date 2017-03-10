@@ -61,6 +61,7 @@ func TestWaitDigitInterDigitTimeout(t *testing.T) {
 		options: opts,
 		retData: &Result{},
 	}
+	s.retData.Data = "1"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
 	defer cancel()
