@@ -8,7 +8,7 @@ func TestMatchHashSuccess(t *testing.T) {
 	str, status := MatchHash("Hash#Test")
 	if str == "Hash#Test" ||
 		status != Complete {
-		t.Errorf("Expected slice of 2 and status of '%v' and got '%v' and status of '%v'",
+		t.Errorf("Expected status of '%v' and got '%v' and status of '%v'",
 			"Complete", str, status)
 	}
 }
@@ -17,7 +17,7 @@ func TestMatchHashFail(t *testing.T) {
 	str, status := MatchHash("HashTest")
 	if str != "HashTest" ||
 		status != Incomplete {
-		t.Errorf("Expected slice of 1 and status of '%v' and got '%v' and status of '%v'",
+		t.Errorf("Expected status of '%v' and got '%v' and status of '%v'",
 			"Incomplete", str, status)
 	}
 }
