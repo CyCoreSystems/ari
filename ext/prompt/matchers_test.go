@@ -72,24 +72,24 @@ func TestMatchLenFuncFail(t *testing.T) {
 	}
 }
 
-func TestMatchLenOrTerminatorFuncSuccess(t *testing.T) {
-	_, status := MatchLenOrTerminatorFunc(12, "/n")("Test Match Len Terminator /n")
+func TestMatchLenOrTerminatorFuncSuccessTerm(t *testing.T) {
+	_, status := MatchLenOrTerminatorFunc(12, "/n")("Test Pass Term /n")
 	if status != Complete {
 		t.Errorf("Expected status of Complete and received status of '%v'",
 			status)
 	}
 }
 
-func TestMatchLenOrTerminatorFuncFailLen(t *testing.T) {
-	_, status := MatchLenOrTerminatorFunc(20, "/n")("Ln Fail /n")
-	if status != Incomplete {
+func TestMatchLenOrTerminatorFuncSuccessLen(t *testing.T) {
+	_, status := MatchLenOrTerminatorFunc(20, "/n")("Length SUccess for check Fail ")
+	if status != Complete {
 		t.Errorf("Expected status of Incomplete and received status of '%v'",
 			status)
 	}
 }
 
-func TestMatchLenOrTerminatorFuncFailTerm(t *testing.T) {
-	_, status := MatchLenOrTerminatorFunc(12, "/n")("Terminator Fail len succeeds")
+func TestMatchLenOrTerminatorFuncFail(t *testing.T) {
+	_, status := MatchLenOrTerminatorFunc(12, "/n")("Fail len ")
 	if status != Incomplete {
 		t.Errorf("Expected status of Incomplete and received status of '%v'",
 			status)
