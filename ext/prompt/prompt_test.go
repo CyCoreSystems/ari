@@ -2,7 +2,8 @@ package prompt
 
 import (
 	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/native"
+	"github.com/CyCoreSystems/ari/client/mock"
+	"github.com/golang/mock/gomock"
 	"golang.org/x/net/context"
 	//"github.com/CyCoreSystems/ari/ext/audio"
 
@@ -11,69 +12,130 @@ import (
 	"time"
 )
 
-// TestWaitDigit tests the WaidDigit func
-func TestWaitDigitTimeout(t *testing.T) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+// TestWaitDigitFirstDigitTimeout tests the waitDigit function's first-digit timeout.
+func TestWaitDigitFirstDigitTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
 
 	opts := &Options{
-		FirstDigitTimeout: 4 * time.Second,
-		InterDigitTimeout: 3 * time.Second,
-		OverallTimeout:    10 * time.Second,
-		EchoData:          true,
-		MatchFunc:         nil,
-		SoundHash:         "",
+		FirstDigitTimeout: 50 * time.Millisecond,
+		InterDigitTimeout: 100 * time.Millisecond,
+		OverallTimeout:    200 * time.Millisecond,
 	}
-
-	overallTimer := time.NewTimer(opts.OverallTimeout)
-	clopts := native.Options{
-		URL: "nats://nats:4222",
-	}
-
-	cl, _ := native.New(clopts)
-	p, _ := cl.Channel.Create(ari.ChannelCreateRequest{
-		Endpoint: "Local/1000",
-		App:      "example",
-	})
 
 	s := &stateObject{
-		dSub:    p.Subscribe(ari.Events.ChannelDtmfReceived),
-		hSub:    p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed),
-		oTimer:  overallTimer,
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
 		options: opts,
-		player:  p,
-		snds:    []string{"pb1", "pb2"},
 		retData: &Result{},
 	}
-	if s.oTimer.Stop() {
-		select {
-		case <-s.oTimer.C:
-		default:
-		}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
 	}
-	s.oTimer.Reset(opts.OverallTimeout)
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout", s.retData.Status)
+		return
+	}
 
-	go func() {
-		ctx2, cancel2 := context.WithTimeout(ctx, time.Millisecond)
-		defer cancel2()
+}
 
-		fn, err := s.waitDigit(ctx2)
-		t.Log("Returned from waitDigit.")
-		if err != nil ||
-			fn != nil {
-			t.Errorf("Unexpected error. '%v'", err)
-		}
-		if s.retData.Status != Timeout {
-			t.Errorf("Expected Timeout but got '%v'", s.retData.Status)
-		}
-		cancel()
-	}()
+// TestWaitDigitInterDigitTimeout tests the waitDigit function's intermediate digit timeout
+func TestWaitDigitInterDigitTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
 
-	select {
-	case <-time.After(10 * time.Second):
-		t.Error("Timeout waiting on WaitDigit.")
-	case <-ctx.Done():
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 50 * time.Millisecond,
+		OverallTimeout:    200 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		retData: &Result{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout:", s.retData.Status)
+		return
+	}
+}
+
+// TestWaitDigitOverallTimeout tests the waitDigit function's overall timeout
+func TestWaitDigitOverallTimeout(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 200 * time.Millisecond,
+		OverallTimeout:    50 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		hSub:    mock.NewMockSubscription(mc),
+		oTimer:  time.NewTimer(opts.OverallTimeout),
+		options: opts,
+		retData: &Result{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	_, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if s.retData.Status != Timeout {
+		t.Error("Status was not Timeout", s.retData.Status)
+		return
+	}
+}
+
+// TestWaitDigitReceived tests the waitDigit function's digitReceived loop case
+func TestWaitDigitReceived(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+
+	opts := &Options{
+		FirstDigitTimeout: 100 * time.Millisecond,
+		InterDigitTimeout: 200 * time.Millisecond,
+		OverallTimeout:    300 * time.Millisecond,
+	}
+
+	s := &stateObject{
+		oTimer:        time.NewTimer(opts.OverallTimeout),
+		options:       opts,
+		retData:       &Result{},
+		digitReceived: make(chan struct{}, 1),
+	}
+
+	s.digitReceived <- struct{}{}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	f, err := s.waitDigit(ctx)
+	if err != nil {
+		t.Error("Failed to execute waitDigit", err)
+		return
+	}
+	if f == nil {
+		t.Error("waitDigit did not loop", s.retData.Status)
+		return
 	}
 }
 

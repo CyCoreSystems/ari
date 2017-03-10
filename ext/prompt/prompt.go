@@ -193,18 +193,20 @@ func (s *stateObject) monitor(ctx context.Context, cancel context.CancelFunc) {
 				return
 			}
 		case <-ctx.Done():
-			s.retData.Status = Canceled
 			return
 		case e := <-s.dSub.Events():
-			dtmf, ok := e.(*ari.ChannelDtmfReceived)
+			v, ok := e.(*ari.ChannelDtmfReceived)
 			if !ok {
 				continue
 			}
-			s.retData.Data += dtmf.Digit
-			Logger.Debug("DTMF received", "digit", dtmf.Digit, "digits", s.retData.Data)
-			s.retData.Data, s.retData.Status = s.options.MatchFunc(s.retData.Data + dtmf.Digit)
+			s.retData.Data += v.Digit
+			Logger.Debug("DTMF received", "digit", v.Digit, "digits", s.retData.Data)
+
+			var status Status
+			s.retData.Data, status = s.options.MatchFunc(s.retData.Data)
 			s.digitReceived <- struct{}{}
-			if s.retData.Status > 0 {
+			if status > 0 {
+				s.retData.Status = status
 				return
 			}
 		}
@@ -218,13 +220,7 @@ func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
 	}
 
 	select {
-	case _, ok := <-s.hSub.Events():
-		if ok {
-			s.retData.Status = Hangup
-			return nil, nil
-		}
 	case <-ctx.Done():
-		s.retData.Status = Canceled
 		return nil, nil
 	case <-time.After(lTimeout):
 		s.retData.Status = Timeout
@@ -233,8 +229,6 @@ func (s *stateObject) waitDigit(ctx context.Context) (stateFn, error) {
 		s.retData.Status = Timeout
 		return nil, nil
 	case <-s.digitReceived:
-		return s.waitDigit, nil
 	}
-
 	return s.waitDigit, nil
 }
