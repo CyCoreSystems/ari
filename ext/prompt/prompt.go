@@ -147,7 +147,6 @@ func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string
 
 func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 	playCtx, playCancel := context.WithCancel(context.Background())
-	opts := s.options
 
 	defer playCancel()
 
@@ -177,7 +176,7 @@ func (s *stateObject) playPrompt(ctx context.Context) (stateFn, error) {
 		default:
 		}
 	}
-	s.oTimer.Reset(opts.OverallTimeout)
+	s.oTimer.Reset(s.options.OverallTimeout)
 
 	return s.waitDigit, err
 }
