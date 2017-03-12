@@ -128,8 +128,6 @@ type Client struct {
 	// Bus the event bus for the Client
 	bus ari.Bus
 
-	events chan ari.Event // chan on which events are sent
-
 	// httpClient is the reusable HTTP client on which commands to Asterisk are sent
 	httpClient http.Client
 

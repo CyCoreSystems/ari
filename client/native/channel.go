@@ -388,18 +388,3 @@ func (v *ChannelVariables) Set(key string, value string) error {
 	err := v.client.post(path, nil, &req)
 	return err
 }
-
-type nativeSubscription struct {
-	closeChan chan struct{}
-	events    chan ari.Event
-}
-
-func (ns *nativeSubscription) Events() chan ari.Event {
-	return ns.events
-}
-
-func (ns *nativeSubscription) Cancel() {
-	if ns.closeChan != nil {
-		close(ns.closeChan)
-	}
-}
