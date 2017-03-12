@@ -23,7 +23,7 @@ func (a *Application) List() (ax []*ari.ApplicationHandle, err error) {
 		Name string `json:"name"`
 	}{}
 
-	err = a.client.conn.Get("/applications", &apps)
+	err = a.client.get("/applications", &apps)
 
 	for _, i := range apps {
 		ax = append(ax, a.Get(i.Name))
@@ -37,7 +37,7 @@ func (a *Application) List() (ax []*ari.ApplicationHandle, err error) {
 // Equivalent to GET /applications/{applicationName}
 func (a *Application) Data(name string) (d *ari.ApplicationData, err error) {
 	d = &ari.ApplicationData{}
-	err = a.client.conn.Get("/applications/"+name, d)
+	err = a.client.get("/applications/"+name, d)
 	if err != nil {
 		d = nil
 		err = dataGetError(err, "application", "%v", name)
@@ -53,7 +53,7 @@ func (a *Application) Subscribe(name string, eventSource string) (err error) {
 	}{
 		EventSource: eventSource,
 	}
-	err = a.client.conn.Post("/applications/"+name+"/subscription", nil, &req)
+	err = a.client.post("/applications/"+name+"/subscription", nil, &req)
 	err = errors.Wrapf(err, "Error subscribing application '%v' for event source '%v'", name, eventSource)
 	return
 }
@@ -63,7 +63,7 @@ func (a *Application) Subscribe(name string, eventSource string) (err error) {
 // Equivalent to DELETE /applications/{applicationName}/subscription
 func (a *Application) Unsubscribe(name string, eventSource string) (err error) {
 	// TODO: handle Error Responses individually
-	err = a.client.conn.Delete("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
+	err = a.client.del("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
 	err = errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
 	return
 }

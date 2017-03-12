@@ -20,7 +20,7 @@ func (c *Channel) List() (cx []*ari.ChannelHandle, err error) {
 		ID string `json:"id"`
 	}{}
 
-	err = c.client.conn.Get("/channels", &channels)
+	err = c.client.get("/channels", &channels)
 	for _, i := range channels {
 		cx = append(cx, c.Get(i.ID))
 	}
@@ -34,13 +34,13 @@ func (c *Channel) Hangup(id, reason string) error {
 	if reason != "" {
 		req = fmt.Sprintf("reason=%s", reason)
 	}
-	return c.client.conn.Delete("/channels/"+id, nil, req)
+	return c.client.del("/channels/"+id, nil, req)
 }
 
 // Data retrieves the current state of the channel
 func (c *Channel) Data(id string) (cd *ari.ChannelData, err error) {
 	cd = &ari.ChannelData{}
-	err = c.client.conn.Get("/channels/"+id, cd)
+	err = c.client.get("/channels/"+id, cd)
 	if err != nil {
 		cd = nil
 		err = dataGetError(err, "channel", "%v", id)
@@ -65,7 +65,7 @@ func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error
 	var resp response
 
 	var err error
-	err = c.client.conn.Post("/channels", &resp, &req)
+	err = c.client.post("/channels", &resp, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, erro
 	}
 
 	var err error
-	err = c.client.conn.Post("/channels/create", nil, &req)
+	err = c.client.post("/channels/create", nil, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *Channel) Continue(id string, context, extension string, priority int) (
 		Priority  int    `json:"priority"`
 	}
 	req := request{Context: context, Extension: extension, Priority: priority}
-	err = c.client.conn.Post("/channels/"+id+"/continue", nil, &req)
+	err = c.client.post("/channels/"+id+"/continue", nil, &req)
 	return
 }
 
@@ -117,31 +117,31 @@ func (c *Channel) Congestion(id string) (err error) {
 
 // Answer answers a channel, if ringing (TODO: does this return an error if already answered?)
 func (c *Channel) Answer(id string) (err error) {
-	err = c.client.conn.Post("/channels/"+id+"/answer", nil, nil)
+	err = c.client.post("/channels/"+id+"/answer", nil, nil)
 	return
 }
 
 // Ring causes a channel to start ringing (TODO: does this return an error if already ringing?)
 func (c *Channel) Ring(id string) (err error) {
-	err = c.client.conn.Post("/channels/"+id+"/ring", nil, nil)
+	err = c.client.post("/channels/"+id+"/ring", nil, nil)
 	return
 }
 
 // StopRing causes a channel to stop ringing (TODO: does this return an error if not ringing?)
 func (c *Channel) StopRing(id string) (err error) {
-	err = c.client.conn.Delete("/channels/"+id+"/ring", nil, "")
+	err = c.client.del("/channels/"+id+"/ring", nil, "")
 	return
 }
 
 // Hold puts a channel on hold (TODO: does this return an error if already on hold?)
 func (c *Channel) Hold(id string) (err error) {
-	err = c.client.conn.Post("/channels/"+id+"/hold", nil, nil)
+	err = c.client.post("/channels/"+id+"/hold", nil, nil)
 	return
 }
 
 // StopHold removes a channel from hold (TODO: does this return an error if not on hold)
 func (c *Channel) StopHold(id string) (err error) {
-	err = c.client.conn.Delete("/channels/"+id+"/hold", nil, "")
+	err = c.client.del("/channels/"+id+"/hold", nil, "")
 	return
 }
 
@@ -153,7 +153,7 @@ func (c *Channel) Mute(id string, dir string) (err error) {
 	}
 
 	req := request{dir}
-	err = c.client.conn.Post("/channels/"+id+"/mute", nil, &req)
+	err = c.client.post("/channels/"+id+"/mute", nil, &req)
 	return
 }
 
@@ -165,7 +165,7 @@ func (c *Channel) Unmute(id string, dir string) (err error) {
 		req = fmt.Sprintf("direction=%s", dir)
 	}
 
-	err = c.client.conn.Delete("/channels/"+id+"/mute", nil, req)
+	err = c.client.del("/channels/"+id+"/mute", nil, req)
 	return
 }
 
@@ -202,7 +202,7 @@ func (c *Channel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err e
 
 	req.Dtmf = dtmf
 
-	err = c.client.conn.Post("/channels/"+id+"/dtmf", nil, &req)
+	err = c.client.post("/channels/"+id+"/dtmf", nil, &req)
 	return
 }
 
@@ -212,25 +212,25 @@ func (c *Channel) MOH(id string, mohClass string) (err error) {
 		MohClass string `json:"mohClass,omitempty"`
 	}
 	req := request{mohClass}
-	err = c.client.conn.Post("/channels/"+id+"/moh", nil, &req)
+	err = c.client.post("/channels/"+id+"/moh", nil, &req)
 	return
 }
 
 // StopMOH stops any music on hold playing on the channel (TODO: does this error when no MOH is playing?)
 func (c *Channel) StopMOH(id string) (err error) {
-	err = c.client.conn.Delete("/channels/"+id+"/moh", nil, "")
+	err = c.client.del("/channels/"+id+"/moh", nil, "")
 	return
 }
 
 // Silence silences a channel (TODO: does this error when already silences)
 func (c *Channel) Silence(id string) (err error) {
-	err = c.client.conn.Post("/channels/"+id+"/silence", nil, nil)
+	err = c.client.post("/channels/"+id+"/silence", nil, nil)
 	return
 }
 
 // StopSilence stops the silence on a channel (TODO: does this error when not silenced)
 func (c *Channel) StopSilence(id string) (err error) {
-	err = c.client.conn.Delete("/channels/"+id+"/silence", nil, "")
+	err = c.client.del("/channels/"+id+"/silence", nil, "")
 	return
 }
 
@@ -242,7 +242,7 @@ func (c *Channel) Play(id string, playbackID string, mediaURI string) (ph *ari.P
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = c.client.conn.Post("/channels/"+id+"/play/"+playbackID, &resp, &req)
+	err = c.client.post("/channels/"+id+"/play/"+playbackID, &resp, &req)
 	ph = c.client.Playback().Get(playbackID)
 	return
 }
@@ -274,7 +274,7 @@ func (c *Channel) Record(id string, name string, opts *ari.RecordingOptions) (rh
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = c.client.conn.Post("/channels/"+id+"/record", &resp, &req)
+	err = c.client.post("/channels/"+id+"/record", &resp, &req)
 	if err != nil {
 		rh = c.client.LiveRecording().Get(name)
 	}
@@ -299,7 +299,7 @@ func (c *Channel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOp
 		App:       app,
 		AppArgs:   opts.AppArgs,
 	}
-	err = c.client.conn.Post("/channels/"+id+"/snoop/"+snoopID, &resp, &req)
+	err = c.client.post("/channels/"+id+"/snoop/"+snoopID, &resp, &req)
 	if err == nil {
 		ch = c.Get(snoopID)
 	}
@@ -315,7 +315,7 @@ func (c *Channel) Dial(id string, callingChannelID string, timeout time.Duration
 		Caller:  callingChannelID,
 		Timeout: int(timeout.Seconds()),
 	}
-	err = c.client.conn.Post("/channels/"+id+"/dial", nil, &req)
+	err = c.client.post("/channels/"+id+"/dial", nil, &req)
 	return
 }
 
@@ -368,7 +368,7 @@ func (v *ChannelVariables) Get(key string) (string, error) {
 	var m variable
 
 	path := "/channels/" + v.channelID + "/variable?variable=" + key
-	err := v.client.conn.Get(path, &m)
+	err := v.client.get(path, &m)
 	if err != nil {
 		return "", err
 	}
@@ -385,7 +385,7 @@ func (v *ChannelVariables) Set(key string, value string) error {
 	}
 	req := request{key, value}
 
-	err := v.client.conn.Post(path, nil, &req)
+	err := v.client.post(path, nil, &req)
 	return err
 }
 

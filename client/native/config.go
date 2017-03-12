@@ -19,7 +19,7 @@ func (c *Config) Data(configClass string, objectType string, id string) (cd *ari
 	cd.Class = configClass
 	cd.Type = objectType
 	resourceID := configClass + "/" + objectType + "/" + id
-	err = c.client.conn.Get("/asterisk/config/dynamic/"+resourceID, &cd.Fields)
+	err = c.client.get("/asterisk/config/dynamic/"+resourceID, &cd.Fields)
 	if err != nil {
 		cd = nil
 		err = dataGetError(err, "config", "%v", resourceID)
@@ -29,12 +29,12 @@ func (c *Config) Data(configClass string, objectType string, id string) (cd *ari
 
 // Update updates the given configuration object
 func (c *Config) Update(configClass string, objectType string, id string, tuples []ari.ConfigTuple) (err error) {
-	err = c.client.conn.Put("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, &tuples)
+	err = c.client.put("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, &tuples)
 	return
 }
 
 // Delete deletes the configuration object
 func (c *Config) Delete(configClass string, objectType string, id string) (err error) {
-	err = c.client.conn.Delete("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, "")
+	err = c.client.del("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, "")
 	return
 }

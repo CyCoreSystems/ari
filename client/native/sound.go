@@ -20,7 +20,7 @@ func (s *Sound) Get(name string) *ari.SoundHandle {
 // Equivalent to GET /sounds/{name}
 func (s *Sound) Data(name string) (sd *ari.SoundData, err error) {
 	sd = &ari.SoundData{}
-	err = s.client.conn.Get("/sounds/"+name, sd)
+	err = s.client.get("/sounds/"+name, sd)
 	if err != nil {
 		sd = nil
 		err = dataGetError(err, "sound", "%v", name)
@@ -46,7 +46,7 @@ func (s *Sound) List(filters map[string]string) (sh []*ari.SoundHandle, err erro
 		uri += "?" + v.Encode()
 	}
 
-	err = s.client.conn.Get(uri, &sounds)
+	err = s.client.get(uri, &sounds)
 
 	// Store whatever we received, even if incomplete or error
 	for _, i := range sounds {

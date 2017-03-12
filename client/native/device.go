@@ -20,7 +20,7 @@ func (ds *DeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
 	}
 
 	var devices []device
-	err = ds.client.conn.Get("/deviceStates", &devices)
+	err = ds.client.get("/deviceStates", &devices)
 	for _, i := range devices {
 		dx = append(dx, ds.Get(i.Name))
 	}
@@ -33,7 +33,7 @@ func (ds *DeviceState) Data(name string) (d *ari.DeviceStateData, err error) {
 	device := struct {
 		State string `json:"state"`
 	}{}
-	err = ds.client.conn.Get("/deviceStates/"+name, &device)
+	err = ds.client.get("/deviceStates/"+name, &device)
 	if err != nil {
 		d = nil
 		err = dataGetError(err, "deviceState", "%v", name)
@@ -49,12 +49,12 @@ func (ds *DeviceState) Update(name string, state string) (err error) {
 	req := map[string]string{
 		"deviceState": state,
 	}
-	err = ds.client.conn.Put("/deviceStates/"+name, nil, &req)
+	err = ds.client.put("/deviceStates/"+name, nil, &req)
 	return
 }
 
 // Delete deletes the device
 func (ds *DeviceState) Delete(name string) (err error) {
-	err = ds.client.conn.Delete("/deviceStates/"+name, nil, "")
+	err = ds.client.del("/deviceStates/"+name, nil, "")
 	return
 }

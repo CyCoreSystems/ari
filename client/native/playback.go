@@ -17,7 +17,7 @@ func (a *Playback) Get(id string) (ph *ari.PlaybackHandle) {
 // (Equivalent to GET /playbacks/{playbackID})
 func (a *Playback) Data(id string) (p *ari.PlaybackData, err error) {
 	p = &ari.PlaybackData{}
-	err = a.client.conn.Get("/playbacks/"+id, p)
+	err = a.client.get("/playbacks/"+id, p)
 	if err != nil {
 		p = nil
 		err = dataGetError(err, "playback", "%v", id)
@@ -36,14 +36,14 @@ func (a *Playback) Control(id string, op string) (err error) {
 	}
 
 	req := request{op}
-	err = a.client.conn.Post("/playbacks/"+id+"/control", nil, &req)
+	err = a.client.post("/playbacks/"+id+"/control", nil, &req)
 	return
 }
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
 func (a *Playback) Stop(id string) (err error) {
-	err = a.client.conn.Delete("/playbacks/"+id, nil, "")
+	err = a.client.del("/playbacks/"+id, nil, "")
 	return
 }
 

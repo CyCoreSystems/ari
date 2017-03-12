@@ -24,7 +24,7 @@ func (b *Bridge) Create(id string, t string, name string) (bh *ari.BridgeHandle,
 		Name: name,
 	}
 
-	err = b.client.conn.Post("/bridges/"+id, &req, nil)
+	err = b.client.post("/bridges/"+id, &req, nil)
 	if err != nil {
 		return
 	}
@@ -44,7 +44,7 @@ func (b *Bridge) List() (bx []*ari.BridgeHandle, err error) {
 		ID string `json:"id"`
 	}{}
 
-	err = b.client.conn.Get("/bridges", &bridges)
+	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
 		bx = append(bx, b.Get(i.ID))
 	}
@@ -55,7 +55,7 @@ func (b *Bridge) List() (bx []*ari.BridgeHandle, err error) {
 // Equivalent to Get /bridges/{bridgeId}
 func (b *Bridge) Data(id string) (bd *ari.BridgeData, err error) {
 	bd = &ari.BridgeData{}
-	err = b.client.conn.Get("/bridges/"+id, bd)
+	err = b.client.get("/bridges/"+id, bd)
 	if err != nil {
 		bd = nil
 		err = dataGetError(err, "bridge", "%v", id)
@@ -73,7 +73,7 @@ func (b *Bridge) AddChannel(bridgeID string, channelID string) (err error) {
 	}
 
 	req := request{channelID, ""}
-	err = b.client.conn.Post("/bridges/"+bridgeID+"/addChannel", nil, &req)
+	err = b.client.post("/bridges/"+bridgeID+"/addChannel", nil, &req)
 	return
 }
 
@@ -87,7 +87,7 @@ func (b *Bridge) RemoveChannel(id string, channelID string) (err error) {
 	}
 
 	//pass request
-	err = b.client.conn.Post("/bridges/"+id+"/removeChannel", nil, &req)
+	err = b.client.post("/bridges/"+id+"/removeChannel", nil, &req)
 	return
 }
 
@@ -96,7 +96,7 @@ func (b *Bridge) RemoveChannel(id string, channelID string) (err error) {
 // This means that the channels themselves are not deleted.
 // Equivalent to DELETE /bridges/{id}
 func (b *Bridge) Delete(id string) (err error) {
-	err = b.client.conn.Delete("/bridges/"+id, nil, "")
+	err = b.client.del("/bridges/"+id, nil, "")
 	return
 }
 
@@ -108,7 +108,7 @@ func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph *ari.Pl
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = b.client.conn.Post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
+	err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
 	ph = b.client.Playback().Get(playbackID)
 	return
 }
@@ -140,7 +140,7 @@ func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh 
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = b.client.conn.Post("/bridges/"+id+"/record", &resp, &req)
+	err = b.client.post("/bridges/"+id+"/record", &resp, &req)
 	if err != nil {
 		rh = b.client.LiveRecording().Get(name)
 	}

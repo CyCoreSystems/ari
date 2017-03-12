@@ -17,13 +17,13 @@ func (l *Logging) Create(name, level string) (err error) {
 		Configuration string `json:"configuration"`
 	}
 	req := request{level}
-	err = l.client.conn.Post("/asterisk/logging/"+name, nil, &req)
+	err = l.client.post("/asterisk/logging/"+name, nil, &req)
 	return
 }
 
 // List lists the logging entities
 func (l *Logging) List() (ld []ari.LogData, err error) {
-	err = l.client.conn.Get("/asterisk/logging", &ld)
+	err = l.client.get("/asterisk/logging", &ld)
 	return
 }
 
@@ -33,7 +33,7 @@ func (l *Logging) Rotate(name string) (err error) {
 		err = errors.New("Not allowed to rotate unnamed channels")
 		return
 	}
-	err = l.client.conn.Put("/asterisk/logging/"+name+"/rotate", nil, nil)
+	err = l.client.put("/asterisk/logging/"+name+"/rotate", nil, nil)
 	return
 }
 
@@ -43,6 +43,6 @@ func (l *Logging) Delete(name string) (err error) {
 		err = errors.New("Not allowed to delete unnamed channels")
 		return
 	}
-	err = l.client.conn.Delete("/asterisk/logging/"+name, nil, "")
+	err = l.client.del("/asterisk/logging/"+name, nil, "")
 	return
 }

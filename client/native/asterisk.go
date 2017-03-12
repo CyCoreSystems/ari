@@ -54,7 +54,7 @@ func (a *Asterisk) Info(only string) (m *ari.AsteriskInfo, err error) {
 	// That means we should probably break this
 	// method into multiple submethods
 
-	err = a.client.conn.Get(path, &m)
+	err = a.client.get(path, &m)
 	err = errors.Wrap(err, "Error getting asterisk info")
 	return m, err
 }
@@ -87,7 +87,7 @@ func (a *AsteriskVariables) Get(key string) (val string, err error) {
 
 	path := "/asterisk/variable?variable=" + key
 
-	err = a.client.conn.Get(path, &m)
+	err = a.client.get(path, &m)
 	if err != nil {
 		err = errors.Wrapf(err, "Error getting asterisk variable '%v'", key)
 		return
@@ -107,7 +107,7 @@ func (a *AsteriskVariables) Set(key string, value string) (err error) {
 	}
 	req := request{key, value}
 
-	err = a.client.conn.Post(path, nil, &req)
+	err = a.client.post(path, nil, &req)
 	err = errors.Wrapf(err, "Error setting asterisk variable '%v'", key) //TODO: include value?
 	return err
 }

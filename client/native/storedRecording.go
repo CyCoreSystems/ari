@@ -13,7 +13,7 @@ func (sr *StoredRecording) List() (sx []*ari.StoredRecordingHandle, err error) {
 		Name string `json:"name"`
 	}
 
-	err = sr.client.conn.Get("/recordings/stored", &recs)
+	err = sr.client.get("/recordings/stored", &recs)
 	for _, rec := range recs {
 		sx = append(sx, sr.Get(rec.Name))
 	}
@@ -30,7 +30,7 @@ func (sr *StoredRecording) Get(name string) (s *ari.StoredRecordingHandle) {
 // Data retrieves the state of the stored recording
 func (sr *StoredRecording) Data(name string) (d *ari.StoredRecordingData, err error) {
 	d = &ari.StoredRecordingData{}
-	err = sr.client.conn.Get("/recordings/stored/"+name, d)
+	err = sr.client.get("/recordings/stored/"+name, d)
 	if err != nil {
 		d = nil
 		err = dataGetError(err, "storedRecording", "%v", name)
@@ -52,7 +52,7 @@ func (sr *StoredRecording) Copy(name string, dest string) (h *ari.StoredRecordin
 
 	request.Dest = dest
 
-	err = sr.client.conn.Post("/recordings/stored/"+name+"/copy", &resp, &request)
+	err = sr.client.post("/recordings/stored/"+name+"/copy", &resp, &request)
 
 	if err != nil {
 		return nil, err
@@ -63,6 +63,6 @@ func (sr *StoredRecording) Copy(name string, dest string) (h *ari.StoredRecordin
 
 // Delete deletes the stored recording
 func (sr *StoredRecording) Delete(name string) (err error) {
-	err = sr.client.conn.Delete("/recordings/stored/"+name+"", nil, "")
+	err = sr.client.del("/recordings/stored/"+name+"", nil, "")
 	return
 }

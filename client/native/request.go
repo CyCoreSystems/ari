@@ -67,30 +67,30 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-// Get calls the ARI server with a GET request
-func (c *Conn) Get(url string, resp interface{}) error {
+// get calls the ARI server with a GET request
+func (c *Client) get(url string, resp interface{}) error {
 
 	url = c.Options.URL + url
 
 	return c.makeRequest("GET", url, resp, nil)
 }
 
-// Post calls the ARI server with a POST request.
-func (c *Conn) Post(requestURL string, resp interface{}, req interface{}) error {
+// post calls the ARI server with a POST request.
+func (c *Client) post(requestURL string, resp interface{}, req interface{}) error {
 	url := c.Options.URL + requestURL
 	return c.makeRequest("POST", url, resp, req)
 }
 
-// Put calls the ARI server with a PUT request.
-func (c *Conn) Put(url string, resp interface{}, req interface{}) error {
+// put calls the ARI server with a PUT request.
+func (c *Client) put(url string, resp interface{}, req interface{}) error {
 
 	url = c.Options.URL + url
 
 	return c.makeRequest("PUT", url, resp, req)
 }
 
-// Delete calls the ARI server with a DELETE request
-func (c *Conn) Delete(url string, resp interface{}, req string) error {
+// del calls the ARI server with a DELETE request
+func (c *Client) del(url string, resp interface{}, req string) error {
 
 	url = c.Options.URL + url
 	if req != "" {
@@ -100,7 +100,7 @@ func (c *Conn) Delete(url string, resp interface{}, req string) error {
 	return c.makeRequest("DELETE", url, resp, req)
 }
 
-func (c *Conn) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
+func (c *Client) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
 	var reqBody io.Reader
 	if req != nil {
 		reqBody, err = structToRequestBody(req)
