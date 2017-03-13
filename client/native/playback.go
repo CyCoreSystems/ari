@@ -49,31 +49,30 @@ func (a *Playback) Stop(id string) (err error) {
 
 // Subscribe listens for ARI events for the given playback entity
 func (a *Playback) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	playbackHandle := a.Get(id)
+	inSub := a.client.Bus().Subscribe(n...)
+	outSub := newSubscription()
 
 	go func() {
-		sub := a.client.Bus().Subscribe(n...)
-		defer sub.Cancel()
-		for {
+		defer inSub.Cancel()
 
+		h := a.Get(id)
+
+		for {
 			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
+			case <-outSub.closedChan:
 				return
-			case evt := <-sub.Events():
-				if playbackHandle.Match(evt) {
-					ns.events <- evt
+			case e, ok := <-inSub.Events():
+				if !ok {
+					return
+				}
+				if h.Match(e) {
+					outSub.events <- e
 				}
 			}
 		}
 	}()
 
-	return &ns
+	return outSub
 }
 
 // PlaybackHandle is the handle for performing playback operations

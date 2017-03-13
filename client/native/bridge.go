@@ -150,32 +150,30 @@ func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh 
 // Subscribe creates an event subscription for events related to the given
 // bridge␃entity
 func (b *Bridge) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	bridgeHandle := b.Get(id)
+	inSub := b.client.Bus().Subscribe(n...)
+	outSub := newSubscription()
 
 	go func() {
-		sub := b.client.Bus().Subscribe(n...)
-		defer sub.Cancel()
-		for {
+		defer inSub.Cancel()
 
+		br := b.Get(id)
+
+		for {
 			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
+			case <-outSub.closedChan:
 				return
-			case evt := <-sub.Events():
-				//TODO: do we want to send in events on the bridge for a specific channel?
-				if bridgeHandle.Match(evt) {
-					ns.events <- evt
+			case e, ok := <-inSub.Events():
+				if !ok {
+					return
+				}
+				if br.Match(e) {
+					outSub.events <- e
 				}
 			}
 		}
 	}()
 
-	return &ns
+	return outSub
 }
 
 // NewBridgeHandle creates a new bridge handle

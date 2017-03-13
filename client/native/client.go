@@ -257,7 +257,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 
 	// Make sure the bus is set up
-	c.bus = stdbus.Start(ctx)
+	c.bus = stdbus.New()
 
 	// Setup and listen on the websocket
 	wg := new(sync.WaitGroup)

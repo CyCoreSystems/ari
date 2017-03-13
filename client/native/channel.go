@@ -316,31 +316,30 @@ func (c *Channel) Dial(id string, callingChannelID string, timeout time.Duration
 
 // Subscribe creates a new subscription for ARI events related to this channel
 func (c *Channel) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	channelHandle := c.Get(id)
+	inSub := c.client.Bus().Subscribe(n...)
+	outSub := newSubscription()
 
 	go func() {
-		sub := c.client.Bus().Subscribe(n...)
-		defer sub.Cancel()
-		for {
+		defer inSub.Cancel()
 
+		ch := c.Get(id)
+
+		for {
 			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
+			case <-outSub.closedChan:
 				return
-			case evt := <-sub.Events():
-				if channelHandle.Match(evt) {
-					ns.events <- evt
+			case e, ok := <-inSub.Events():
+				if !ok {
+					return
+				}
+				if ch.Match(e) {
+					outSub.events <- e
 				}
 			}
 		}
 	}()
 
-	return &ns
+	return outSub
 }
 
 // ChannelVariables provides the ARI Variables accessor scoped to a channel identifier for the native client
