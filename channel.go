@@ -79,7 +79,7 @@ type Channel interface {
 	Dial(id string, caller string, timeout time.Duration) error
 
 	// Snoop spies on a specific channel, creating a new snooping channel
-	Snoop(id string, snoopID string, app string, opts *SnoopOptions) (ChannelHandle, error)
+	Snoop(id string, snoopID string, opts *SnoopOptions) (ChannelHandle, error)
 
 	// Subscribe subscribes on the channel events
 	Subscribe(id string, n ...string) Subscription
@@ -218,7 +218,7 @@ type ChannelHandle interface {
 	Dial(caller string, timeout time.Duration) error
 
 	// Snoop spies on a specific channel, creating a new snooping channel placed into the given app
-	Snoop(snoopID string, app string, opts *SnoopOptions) (ChannelHandle, error)
+	Snoop(snoopID string, opts *SnoopOptions) (ChannelHandle, error)
 
 	// Silence plays silence to the channel
 	Silence() error

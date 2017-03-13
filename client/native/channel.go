@@ -580,8 +580,8 @@ func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
 }
 
 // Snoop spies on a specific channel, creating a new snooping channel placed into the given app
-func (ch *ChannelHandle) Snoop(snoopID string, app string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
-	return ch.c.Snoop(ch.id, snoopID, app, opts)
+func (ch *ChannelHandle) Snoop(snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
+	return ch.c.Snoop(ch.id, snoopID, opts)
 }
 
 // ----
