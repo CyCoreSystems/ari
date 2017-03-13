@@ -8,8 +8,8 @@ type LiveRecording struct {
 }
 
 // Get gets a lazy handle for the live recording name
-func (lr *LiveRecording) Get(name string) (h *ari.LiveRecordingHandle) {
-	h = ari.NewLiveRecordingHandle(name, lr)
+func (lr *LiveRecording) Get(name string) (h ari.LiveRecordingHandle) {
+	h = NewLiveRecordingHandle(name, lr)
 	return
 }
 
@@ -67,4 +67,86 @@ func (lr *LiveRecording) Scrap(name string) (err error) {
 	//TODO reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
 	err = lr.client.del("/recordings/live/"+name, nil, "")
 	return
+}
+
+// NewLiveRecordingHandle creates a new stored recording handle
+func NewLiveRecordingHandle(name string, s *LiveRecording) ari.LiveRecordingHandle {
+	return &LiveRecordingHandle{
+		name: name,
+		s:    s,
+	}
+}
+
+// A LiveRecordingHandle is a reference to a stored recording that can be operated on
+type LiveRecordingHandle struct {
+	name string
+	s    *LiveRecording
+}
+
+// ID returns the identifier of the live recording
+func (s *LiveRecordingHandle) ID() string {
+	return s.name
+}
+
+// Data gets the data for the stored recording
+func (s *LiveRecordingHandle) Data() (d *ari.LiveRecordingData, err error) {
+	d, err = s.s.Data(s.name)
+	return
+}
+
+// Stop stops and saves the recording
+func (s *LiveRecordingHandle) Stop() (err error) {
+	err = s.s.Stop(s.name)
+	return
+}
+
+// Scrap stops and deletes the recording
+func (s *LiveRecordingHandle) Scrap() (err error) {
+	err = s.s.Scrap(s.name)
+	return
+}
+
+// Delete deletes the recording
+func (s *LiveRecordingHandle) Delete() (err error) {
+	err = s.s.Delete(s.name)
+	return
+}
+
+// Resume resumes the recording
+func (s *LiveRecordingHandle) Resume() (err error) {
+	err = s.s.Resume(s.name)
+	return
+}
+
+// Pause pauses the recording
+func (s *LiveRecordingHandle) Pause() (err error) {
+	err = s.s.Pause(s.name)
+	return
+}
+
+// Mute mutes the recording
+func (s *LiveRecordingHandle) Mute() (err error) {
+	err = s.s.Mute(s.name)
+	return
+}
+
+// Unmute mutes the recording
+func (s *LiveRecordingHandle) Unmute() (err error) {
+	err = s.s.Unmute(s.name)
+	return
+}
+
+// Match returns true if the event matches the bridge
+func (s *LiveRecordingHandle) Match(e ari.Event) bool {
+	r, ok := e.(ari.RecordingEvent)
+	if !ok {
+		return false
+	}
+	rIDs := r.GetRecordingIDs()
+	for _, i := range rIDs {
+		if i == s.ID() {
+			return true
+		}
+	}
+	return false
 }

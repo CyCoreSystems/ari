@@ -12,12 +12,12 @@ type Mailbox struct {
 }
 
 // Get gets a lazy handle for the mailbox name
-func (m *Mailbox) Get(name string) *ari.MailboxHandle {
-	return ari.NewMailboxHandle(name, m)
+func (m *Mailbox) Get(name string) ari.MailboxHandle {
+	return NewMailboxHandle(name, m)
 }
 
 // List lists the mailboxes and returns a list of handles
-func (m *Mailbox) List() (mx []*ari.MailboxHandle, err error) {
+func (m *Mailbox) List() (mx []ari.MailboxHandle, err error) {
 
 	mailboxes := []struct {
 		Name string `json:"name"`
@@ -57,4 +57,39 @@ func (m *Mailbox) Update(name string, oldMessages int, newMessages int) (err err
 func (m *Mailbox) Delete(name string) (err error) {
 	err = m.client.del("/mailboxes/"+name, nil, "")
 	return
+}
+
+// A MailboxHandle is a handle to a mailbox instance attached to an
+// ari transport
+type MailboxHandle struct {
+	name string
+	m    *Mailbox
+}
+
+// NewMailboxHandle creates a new mailbox handle given the name and mailbox transport
+func NewMailboxHandle(name string, m *Mailbox) *MailboxHandle {
+	return &MailboxHandle{
+		name: name,
+		m:    m,
+	}
+}
+
+// ID returns the identifier for the mailbox handle
+func (mh *MailboxHandle) ID() string {
+	return mh.name
+}
+
+// Data gets the current state of the mailbox
+func (mh *MailboxHandle) Data() (*ari.MailboxData, error) {
+	return mh.m.Data(mh.name)
+}
+
+// Update updates the state of the mailbox, or creates if does not exist
+func (mh *MailboxHandle) Update(oldMessages int, newMessages int) error {
+	return mh.m.Update(mh.name, oldMessages, newMessages)
+}
+
+// Delete deletes the mailbox
+func (mh *MailboxHandle) Delete() error {
+	return mh.m.Delete(mh.name)
 }

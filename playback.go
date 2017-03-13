@@ -5,7 +5,7 @@ package ari
 type Playback interface {
 
 	// Get gets the handle to the given playbacl ID
-	Get(id string) *PlaybackHandle
+	Get(id string) PlaybackHandle
 
 	// Data gets the playback data
 	Data(id string) (*PlaybackData, error)
@@ -34,62 +34,24 @@ type PlaybackData struct {
 	TargetURI string `json:"target_uri"` // URI of the channel or bridge on which the media should be played (follows format of 'type':'name')
 }
 
-// NewPlaybackHandle builds a handle to the playback id
-func NewPlaybackHandle(id string, pb Playback) *PlaybackHandle {
-	return &PlaybackHandle{
-		id: id,
-		p:  pb,
-	}
-}
-
 // PlaybackHandle is the handle for performing playback operations
-type PlaybackHandle struct {
-	id string
-	p  Playback
-}
+type PlaybackHandle interface {
 
-// ID returns the identifier for the playback
-func (ph *PlaybackHandle) ID() string {
-	return ph.id
-}
+	// ID returns the identifier for the playback
+	ID() string
 
-// Data gets the playback data
-func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
-	pd, err = ph.p.Data(ph.id)
-	return
-}
+	// Data gets the playback data
+	Data() (pd *PlaybackData, err error)
 
-// Control performs the given operation
-func (ph *PlaybackHandle) Control(op string) (err error) {
-	err = ph.p.Control(ph.id, op)
-	return
-}
+	// Control performs the given operation
+	Control(op string) (err error)
 
-// Stop stops the playback
-func (ph *PlaybackHandle) Stop() (err error) {
-	err = ph.p.Stop(ph.id)
-	return
-}
+	// Stop stops the playback
+	Stop() (err error)
 
-// Match returns true if the event matches the playback
-func (ph *PlaybackHandle) Match(e Event) bool {
-	p, ok := e.(PlaybackEvent)
-	if !ok {
-		return false
-	}
-	ids := p.GetPlaybackIDs()
-	for _, i := range ids {
-		if i == ph.ID() {
-			return true
-		}
-	}
-	return false
-}
+	// Match returns true if the event matches the playback
+	Match(e Event) bool
 
-// Subscribe subscribes the list of channel events
-func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
-	if ph == nil {
-		return nil
-	}
-	return ph.p.Subscribe(ph.id, n...)
+	// Subscribe subscribes the list of channel events
+	Subscribe(n ...string) Subscription
 }

@@ -8,12 +8,12 @@ type Modules struct {
 }
 
 // Get obtains a lazy handle to an asterisk module
-func (m *Modules) Get(name string) *ari.ModuleHandle {
-	return ari.NewModuleHandle(name, m)
+func (m *Modules) Get(name string) ari.ModuleHandle {
+	return NewModuleHandle(name, m)
 }
 
 // List lists the modules and returns lists of handles
-func (m *Modules) List() (hx []*ari.ModuleHandle, err error) {
+func (m *Modules) List() (hx []ari.ModuleHandle, err error) {
 	var modules = []struct {
 		Name string `json:"name"`
 	}{}
@@ -53,4 +53,40 @@ func (m *Modules) Data(name string) (md *ari.ModuleData, err error) {
 		err = dataGetError(err, "module", "%v", name)
 	}
 	return
+}
+
+// ModuleHandle is the reference to an asterisk module
+type ModuleHandle struct {
+	name string
+	m    *Modules
+}
+
+// NewModuleHandle returns a new module handle
+func NewModuleHandle(name string, m *Modules) ari.ModuleHandle {
+	return &ModuleHandle{name, m}
+}
+
+// ID returns the identifier for the module
+func (mh *ModuleHandle) ID() string {
+	return mh.name
+}
+
+// Reload reloads the module
+func (mh *ModuleHandle) Reload() error {
+	return mh.m.Reload(mh.name)
+}
+
+// Unload unloads the module
+func (mh *ModuleHandle) Unload() error {
+	return mh.m.Unload(mh.name)
+}
+
+// Load loads the module
+func (mh *ModuleHandle) Load() error {
+	return mh.m.Load(mh.name)
+}
+
+// Data gets the module data
+func (mh *ModuleHandle) Data() (*ari.ModuleData, error) {
+	return mh.m.Data(mh.name)
 }

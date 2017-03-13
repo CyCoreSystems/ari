@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"fmt"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // Config provides the ARI Configuration accessors for a native client
 type Config struct {
@@ -8,8 +12,8 @@ type Config struct {
 }
 
 // Get gets a lazy handle to a configuration object
-func (c *Config) Get(configClass string, objectType string, id string) *ari.ConfigHandle {
-	return ari.NewConfigHandle(configClass, objectType, id, c)
+func (c *Config) Get(configClass string, objectType string, id string) ari.ConfigHandle {
+	return NewConfigHandle(configClass, objectType, id, c)
 }
 
 // Data retrieves the state of a configuration object
@@ -37,4 +41,44 @@ func (c *Config) Update(configClass string, objectType string, id string, tuples
 func (c *Config) Delete(configClass string, objectType string, id string) (err error) {
 	err = c.client.del("/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, "")
 	return
+}
+
+// NewConfigHandle builds a new config handle
+func NewConfigHandle(configClass, objectType, id string, c *Config) ari.ConfigHandle {
+	return &ConfigHandle{
+		configClass: configClass,
+		objectType:  objectType,
+		id:          id,
+		c:           c,
+	}
+}
+
+// A ConfigHandle is a reference to a Config object
+// on the asterisk service
+type ConfigHandle struct {
+	configClass string
+	objectType  string
+	id          string
+
+	c *Config
+}
+
+// ID returns the unique identifier for the config object
+func (ch *ConfigHandle) ID() string {
+	return fmt.Sprintf("%v/%v/%v", ch.configClass, ch.objectType, ch.id)
+}
+
+// Data gets the current data for the config handle
+func (ch *ConfigHandle) Data() (*ari.ConfigData, error) {
+	return ch.c.Data(ch.configClass, ch.objectType, ch.id)
+}
+
+// Update creates or updates the given config tuples
+func (ch *ConfigHandle) Update(tuples []ari.ConfigTuple) error {
+	return ch.c.Update(ch.configClass, ch.objectType, ch.id, tuples)
+}
+
+// Delete deletes the dynamic configuration object
+func (ch *ConfigHandle) Delete() error {
+	return ch.c.Delete(ch.configClass, ch.objectType, ch.id)
 }

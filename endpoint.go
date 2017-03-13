@@ -14,13 +14,13 @@ type Endpoint interface {
 
 	// List lists the endpoints
 	// TODO: associated with the application, or on the entire system?
-	List() ([]*EndpointHandle, error)
+	List() ([]EndpointHandle, error)
 
 	// List available endpoints for a given endpoint technology
-	ListByTech(tech string) ([]*EndpointHandle, error)
+	ListByTech(tech string) ([]EndpointHandle, error)
 
 	// Get returns a handle to the endpoint for further operations
-	Get(tech string, resource string) *EndpointHandle
+	Get(tech string, resource string) EndpointHandle
 
 	// Data returns the state of the endpoint
 	Data(tech string, resource string) (*EndpointData, error)
@@ -40,32 +40,6 @@ type EndpointData struct {
 // ID returns the ID for the endpoint
 func (ed *EndpointData) ID() string {
 	return ed.Technology + "/" + ed.Resource
-}
-
-// NewEndpointHandle creates a new EndpointHandle
-func NewEndpointHandle(tech string, resource string, e Endpoint) *EndpointHandle {
-	return &EndpointHandle{
-		tech:     tech,
-		resource: resource,
-	}
-}
-
-// An EndpointHandle is a reference to an endpoint attached to
-// a transport to an asterisk server
-type EndpointHandle struct {
-	tech     string
-	resource string
-	e        Endpoint
-}
-
-// ID returns the identifier for the endpoint
-func (eh *EndpointHandle) ID() string {
-	return eh.tech + "/" + eh.resource
-}
-
-// Data returns the state of the endpoint
-func (eh *EndpointHandle) Data() (*EndpointData, error) {
-	return eh.e.Data(eh.tech, eh.resource)
 }
 
 // FromEndpointID converts the endpoint ID to the tech, resource pair.
@@ -88,17 +62,15 @@ func FromEndpointID(id string) (tech string, resource string, err error) {
 	return
 }
 
-// Match returns true if the event matches the bridge
-func (eh *EndpointHandle) Match(e Event) bool {
-	en, ok := e.(EndpointEvent)
-	if !ok {
-		return false
-	}
-	ids := en.GetEndpointIDs()
-	for _, i := range ids {
-		if i == eh.ID() {
-			return true
-		}
-	}
-	return false
+// An EndpointHandle is a reference to an endpoint attached to
+// a transport to an asterisk server
+type EndpointHandle interface {
+	// ID returns the identifier for the endpoint
+	ID() string
+
+	// Data returns the state of the endpoint
+	Data() (*EndpointData, error)
+
+	// Match returns true if the event matches the bridge
+	Match(e Event) bool
 }

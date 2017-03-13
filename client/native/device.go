@@ -8,12 +8,12 @@ type DeviceState struct {
 }
 
 // Get returns the lazy handle for the given device name
-func (ds *DeviceState) Get(name string) *ari.DeviceStateHandle {
-	return ari.NewDeviceStateHandle(name, ds)
+func (ds *DeviceState) Get(name string) ari.DeviceStateHandle {
+	return NewDeviceStateHandle(name, ds)
 }
 
 // List lists the current devices and returns a list of handles
-func (ds *DeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
+func (ds *DeviceState) List() (dx []ari.DeviceStateHandle, err error) {
 
 	type device struct {
 		Name string `json:"name"`
@@ -56,5 +56,47 @@ func (ds *DeviceState) Update(name string, state string) (err error) {
 // Delete deletes the device
 func (ds *DeviceState) Delete(name string) (err error) {
 	err = ds.client.del("/deviceStates/"+name, nil, "")
+	return
+}
+
+// DeviceStateHandle is a representation of a device state
+// that can be interacted with
+type DeviceStateHandle struct {
+	name string
+	d    *DeviceState
+}
+
+// NewDeviceStateHandle creates a new deviceState handle
+func NewDeviceStateHandle(name string, d *DeviceState) ari.DeviceStateHandle {
+	return &DeviceStateHandle{
+		name: name,
+		d:    d,
+	}
+}
+
+// ID returns the identifier for the device
+func (dsh *DeviceStateHandle) ID() string {
+	return dsh.name
+}
+
+// Data gets the device state
+func (dsh *DeviceStateHandle) Data() (d *ari.DeviceStateData, err error) {
+	d, err = dsh.d.Data(dsh.name)
+	return
+}
+
+// Update updates the device state, implicitly creating it if not exists
+func (dsh *DeviceStateHandle) Update(state string) (err error) {
+	err = dsh.d.Update(dsh.name, state)
+	return
+}
+
+// Delete deletes the device state
+func (dsh *DeviceStateHandle) Delete() (err error) {
+	err = dsh.d.Delete(dsh.name)
+	//NOTE: if err is not nil,
+	// we could replace 'd' with a version of it
+	// that always returns ErrNotFound. Not required, as the
+	// handle could "come back" at any moment via an 'Update'
 	return
 }

@@ -12,7 +12,7 @@ type Bridge struct {
 }
 
 // Create creates a bridge and returns the lazy handle for the bridge
-func (b *Bridge) Create(id string, t string, name string) (bh *ari.BridgeHandle, err error) {
+func (b *Bridge) Create(id string, t string, name string) (bh ari.BridgeHandle, err error) {
 
 	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
@@ -34,12 +34,12 @@ func (b *Bridge) Create(id string, t string, name string) (bh *ari.BridgeHandle,
 }
 
 // Get gets the lazy handle for the given bridge id
-func (b *Bridge) Get(id string) *ari.BridgeHandle {
-	return ari.NewBridgeHandle(id, b)
+func (b *Bridge) Get(id string) ari.BridgeHandle {
+	return NewBridgeHandle(id, b)
 }
 
 // List lists the current bridges and returns a list of lazy handles
-func (b *Bridge) List() (bx []*ari.BridgeHandle, err error) {
+func (b *Bridge) List() (bx []ari.BridgeHandle, err error) {
 	var bridges = []struct {
 		ID string `json:"id"`
 	}{}
@@ -102,7 +102,7 @@ func (b *Bridge) Delete(id string) (err error) {
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
+func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
 	resp := make(map[string]interface{})
 	type request struct {
 		Media string `json:"media"`
@@ -115,7 +115,7 @@ func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph *ari.Pl
 
 // Record attempts to record audio on the bridge, using name as the identifier for
 // the created live recording handle
-func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
+func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -176,4 +176,93 @@ func (b *Bridge) Subscribe(id string, n ...string) ari.Subscription {
 	}()
 
 	return &ns
+}
+
+// NewBridgeHandle creates a new bridge handle
+func NewBridgeHandle(id string, b *Bridge) ari.BridgeHandle {
+	return &BridgeHandle{
+		id: id,
+		b:  b,
+	}
+}
+
+// BridgeHandle is the handle to a bridge for performing operations
+type BridgeHandle struct {
+	id string
+	b  *Bridge
+}
+
+// ID returns the identifier for the bridge
+func (bh *BridgeHandle) ID() string {
+	return bh.id
+}
+
+// AddChannel adds a channel to the bridge
+func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
+	err = bh.b.AddChannel(bh.id, channelID)
+	return
+}
+
+// RemoveChannel removes a channel from the bridge
+func (bh *BridgeHandle) RemoveChannel(channelID string) (err error) {
+	err = bh.b.RemoveChannel(bh.id, channelID)
+	return
+}
+
+// Delete deletes the bridge
+func (bh *BridgeHandle) Delete() (err error) {
+	err = bh.b.Delete(bh.id)
+	return
+}
+
+// Data gets the bridge data
+func (bh *BridgeHandle) Data() (bd *ari.BridgeData, err error) {
+	bd, err = bh.b.Data(bh.id)
+	return
+}
+
+// Play initiates playback of the specified media uri
+// to the bridge, returning the Playback handle
+func (bh *BridgeHandle) Play(id string, mediaURI string) (ph ari.PlaybackHandle, err error) {
+	ph, err = bh.b.Play(bh.id, id, mediaURI)
+	return
+}
+
+// Record records the bridge to the given filename
+func (bh *BridgeHandle) Record(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+	rh, err = bh.b.Record(bh.id, name, opts)
+	return
+}
+
+/* FIXME(scm): what is this for?
+// Playback returns the playback transport
+func (bh *BridgeHandle) Playback() Playback {
+	if pb, ok := bh.b.(Playbacker); ok {
+		return pb.Playback()
+	}
+	return nil
+}
+*/
+
+// Subscribe creates a subscription to the list of events
+func (bh *BridgeHandle) Subscribe(n ...string) ari.Subscription {
+	if bh == nil {
+		return nil
+	}
+	return bh.b.Subscribe(bh.id, n...)
+}
+
+// Match returns true if the event matches the bridge
+func (bh *BridgeHandle) Match(e ari.Event) bool {
+	bridgeEvent, ok := e.(ari.BridgeEvent)
+	if !ok {
+		return false
+	}
+	bridgeIDs := bridgeEvent.GetBridgeIDs()
+	for _, i := range bridgeIDs {
+		if i == bh.id {
+			return true
+		}
+	}
+	return false
 }

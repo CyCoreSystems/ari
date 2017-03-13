@@ -5,10 +5,10 @@ package ari
 type Application interface {
 
 	// List returns the list of applications in Asterisk
-	List() ([]*ApplicationHandle, error)
+	List() ([]ApplicationHandle, error)
 
 	// Get returns a handle to the application for further interaction
-	Get(name string) *ApplicationHandle
+	Get(name string) ApplicationHandle
 
 	// Data returns the applications data
 	Data(name string) (*ApplicationData, error)
@@ -36,59 +36,28 @@ type ApplicationData struct {
 	Name        string   `json:"name"`         // Name of the application
 }
 
-// NewApplicationHandle creates a new handle to the application name
-func NewApplicationHandle(name string, app Application) *ApplicationHandle {
-	return &ApplicationHandle{
-		name: name,
-		a:    app,
-	}
-}
-
 // ApplicationHandle provides a wrapper to an Application interface for
 // operations on a specific application
-type ApplicationHandle struct {
-	name string
-	a    Application
-}
+type ApplicationHandle interface {
+	// ID returns the identifier for the application
+	ID() string
 
-// ID returns the identifier for the application
-func (ah *ApplicationHandle) ID() string {
-	return ah.name
-}
+	// Data retrives the data for the application
+	Data() (ad *ApplicationData, err error)
 
-// Data retrives the data for the application
-func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
-	ad, err = ah.a.Data(ah.name)
-	return
-}
+	// Subscribe subscribes the application to an event source
+	// event source may be one of:
+	//  - channel:<channelId>
+	//  - bridge:<bridgeId>
+	//  - endpoint:<tech>/<resource> (e.g. SIP/102)
+	//  - deviceState:<deviceName>
+	Subscribe(eventSource string) (err error)
 
-// Subscribe subscribes the application to an event source
-// event source may be one of:
-//  - channel:<channelId>
-//  - bridge:<bridgeId>
-//  - endpoint:<tech>/<resource> (e.g. SIP/102)
-//  - deviceState:<deviceName>
-func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
-	err = ah.a.Subscribe(ah.name, eventSource)
-	return
-}
+	// Unsubscribe unsubscribes (removes a subscription to) a given
+	// ARI application from the provided event source
+	// Equivalent to DELETE /applications/{applicationName}/subscription
+	Unsubscribe(eventSource string) (err error)
 
-// Unsubscribe unsubscribes (removes a subscription to) a given
-// ARI application from the provided event source
-// Equivalent to DELETE /applications/{applicationName}/subscription
-func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
-	err = ah.a.Unsubscribe(ah.name, eventSource)
-	return
-}
-
-// Match returns true fo the event matches the application
-func (ah *ApplicationHandle) Match(evt Event) bool {
-	applicationEvent, ok := evt.(ApplicationEvent)
-	if !ok {
-		return false
-	}
-	if applicationEvent.GetApplication() == ah.name {
-		return true
-	}
-	return false
+	// Match returns true fo the event matches the application
+	Match(evt Event) bool
 }

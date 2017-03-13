@@ -8,7 +8,7 @@ type StoredRecording struct {
 }
 
 // List lists the current stored recordings and returns a list of handles
-func (sr *StoredRecording) List() (sx []*ari.StoredRecordingHandle, err error) {
+func (sr *StoredRecording) List() (sx []ari.StoredRecordingHandle, err error) {
 	var recs []struct {
 		Name string `json:"name"`
 	}
@@ -22,8 +22,8 @@ func (sr *StoredRecording) List() (sx []*ari.StoredRecordingHandle, err error) {
 }
 
 // Get gets a lazy handle for the given stored recording name
-func (sr *StoredRecording) Get(name string) (s *ari.StoredRecordingHandle) {
-	s = ari.NewStoredRecordingHandle(name, sr)
+func (sr *StoredRecording) Get(name string) (s ari.StoredRecordingHandle) {
+	s = NewStoredRecordingHandle(name, sr)
 	return
 }
 
@@ -40,7 +40,7 @@ func (sr *StoredRecording) Data(name string) (d *ari.StoredRecordingData, err er
 }
 
 // Copy copies a stored recording and returns the new handle
-func (sr *StoredRecording) Copy(name string, dest string) (h *ari.StoredRecordingHandle, err error) {
+func (sr *StoredRecording) Copy(name string, dest string) (h ari.StoredRecordingHandle, err error) {
 
 	var resp struct {
 		Name string `json:"name"`
@@ -64,5 +64,42 @@ func (sr *StoredRecording) Copy(name string, dest string) (h *ari.StoredRecordin
 // Delete deletes the stored recording
 func (sr *StoredRecording) Delete(name string) (err error) {
 	err = sr.client.del("/recordings/stored/"+name+"", nil, "")
+	return
+}
+
+// A StoredRecordingHandle is a reference to a stored recording that can be operated on
+type StoredRecordingHandle struct {
+	name string
+	s    *StoredRecording
+}
+
+// NewStoredRecordingHandle creates a new stored recording handle
+func NewStoredRecordingHandle(name string, s *StoredRecording) ari.StoredRecordingHandle {
+	return &StoredRecordingHandle{
+		name: name,
+		s:    s,
+	}
+}
+
+// ID returns the identifier for the stored recording
+func (s *StoredRecordingHandle) ID() string {
+	return s.name
+}
+
+// Data gets the data for the stored recording
+func (s *StoredRecordingHandle) Data() (d *ari.StoredRecordingData, err error) {
+	d, err = s.s.Data(s.name)
+	return
+}
+
+// Copy copies the stored recording
+func (s *StoredRecordingHandle) Copy(dest string) (h ari.StoredRecordingHandle, err error) {
+	h, err = s.s.Copy(s.name, dest)
+	return
+}
+
+// Delete deletes the recording
+func (s *StoredRecordingHandle) Delete() (err error) {
+	err = s.s.Delete(s.name)
 	return
 }
