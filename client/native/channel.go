@@ -286,24 +286,12 @@ func (c *Channel) Record(id string, name string, opts *ari.RecordingOptions) (rh
 }
 
 // Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
-func (c *Channel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch ari.ChannelHandle, err error) {
+func (c *Channel) Snoop(id string, snoopID string, opts *ari.SnoopOptions) (ch ari.ChannelHandle, err error) {
 	if opts == nil {
-		opts = &ari.SnoopOptions{}
+		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
 
-	resp := make(map[string]interface{})
-	req := struct {
-		Direction ari.Direction `json:"spy,omitempty"`
-		Whisper   ari.Direction `json:"whisper,omitempty"`
-		App       string        `json:"app"`
-		AppArgs   string        `json:"appArgs"`
-	}{
-		Direction: opts.Direction,
-		Whisper:   opts.Whisper,
-		App:       app,
-		AppArgs:   opts.AppArgs,
-	}
-	err = c.client.post("/channels/"+id+"/snoop/"+snoopID, &resp, &req)
+	err = c.client.post("/channels/"+id+"/snoop/"+snoopID, nil, &opts)
 	if err == nil {
 		ch = c.Get(snoopID)
 	}
@@ -313,8 +301,11 @@ func (c *Channel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOp
 // Dial dials the given calling channel identifier
 func (c *Channel) Dial(id string, callingChannelID string, timeout time.Duration) (err error) {
 	req := struct {
-		Caller  string `json:"caller,omitempty"` // the CHANNEL ID (not CallerID) of the channel for whom this dial is being generated
-		Timeout int    `json:"timeout"`
+		// Caller is the (optional) channel ID of another channel to which media negotiations for the newly-dialed channel will be associated.
+		Caller string `json:"caller,omitempty"`
+
+		// Timeout is the maximum amount of time to allow for the dial to complete.
+		Timeout int `json:"timeout"`
 	}{
 		Caller:  callingChannelID,
 		Timeout: int(timeout.Seconds()),

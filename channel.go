@@ -128,9 +128,19 @@ type ChannelCreateRequest struct {
 
 // SnoopOptions enumerates the non-required arguments for the snoop operation
 type SnoopOptions struct {
-	Direction Direction // Direction of audio to spy on (in, out, both)
-	Whisper   Direction // Direction of audio to whisper into (in, out, both)
-	AppArgs   string    // The arguments to pass to the new application.
+	// App is the ARI application into which the newly-created Snoop channel should be dropped.
+	App string `json:"app"`
+
+	// AppArgs is the set of arguments to pass with the newly-created Snoop channel's entry into ARI.
+	AppArgs string `json:"appArgs,omitempty"`
+
+	// Spy describes the direction of audio on which to spy (none, in, out, both).
+	// The default is 'none'.
+	Spy Direction `json:"spy,omitempty"`
+
+	// Whisper describes the direction of audio on which to send (none, in, out, both).
+	// The default is 'none'.
+	Whisper Direction `json:"whisper,omitempty"`
 }
 
 // ChannelHandle provides a wrapper to a Channel interface for

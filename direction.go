@@ -4,6 +4,9 @@ package ari
 type Direction string
 
 const (
+	// DirectionNone indicates audio should not flow in any direction
+	DirectionNone Direction = "none"
+
 	// DirectionIn indicates the direction flowing from the channel into Asterisk
 	DirectionIn Direction = "in"
 
