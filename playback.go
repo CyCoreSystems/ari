@@ -20,9 +20,12 @@ type Playback interface {
 	Subscribe(id string, n ...string) Subscription
 }
 
-// Playbacker contains a playback transport
-type Playbacker interface {
-	Playback() Playback
+// A Player is an entity which can play an audio URI
+type Player interface {
+	Subscriber
+
+	// Play plays the audio using the given playback ID and media URI
+	Play(string, string) (PlaybackHandle, error)
 }
 
 // PlaybackData represents the state of a playback

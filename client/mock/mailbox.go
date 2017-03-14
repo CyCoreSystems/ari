@@ -50,9 +50,9 @@ func (_mr *_MockMailboxRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *MockMailbox) Get(_param0 string) *ari.MailboxHandle {
+func (_m *MockMailbox) Get(_param0 string) ari.MailboxHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.MailboxHandle)
+	ret0, _ := ret[0].(ari.MailboxHandle)
 	return ret0
 }
 
@@ -60,9 +60,9 @@ func (_mr *_MockMailboxRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockMailbox) List() ([]*ari.MailboxHandle, error) {
+func (_m *MockMailbox) List() ([]ari.MailboxHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.MailboxHandle)
+	ret0, _ := ret[0].([]ari.MailboxHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

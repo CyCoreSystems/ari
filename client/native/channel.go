@@ -429,16 +429,6 @@ func (ch *ChannelHandle) Record(name string, opts *ari.RecordingOptions) (rh ari
 	return
 }
 
-/* FIXME(scm): what is this?
-// Playback returns the playback transport
-func (ch *ChannelHandle) Playback() ari.Playback {
-	if pb, ok := ch.c.(ari.Playbacker); ok {
-		return pb.Playback()
-	}
-	return nil
-}
-*/
-
 //---
 // Hangup Operations
 //---

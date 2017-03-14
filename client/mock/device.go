@@ -50,9 +50,9 @@ func (_mr *_MockDeviceStateRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *MockDeviceState) Get(_param0 string) *ari.DeviceStateHandle {
+func (_m *MockDeviceState) Get(_param0 string) ari.DeviceStateHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.DeviceStateHandle)
+	ret0, _ := ret[0].(ari.DeviceStateHandle)
 	return ret0
 }
 
@@ -60,9 +60,9 @@ func (_mr *_MockDeviceStateRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockDeviceState) List() ([]*ari.DeviceStateHandle, error) {
+func (_m *MockDeviceState) List() ([]ari.DeviceStateHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.DeviceStateHandle)
+	ret0, _ := ret[0].([]ari.DeviceStateHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

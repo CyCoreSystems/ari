@@ -50,9 +50,9 @@ func (_mr *_MockPlaybackRecorder) Data(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Data", arg0)
 }
 
-func (_m *MockPlayback) Get(_param0 string) *ari.PlaybackHandle {
+func (_m *MockPlayback) Get(_param0 string) ari.PlaybackHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.PlaybackHandle)
+	ret0, _ := ret[0].(ari.PlaybackHandle)
 	return ret0
 }
 

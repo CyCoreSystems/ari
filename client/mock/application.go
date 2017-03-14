@@ -40,9 +40,9 @@ func (_mr *_MockApplicationRecorder) Data(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Data", arg0)
 }
 
-func (_m *MockApplication) Get(_param0 string) *ari.ApplicationHandle {
+func (_m *MockApplication) Get(_param0 string) ari.ApplicationHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.ApplicationHandle)
+	ret0, _ := ret[0].(ari.ApplicationHandle)
 	return ret0
 }
 
@@ -50,9 +50,9 @@ func (_mr *_MockApplicationRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockApplication) List() ([]*ari.ApplicationHandle, error) {
+func (_m *MockApplication) List() ([]ari.ApplicationHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.ApplicationHandle)
+	ret0, _ := ret[0].([]ari.ApplicationHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

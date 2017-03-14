@@ -40,9 +40,9 @@ func (_mr *_MockModulesRecorder) Data(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Data", arg0)
 }
 
-func (_m *MockModules) Get(_param0 string) *ari.ModuleHandle {
+func (_m *MockModules) Get(_param0 string) ari.ModuleHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.ModuleHandle)
+	ret0, _ := ret[0].(ari.ModuleHandle)
 	return ret0
 }
 
@@ -50,9 +50,9 @@ func (_mr *_MockModulesRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockModules) List() ([]*ari.ModuleHandle, error) {
+func (_m *MockModules) List() ([]ari.ModuleHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.ModuleHandle)
+	ret0, _ := ret[0].([]ari.ModuleHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

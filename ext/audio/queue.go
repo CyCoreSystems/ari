@@ -32,9 +32,12 @@ type Options struct {
 // Queue represents a sequence of audio playbacks
 // which are to be played on the associated Player
 type Queue struct {
-	queue        []string // List of mediaURI to be played
-	mu           sync.Mutex
+	mu    sync.Mutex
+	queue []string // List of mediaURI to be played
+
 	receivedDTMF string // Storage for received DTMF, if we are listening for them
+
+	cancel context.CancelFunc
 }
 
 // NewQueue creates (but does not start) a new playback queue.
@@ -43,13 +46,8 @@ func NewQueue() *Queue {
 }
 
 // Add appends one or more mediaURIs to the playback queue
-func (pq *Queue) Add(mediaURIs ...string) {
-	// Make sure our queue exists
-	pq.mu.Lock()
-	if pq.queue == nil {
-		pq.queue = []string{}
-	}
-	pq.mu.Unlock()
+func (q *Queue) Add(mediaURIs ...string) {
+	q.mu.Lock()
 
 	// Add each media URI to the queue
 	for _, u := range mediaURIs {
@@ -57,28 +55,28 @@ func (pq *Queue) Add(mediaURIs ...string) {
 			continue
 		}
 
-		pq.mu.Lock()
-		pq.queue = append(pq.queue, u)
-		pq.mu.Unlock()
+		q.queue = append(q.queue, u)
 	}
+	q.mu.Unlock()
 }
 
 // Flush empties a playback queue.
 // NOTE that this does NOT stop the current playback.
-func (pq *Queue) Flush() {
-	pq.mu.Lock()
-	pq.queue = []string{}
-	pq.mu.Unlock()
+func (q *Queue) Flush() {
+	q.queue = []string{}
 }
 
 // ReceivedDTMF returns any DTMF which has been received
 // by the PlaybackQueue.
-func (pq *Queue) ReceivedDTMF() string {
-	return pq.receivedDTMF
+func (q *Queue) ReceivedDTMF() string {
+	return q.receivedDTMF
 }
 
 // Play starts the playback of the queue to the Player.
-func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) (Status, error) {
+func (q *Queue) Play(ctx context.Context, p ari.Player, opts *Options) (Status, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	q.cancel = cancel
+	defer cancel()
 
 	if opts == nil {
 		opts = &Options{}
@@ -88,59 +86,43 @@ func (pq *Queue) Play(ctx context.Context, p Player, opts *Options) (Status, err
 		defer close(opts.Done)
 	}
 
-	queue := make(chan string)
-
-	dtmfSub := p.Subscribe(ari.Events.ChannelDtmfReceived)
-	defer dtmfSub.Cancel()
-
-	pq.queue = append(pq.queue, "")
-
-	dtmfExit := make(chan struct{})
-
-	go func() {
-		defer close(queue)
-		for i := 0; i != len(pq.queue); {
-			select {
-			case e := <-dtmfSub.Events(): // read dtmf input
-				d := e.(*ari.ChannelDtmfReceived)
-				pq.receivedDTMF += d.Digit
-
-				if strings.Contains(opts.ExitOnDTMF, d.Digit) {
-					close(dtmfExit)
-					return
-				}
-
-			case queue <- pq.queue[i]: // send next item
-				i++
-				continue
-
-			case <-ctx.Done(): // wait for cancellation
-				return
-
-			}
-		}
-	}()
+	if opts.ExitOnDTMF != "" {
+		go q.monitorDTMF(ctx, p, opts.ExitOnDTMF)
+	}
 
 	// Start the playback
-	for q := range queue {
-		if q == "" {
-			break
+	for i := 0; i < len(q.queue); i++ {
+		if ctx.Err() != nil {
+			return Canceled, nil
 		}
-		pb := PlayAsync(ctx, p, q)
-
-		select {
-		case <-dtmfExit:
-			pb.Cancel()
-			return Finished, nil
-		case <-pb.Stopped():
-			if pb.Status() > Finished {
-				return pb.Status(), pb.Err()
-			}
-		case <-ctx.Done():
-			// should be caught in PlayAsync but just in case..
-			return Canceled, ctx.Err()
+		status, err := Play(ctx, p, q.queue[i])
+		if err != nil {
+			return status, err
 		}
 	}
 
 	return Finished, nil
+}
+
+func (q *Queue) monitorDTMF(ctx context.Context, p ari.Player, exitList string) {
+	defer q.cancel()
+
+	sub := p.Subscribe(ari.Events.ChannelDtmfReceived)
+	defer sub.Cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case e := <-sub.Events():
+			v, ok := e.(*ari.ChannelDtmfReceived)
+			if !ok {
+				return
+			}
+			q.receivedDTMF += v.Digit
+			if strings.Contains(exitList, v.Digit) {
+				return
+			}
+		}
+	}
 }

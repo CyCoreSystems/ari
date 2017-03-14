@@ -40,9 +40,9 @@ func (_mr *_MockSoundRecorder) Data(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Data", arg0)
 }
 
-func (_m *MockSound) Get(_param0 string) *ari.SoundHandle {
+func (_m *MockSound) Get(_param0 string) ari.SoundHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.SoundHandle)
+	ret0, _ := ret[0].(ari.SoundHandle)
 	return ret0
 }
 
@@ -50,9 +50,9 @@ func (_mr *_MockSoundRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockSound) List(_param0 map[string]string) ([]*ari.SoundHandle, error) {
+func (_m *MockSound) List(_param0 map[string]string) ([]ari.SoundHandle, error) {
 	ret := _m.ctrl.Call(_m, "List", _param0)
-	ret0, _ := ret[0].([]*ari.SoundHandle)
+	ret0, _ := ret[0].([]ari.SoundHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

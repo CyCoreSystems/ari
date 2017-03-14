@@ -71,10 +71,6 @@ type BridgeHandle interface {
 	// Record records the bridge to the given filename
 	Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error)
 
-	// Playback returns the playback transport
-	// FIXME(scm): what is this for?
-	//Playback() Playback
-
 	// Subscribe creates a subscription to the list of events
 	Subscribe(n ...string) Subscription
 

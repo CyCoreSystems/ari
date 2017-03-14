@@ -39,9 +39,9 @@ func (_mr *_MockBridgeRecorder) AddChannel(arg0, arg1 interface{}) *gomock.Call 
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "AddChannel", arg0, arg1)
 }
 
-func (_m *MockBridge) Create(_param0 string, _param1 string, _param2 string) (*ari.BridgeHandle, error) {
+func (_m *MockBridge) Create(_param0 string, _param1 string, _param2 string) (ari.BridgeHandle, error) {
 	ret := _m.ctrl.Call(_m, "Create", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.BridgeHandle)
+	ret0, _ := ret[0].(ari.BridgeHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -71,9 +71,9 @@ func (_mr *_MockBridgeRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *MockBridge) Get(_param0 string) *ari.BridgeHandle {
+func (_m *MockBridge) Get(_param0 string) ari.BridgeHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.BridgeHandle)
+	ret0, _ := ret[0].(ari.BridgeHandle)
 	return ret0
 }
 
@@ -81,9 +81,9 @@ func (_mr *_MockBridgeRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockBridge) List() ([]*ari.BridgeHandle, error) {
+func (_m *MockBridge) List() ([]ari.BridgeHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.BridgeHandle)
+	ret0, _ := ret[0].([]ari.BridgeHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -92,9 +92,9 @@ func (_mr *_MockBridgeRecorder) List() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "List")
 }
 
-func (_m *MockBridge) Play(_param0 string, _param1 string, _param2 string) (*ari.PlaybackHandle, error) {
+func (_m *MockBridge) Play(_param0 string, _param1 string, _param2 string) (ari.PlaybackHandle, error) {
 	ret := _m.ctrl.Call(_m, "Play", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.PlaybackHandle)
+	ret0, _ := ret[0].(ari.PlaybackHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -103,9 +103,9 @@ func (_mr *_MockBridgeRecorder) Play(arg0, arg1, arg2 interface{}) *gomock.Call 
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Play", arg0, arg1, arg2)
 }
 
-func (_m *MockBridge) Record(_param0 string, _param1 string, _param2 *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+func (_m *MockBridge) Record(_param0 string, _param1 string, _param2 *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
 	ret := _m.ctrl.Call(_m, "Record", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.LiveRecordingHandle)
+	ret0, _ := ret[0].(ari.LiveRecordingHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -50,9 +50,9 @@ func (_mr *_MockLiveRecordingRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *MockLiveRecording) Get(_param0 string) *ari.LiveRecordingHandle {
+func (_m *MockLiveRecording) Get(_param0 string) ari.LiveRecordingHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.LiveRecordingHandle)
+	ret0, _ := ret[0].(ari.LiveRecordingHandle)
 	return ret0
 }
 

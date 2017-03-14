@@ -50,9 +50,9 @@ func (_mr *_MockConfigRecorder) Delete(arg0, arg1, arg2 interface{}) *gomock.Cal
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0, arg1, arg2)
 }
 
-func (_m *MockConfig) Get(_param0 string, _param1 string, _param2 string) *ari.ConfigHandle {
+func (_m *MockConfig) Get(_param0 string, _param1 string, _param2 string) ari.ConfigHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.ConfigHandle)
+	ret0, _ := ret[0].(ari.ConfigHandle)
 	return ret0
 }
 

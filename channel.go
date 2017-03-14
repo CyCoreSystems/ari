@@ -162,9 +162,6 @@ type ChannelHandle interface {
 	// Record records the channel to the given filename
 	Record(name string, opts *RecordingOptions) (LiveRecordingHandle, error)
 
-	// Playback returns the playback transport -- FIXME(scm): what is this for?
-	//Playback() Playback
-
 	// Busy hangs up the channel with the "busy" cause code
 	Busy() error
 

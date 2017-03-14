@@ -70,9 +70,9 @@ func (_mr *_MockChannelRecorder) Continue(arg0, arg1, arg2, arg3 interface{}) *g
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Continue", arg0, arg1, arg2, arg3)
 }
 
-func (_m *MockChannel) Create(_param0 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+func (_m *MockChannel) Create(_param0 ari.ChannelCreateRequest) (ari.ChannelHandle, error) {
 	ret := _m.ctrl.Call(_m, "Create", _param0)
-	ret0, _ := ret[0].(*ari.ChannelHandle)
+	ret0, _ := ret[0].(ari.ChannelHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -102,9 +102,9 @@ func (_mr *_MockChannelRecorder) Dial(arg0, arg1, arg2 interface{}) *gomock.Call
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Dial", arg0, arg1, arg2)
 }
 
-func (_m *MockChannel) Get(_param0 string) *ari.ChannelHandle {
+func (_m *MockChannel) Get(_param0 string) ari.ChannelHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.ChannelHandle)
+	ret0, _ := ret[0].(ari.ChannelHandle)
 	return ret0
 }
 
@@ -132,9 +132,9 @@ func (_mr *_MockChannelRecorder) Hold(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Hold", arg0)
 }
 
-func (_m *MockChannel) List() ([]*ari.ChannelHandle, error) {
+func (_m *MockChannel) List() ([]ari.ChannelHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.ChannelHandle)
+	ret0, _ := ret[0].([]ari.ChannelHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -153,7 +153,7 @@ func (_mr *_MockChannelRecorder) MOH(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "MOH", arg0, arg1)
 }
 
-func (_m *MockChannel) Mute(_param0 string, _param1 string) error {
+func (_m *MockChannel) Mute(_param0 string, _param1 ari.Direction) error {
 	ret := _m.ctrl.Call(_m, "Mute", _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -163,9 +163,9 @@ func (_mr *_MockChannelRecorder) Mute(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Mute", arg0, arg1)
 }
 
-func (_m *MockChannel) Originate(_param0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
+func (_m *MockChannel) Originate(_param0 ari.OriginateRequest) (ari.ChannelHandle, error) {
 	ret := _m.ctrl.Call(_m, "Originate", _param0)
-	ret0, _ := ret[0].(*ari.ChannelHandle)
+	ret0, _ := ret[0].(ari.ChannelHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -174,9 +174,9 @@ func (_mr *_MockChannelRecorder) Originate(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Originate", arg0)
 }
 
-func (_m *MockChannel) Play(_param0 string, _param1 string, _param2 string) (*ari.PlaybackHandle, error) {
+func (_m *MockChannel) Play(_param0 string, _param1 string, _param2 string) (ari.PlaybackHandle, error) {
 	ret := _m.ctrl.Call(_m, "Play", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.PlaybackHandle)
+	ret0, _ := ret[0].(ari.PlaybackHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -185,9 +185,9 @@ func (_mr *_MockChannelRecorder) Play(arg0, arg1, arg2 interface{}) *gomock.Call
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Play", arg0, arg1, arg2)
 }
 
-func (_m *MockChannel) Record(_param0 string, _param1 string, _param2 *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+func (_m *MockChannel) Record(_param0 string, _param1 string, _param2 *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
 	ret := _m.ctrl.Call(_m, "Record", _param0, _param1, _param2)
-	ret0, _ := ret[0].(*ari.LiveRecordingHandle)
+	ret0, _ := ret[0].(ari.LiveRecordingHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -226,15 +226,15 @@ func (_mr *_MockChannelRecorder) Silence(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Silence", arg0)
 }
 
-func (_m *MockChannel) Snoop(_param0 string, _param1 string, _param2 string, _param3 *ari.SnoopOptions) (*ari.ChannelHandle, error) {
-	ret := _m.ctrl.Call(_m, "Snoop", _param0, _param1, _param2, _param3)
-	ret0, _ := ret[0].(*ari.ChannelHandle)
+func (_m *MockChannel) Snoop(_param0 string, _param1 string, _param2 *ari.SnoopOptions) (ari.ChannelHandle, error) {
+	ret := _m.ctrl.Call(_m, "Snoop", _param0, _param1, _param2)
+	ret0, _ := ret[0].(ari.ChannelHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockChannelRecorder) Snoop(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Snoop", arg0, arg1, arg2, arg3)
+func (_mr *_MockChannelRecorder) Snoop(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Snoop", arg0, arg1, arg2)
 }
 
 func (_m *MockChannel) StopHold(_param0 string) error {
@@ -292,7 +292,7 @@ func (_mr *_MockChannelRecorder) Subscribe(arg0 interface{}, arg1 ...interface{}
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Subscribe", _s...)
 }
 
-func (_m *MockChannel) Unmute(_param0 string, _param1 string) error {
+func (_m *MockChannel) Unmute(_param0 string, _param1 ari.Direction) error {
 	ret := _m.ctrl.Call(_m, "Unmute", _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0

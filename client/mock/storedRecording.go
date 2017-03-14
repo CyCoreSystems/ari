@@ -29,9 +29,9 @@ func (_m *MockStoredRecording) EXPECT() *_MockStoredRecordingRecorder {
 	return _m.recorder
 }
 
-func (_m *MockStoredRecording) Copy(_param0 string, _param1 string) (*ari.StoredRecordingHandle, error) {
+func (_m *MockStoredRecording) Copy(_param0 string, _param1 string) (ari.StoredRecordingHandle, error) {
 	ret := _m.ctrl.Call(_m, "Copy", _param0, _param1)
-	ret0, _ := ret[0].(*ari.StoredRecordingHandle)
+	ret0, _ := ret[0].(ari.StoredRecordingHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -61,9 +61,9 @@ func (_mr *_MockStoredRecordingRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *MockStoredRecording) Get(_param0 string) *ari.StoredRecordingHandle {
+func (_m *MockStoredRecording) Get(_param0 string) ari.StoredRecordingHandle {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(*ari.StoredRecordingHandle)
+	ret0, _ := ret[0].(ari.StoredRecordingHandle)
 	return ret0
 }
 
@@ -71,9 +71,9 @@ func (_mr *_MockStoredRecordingRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
 
-func (_m *MockStoredRecording) List() ([]*ari.StoredRecordingHandle, error) {
+func (_m *MockStoredRecording) List() ([]ari.StoredRecordingHandle, error) {
 	ret := _m.ctrl.Call(_m, "List")
-	ret0, _ := ret[0].([]*ari.StoredRecordingHandle)
+	ret0, _ := ret[0].([]ari.StoredRecordingHandle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

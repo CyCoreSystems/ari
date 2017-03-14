@@ -37,9 +37,9 @@ func (_mr *_MockSubscriptionRecorder) Cancel() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Cancel")
 }
 
-func (_m *MockSubscription) Events() chan ari.Event {
+func (_m *MockSubscription) Events() <-chan ari.Event {
 	ret := _m.ctrl.Call(_m, "Events")
-	ret0, _ := ret[0].(chan ari.Event)
+	ret0, _ := ret[0].(<-chan ari.Event)
 	return ret0
 }
 

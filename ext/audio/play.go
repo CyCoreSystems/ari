@@ -1,10 +1,11 @@
 package audio
 
 import (
-	"errors"
+	"sync"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
@@ -22,122 +23,173 @@ var PlaybackStartTimeout = 1 * time.Second
 var MaxPlaybackTime = 10 * time.Minute
 
 // Play plays the given media URI
-func Play(ctx context.Context, p Player, mediaURI string) (st Status, err error) {
-	pb := PlayAsync(ctx, p, mediaURI)
+func Play(ctx context.Context, p ari.Player, mediaURI string) (Status, error) {
+	c := PlayAsync(ctx, p, mediaURI)
 
-	<-pb.Stopped()
+	<-c.Stopped()
 
-	st, err = pb.Status(), pb.Err()
-	return
+	return c.Status(), c.Err()
 }
 
 // PlayAsync plays the audio asynchronously and returns a playback object
-func PlayAsync(ctx context.Context, p Player, mediaURI string) *Playback {
+func PlayAsync(ctx context.Context, p ari.Player, mediaURI string) *Control {
+	var err error
 
-	var pb Playback
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	id := uuid.NewV1().String()
-
-	var playbackStarted ari.Subscription
-	var playbackFinished ari.Subscription
-
-	if playbacker, ok := p.(ari.Playbacker); ok {
-		playback := playbacker.Playback()
-		if playback != nil {
-			pb.handle = playback.Get(id)
-			playbackStarted = pb.handle.Subscribe(ari.Events.PlaybackStarted)
-			playbackFinished = pb.handle.Subscribe(ari.Events.PlaybackFinished)
-		}
-	} else {
-		Logger.Warn("Could not convert ari.Player to ari.Playbacker, timing issues may occur")
+	c := Control{
+		id:      uuid.NewV1().String(),
+		startCh: make(chan struct{}),
+		stopCh:  make(chan struct{}),
+		status:  InProgress,
+		cancel:  cancel,
 	}
 
-	pb.startCh = make(chan struct{})
-	pb.stopCh = make(chan struct{})
-	pb.status = InProgress
-	pb.err = nil
-	pb.ctx, pb.cancel = context.WithCancel(ctx)
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	go c.watchEvents(ctx, wg)
+	wg.Wait()
+
+	c.pb, err = p.Play(c.id, mediaURI)
+	if err != nil {
+		c.err = errors.Wrap(err, "failed to execute Play on player")
+		c.status = Failed
+	}
+
+	return &c
+}
+
+// Control provides a mechanism for interacting with an audio playback
+type Control struct {
+	id string // playback ID
+
+	started bool
+	startCh chan struct{}
+
+	stopped bool
+	stopCh  chan struct{}
+
+	p  ari.Player
+	pb ari.PlaybackHandle
+
+	status Status
+	err    error
+
+	startedSub  ari.Subscription
+	finishedSub ari.Subscription
+	hangupSub   ari.Subscription
+
+	cancel context.CancelFunc
+}
+
+// Handle returns the ARI reference to the playback object
+func (c *Control) Handle() ari.PlaybackHandle {
+	return c.pb
+}
+
+func (c *Control) onStarted() {
+	if !c.started {
+		c.started = true
+		close(c.startCh)
+	}
+}
+
+// Started returns the channel that is closed when the playback has started
+func (c *Control) Started() <-chan struct{} {
+	return c.startCh
+}
+
+func (c *Control) onStopped() {
+	if !c.stopped {
+		c.stopped = true
+		close(c.stopCh)
+	}
+}
+
+// Stopped returns the channel that is closed when the playback has stopped
+func (c *Control) Stopped() <-chan struct{} {
+	return c.stopCh
+}
+
+// Status returns the current status of the playback
+func (c *Control) Status() Status {
+	return c.status
+}
+
+// Err returns any accumulated errors during playback
+func (c *Control) Err() error {
+	return c.err
+}
+
+// Cancel stops the playback
+func (c *Control) Cancel() {
+	if !c.stopped && c.pb != nil {
+		c.pb.Stop()
+	}
+
+	c.onStopped()
+
+	c.cancel()
+}
+
+type stateFn func(context.Context) stateFn
+
+func (c *Control) watchEvents(ctx context.Context, wg *sync.WaitGroup) {
+	defer c.Cancel()
+
+	c.startedSub = c.p.Subscribe(ari.Events.PlaybackStarted)
+	defer c.startedSub.Cancel()
+	c.finishedSub = c.p.Subscribe(ari.Events.PlaybackFinished)
+	defer c.finishedSub.Cancel()
 
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
-	hangup := p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
+	c.hangupSub = c.p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
+	defer c.hangupSub.Cancel()
 
-	pb.handle, pb.err = p.Play(id, mediaURI)
+	wg.Done()
 
-	if playbackStarted == nil {
-		playbackStarted = pb.handle.Subscribe(ari.Events.PlaybackStarted)
-		playbackFinished = pb.handle.Subscribe(ari.Events.PlaybackFinished)
+	for f := c.waitStart; f != nil; {
+		f = f(ctx)
 	}
+}
 
-	go func() {
-		defer func() {
-			if pb.handle != nil {
-				pb.handle.Stop()
-			}
-			playbackStarted.Cancel()
-			playbackFinished.Cancel()
-			hangup.Cancel()
-			close(pb.stopCh)
-		}()
+func (c *Control) waitStart(ctx context.Context) stateFn {
+	select {
+	case <-ctx.Done():
+		c.status = Canceled
+		c.err = ctx.Err()
+		return nil
+	case <-time.After(PlaybackStartTimeout):
+		c.status = Timeout
+		c.err = errors.New("Timeout waiting for start of playback")
+		return nil
+	case <-c.hangupSub.Events():
+		c.status = Hangup
+		return nil
+	case <-c.finishedSub.Events():
+		Logger.Warn("Got playback finished before start")
+		c.status = Finished
+		c.onStopped()
+		return nil
+	case <-c.startedSub.Events():
+		c.onStarted()
+		return c.waitStop
+	}
+}
 
-		// wait to check error here so
-		// subscriptions are cleaned up
-		if pb.err != nil {
-			close(pb.startCh)
-			pb.status = Failed
-			return
-		}
-
-		go func() {
-			defer close(pb.startCh)
-
-			for {
-				select {
-				case <-time.After(PlaybackStartTimeout):
-					pb.status = Timeout
-					pb.err = errors.New("Timeout waiting for start of playback")
-					return
-				case <-hangup.Events():
-					pb.status = Hangup
-					return
-				case <-pb.ctx.Done():
-					pb.status = Canceled
-					pb.err = pb.ctx.Err()
-					return
-				case <-playbackFinished.Events():
-					Logger.Debug("Got playback finished before start")
-					pb.status = Finished
-					return
-				case <-playbackStarted.Events():
-					return
-				}
-			}
-		}()
-
-		<-pb.startCh
-
-		if pb.status != InProgress {
-			return
-		}
-
-		for {
-			select {
-			case <-time.After(MaxPlaybackTime):
-				pb.status = Timeout
-				pb.err = errors.New("Timeout waiting for stop of playback")
-				return
-			case <-hangup.Events():
-				pb.status = Hangup
-				return
-			case <-pb.ctx.Done():
-				pb.status = Canceled
-				pb.err = pb.ctx.Err()
-				return
-			case <-playbackFinished.Events():
-				pb.status = Finished
-				return
-			}
-		}
-	}()
-
-	return &pb
+func (c *Control) waitStop(ctx context.Context) stateFn {
+	select {
+	case <-ctx.Done():
+		c.status = Canceled
+		c.err = ctx.Err()
+	case <-time.After(MaxPlaybackTime):
+		c.status = Timeout
+		c.err = errors.New("Timeout waiting for stop of playback")
+	case <-c.hangupSub.Events():
+		c.status = Hangup
+	case <-c.finishedSub.Events():
+		c.status = Finished
+	}
+	return nil
 }
