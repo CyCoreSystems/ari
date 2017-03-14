@@ -77,14 +77,21 @@ func (el eventList) Swap(l int, r int) {
 }
 
 func main() {
+	if len(os.Args) < 3 {
+		log.Fatalf("Usage: %s <template> <specFile.json>\n", os.Args[0])
+		return
+	}
+	templateFile := os.Args[1]
+	specFile := os.Args[2]
+
 	// load template
-	tmpl, err := template.New("eventsTemplate").ParseFiles("template.tmpl")
+	tmpl, err := template.New("eventsTemplate").ParseFiles(templateFile)
 	if err != nil {
 		log.Fatalln("failed to parse template", err)
 	}
 
 	// load file
-	input, err := os.Open("./json/events-14.0.0-rc1.json")
+	input, err := os.Open(specFile)
 	if err != nil {
 		log.Fatalln("failed to open event definition file", err)
 	}

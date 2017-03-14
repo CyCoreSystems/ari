@@ -232,6 +232,95 @@ type RawEvent struct {
 	TextMessageReceived *TextMessageReceived `json:",inline,omitempty"`
 }
 
+// EventToRaw converts an Event to a RawEvent
+func EventToRaw(e Event) *RawEvent {
+	raw := new(RawEvent)
+	switch e.GetType() {
+	case Events.ApplicationReplaced:
+		raw.ApplicationReplaced = e.(*ApplicationReplaced)
+	case Events.BridgeAttendedTransfer:
+		raw.BridgeAttendedTransfer = e.(*BridgeAttendedTransfer)
+	case Events.BridgeBlindTransfer:
+		raw.BridgeBlindTransfer = e.(*BridgeBlindTransfer)
+	case Events.BridgeCreated:
+		raw.BridgeCreated = e.(*BridgeCreated)
+	case Events.BridgeDestroyed:
+		raw.BridgeDestroyed = e.(*BridgeDestroyed)
+	case Events.BridgeMerged:
+		raw.BridgeMerged = e.(*BridgeMerged)
+	case Events.ChannelCallerID:
+		raw.ChannelCallerID = e.(*ChannelCallerID)
+	case Events.ChannelConnectedLine:
+		raw.ChannelConnectedLine = e.(*ChannelConnectedLine)
+	case Events.ChannelCreated:
+		raw.ChannelCreated = e.(*ChannelCreated)
+	case Events.ChannelDestroyed:
+		raw.ChannelDestroyed = e.(*ChannelDestroyed)
+	case Events.ChannelDialplan:
+		raw.ChannelDialplan = e.(*ChannelDialplan)
+	case Events.ChannelDtmfReceived:
+		raw.ChannelDtmfReceived = e.(*ChannelDtmfReceived)
+	case Events.ChannelEnteredBridge:
+		raw.ChannelEnteredBridge = e.(*ChannelEnteredBridge)
+	case Events.ChannelHangupRequest:
+		raw.ChannelHangupRequest = e.(*ChannelHangupRequest)
+	case Events.ChannelHold:
+		raw.ChannelHold = e.(*ChannelHold)
+	case Events.ChannelLeftBridge:
+		raw.ChannelLeftBridge = e.(*ChannelLeftBridge)
+	case Events.ChannelStateChange:
+		raw.ChannelStateChange = e.(*ChannelStateChange)
+	case Events.ChannelTalkingFinished:
+		raw.ChannelTalkingFinished = e.(*ChannelTalkingFinished)
+	case Events.ChannelTalkingStarted:
+		raw.ChannelTalkingStarted = e.(*ChannelTalkingStarted)
+	case Events.ChannelUnhold:
+		raw.ChannelUnhold = e.(*ChannelUnhold)
+	case Events.ChannelUserevent:
+		raw.ChannelUserevent = e.(*ChannelUserevent)
+	case Events.ChannelVarset:
+		raw.ChannelVarset = e.(*ChannelVarset)
+	case Events.ContactInfo:
+		raw.ContactInfo = e.(*ContactInfo)
+	case Events.ContactStatusChange:
+		raw.ContactStatusChange = e.(*ContactStatusChange)
+	case Events.DeviceStateChanged:
+		raw.DeviceStateChanged = e.(*DeviceStateChanged)
+	case Events.Dial:
+		raw.Dial = e.(*Dial)
+	case Events.EndpointStateChange:
+		raw.EndpointStateChange = e.(*EndpointStateChange)
+	case Events.MissingParams:
+		raw.MissingParams = e.(*MissingParams)
+	case Events.Peer:
+		raw.Peer = e.(*Peer)
+	case Events.PeerStatusChange:
+		raw.PeerStatusChange = e.(*PeerStatusChange)
+	case Events.PlaybackContinuing:
+		raw.PlaybackContinuing = e.(*PlaybackContinuing)
+	case Events.PlaybackFinished:
+		raw.PlaybackFinished = e.(*PlaybackFinished)
+	case Events.PlaybackStarted:
+		raw.PlaybackStarted = e.(*PlaybackStarted)
+	case Events.RecordingFailed:
+		raw.RecordingFailed = e.(*RecordingFailed)
+	case Events.RecordingFinished:
+		raw.RecordingFinished = e.(*RecordingFinished)
+	case Events.RecordingStarted:
+		raw.RecordingStarted = e.(*RecordingStarted)
+	case Events.StasisEnd:
+		raw.StasisEnd = e.(*StasisEnd)
+	case Events.StasisStart:
+		raw.StasisStart = e.(*StasisStart)
+	case Events.TextMessageReceived:
+		raw.TextMessageReceived = e.(*TextMessageReceived)
+
+	default:
+		return nil
+	}
+	return raw
+}
+
 // ToEvent converts a RawEvent to an Evert, preseving any transport Headers associated with the RawEvent.
 func (r *RawEvent) ToEvent() (Event, error) {
 	if r.Header == nil {

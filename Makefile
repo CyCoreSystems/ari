@@ -1,4 +1,6 @@
+SHELL = /bin/bash
 
+EVENT_SPEC_FILE = internal/eventgen/json/events-14.0.0-rc1.json
 
 all: api clients
 
@@ -15,6 +17,10 @@ extensions:
 	go build ./ext/prompt
 	go build ./ext/record
 
+events:
+	go build -o bin/eventgen ./internal/eventgen/...
+	@./bin/eventgen internal/eventgen/template.tmpl ${EVENT_SPEC_FILE} |goimports > events_gen.go
+	
 mock:
 	go generate ./client/mock
 

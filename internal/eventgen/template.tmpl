@@ -45,6 +45,19 @@ type RawEvent struct {
 {{end}}
 }
 
+// EventToRaw converts an Event to a RawEvent
+func EventToRaw(e Event) *RawEvent {
+   raw := new(RawEvent)
+   switch e.GetType() {
+   {{range .}}case Events.{{.Name}}:
+      raw.{{.Name}} = e.(*{{.Name}})
+   {{end}}
+   default:
+      return nil
+   }
+   return raw
+}
+
 // ToEvent converts a RawEvent to an Evert, preseving any transport Headers associated with the RawEvent.
 func (r *RawEvent) ToEvent() (Event, error) {
    if r.Header == nil {
@@ -72,3 +85,4 @@ type {{.Name}} struct {
 	{{range .Properties}}{{.Name}} {{.Type}} {{.Mapping}} {{.Description}}
 	{{end}} }
 {{end}}
+
