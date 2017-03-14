@@ -24,20 +24,20 @@ func NewMessage(raw []byte) (*Message, error) {
 	}
 
 	// Set _raw to be our raw bytestream
-	m._raw = &raw
+	m._raw = raw
 
 	return &m, nil
 }
 
 // MessageRawer provides operations to get raw message data
 type MessageRawer interface {
-	SetRaw(*[]byte)
-	GetRaw() *[]byte
+	SetRaw([]byte)
+	GetRaw() []byte
 }
 
 // RawMessage contains the raw bytes
 type RawMessage struct {
-	_raw *[]byte // The raw message
+	_raw []byte // The raw message
 }
 
 // DecodeAs converts the current message to
@@ -47,7 +47,7 @@ func (m *RawMessage) DecodeAs(v MessageRawer) error {
 		return errors.New("empty message")
 	}
 	// First, unmarshal raw into the new type
-	err := json.Unmarshal(*m.GetRaw(), v)
+	err := json.Unmarshal(m.GetRaw(), v)
 	if err != nil {
 		return err
 	}
@@ -59,11 +59,11 @@ func (m *RawMessage) DecodeAs(v MessageRawer) error {
 }
 
 // SetRaw sets the raw value of this RawMessage
-func (m *RawMessage) SetRaw(raw *[]byte) {
+func (m *RawMessage) SetRaw(raw []byte) {
 	m._raw = raw
 }
 
 // GetRaw gets the raw value of this RawMessage
-func (m *RawMessage) GetRaw() *[]byte {
+func (m *RawMessage) GetRaw() []byte {
 	return m._raw
 }

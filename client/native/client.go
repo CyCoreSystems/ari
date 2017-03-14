@@ -353,7 +353,7 @@ func unmarshal(data []byte, payloadType byte, v interface{}) error {
 	}
 
 	// Store the raw data
-	e.SetRaw(&data)
+	e.SetRaw(data)
 
 	return nil
 }
