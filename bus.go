@@ -12,7 +12,7 @@ type Bus interface {
 
 // A Sender is an entity which can send event bus messages
 type Sender interface {
-	Send(m *Message)
+	Send(e Event)
 }
 
 // A Subscriber is an entity which can create ARI event subscriptions

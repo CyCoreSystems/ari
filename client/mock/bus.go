@@ -37,7 +37,7 @@ func (_mr *_MockBusRecorder) Close() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Close")
 }
 
-func (_m *MockBus) Send(_param0 *ari.Message) {
+func (_m *MockBus) Send(_param0 ari.Event) {
 	_m.ctrl.Call(_m, "Send", _param0)
 }
 

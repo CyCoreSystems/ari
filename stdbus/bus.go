@@ -43,9 +43,7 @@ func (b *bus) Close() {
 }
 
 // Send sends the message to the bus
-func (b *bus) Send(msg *ari.Message) {
-	e := ari.Events.Parse(msg)
-
+func (b *bus) Send(e ari.Event) {
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
 		for _, topic := range s.events {

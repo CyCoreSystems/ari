@@ -4,8 +4,10 @@ import "strings"
 
 // Event is the top level event interface
 type Event interface {
-	MessageRawer
-	ApplicationEvent
+	// GetApplication returns the name of the ARI application to which this event is associated
+	GetApplication() string
+
+	// GetType returns the type name of this event
 	GetType() string
 }
 
@@ -14,11 +16,19 @@ type Matcher interface {
 	Match(evt Event) bool
 }
 
-// EventData is the base struct for all events
+// EventData provides the basic metadata for an ARI event
 type EventData struct {
-	Message
-	Application string   `json:"application"`
-	Timestamp   DateTime `json:"timestamp,omitempty"`
+	// Type is the type name of this event
+	Type string `json:"type"`
+
+	// AsteriskID indicates the unique identifier of the source Asterisk box for this event
+	AsteriskID string `json:"asterisk_id,omitempty"`
+
+	// Application indicates the ARI application which emitted this event
+	Application string `json:"application"`
+
+	// Timestamp indicates the time this event was generated
+	Timestamp DateTime `json:"timestamp,omitempty"`
 }
 
 // GetApplication gets the application of the event
@@ -38,11 +48,6 @@ func (e *EventData) GetType() string {
 //		ch, ok := evt.(ChannelEvent)
 //		if ok { // event is for a channel }
 //
-
-// An ApplicationEvent is an event with an application (which is every event actually)
-type ApplicationEvent interface {
-	GetApplication() string
-}
 
 // A ChannelEvent is an event with one or more channel IDs
 type ChannelEvent interface {
@@ -542,4 +547,35 @@ func resolveTarget(typ string, targetURI string) (s string) {
 	s = strings.Join(items[1:], ":")
 	return
 
+}
+
+// Header represents a set of key-value pairs to store transport-related metadata on Events
+type Header map[string][]string
+
+// Add appens the value to the list of values for the given header key.
+func (h Header) Add(key, val string) {
+	h[key] = append(h[key], val)
+}
+
+// Set sets the value for the given header key, replacing any existing values.
+func (h Header) Set(key, val string) {
+	h[key] = []string{val}
+}
+
+// Get returns the first value associated with the given header key.
+func (h Header) Get(key string) string {
+	if h == nil {
+		return ""
+	}
+
+	v := h[key]
+	if len(v) == 0 {
+		return ""
+	}
+	return v[0]
+}
+
+// Del deletes the values associated with the given header key.
+func (h Header) Del(key string) {
+	delete(h, key)
 }

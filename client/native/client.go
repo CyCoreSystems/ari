@@ -312,14 +312,19 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 
 	go func() {
 		for {
-			var msg ari.Message
-			err := AsteriskCodec.Receive(ws, &msg)
+			var raw ari.RawEvent
+			err := AsteriskCodec.Receive(ws, &raw)
 			if err != nil {
 				errChan <- errors.Wrap(err, "failed to decode websocket message")
 				return
 			}
+			e, err := raw.ToEvent()
+			if err != nil {
+				Logger.Error("failed to convert message to event", "error", err)
+				continue
+			}
 
-			c.bus.Send(&msg)
+			c.bus.Send(e)
 		}
 	}()
 
