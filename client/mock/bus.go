@@ -29,6 +29,14 @@ func (_m *MockBus) EXPECT() *_MockBusRecorder {
 	return _m.recorder
 }
 
+func (_m *MockBus) Close() {
+	_m.ctrl.Call(_m, "Close")
+}
+
+func (_mr *_MockBusRecorder) Close() *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Close")
+}
+
 func (_m *MockBus) Send(_param0 *ari.Message) {
 	_m.ctrl.Call(_m, "Send", _param0)
 }
