@@ -1,25 +1,15 @@
-# ari 
+# ari - Golang Asterisk Rest Interface (ARI) library
 [![Build Status](https://travis-ci.org/CyCoreSystems/ari.png)](https://travis-ci.org/CyCoreSystems/ari) [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
 
-Golang Asterisk ARI library
+This is a go-based ARI library.  It also includes some common convenience wrappers for various tasks, which can be found in /ext.
 
-Golang ARI library with support for native ARI interface as well as an ARI-NATS bridge.  Also includes common convenience wrappers for various tasks.
+This library maintains semver, and APIs between major releases **do** change.
+Therefore, always use a vendoring tool which supports semver, such as `glide` or
+`dep` or use the `gopkg.in` aliasing, such as `gopkg.in/CyCoreSystems/ari.v3`.
 
-V3 is the current release, which is available using gopkg.in versioning
-semantics.
+The `v3` branch is the most well-tested branch, while `v4` fixes a number of
+shortcomings of `v3`, particularly for interoperating with proxies clients.
 
-```sh
-  # Version 3 release
-  go get gopkg.in/CyCoreSystems/ari.v3
-```
-
-This repository also includes semver tags for version 3 releases.
-
-The latest development version is maintained as the master branch, which you can
-obtain by
-
-```sh
-  # Development version
-  go get github.com/CyCoreSystems/ari
-```
-
+There is also a NATS-based `ari-proxy` which is designed to work with this
+client library.  It can be found at
+[CyCoreSystems/ari-proxy](https://github.com/CyCoreSystems/ari-proxy).
