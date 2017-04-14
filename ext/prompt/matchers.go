@@ -20,6 +20,22 @@ func MatchHash(pat string) (string, Status) {
 	return pat, Incomplete
 }
 
+// MatchSetFunc returns a MatchFunc which will match any digit in the provided set of digits
+func MatchSetFunc(set string) func(string) (string, Status) {
+	return func(pat string) (string, Status) {
+		if len(pat) < 1 {
+			return pat, Incomplete
+		}
+
+		for _, c := range set {
+			if strings.Contains(pat, string(c)) {
+				return pat, Complete
+			}
+		}
+		return pat, Invalid
+	}
+}
+
 // MatchTerminatorFunc is a MatchFunc which returns Complete if the pattern
 // contains the character and Incomplete, otherwise.
 func MatchTerminatorFunc(terminator string) func(string) (string, Status) {

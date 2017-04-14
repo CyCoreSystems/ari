@@ -27,7 +27,6 @@ func TestWaitDigitFirstDigitTimeout(t *testing.T) {
 		hSub:    mock.NewMockSubscription(mc),
 		oTimer:  time.NewTimer(opts.OverallTimeout),
 		options: opts,
-		retData: &Result{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
@@ -37,8 +36,8 @@ func TestWaitDigitFirstDigitTimeout(t *testing.T) {
 		t.Error("Failed to execute waitDigit", err)
 		return
 	}
-	if s.retData.Status != Timeout {
-		t.Error("Status was not Timeout", s.retData.Status)
+	if s.status != Timeout {
+		t.Error("Status was not Timeout", s.status)
 		return
 	}
 
@@ -59,9 +58,8 @@ func TestWaitDigitInterDigitTimeout(t *testing.T) {
 		hSub:    mock.NewMockSubscription(mc),
 		oTimer:  time.NewTimer(opts.OverallTimeout),
 		options: opts,
-		retData: &Result{},
 	}
-	s.retData.Data = "1"
+	s.digits = "1"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
 	defer cancel()
@@ -70,8 +68,8 @@ func TestWaitDigitInterDigitTimeout(t *testing.T) {
 		t.Error("Failed to execute waitDigit", err)
 		return
 	}
-	if s.retData.Status != Timeout {
-		t.Error("Status was not Timeout:", s.retData.Status)
+	if s.status != Timeout {
+		t.Error("Status was not Timeout:", s.status)
 		return
 	}
 }
@@ -91,7 +89,6 @@ func TestWaitDigitOverallTimeout(t *testing.T) {
 		hSub:    mock.NewMockSubscription(mc),
 		oTimer:  time.NewTimer(opts.OverallTimeout),
 		options: opts,
-		retData: &Result{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
@@ -101,8 +98,8 @@ func TestWaitDigitOverallTimeout(t *testing.T) {
 		t.Error("Failed to execute waitDigit", err)
 		return
 	}
-	if s.retData.Status != Timeout {
-		t.Error("Status was not Timeout", s.retData.Status)
+	if s.status != Timeout {
+		t.Error("Status was not Timeout", s.status)
 		return
 	}
 }
@@ -121,7 +118,6 @@ func TestWaitDigitReceived(t *testing.T) {
 	s := &stateObject{
 		oTimer:        time.NewTimer(opts.OverallTimeout),
 		options:       opts,
-		retData:       &Result{},
 		digitReceived: make(chan struct{}, 1),
 	}
 
@@ -135,7 +131,7 @@ func TestWaitDigitReceived(t *testing.T) {
 		return
 	}
 	if f == nil {
-		t.Error("waitDigit did not loop", s.retData.Status)
+		t.Error("waitDigit did not loop", s.status)
 		return
 	}
 }
