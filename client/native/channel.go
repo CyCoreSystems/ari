@@ -66,8 +66,7 @@ func (c *Channel) Originate(req ari.OriginateRequest) (ari.ChannelHandle, error)
 
 	var resp response
 
-	var err error
-	err = c.client.post("/channels", &resp, &req)
+	err := c.client.post("/channels", &resp, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +82,7 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (ari.ChannelHandle, error
 		req.ChannelID = uuid.NewV1().String()
 	}
 
-	var err error
-	err = c.client.post("/channels/create", nil, &req)
+	err := c.client.post("/channels/create", nil, &req)
 	if err != nil {
 		return nil, err
 	}
