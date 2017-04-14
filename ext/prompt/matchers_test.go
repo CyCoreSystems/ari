@@ -6,7 +6,7 @@ import (
 
 func TestMatchHashSuccess(t *testing.T) {
 	str, status := MatchHash("Hash#Test")
-	if str == "Hash#Test" ||
+	if str != "Hash" ||
 		status != Complete {
 		t.Errorf("Expected status of '%v' and got '%v' and status of '%v'",
 			"Complete", str, status)

@@ -6,7 +6,6 @@ import (
 	"github.com/CyCoreSystems/ari/ext/audio"
 
 	"github.com/CyCoreSystems/ari"
-	//"github.com/CyCoreSystems/ari/client/native"
 
 	"golang.org/x/net/context"
 )
