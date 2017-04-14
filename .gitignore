@@ -7,7 +7,7 @@
 _obj
 _test
 bin
-vendor/*/
+vendor/
 
 # Architecture specific extensions/prefixes
 *.[568vq]
