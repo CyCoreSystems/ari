@@ -8,6 +8,10 @@ api:
 	go build ./
 	go build ./stdbus
 
+check: all
+	# disabling golint due to stringer output failing this check; TODO: fix this somehow
+	gometalinter --disable=gotype --disable=golint client/native ext/...
+
 clients:
 	go build ./client/native
 	go build ./client/mock
@@ -24,3 +28,4 @@ events:
 mock:
 	go generate ./client/mock
 
+ci: check

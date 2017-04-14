@@ -71,6 +71,7 @@ var (
 type stateFn func() stateFn
 
 // Prompt plays the given sound and waits for user input.
+// nolint:gocyclo
 func Prompt(ctx context.Context, p audio.Player, opts *Options, sounds ...string) (ret *Result, err error) {
 	ret = &Result{}
 

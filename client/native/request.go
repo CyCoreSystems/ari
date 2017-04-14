@@ -124,7 +124,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	if err != nil {
 		return errors.Wrap(err, "failed to make request")
 	}
-	defer ret.Body.Close()
+	defer ret.Body.Close() //nolint:errcheck
 
 	if resp != nil {
 		err = json.NewDecoder(ret.Body).Decode(resp)

@@ -4,3 +4,6 @@ go:
 install:
    - go get -v github.com/Masterminds/glide
    - glide install
+   - go get -u github.com/alecthomas/gometalinter/...
+   - gometalinter --install
+script: make ci

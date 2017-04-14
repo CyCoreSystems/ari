@@ -131,11 +131,7 @@ type Client struct {
 	// httpClient is the reusable HTTP client on which commands to Asterisk are sent
 	httpClient http.Client
 
-	// wsConn is the current websocket connection
-	wsConn *websocket.Conn
-
 	cancel context.CancelFunc
-	mu     sync.Mutex
 }
 
 // ApplicationName returns the client's ARI Application name
@@ -294,13 +290,17 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		// Wait for context closure or read error
 		select {
 		case <-ctx.Done():
-		case err := <-c.wsRead(ws):
+		case err = <-c.wsRead(ws):
 			Logger.Error("read failure on websocket", "error", err)
 			time.Sleep(10 * time.Millisecond)
 		}
 
 		// Make sure our websocket connection is closed before looping
-		ws.Close()
+		err = ws.Close()
+		if err != nil {
+			Logger.Debug("failed to close websocket", "error", err)
+		}
+
 	}
 }
 

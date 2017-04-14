@@ -115,8 +115,5 @@ func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
 
 // Match returns true fo the event matches the application
 func (ah *ApplicationHandle) Match(e ari.Event) bool {
-	if e.GetApplication() == ah.name {
-		return true
-	}
-	return false
+	return e.GetApplication() == ah.name
 }

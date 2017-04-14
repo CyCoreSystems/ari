@@ -197,8 +197,8 @@ func ToneURI(name string) string {
 	return "tone:" + name
 }
 
-// checkAudioURI checks if the audio URI is formatted properly
-func checkAudioURI(uri string) error {
+// Check checks if the audio URI is formatted properly
+func Check(uri string) error {
 	l := strings.Split(uri, ":")
 	if len(l) != 2 {
 		return fmt.Errorf("Audio URI %s is not formatted properly", uri)

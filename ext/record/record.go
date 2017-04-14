@@ -14,6 +14,8 @@ import (
 var RecordingStartTimeout = 1 * time.Second
 
 // Record starts a recording on the given Recorder.
+// TODO: simplify
+// nolint:gocyclo
 func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOptions) (rec *Recording) {
 
 	Logger.Debug("Starting record", "name", name, "opts", opts)
