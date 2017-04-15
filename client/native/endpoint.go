@@ -71,7 +71,7 @@ func (eh *EndpointHandle) Data() (*ari.EndpointData, error) {
 	return eh.e.Data(eh.tech, eh.resource)
 }
 
-// Match returns true if the event matches the bridge
+// Match returns true if the event matches the endpoint
 func (eh *EndpointHandle) Match(e ari.Event) bool {
 	en, ok := e.(ari.EndpointEvent)
 	if !ok {
