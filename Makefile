@@ -1,4 +1,4 @@
-SHELL = /bin/bash
+SHELL = /usr/bin/env bash
 
 EVENT_SPEC_FILE = internal/eventgen/json/events-14.0.0-rc1.json
 
