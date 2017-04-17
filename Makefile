@@ -1,6 +1,6 @@
 SHELL = /usr/bin/env bash
 
-EVENT_SPEC_FILE = internal/eventgen/json/events-14.0.0-rc1.json
+EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 
 all: api clients
 
