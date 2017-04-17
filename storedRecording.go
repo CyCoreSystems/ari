@@ -16,6 +16,9 @@ type StoredRecording interface {
 	// Copy copies the recording to the destination name
 	Copy(name string, dest string) (StoredRecordingHandle, error)
 
+	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+	StageCopy(name string, dest string) StoredRecordingHandle
+
 	// Delete deletes the recording
 	Delete(name string) error
 }
@@ -42,6 +45,12 @@ type StoredRecordingHandle interface {
 	// Copy copies the stored recording
 	Copy(dest string) (h StoredRecordingHandle, err error)
 
+	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+	StageCopy(dest string) (h StoredRecordingHandle)
+
 	// Delete deletes the recording
 	Delete() (err error)
+
+	// Exec executes any staged operations attached to the handle.
+	Exec() (err error)
 }

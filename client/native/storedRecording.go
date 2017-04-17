@@ -23,7 +23,7 @@ func (sr *StoredRecording) List() (sx []ari.StoredRecordingHandle, err error) {
 
 // Get gets a lazy handle for the given stored recording name
 func (sr *StoredRecording) Get(name string) (s ari.StoredRecordingHandle) {
-	s = NewStoredRecordingHandle(name, sr)
+	s = NewStoredRecordingHandle(name, sr, nil)
 	return
 }
 
@@ -41,6 +41,13 @@ func (sr *StoredRecording) Data(name string) (d *ari.StoredRecordingData, err er
 
 // Copy copies a stored recording and returns the new handle
 func (sr *StoredRecording) Copy(name string, dest string) (h ari.StoredRecordingHandle, err error) {
+	h = sr.StageCopy(name, dest)
+	err = h.Exec()
+	return
+}
+
+// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+func (sr *StoredRecording) StageCopy(name string, dest string) (h ari.StoredRecordingHandle) {
 
 	var resp struct {
 		Name string `json:"name"`
@@ -52,13 +59,10 @@ func (sr *StoredRecording) Copy(name string, dest string) (h ari.StoredRecording
 
 	request.Dest = dest
 
-	err = sr.client.post("/recordings/stored/"+name+"/copy", &resp, &request)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return sr.Get(resp.Name), nil
+	return NewStoredRecordingHandle(name, sr, func(h *StoredRecordingHandle) (err error) {
+		err = sr.client.post("/recordings/stored/"+name+"/copy", &resp, &request)
+		return
+	})
 }
 
 // Delete deletes the stored recording
@@ -71,19 +75,30 @@ func (sr *StoredRecording) Delete(name string) (err error) {
 type StoredRecordingHandle struct {
 	name string
 	s    *StoredRecording
+	exec func(a *StoredRecordingHandle) error
 }
 
 // NewStoredRecordingHandle creates a new stored recording handle
-func NewStoredRecordingHandle(name string, s *StoredRecording) ari.StoredRecordingHandle {
+func NewStoredRecordingHandle(name string, s *StoredRecording, exec func(a *StoredRecordingHandle) error) ari.StoredRecordingHandle {
 	return &StoredRecordingHandle{
 		name: name,
 		s:    s,
+		exec: exec,
 	}
 }
 
 // ID returns the identifier for the stored recording
 func (s *StoredRecordingHandle) ID() string {
 	return s.name
+}
+
+// Exec executes any staged operations
+func (s *StoredRecordingHandle) Exec() (err error) {
+	if s.exec != nil {
+		err = s.exec(s)
+		s.exec = nil
+	}
+	return
 }
 
 // Data gets the data for the stored recording
@@ -95,6 +110,12 @@ func (s *StoredRecordingHandle) Data() (d *ari.StoredRecordingData, err error) {
 // Copy copies the stored recording
 func (s *StoredRecordingHandle) Copy(dest string) (h ari.StoredRecordingHandle, err error) {
 	h, err = s.s.Copy(s.name, dest)
+	return
+}
+
+// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+func (s *StoredRecordingHandle) StageCopy(dest string) (h ari.StoredRecordingHandle) {
+	h = s.s.StageCopy(s.name, dest)
 	return
 }
 

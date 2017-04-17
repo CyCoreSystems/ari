@@ -68,6 +68,20 @@ func (_m *StoredRecordingHandle) Delete() error {
 	return r0
 }
 
+// Exec provides a mock function with given fields:
+func (_m *StoredRecordingHandle) Exec() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ID provides a mock function with given fields:
 func (_m *StoredRecordingHandle) ID() string {
 	ret := _m.Called()
@@ -77,6 +91,22 @@ func (_m *StoredRecordingHandle) ID() string {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// StageCopy provides a mock function with given fields: dest
+func (_m *StoredRecordingHandle) StageCopy(dest string) ari.StoredRecordingHandle {
+	ret := _m.Called(dest)
+
+	var r0 ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(string) ari.StoredRecordingHandle); ok {
+		r0 = rf(dest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.StoredRecordingHandle)
+		}
 	}
 
 	return r0

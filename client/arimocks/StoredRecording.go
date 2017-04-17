@@ -106,3 +106,19 @@ func (_m *StoredRecording) List() ([]ari.StoredRecordingHandle, error) {
 
 	return r0, r1
 }
+
+// StageCopy provides a mock function with given fields: name, dest
+func (_m *StoredRecording) StageCopy(name string, dest string) ari.StoredRecordingHandle {
+	ret := _m.Called(name, dest)
+
+	var r0 ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(string, string) ari.StoredRecordingHandle); ok {
+		r0 = rf(name, dest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.StoredRecordingHandle)
+		}
+	}
+
+	return r0
+}
