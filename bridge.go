@@ -7,6 +7,9 @@ type Bridge interface {
 	// Create creates a bridge
 	Create(id string, btype string, name string) (BridgeHandle, error)
 
+	// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
+	StageCreate(id string, btype string, name string) BridgeHandle
+
 	// Get gets the BridgeHandle
 	Get(id string) BridgeHandle
 
@@ -76,4 +79,7 @@ type BridgeHandle interface {
 
 	// Match returns true if the event matches the bridge
 	Match(e Event) bool
+
+	// Exec executes any staged operations attached on the bridge handle
+	Exec() error
 }

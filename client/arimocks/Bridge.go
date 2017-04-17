@@ -181,6 +181,22 @@ func (_m *Bridge) RemoveChannel(bridgeID string, channelID string) error {
 	return r0
 }
 
+// StageCreate provides a mock function with given fields: id, btype, name
+func (_m *Bridge) StageCreate(id string, btype string, name string) ari.BridgeHandle {
+	ret := _m.Called(id, btype, name)
+
+	var r0 ari.BridgeHandle
+	if rf, ok := ret.Get(0).(func(string, string, string) ari.BridgeHandle); ok {
+		r0 = rf(id, btype, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.BridgeHandle)
+		}
+	}
+
+	return r0
+}
+
 // Subscribe provides a mock function with given fields: id, n
 func (_m *Bridge) Subscribe(id string, n ...string) ari.Subscription {
 	_va := make([]interface{}, len(n))

@@ -13,6 +13,13 @@ type Bridge struct {
 
 // Create creates a bridge and returns the lazy handle for the bridge
 func (b *Bridge) Create(id string, t string, name string) (bh ari.BridgeHandle, err error) {
+	bh = b.StageCreate(id, t, name)
+	err = bh.Exec()
+	return
+}
+
+// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
+func (b *Bridge) StageCreate(id string, t string, name string) ari.BridgeHandle {
 
 	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
@@ -24,18 +31,18 @@ func (b *Bridge) Create(id string, t string, name string) (bh ari.BridgeHandle, 
 		Name: name,
 	}
 
-	err = b.client.post("/bridges/"+id, &req, nil)
-	if err != nil {
+	return NewBridgeHandle(id, b, func(bh *BridgeHandle) (err error) {
+		err = b.client.post("/bridges/"+id, &req, nil)
+		if err != nil {
+			return
+		}
 		return
-	}
-
-	bh = b.Get(id)
-	return
+	})
 }
 
 // Get gets the lazy handle for the given bridge id
 func (b *Bridge) Get(id string) ari.BridgeHandle {
-	return NewBridgeHandle(id, b)
+	return NewBridgeHandle(id, b, nil)
 }
 
 // List lists the current bridges and returns a list of lazy handles
@@ -177,22 +184,33 @@ func (b *Bridge) Subscribe(id string, n ...string) ari.Subscription {
 }
 
 // NewBridgeHandle creates a new bridge handle
-func NewBridgeHandle(id string, b *Bridge) ari.BridgeHandle {
+func NewBridgeHandle(id string, b *Bridge, exec func(bh *BridgeHandle) error) ari.BridgeHandle {
 	return &BridgeHandle{
-		id: id,
-		b:  b,
+		id:   id,
+		b:    b,
+		exec: exec,
 	}
 }
 
 // BridgeHandle is the handle to a bridge for performing operations
 type BridgeHandle struct {
-	id string
-	b  *Bridge
+	id   string
+	b    *Bridge
+	exec func(bh *BridgeHandle) error
 }
 
 // ID returns the identifier for the bridge
 func (bh *BridgeHandle) ID() string {
 	return bh.id
+}
+
+// Exec executes any staged operations attached on the bridge handle
+func (bh *BridgeHandle) Exec() (err error) {
+	if bh.exec != nil {
+		err = bh.exec(bh)
+		bh.exec = nil
+	}
+	return
 }
 
 // AddChannel adds a channel to the bridge
