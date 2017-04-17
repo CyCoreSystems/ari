@@ -59,3 +59,17 @@ We can also bind a dialog:
 All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
 instead.  In many cases, this can be easily back-ported by wrapping IDs with
 `ari.NewKey(id)`.
+
+# Staging resources
+
+A common issue for ARI resources is making sure a subscription exists before
+events for that resource are sent.  Otherwise, important events which occur too
+quickly can become lost.  This results in a chicken-and-egg problem for
+subscriptions.
+
+In order to address this common issue, resource handles creation operations now
+offer a `StageXXXX` variant, which returns the handle for the resource without
+actually creating the resource.  Once all of the subscriptions are bound to this
+handle, the caller may call `resource.Exec()` in order to create the resource in
+Asterisk.
+
