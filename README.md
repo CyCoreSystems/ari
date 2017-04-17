@@ -29,9 +29,20 @@ transaction with logically-bound resources.  This Key includes all of these.
 ```go
 package ari
 
+// Key identifies a unique resource in the system
 type Key struct {
+   // Kind indicates the type of resource the Key points to.  e.g., "channel",
+   // "bridge", etc.
+   Kind string
+
+   // ID indicates the unique identifier of the resource
    ID string
+
+   // Node indicates the unique identifier of the Asterisk node on which the
+   // resource exists or will be created
    Node string
+
+   // Dialog indicates a named scope of the resource, for receiving events
    Dialog string
 }
 ```
@@ -39,26 +50,26 @@ At a basic level, when the specific Asterisk ID is not needed, a key can consist
 of a simple ID string:
 
 ```go
-  key := ari.NewKey("myID")
+  key := ari.NewKey(ari.KeyChannel, myID")
 ```
 
 For more interesting systems, however, we can declare the Node ID:
 
 ```go
-  key := ari.NewKey("myID", ari.WithNode("00:01:02:30:40:50"))
+  key := ari.NewKey(ari.KeyBridge, "myID", ari.WithNode("00:01:02:30:40:50"))
 ```
 
 We can also bind a dialog:
 
 ```go
-  key := ari.NewKey("myID",
+  key := ari.NewKey(ari.KeyChannel, "myID",
    ari.WithNode("00:01:02:30:40:50"),
    ari.WithDialog("privateConversation"))
 ```
 
 All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
 instead.  In many cases, this can be easily back-ported by wrapping IDs with
-`ari.NewKey(id)`.
+`ari.NewKey("channel", id)`.
 
 # Staging resources
 
