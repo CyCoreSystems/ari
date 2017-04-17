@@ -23,8 +23,12 @@ versions expected a simple ID (string) field for the identification of a
 resource to ARI.  This reflects how ARI itself operates.  However, for systems
 with multiple Asterisk instances, more metadata is necessary in order to
 properly address a resource.  Specifically, we need to know the Asterisk node.
-There is also the concept of a Dialog, which is, generically, a named
-transaction with logically-bound resources.  This Key includes all of these.
+There is also the concept of a Dialog, which offers an orthogonal logical
+grouping of events which transcends nodes and applications.  This is not
+meaningful in the native client, but other transports, such as the ARI proxy,
+may make use of this for alternative routing of events.
+
+This Key includes all of these data.
 
 ```go
 package ari
@@ -33,17 +37,17 @@ package ari
 type Key struct {
    // Kind indicates the type of resource the Key points to.  e.g., "channel",
    // "bridge", etc.
-   Kind string
+   Kind string   `json:"kind"`
 
    // ID indicates the unique identifier of the resource
-   ID string
+   ID string `json:"id"`
 
    // Node indicates the unique identifier of the Asterisk node on which the
    // resource exists or will be created
-   Node string
+   Node string `json:"node,omitempty"`
 
    // Dialog indicates a named scope of the resource, for receiving events
-   Dialog string
+   Dialog stringa `json:"dialog,omitempty"`
 }
 ```
 At a basic level, when the specific Asterisk ID is not needed, a key can consist
