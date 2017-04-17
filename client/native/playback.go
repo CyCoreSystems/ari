@@ -9,7 +9,7 @@ type Playback struct {
 
 // Get gets a lazy handle for the given playback identifier
 func (a *Playback) Get(id string) (ph ari.PlaybackHandle) {
-	ph = NewPlaybackHandle(id, a)
+	ph = NewPlaybackHandle(id, a, nil)
 	return
 }
 
@@ -77,15 +77,17 @@ func (a *Playback) Subscribe(id string, n ...string) ari.Subscription {
 
 // PlaybackHandle is the handle for performing playback operations
 type PlaybackHandle struct {
-	id string
-	p  *Playback
+	id   string
+	p    *Playback
+	exec func(pb *PlaybackHandle) error
 }
 
 // NewPlaybackHandle builds a handle to the playback id
-func NewPlaybackHandle(id string, pb *Playback) ari.PlaybackHandle {
+func NewPlaybackHandle(id string, pb *Playback, exec func(pb *PlaybackHandle) error) ari.PlaybackHandle {
 	return &PlaybackHandle{
-		id: id,
-		p:  pb,
+		id:   id,
+		p:    pb,
+		exec: exec,
 	}
 }
 
@@ -133,4 +135,13 @@ func (ph *PlaybackHandle) Subscribe(n ...string) ari.Subscription {
 		return nil
 	}
 	return ph.p.Subscribe(ph.id, n...)
+}
+
+// Exec executes any staged operations
+func (ph *PlaybackHandle) Exec() (err error) {
+	if ph.exec != nil {
+		err = ph.exec(ph)
+		ph.exec = nil
+	}
+	return
 }

@@ -197,6 +197,38 @@ func (_m *Bridge) StageCreate(id string, btype string, name string) ari.BridgeHa
 	return r0
 }
 
+// StagePlay provides a mock function with given fields: id, playbackID, mediaURI
+func (_m *Bridge) StagePlay(id string, playbackID string, mediaURI string) ari.PlaybackHandle {
+	ret := _m.Called(id, playbackID, mediaURI)
+
+	var r0 ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(string, string, string) ari.PlaybackHandle); ok {
+		r0 = rf(id, playbackID, mediaURI)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.PlaybackHandle)
+		}
+	}
+
+	return r0
+}
+
+// StageRecord provides a mock function with given fields: id, name, opts
+func (_m *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
+	ret := _m.Called(id, name, opts)
+
+	var r0 ari.LiveRecordingHandle
+	if rf, ok := ret.Get(0).(func(string, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(id, name, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.LiveRecordingHandle)
+		}
+	}
+
+	return r0
+}
+
 // Subscribe provides a mock function with given fields: id, n
 func (_m *Bridge) Subscribe(id string, n ...string) ari.Subscription {
 	_va := make([]interface{}, len(n))

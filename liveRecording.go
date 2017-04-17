@@ -81,4 +81,7 @@ type LiveRecordingHandle interface {
 
 	// Match returns true if the event matches the bridge
 	Match(e Event) bool
+
+	// Exec executes any staged operations on the `LiveRecordingHandle`
+	Exec() (err error)
 }

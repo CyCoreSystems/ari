@@ -9,7 +9,7 @@ type LiveRecording struct {
 
 // Get gets a lazy handle for the live recording name
 func (lr *LiveRecording) Get(name string) (h ari.LiveRecordingHandle) {
-	h = NewLiveRecordingHandle(name, lr)
+	h = NewLiveRecordingHandle(name, lr, nil)
 	return
 }
 
@@ -70,10 +70,11 @@ func (lr *LiveRecording) Scrap(name string) (err error) {
 }
 
 // NewLiveRecordingHandle creates a new stored recording handle
-func NewLiveRecordingHandle(name string, s *LiveRecording) ari.LiveRecordingHandle {
+func NewLiveRecordingHandle(name string, s *LiveRecording, exec func() (err error)) ari.LiveRecordingHandle {
 	return &LiveRecordingHandle{
 		name: name,
 		s:    s,
+		exec: exec,
 	}
 }
 
@@ -81,6 +82,7 @@ func NewLiveRecordingHandle(name string, s *LiveRecording) ari.LiveRecordingHand
 type LiveRecordingHandle struct {
 	name string
 	s    *LiveRecording
+	exec func() (err error)
 }
 
 // ID returns the identifier of the live recording
@@ -149,4 +151,13 @@ func (s *LiveRecordingHandle) Match(e ari.Event) bool {
 		}
 	}
 	return false
+}
+
+// Exec executes any staged operations attached to the `LiveRecordingHandle`
+func (s *LiveRecordingHandle) Exec() (err error) {
+	if s.exec != nil {
+		err = s.exec()
+		s.exec = nil
+	}
+	return
 }

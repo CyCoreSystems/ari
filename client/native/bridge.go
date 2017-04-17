@@ -110,19 +110,36 @@ func (b *Bridge) Delete(id string) (err error) {
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
 func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
+	ph = b.StagePlay(id, playbackID, mediaURI)
+	err = ph.Exec()
+	return
+}
+
+// StagePlay stages a `Play` operation on the bridge
+func (b *Bridge) StagePlay(id string, playbackID string, mediaURI string) (ph ari.PlaybackHandle) {
+
 	resp := make(map[string]interface{})
 	type request struct {
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-	err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
-	ph = b.client.Playback().Get(playbackID)
-	return
+
+	return NewPlaybackHandle(playbackID, b.client.Playback().(*Playback), func(pb *PlaybackHandle) (err error) {
+		err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
+		return
+	})
 }
 
 // Record attempts to record audio on the bridge, using name as the identifier for
 // the created live recording handle
 func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+	rh = b.StageRecord(id, name, opts)
+	err = rh.Exec()
+	return
+}
+
+// StageRecord stages a `Record` opreation
+func (b *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -147,11 +164,11 @@ func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh 
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = b.client.post("/bridges/"+id+"/record", &resp, &req)
-	if err != nil {
-		rh = b.client.LiveRecording().Get(name)
-	}
-	return
+
+	return NewLiveRecordingHandle(name, b.client.LiveRecording().(*LiveRecording), func() (err error) {
+		err = b.client.post("/bridges/"+id+"/record", &resp, &req)
+		return
+	})
 }
 
 // Subscribe creates an event subscription for events related to the given
@@ -244,9 +261,21 @@ func (bh *BridgeHandle) Play(id string, mediaURI string) (ph ari.PlaybackHandle,
 	return
 }
 
+// StagePlay stages a `Play` operation.
+func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph ari.PlaybackHandle) {
+	ph = bh.b.StagePlay(bh.id, id, mediaURI)
+	return
+}
+
 // Record records the bridge to the given filename
 func (bh *BridgeHandle) Record(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
 	rh, err = bh.b.Record(bh.id, name, opts)
+	return
+}
+
+// StageRecord stages a `Record` operation
+func (bh *BridgeHandle) StageRecord(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+	rh = bh.b.StageRecord(bh.id, name, opts)
 	return
 }
 

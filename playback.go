@@ -26,6 +26,9 @@ type Player interface {
 
 	// Play plays the audio using the given playback ID and media URI
 	Play(string, string) (PlaybackHandle, error)
+
+	// StagePlay stages a `Play` operation
+	StagePlay(string, string) PlaybackHandle
 }
 
 // PlaybackData represents the state of a playback
@@ -57,4 +60,7 @@ type PlaybackHandle interface {
 
 	// Subscribe subscribes the list of channel events
 	Subscribe(n ...string) Subscription
+
+	// Exec executes any staged operations
+	Exec() (err error)
 }

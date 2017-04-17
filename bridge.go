@@ -31,8 +31,16 @@ type Bridge interface {
 	// Play plays the media URI to the bridge
 	Play(id string, playbackID string, mediaURI string) (PlaybackHandle, error)
 
+	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StagePlay(id string, playbackID string, mediaURI string) (ph PlaybackHandle)
+
 	// Record records the bridge
 	Record(id string, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+
+	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StageRecord(id string, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
 
 	// Subscribe subscribes the given bridge events events
 	Subscribe(id string, n ...string) Subscription
@@ -71,8 +79,16 @@ type BridgeHandle interface {
 	// to the bridge, returning the Playback handle
 	Play(id string, mediaURI string) (ph PlaybackHandle, err error)
 
+	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StagePlay(id string, mediaURI string) (ph PlaybackHandle)
+
 	// Record records the bridge to the given filename
 	Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error)
+
+	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle)
 
 	// Subscribe creates a subscription to the list of events
 	Subscribe(n ...string) Subscription
