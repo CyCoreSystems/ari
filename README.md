@@ -50,7 +50,7 @@ At a basic level, when the specific Asterisk ID is not needed, a key can consist
 of a simple ID string:
 
 ```go
-  key := ari.NewKey(ari.KeyChannel, myID")
+  key := ari.NewKey(ari.KeyChannel, "myID")
 ```
 
 For more interesting systems, however, we can declare the Node ID:
