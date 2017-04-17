@@ -354,6 +354,38 @@ func (_m *Channel) Snoop(id string, snoopID string, opts *ari.SnoopOptions) (ari
 	return r0, r1
 }
 
+// StageOriginate provides a mock function with given fields: _a0
+func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) ari.ChannelHandle {
+	ret := _m.Called(_a0)
+
+	var r0 ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) ari.ChannelHandle); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.ChannelHandle)
+		}
+	}
+
+	return r0
+}
+
+// StageSnoop provides a mock function with given fields: id, snoopID, opts
+func (_m *Channel) StageSnoop(id string, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+	ret := _m.Called(id, snoopID, opts)
+
+	var r0 ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(string, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+		r0 = rf(id, snoopID, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.ChannelHandle)
+		}
+	}
+
+	return r0
+}
+
 // StopHold provides a mock function with given fields: id
 func (_m *Channel) StopHold(id string) error {
 	ret := _m.Called(id)

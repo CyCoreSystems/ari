@@ -14,8 +14,12 @@ type Channel interface {
 	// error, if the creation failed
 	Originate(OriginateRequest) (ChannelHandle, error)
 
+	// StageOriginate creates a new Originate, created when the `Exec` method
+	// on `ChannelHandle` is invoked
+	StageOriginate(OriginateRequest) ChannelHandle
+
 	// Create creates a new channel, returning a handle to it or an
-	// error, if the creation failed
+	// error, if the creation failed. Create is already Staged via `Dial`.
 	Create(ChannelCreateRequest) (ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
@@ -80,6 +84,10 @@ type Channel interface {
 
 	// Snoop spies on a specific channel, creating a new snooping channel
 	Snoop(id string, snoopID string, opts *SnoopOptions) (ChannelHandle, error)
+
+	// StageSnoop creates a new `ChannelHandle`, when `Exec`ed, snoops on the given channel ID and
+	// creates a new snooping channel.
+	StageSnoop(id string, snoopID string, opts *SnoopOptions) ChannelHandle
 
 	// Subscribe subscribes on the channel events
 	Subscribe(id string, n ...string) Subscription
@@ -231,4 +239,7 @@ type ChannelHandle interface {
 
 	// Match returns true if the event matches the channel
 	Match(e Event) bool
+
+	// Exec executes any outstanding lazy creation operations on the given handle
+	Exec() error
 }

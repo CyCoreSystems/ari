@@ -53,26 +53,39 @@ func (c *Channel) Data(id string) (cd *ari.ChannelData, err error) {
 // Get gets the lazy handle for the given channel
 func (c *Channel) Get(id string) ari.ChannelHandle {
 	//TODO: does Get need to do anything else??
-	return NewChannelHandle(id, c)
+	return NewChannelHandle(id, c, nil)
 }
 
 // Originate originates a channel and returns the handle TODO: expand
 // differences between originate and create
 func (c *Channel) Originate(req ari.OriginateRequest) (ari.ChannelHandle, error) {
-
-	type response struct {
-		ID string `json:"id"`
-	}
-
-	var resp response
-
-	err := c.client.post("/channels", &resp, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	h := NewChannelHandle(resp.ID, c)
+	h := c.StageOriginate(req)
+	err := h.Exec()
 	return h, err
+}
+
+// StageOriginate creates a new channel handle with a channel originate request
+// staged.
+func (c *Channel) StageOriginate(req ari.OriginateRequest) ari.ChannelHandle {
+
+	if req.ChannelID == "" {
+		req.ChannelID = uuid.NewV1().String()
+	}
+
+	return NewChannelHandle(req.ChannelID, c, func(ch *ChannelHandle) error {
+		type response struct {
+			ID string `json:"id"`
+		}
+
+		var resp response
+
+		err := c.client.post("/channels", &resp, &req)
+		if err != nil {
+			return nil
+		}
+
+		return err
+	})
 }
 
 // Create creates a channel and returns the handle. TODO: expand
@@ -87,7 +100,7 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (ari.ChannelHandle, error
 		return nil, err
 	}
 
-	h := NewChannelHandle(req.ChannelID, c)
+	h := NewChannelHandle(req.ChannelID, c, nil)
 	return h, err
 }
 
@@ -285,15 +298,23 @@ func (c *Channel) Record(id string, name string, opts *ari.RecordingOptions) (rh
 
 // Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
 func (c *Channel) Snoop(id string, snoopID string, opts *ari.SnoopOptions) (ch ari.ChannelHandle, err error) {
+	ch = c.StageSnoop(id, snoopID, opts)
+	err = ch.Exec()
+	return
+}
+
+// StageSnoop creates a new `ChannelHandle` with a `Snoop` operation staged.
+func (c *Channel) StageSnoop(id string, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
 	if opts == nil {
 		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
-
-	err = c.client.post("/channels/"+id+"/snoop/"+snoopID, nil, &opts)
-	if err == nil {
-		ch = c.Get(snoopID)
+	if snoopID == "" {
+		snoopID = uuid.NewV1().String()
 	}
-	return
+	return NewChannelHandle(id, c, func(ch *ChannelHandle) (err error) {
+		err = c.client.post("/channels/"+id+"/snoop/"+snoopID, nil, &opts)
+		return
+	})
 }
 
 // Dial dials the given calling channel identifier
@@ -385,19 +406,31 @@ func (v *ChannelVariables) Set(key string, value string) error {
 type ChannelHandle struct {
 	id string
 	c  *Channel
+
+	exec func(ch *ChannelHandle) error
 }
 
 // NewChannelHandle returns a handle to the given ARI channel
-func NewChannelHandle(id string, c *Channel) *ChannelHandle {
+func NewChannelHandle(id string, c *Channel, exec func(ch *ChannelHandle) error) *ChannelHandle {
 	return &ChannelHandle{
-		id: id,
-		c:  c,
+		id:   id,
+		c:    c,
+		exec: exec,
 	}
 }
 
 // ID returns the identifier for the channel handle
 func (ch *ChannelHandle) ID() string {
 	return ch.id
+}
+
+// Exec executes any staged channel operations attached to this handle.
+func (ch *ChannelHandle) Exec() (err error) {
+	if ch.exec != nil {
+		err = ch.exec(ch)
+		ch.exec = nil
+	}
+	return err
 }
 
 // Data returns the channel's data

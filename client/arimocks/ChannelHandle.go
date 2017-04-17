@@ -102,6 +102,20 @@ func (_m *ChannelHandle) Dial(caller string, timeout time.Duration) error {
 	return r0
 }
 
+// Exec provides a mock function with given fields:
+func (_m *ChannelHandle) Exec() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Hangup provides a mock function with given fields:
 func (_m *ChannelHandle) Hangup() error {
 	ret := _m.Called()
