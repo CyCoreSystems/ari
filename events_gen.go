@@ -9,46 +9,47 @@ import (
 
 // EventTypes enumerates the list of event types
 type EventTypes struct {
-	All                    string
-	ApplicationReplaced    string
-	BridgeAttendedTransfer string
-	BridgeBlindTransfer    string
-	BridgeCreated          string
-	BridgeDestroyed        string
-	BridgeMerged           string
-	ChannelCallerID        string
-	ChannelConnectedLine   string
-	ChannelCreated         string
-	ChannelDestroyed       string
-	ChannelDialplan        string
-	ChannelDtmfReceived    string
-	ChannelEnteredBridge   string
-	ChannelHangupRequest   string
-	ChannelHold            string
-	ChannelLeftBridge      string
-	ChannelStateChange     string
-	ChannelTalkingFinished string
-	ChannelTalkingStarted  string
-	ChannelUnhold          string
-	ChannelUserevent       string
-	ChannelVarset          string
-	ContactInfo            string
-	ContactStatusChange    string
-	DeviceStateChanged     string
-	Dial                   string
-	EndpointStateChange    string
-	MissingParams          string
-	Peer                   string
-	PeerStatusChange       string
-	PlaybackContinuing     string
-	PlaybackFinished       string
-	PlaybackStarted        string
-	RecordingFailed        string
-	RecordingFinished      string
-	RecordingStarted       string
-	StasisEnd              string
-	StasisStart            string
-	TextMessageReceived    string
+	All                      string
+	ApplicationReplaced      string
+	BridgeAttendedTransfer   string
+	BridgeBlindTransfer      string
+	BridgeCreated            string
+	BridgeDestroyed          string
+	BridgeMerged             string
+	BridgeVideoSourceChanged string
+	ChannelCallerID          string
+	ChannelConnectedLine     string
+	ChannelCreated           string
+	ChannelDestroyed         string
+	ChannelDialplan          string
+	ChannelDtmfReceived      string
+	ChannelEnteredBridge     string
+	ChannelHangupRequest     string
+	ChannelHold              string
+	ChannelLeftBridge        string
+	ChannelStateChange       string
+	ChannelTalkingFinished   string
+	ChannelTalkingStarted    string
+	ChannelUnhold            string
+	ChannelUserevent         string
+	ChannelVarset            string
+	ContactInfo              string
+	ContactStatusChange      string
+	DeviceStateChanged       string
+	Dial                     string
+	EndpointStateChange      string
+	MissingParams            string
+	Peer                     string
+	PeerStatusChange         string
+	PlaybackContinuing       string
+	PlaybackFinished         string
+	PlaybackStarted          string
+	RecordingFailed          string
+	RecordingFinished        string
+	RecordingStarted         string
+	StasisEnd                string
+	StasisStart              string
+	TextMessageReceived      string
 }
 
 // Events is the instance for grabbing event types
@@ -62,6 +63,7 @@ func init() {
 	Events.BridgeCreated = "BridgeCreated"
 	Events.BridgeDestroyed = "BridgeDestroyed"
 	Events.BridgeMerged = "BridgeMerged"
+	Events.BridgeVideoSourceChanged = "BridgeVideoSourceChanged"
 	Events.ChannelCallerID = "ChannelCallerId"
 	Events.ChannelConnectedLine = "ChannelConnectedLine"
 	Events.ChannelCreated = "ChannelCreated"
@@ -131,6 +133,9 @@ type RawEvent struct {
 
 	// BridgeMerged - "Notification that one bridge has merged into another."
 	BridgeMerged *BridgeMerged `json:",inline,omitempty"`
+
+	// BridgeVideoSourceChanged - "Notification that the source of video in a bridge has changed."
+	BridgeVideoSourceChanged *BridgeVideoSourceChanged `json:",inline,omitempty"`
 
 	// ChannelCallerID - "Channel changed Caller ID."
 	ChannelCallerID *ChannelCallerID `json:",inline,omitempty"`
@@ -248,6 +253,8 @@ func EventToRaw(e Event) *RawEvent {
 		raw.BridgeDestroyed = e.(*BridgeDestroyed)
 	case Events.BridgeMerged:
 		raw.BridgeMerged = e.(*BridgeMerged)
+	case Events.BridgeVideoSourceChanged:
+		raw.BridgeVideoSourceChanged = e.(*BridgeVideoSourceChanged)
 	case Events.ChannelCallerID:
 		raw.ChannelCallerID = e.(*ChannelCallerID)
 	case Events.ChannelConnectedLine:
@@ -346,6 +353,9 @@ func (r *RawEvent) ToEvent() (Event, error) {
 	case Events.BridgeMerged:
 		r.BridgeMerged.Header = r.Header
 		return r.BridgeMerged, nil
+	case Events.BridgeVideoSourceChanged:
+		r.BridgeVideoSourceChanged.Header = r.Header
+		return r.BridgeVideoSourceChanged, nil
 	case Events.ChannelCallerID:
 		r.ChannelCallerID.Header = r.Header
 		return r.ChannelCallerID, nil
@@ -530,6 +540,17 @@ type BridgeMerged struct {
 
 	Bridge     BridgeData `json:"bridge"`
 	BridgeFrom BridgeData `json:"bridge_from"`
+}
+
+// BridgeVideoSourceChanged - "Notification that the source of video in a bridge has changed."
+type BridgeVideoSourceChanged struct {
+	EventData
+
+	// Header describes any transport-related metadata
+	Header Header `json:"-"`
+
+	Bridge           BridgeData `json:"bridge"`
+	OldVideoSourceId string     `json:"old_video_source_id,omitempty"`
 }
 
 // ChannelCallerID - "Channel changed Caller ID."
