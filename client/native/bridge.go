@@ -211,9 +211,10 @@ func NewBridgeHandle(id string, b *Bridge, exec func(bh *BridgeHandle) error) ar
 
 // BridgeHandle is the handle to a bridge for performing operations
 type BridgeHandle struct {
-	id   string
-	b    *Bridge
-	exec func(bh *BridgeHandle) error
+	id       string
+	b        *Bridge
+	exec     func(bh *BridgeHandle) error
+	executed bool
 }
 
 // ID returns the identifier for the bridge
@@ -223,9 +224,12 @@ func (bh *BridgeHandle) ID() string {
 
 // Exec executes any staged operations attached on the bridge handle
 func (bh *BridgeHandle) Exec() (err error) {
-	if bh.exec != nil {
-		err = bh.exec(bh)
-		bh.exec = nil
+	if !bh.executed {
+		bh.executed = true
+		if bh.exec != nil {
+			err = bh.exec(bh)
+			bh.exec = nil
+		}
 	}
 	return
 }

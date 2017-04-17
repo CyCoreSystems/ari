@@ -77,9 +77,10 @@ func (a *Playback) Subscribe(id string, n ...string) ari.Subscription {
 
 // PlaybackHandle is the handle for performing playback operations
 type PlaybackHandle struct {
-	id   string
-	p    *Playback
-	exec func(pb *PlaybackHandle) error
+	id       string
+	p        *Playback
+	exec     func(pb *PlaybackHandle) error
+	executed bool
 }
 
 // NewPlaybackHandle builds a handle to the playback id
@@ -139,9 +140,12 @@ func (ph *PlaybackHandle) Subscribe(n ...string) ari.Subscription {
 
 // Exec executes any staged operations
 func (ph *PlaybackHandle) Exec() (err error) {
-	if ph.exec != nil {
-		err = ph.exec(ph)
-		ph.exec = nil
+	if !ph.executed {
+		ph.executed = true
+		if ph.exec != nil {
+			err = ph.exec(ph)
+			ph.exec = nil
+		}
 	}
 	return
 }

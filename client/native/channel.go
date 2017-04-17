@@ -408,6 +408,8 @@ type ChannelHandle struct {
 	c  *Channel
 
 	exec func(ch *ChannelHandle) error
+
+	executed bool
 }
 
 // NewChannelHandle returns a handle to the given ARI channel
@@ -426,9 +428,12 @@ func (ch *ChannelHandle) ID() string {
 
 // Exec executes any staged channel operations attached to this handle.
 func (ch *ChannelHandle) Exec() (err error) {
-	if ch.exec != nil {
-		err = ch.exec(ch)
-		ch.exec = nil
+	if !ch.executed {
+		ch.executed = true
+		if ch.exec != nil {
+			err = ch.exec(ch)
+			ch.exec = nil
+		}
 	}
 	return err
 }

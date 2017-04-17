@@ -73,9 +73,10 @@ func (sr *StoredRecording) Delete(name string) (err error) {
 
 // A StoredRecordingHandle is a reference to a stored recording that can be operated on
 type StoredRecordingHandle struct {
-	name string
-	s    *StoredRecording
-	exec func(a *StoredRecordingHandle) error
+	name     string
+	s        *StoredRecording
+	exec     func(a *StoredRecordingHandle) error
+	executed bool
 }
 
 // NewStoredRecordingHandle creates a new stored recording handle
@@ -94,9 +95,12 @@ func (s *StoredRecordingHandle) ID() string {
 
 // Exec executes any staged operations
 func (s *StoredRecordingHandle) Exec() (err error) {
-	if s.exec != nil {
-		err = s.exec(s)
-		s.exec = nil
+	if !s.executed {
+		s.executed = true
+		if s.exec != nil {
+			err = s.exec(s)
+			s.exec = nil
+		}
 	}
 	return
 }

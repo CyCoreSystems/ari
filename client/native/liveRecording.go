@@ -80,9 +80,10 @@ func NewLiveRecordingHandle(name string, s *LiveRecording, exec func() (err erro
 
 // A LiveRecordingHandle is a reference to a stored recording that can be operated on
 type LiveRecordingHandle struct {
-	name string
-	s    *LiveRecording
-	exec func() (err error)
+	name     string
+	s        *LiveRecording
+	exec     func() (err error)
+	executed bool
 }
 
 // ID returns the identifier of the live recording
@@ -155,9 +156,12 @@ func (s *LiveRecordingHandle) Match(e ari.Event) bool {
 
 // Exec executes any staged operations attached to the `LiveRecordingHandle`
 func (s *LiveRecordingHandle) Exec() (err error) {
-	if s.exec != nil {
-		err = s.exec()
-		s.exec = nil
+	if !s.executed {
+		s.executed = true
+		if s.exec != nil {
+			err = s.exec()
+			s.exec = nil
+		}
 	}
 	return
 }
