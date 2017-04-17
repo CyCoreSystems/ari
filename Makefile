@@ -14,7 +14,7 @@ check: all
 
 clients:
 	go build ./client/native
-	go build ./client/mock
+	go build ./client/arimocks
 
 extensions:
 	go build ./ext/audio
@@ -26,6 +26,6 @@ events:
 	@./bin/eventgen internal/eventgen/template.tmpl ${EVENT_SPEC_FILE} |goimports > events_gen.go
 	
 mock:
-	go generate ./client/mock
+	mockery -all -outpkg arimocks -output client/arimocks
 
 ci: check
