@@ -8,13 +8,13 @@ type Application struct {
 	mock.Mock
 }
 
-// Data provides a mock function with given fields: name
-func (_m *Application) Data(name string) (*ari.ApplicationData, error) {
-	ret := _m.Called(name)
+// Data provides a mock function with given fields: key
+func (_m *Application) Data(key *ari.Key) (*ari.ApplicationData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.ApplicationData
-	if rf, ok := ret.Get(0).(func(string) *ari.ApplicationData); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ApplicationData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ApplicationData)
@@ -22,8 +22,8 @@ func (_m *Application) Data(name string) (*ari.ApplicationData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -31,13 +31,13 @@ func (_m *Application) Data(name string) (*ari.ApplicationData, error) {
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: name
-func (_m *Application) Get(name string) ari.ApplicationHandle {
-	ret := _m.Called(name)
+// Get provides a mock function with given fields: key
+func (_m *Application) Get(key *ari.Key) ari.ApplicationHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.ApplicationHandle
-	if rf, ok := ret.Get(0).(func(string) ari.ApplicationHandle); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ApplicationHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.ApplicationHandle)
@@ -48,15 +48,15 @@ func (_m *Application) Get(name string) ari.ApplicationHandle {
 }
 
 // List provides a mock function with given fields:
-func (_m *Application) List() ([]ari.ApplicationHandle, error) {
+func (_m *Application) List() ([]*ari.Key, error) {
 	ret := _m.Called()
 
-	var r0 []ari.ApplicationHandle
-	if rf, ok := ret.Get(0).(func() []ari.ApplicationHandle); ok {
+	var r0 []*ari.Key
+	if rf, ok := ret.Get(0).(func() []*ari.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ari.ApplicationHandle)
+			r0 = ret.Get(0).([]*ari.Key)
 		}
 	}
 
@@ -70,13 +70,13 @@ func (_m *Application) List() ([]ari.ApplicationHandle, error) {
 	return r0, r1
 }
 
-// Subscribe provides a mock function with given fields: name, eventSource
-func (_m *Application) Subscribe(name string, eventSource string) error {
-	ret := _m.Called(name, eventSource)
+// Subscribe provides a mock function with given fields: key, eventSource
+func (_m *Application) Subscribe(key *ari.Key, eventSource string) error {
+	ret := _m.Called(key, eventSource)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(name, eventSource)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, eventSource)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -84,13 +84,13 @@ func (_m *Application) Subscribe(name string, eventSource string) error {
 	return r0
 }
 
-// Unsubscribe provides a mock function with given fields: name, eventSource
-func (_m *Application) Unsubscribe(name string, eventSource string) error {
-	ret := _m.Called(name, eventSource)
+// Unsubscribe provides a mock function with given fields: key, eventSource
+func (_m *Application) Unsubscribe(key *ari.Key, eventSource string) error {
+	ret := _m.Called(key, eventSource)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(name, eventSource)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, eventSource)
 	} else {
 		r0 = ret.Error(0)
 	}

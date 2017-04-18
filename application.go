@@ -5,13 +5,13 @@ package ari
 type Application interface {
 
 	// List returns the list of applications in Asterisk
-	List() ([]ApplicationHandle, error)
+	List() ([]*Key, error)
 
 	// Get returns a handle to the application for further interaction
-	Get(name string) ApplicationHandle
+	Get(key *Key) ApplicationHandle
 
 	// Data returns the applications data
-	Data(name string) (*ApplicationData, error)
+	Data(key *Key) (*ApplicationData, error)
 
 	// Subscribe subscribes the given application to an event source
 	// event source may be one of:
@@ -19,12 +19,12 @@ type Application interface {
 	//  - bridge:<bridgeId>
 	//  - endpoint:<tech>/<resource> (e.g. SIP/102)
 	//  - deviceState:<deviceName>
-	Subscribe(name string, eventSource string) error
+	Subscribe(key *Key, eventSource string) error
 
 	// Unsubscribe unsubscribes (removes a subscription to) a given
 	// ARI application from the provided event source
 	// Equivalent to DELETE /applications/{applicationName}/subscription
-	Unsubscribe(name string, eventSource string) error
+	Unsubscribe(key *Key, eventSource string) error
 }
 
 // ApplicationData describes the data for a Stasis (Ari) application

@@ -1,5 +1,10 @@
 package ari
 
+const (
+	// ApplicationKey is the key kind for ARI Application resources.
+	ApplicationKey = "application"
+)
+
 // Key identifies a unique resource in the system
 type Key struct {
 	// Kind indicates the type of resource the Key points to.  e.g., "channel",
