@@ -8,13 +8,13 @@ type LiveRecording struct {
 	mock.Mock
 }
 
-// Data provides a mock function with given fields: name
-func (_m *LiveRecording) Data(name string) (*ari.LiveRecordingData, error) {
-	ret := _m.Called(name)
+// Data provides a mock function with given fields: key
+func (_m *LiveRecording) Data(key *ari.Key) (*ari.LiveRecordingData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.LiveRecordingData
-	if rf, ok := ret.Get(0).(func(string) *ari.LiveRecordingData); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.LiveRecordingData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.LiveRecordingData)
@@ -22,8 +22,8 @@ func (_m *LiveRecording) Data(name string) (*ari.LiveRecordingData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -31,13 +31,13 @@ func (_m *LiveRecording) Data(name string) (*ari.LiveRecordingData, error) {
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: name
-func (_m *LiveRecording) Delete(name string) error {
-	ret := _m.Called(name)
+// Delete provides a mock function with given fields: key
+func (_m *LiveRecording) Delete(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -45,13 +45,13 @@ func (_m *LiveRecording) Delete(name string) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: name
-func (_m *LiveRecording) Get(name string) ari.LiveRecordingHandle {
-	ret := _m.Called(name)
+// Get provides a mock function with given fields: key
+func (_m *LiveRecording) Get(key *ari.Key) ari.LiveRecordingHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(string) ari.LiveRecordingHandle); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.LiveRecordingHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.LiveRecordingHandle)
@@ -61,13 +61,13 @@ func (_m *LiveRecording) Get(name string) ari.LiveRecordingHandle {
 	return r0
 }
 
-// Mute provides a mock function with given fields: name
-func (_m *LiveRecording) Mute(name string) error {
-	ret := _m.Called(name)
+// Mute provides a mock function with given fields: key
+func (_m *LiveRecording) Mute(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -75,13 +75,13 @@ func (_m *LiveRecording) Mute(name string) error {
 	return r0
 }
 
-// Pause provides a mock function with given fields: name
-func (_m *LiveRecording) Pause(name string) error {
-	ret := _m.Called(name)
+// Pause provides a mock function with given fields: key
+func (_m *LiveRecording) Pause(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -89,13 +89,13 @@ func (_m *LiveRecording) Pause(name string) error {
 	return r0
 }
 
-// Resume provides a mock function with given fields: name
-func (_m *LiveRecording) Resume(name string) error {
-	ret := _m.Called(name)
+// Resume provides a mock function with given fields: key
+func (_m *LiveRecording) Resume(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -103,13 +103,13 @@ func (_m *LiveRecording) Resume(name string) error {
 	return r0
 }
 
-// Scrap provides a mock function with given fields: name
-func (_m *LiveRecording) Scrap(name string) error {
-	ret := _m.Called(name)
+// Scrap provides a mock function with given fields: key
+func (_m *LiveRecording) Scrap(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -117,13 +117,13 @@ func (_m *LiveRecording) Scrap(name string) error {
 	return r0
 }
 
-// Stop provides a mock function with given fields: name
-func (_m *LiveRecording) Stop(name string) error {
-	ret := _m.Called(name)
+// Stop provides a mock function with given fields: key
+func (_m *LiveRecording) Stop(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -131,13 +131,13 @@ func (_m *LiveRecording) Stop(name string) error {
 	return r0
 }
 
-// Unmute provides a mock function with given fields: name
-func (_m *LiveRecording) Unmute(name string) error {
-	ret := _m.Called(name)
+// Unmute provides a mock function with given fields: key
+func (_m *LiveRecording) Unmute(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}

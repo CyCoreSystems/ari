@@ -309,10 +309,13 @@ func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) 
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
+
+	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
+
 	id := key.ID
 	err = c.client.post("/channels/"+id+"/record", &resp, &req)
 	if err != nil {
-		rh = c.client.LiveRecording().Get(name)
+		rh = c.client.LiveRecording().Get(recordingKey)
 	}
 	return
 }

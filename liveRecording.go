@@ -5,32 +5,32 @@ package ari
 type LiveRecording interface {
 
 	// Get gets the Recording by type
-	Get(name string) LiveRecordingHandle
+	Get(key *Key) LiveRecordingHandle
 
 	// Data gets the data for the live recording
-	Data(name string) (*LiveRecordingData, error)
+	Data(key *Key) (*LiveRecordingData, error)
 
 	// Stop stops the live recording
-	Stop(name string) error
+	Stop(key *Key) error
 
 	// Pause pauses the live recording
-	Pause(name string) error
+	Pause(key *Key) error
 
 	// Resume resumes the live recording
-	Resume(name string) error
+	Resume(key *Key) error
 
 	// Mute mutes the live recording
-	Mute(name string) error
+	Mute(key *Key) error
 
 	// Unmute unmutes the live recording
-	Unmute(name string) error
+	Unmute(key *Key) error
 
 	// Delete deletes the live recording
-	Delete(name string) error
+	Delete(key *Key) error
 
 	// Scrap Stops and deletes the current LiveRecording
 	//TODO: reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
-	Scrap(name string) error
+	Scrap(key *Key) error
 }
 
 // LiveRecordingData is the data for a stored recording

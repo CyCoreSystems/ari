@@ -179,7 +179,9 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 		TerminateOn: opts.Terminate,
 	}
 
-	return NewLiveRecordingHandle(name, b.client.LiveRecording().(*LiveRecording), func() (err error) {
+	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
+
+	return NewLiveRecordingHandle(recordingKey, b.client.LiveRecording().(*LiveRecording), func() (err error) {
 		err = b.client.post("/bridges/"+id+"/record", &resp, &req)
 		return
 	})

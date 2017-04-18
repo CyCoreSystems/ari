@@ -15,6 +15,9 @@ const (
 
 	// EndpointKey is the key kind for the ARI Endpoint resource
 	EndpointKey = "endpoint"
+
+	// LiveRecordingKey is the key kidn for the ARI LiveRecording resource
+	LiveRecordingKey = "liverecording"
 )
 
 // Key identifies a unique resource in the system
