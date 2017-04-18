@@ -14,16 +14,21 @@ type Endpoint interface {
 
 	// List lists the endpoints
 	// TODO: associated with the application, or on the entire system?
-	List() ([]EndpointHandle, error)
+	List(filter *Key) ([]*Key, error)
 
 	// List available endpoints for a given endpoint technology
-	ListByTech(tech string) ([]EndpointHandle, error)
+	ListByTech(tech string, filter *Key) ([]*Key, error)
 
 	// Get returns a handle to the endpoint for further operations
-	Get(tech string, resource string) EndpointHandle
+	Get(key *Key) EndpointHandle
 
 	// Data returns the state of the endpoint
-	Data(tech string, resource string) (*EndpointData, error)
+	Data(key *Key) (*EndpointData, error)
+}
+
+// NewEndpointKey returns the key for the given endpoint
+func NewEndpointKey(tech, resource string, opts ...KeyOptionFunc) *Key {
+	return NewKey(EndpointKey, tech+"/"+resource, opts...)
 }
 
 // EndpointData describes an external device which may offer or accept calls

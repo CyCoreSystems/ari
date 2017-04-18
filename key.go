@@ -12,6 +12,9 @@ const (
 
 	// DeviceStateKey is the key kind for the ARI DeviceState resource
 	DeviceStateKey = "devicestate"
+
+	// EndpointKey is the key kind for the ARI Endpoint resource
+	EndpointKey = "endpoint"
 )
 
 // Key identifies a unique resource in the system

@@ -1,6 +1,11 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+	"strings"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // Endpoint provides the ARI Endpoint accessors for the native client
 type Endpoint struct {
@@ -8,19 +13,25 @@ type Endpoint struct {
 }
 
 // Get gets a lazy handle for the endpoint entity
-func (e *Endpoint) Get(tech string, resource string) ari.EndpointHandle {
-	return NewEndpointHandle(tech, resource, e)
+func (e *Endpoint) Get(key *ari.Key) ari.EndpointHandle {
+	return NewEndpointHandle(key, e)
 }
 
 // List lists the current endpoints and returns a list of handles
-func (e *Endpoint) List() (ex []ari.EndpointHandle, err error) {
+func (e *Endpoint) List(filter *ari.Key) (ex []*ari.Key, err error) {
 	endpoints := []struct {
 		Tech     string `json:"technology"`
 		Resource string `json:"resource"`
 	}{}
+	if filter == nil {
+		filter = ari.AppKey(e.client.ApplicationName())
+	}
 	err = e.client.get("/endpoints", &endpoints)
 	for _, i := range endpoints {
-		ex = append(ex, e.Get(i.Tech, i.Resource))
+		k := ari.NewEndpointKey(i.Tech, i.Resource, ari.WithApp(e.client.ApplicationName()), ari.WithNode(e.client.node))
+		if filter.Match(k) {
+			ex = append(ex, k)
+		}
 	}
 
 	return
@@ -28,13 +39,38 @@ func (e *Endpoint) List() (ex []ari.EndpointHandle, err error) {
 
 // ListByTech lists the current endpoints with the given technology and
 // returns a list of handles.
-func (e *Endpoint) ListByTech(tech string) (ex []ari.EndpointHandle, err error) {
-	err = e.client.get("/endpoints/"+tech, &ex)
+func (e *Endpoint) ListByTech(tech string, filter *ari.Key) (ex []*ari.Key, err error) {
+	endpoints := []struct {
+		Tech     string `json:"technology"`
+		Resource string `json:"resource"`
+	}{}
+	if filter == nil {
+		filter = ari.AppKey(e.client.ApplicationName())
+	}
+	err = e.client.get("/endpoints/"+tech, &endpoints)
+	for _, i := range endpoints {
+		k := ari.NewEndpointKey(i.Tech, i.Resource, ari.WithApp(e.client.ApplicationName()), ari.WithNode(e.client.node))
+		if filter.Match(k) {
+			ex = append(ex, k)
+		}
+	}
+
 	return
 }
 
 // Data retrieves the current state of the endpoint
-func (e *Endpoint) Data(tech string, resource string) (ed *ari.EndpointData, err error) {
+func (e *Endpoint) Data(key *ari.Key) (ed *ari.EndpointData, err error) {
+	if key.Kind != ari.EndpointKey {
+		err = errors.New("wrong key type")
+		return
+	}
+	items := strings.Split(key.ID, "/")
+	if len(items) != 2 {
+		err = errors.New("malformed key")
+		return
+	}
+	tech := items[0]
+	resource := items[1]
 	ed = &ari.EndpointData{}
 	err = e.client.get("/endpoints/"+tech+"/"+resource, ed)
 	if err != nil {
@@ -46,29 +82,28 @@ func (e *Endpoint) Data(tech string, resource string) (ed *ari.EndpointData, err
 }
 
 // NewEndpointHandle creates a new EndpointHandle
-func NewEndpointHandle(tech string, resource string, e *Endpoint) ari.EndpointHandle {
+func NewEndpointHandle(key *ari.Key, e *Endpoint) ari.EndpointHandle {
 	return &EndpointHandle{
-		tech:     tech,
-		resource: resource,
+		key: key,
+		e:   e,
 	}
 }
 
 // An EndpointHandle is a reference to an endpoint attached to
 // a transport to an asterisk server
 type EndpointHandle struct {
-	tech     string
-	resource string
-	e        *Endpoint
+	key *ari.Key
+	e   *Endpoint
 }
 
 // ID returns the identifier for the endpoint
 func (eh *EndpointHandle) ID() string {
-	return eh.tech + "/" + eh.resource
+	return eh.key.ID
 }
 
 // Data returns the state of the endpoint
 func (eh *EndpointHandle) Data() (*ari.EndpointData, error) {
-	return eh.e.Data(eh.tech, eh.resource)
+	return eh.e.Data(eh.key)
 }
 
 // Match returns true if the event matches the endpoint
