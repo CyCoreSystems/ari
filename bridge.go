@@ -5,13 +5,13 @@ package ari
 type Bridge interface {
 
 	// Create creates a bridge
-	Create(key *Key, btype string, name string) (BridgeHandle, error)
+	Create(key *Key, btype string, name string) (*BridgeHandle, error)
 
 	// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
-	StageCreate(key *Key, btype string, name string) BridgeHandle
+	StageCreate(key *Key, btype string, name string) *BridgeHandle
 
 	// Get gets the BridgeHandle
-	Get(key *Key) BridgeHandle
+	Get(key *Key) *BridgeHandle
 
 	// Lists returns the lists of bridges in asterisk, optionally using the key for filtering.
 	List(*Key) ([]*Key, error)
@@ -58,44 +58,108 @@ type BridgeData struct {
 	Technology string   `json:"technology"`   // Name of the bridging technology
 }
 
-// BridgeHandle is the handle to a bridge for performing operations on a specific bridge
-type BridgeHandle interface {
-	// ID returns the identifier for the bridge
-	ID() string
+// NewBridgeHandle creates a new bridge handle
+func NewBridgeHandle(key *Key, b Bridge, exec func(bh *BridgeHandle) error) *BridgeHandle {
+	return &BridgeHandle{
+		key:  key,
+		b:    b,
+		exec: exec,
+	}
+}
 
-	// AddChannel adds a channel to the bridge
-	AddChannel(channelID string) (err error)
+// BridgeHandle is the handle to a bridge for performing operations
+type BridgeHandle struct {
+	key      *Key
+	b        Bridge
+	exec     func(bh *BridgeHandle) error
+	executed bool
+}
 
-	// RemoveChannel removes a channel from the bridge
-	RemoveChannel(channelID string) (err error)
+// ID returns the identifier for the bridge
+func (bh *BridgeHandle) ID() string {
+	return bh.key.ID
+}
 
-	// Delete deletes the bridge
-	Delete() (err error)
+// Exec executes any staged operations attached on the bridge handle
+func (bh *BridgeHandle) Exec() (err error) {
+	if !bh.executed {
+		bh.executed = true
+		if bh.exec != nil {
+			err = bh.exec(bh)
+			bh.exec = nil
+		}
+	}
+	return
+}
 
-	// Data gets the bridge data
-	Data() (bd *BridgeData, err error)
+// AddChannel adds a channel to the bridge
+func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
+	err = bh.b.AddChannel(bh.key, channelID)
+	return
+}
 
-	// Play initiates playback of the specified media uri
-	// to the bridge, returning the Playback handle
-	Play(id string, mediaURI string) (ph PlaybackHandle, err error)
+// RemoveChannel removes a channel from the bridge
+func (bh *BridgeHandle) RemoveChannel(channelID string) (err error) {
+	err = bh.b.RemoveChannel(bh.key, channelID)
+	return
+}
 
-	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
-	// for invoking it.
-	StagePlay(id string, mediaURI string) (ph PlaybackHandle)
+// Delete deletes the bridge
+func (bh *BridgeHandle) Delete() (err error) {
+	err = bh.b.Delete(bh.key)
+	return
+}
 
-	// Record records the bridge to the given filename
-	Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error)
+// Data gets the bridge data
+func (bh *BridgeHandle) Data() (bd *BridgeData, err error) {
+	bd, err = bh.b.Data(bh.key)
+	return
+}
 
-	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
-	// for invoking it.
-	StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle)
+// Play initiates playback of the specified media uri
+// to the bridge, returning the Playback handle
+func (bh *BridgeHandle) Play(id string, mediaURI string) (ph PlaybackHandle, err error) {
+	ph, err = bh.b.Play(bh.key, id, mediaURI)
+	return
+}
 
-	// Subscribe creates a subscription to the list of events
-	Subscribe(n ...string) Subscription
+// StagePlay stages a `Play` operation.
+func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph PlaybackHandle) {
+	ph = bh.b.StagePlay(bh.key, id, mediaURI)
+	return
+}
 
-	// Match returns true if the event matches the bridge
-	Match(e Event) bool
+// Record records the bridge to the given filename
+func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error) {
+	rh, err = bh.b.Record(bh.key, name, opts)
+	return
+}
 
-	// Exec executes any staged operations attached on the bridge handle
-	Exec() error
+// StageRecord stages a `Record` operation
+func (bh *BridgeHandle) StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle) {
+	rh = bh.b.StageRecord(bh.key, name, opts)
+	return
+}
+
+// Subscribe creates a subscription to the list of events
+func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
+	if bh == nil {
+		return nil
+	}
+	return bh.b.Subscribe(bh.key, n...)
+}
+
+// Match returns true if the event matches the bridge
+func (bh *BridgeHandle) Match(e Event) bool {
+	bridgeEvent, ok := e.(BridgeEvent)
+	if !ok {
+		return false
+	}
+	bridgeIDs := bridgeEvent.GetBridgeIDs()
+	for _, i := range bridgeIDs {
+		if i == bh.key.ID {
+			return true
+		}
+	}
+	return false
 }

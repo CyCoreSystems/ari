@@ -23,15 +23,15 @@ func (_m *Bridge) AddChannel(key *ari.Key, channelID string) error {
 }
 
 // Create provides a mock function with given fields: key, btype, name
-func (_m *Bridge) Create(key *ari.Key, btype string, name string) (ari.BridgeHandle, error) {
+func (_m *Bridge) Create(key *ari.Key, btype string, name string) (*ari.BridgeHandle, error) {
 	ret := _m.Called(key, btype, name)
 
-	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.BridgeHandle); ok {
+	var r0 *ari.BridgeHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) *ari.BridgeHandle); ok {
 		r0 = rf(key, btype, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.BridgeHandle)
+			r0 = ret.Get(0).(*ari.BridgeHandle)
 		}
 	}
 
@@ -83,15 +83,15 @@ func (_m *Bridge) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Bridge) Get(key *ari.Key) ari.BridgeHandle {
+func (_m *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.BridgeHandle); ok {
+	var r0 *ari.BridgeHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.BridgeHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.BridgeHandle)
+			r0 = ret.Get(0).(*ari.BridgeHandle)
 		}
 	}
 
@@ -182,15 +182,15 @@ func (_m *Bridge) RemoveChannel(key *ari.Key, channelID string) error {
 }
 
 // StageCreate provides a mock function with given fields: key, btype, name
-func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) ari.BridgeHandle {
+func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) *ari.BridgeHandle {
 	ret := _m.Called(key, btype, name)
 
-	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.BridgeHandle); ok {
+	var r0 *ari.BridgeHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) *ari.BridgeHandle); ok {
 		r0 = rf(key, btype, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.BridgeHandle)
+			r0 = ret.Get(0).(*ari.BridgeHandle)
 		}
 	}
 
