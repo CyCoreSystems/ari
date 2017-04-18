@@ -3,9 +3,9 @@ package prompt
 import (
 	"time"
 
-	"github.com/CyCoreSystems/ari/ext/audio"
-
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/ext"
+	"github.com/CyCoreSystems/ari/ext/audio"
 
 	"golang.org/x/net/context"
 )
@@ -48,7 +48,7 @@ type Options struct {
 	//  Invalid (2) : A match could not be found, given the digits received.
 	// If this function returns a non-zero int, then the prompt will be stopped.
 	// If not specified MatchAny will be used.
-	MatchFunc func(string) (string, Status)
+	MatchFunc func(string) (string, ext.Status)
 
 	// Which type of word to use when playing '#'
 	SoundHash string // pound or hash
@@ -72,8 +72,8 @@ type stateFn func() stateFn
 
 // Prompt plays the given sound and waits for user input.
 // nolint:gocyclo
-func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) (ret *Result, err error) {
-	ret = &Result{}
+func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) (ret *ext.Result, err error) {
+	ret = &ext.Result{}
 
 	// Handle default options
 	if opts == nil {
@@ -123,11 +123,11 @@ func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) 
 				select {
 				case _, ok := <-hangupSub.Events():
 					if ok {
-						ret.Status = Hangup
+						ret.Status = ext.Hangup
 						return
 					}
 				case <-ctx.Done():
-					ret.Status = Canceled
+					ret.Status = ext.Canceled
 					return
 				case <-doneCh:
 					return
@@ -145,26 +145,12 @@ func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) 
 			}
 		}()
 
-		q := audio.NewQueue()
-		q.Add(sounds...)
-		var st audio.Status
-		st, err = q.Play(playCtx, p, &audio.Options{ExitOnDTMF: ""})
-
-		switch st {
-		case audio.Canceled:
-			//NOTE: since playCtx doesn't extend the parent context,
-			// any audio cancel is considered a special case
-			// and we don't overwrite the return status
+		var st ext.Status
+		st, err = audio.Queue(playCtx, p, sounds...)
+		if st == ext.Canceled {
 			err = nil
-		case audio.Hangup:
-			ret.Status = Hangup
-		case audio.Failed:
-			ret.Status = Failed
-		case audio.Timeout:
-			ret.Status = Failed
-		}
-
-		if ret.Status > Incomplete {
+		} else if st != ext.Complete {
+			ret.Status = st
 			return nil
 		}
 
@@ -191,17 +177,17 @@ func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) 
 		select {
 		case _, ok := <-hangupSub.Events():
 			if ok {
-				ret.Status = Hangup
+				ret.Status = ext.Hangup
 				return nil
 			}
 		case <-ctx.Done():
-			ret.Status = Canceled
+			ret.Status = ext.Canceled
 			return nil
 		case <-time.After(opts.FirstDigitTimeout):
-			ret.Status = Timeout
+			ret.Status = ext.Timeout
 			return nil
 		case <-overallTimer.C:
-			ret.Status = Timeout
+			ret.Status = ext.Timeout
 			return nil
 		case e := <-dtmfSub.Events():
 			ret.Data += e.(*ari.ChannelDtmfReceived).Digit
@@ -221,17 +207,17 @@ func Prompt(ctx context.Context, p ari.Player, opts *Options, sounds ...string) 
 		select {
 		case _, ok := <-hangupSub.Events():
 			if ok {
-				ret.Status = Hangup
+				ret.Status = ext.Hangup
 				return nil
 			}
 		case <-ctx.Done():
-			ret.Status = Canceled
+			ret.Status = ext.Canceled
 			return nil
 		case <-time.After(opts.InterDigitTimeout):
-			ret.Status = Timeout
+			ret.Status = ext.Timeout
 			return nil
 		case <-overallTimer.C:
-			ret.Status = Timeout
+			ret.Status = ext.Timeout
 			return nil
 		case e := <-dtmfSub.Events():
 			ret.Data += e.(*ari.ChannelDtmfReceived).Digit
