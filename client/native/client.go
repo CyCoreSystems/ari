@@ -64,6 +64,15 @@ func Connect(ctx context.Context, opts Options) (ari.Client, error) {
 	c := New(opts)
 
 	err := c.Connect(ctx)
+	if err != nil {
+		return c, err
+	}
+
+	info, err := c.Asterisk().Info("")
+	if err != nil {
+		return c, err
+	}
+	c.node = info.SystemInfo.EntityID
 
 	return c, err
 }
@@ -115,6 +124,8 @@ func New(opts Options) *Client {
 // Client describes a native ARI client, which connects directly to an Asterisk HTTP-based ARI service.
 type Client struct {
 	appName string
+
+	node string
 
 	// opts are the configuration options for the client
 	Options *Options
