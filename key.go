@@ -9,6 +9,9 @@ const (
 
 	// ChannelKey is the key kind for the ARI Channel resource
 	ChannelKey = "channel"
+
+	// DeviceStateKey is the key kind for the ARI DeviceState resource
+	DeviceStateKey = "devicestate"
 )
 
 // Key identifies a unique resource in the system

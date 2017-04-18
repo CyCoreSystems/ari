@@ -8,13 +8,13 @@ type DeviceState struct {
 	mock.Mock
 }
 
-// Data provides a mock function with given fields: name
-func (_m *DeviceState) Data(name string) (*ari.DeviceStateData, error) {
-	ret := _m.Called(name)
+// Data provides a mock function with given fields: key
+func (_m *DeviceState) Data(key *ari.Key) (*ari.DeviceStateData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.DeviceStateData
-	if rf, ok := ret.Get(0).(func(string) *ari.DeviceStateData); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.DeviceStateData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.DeviceStateData)
@@ -22,8 +22,8 @@ func (_m *DeviceState) Data(name string) (*ari.DeviceStateData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -31,13 +31,13 @@ func (_m *DeviceState) Data(name string) (*ari.DeviceStateData, error) {
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: name
-func (_m *DeviceState) Delete(name string) error {
-	ret := _m.Called(name)
+// Delete provides a mock function with given fields: key
+func (_m *DeviceState) Delete(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -45,13 +45,13 @@ func (_m *DeviceState) Delete(name string) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: name
-func (_m *DeviceState) Get(name string) ari.DeviceStateHandle {
-	ret := _m.Called(name)
+// Get provides a mock function with given fields: key
+func (_m *DeviceState) Get(key *ari.Key) ari.DeviceStateHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.DeviceStateHandle
-	if rf, ok := ret.Get(0).(func(string) ari.DeviceStateHandle); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.DeviceStateHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.DeviceStateHandle)
@@ -61,22 +61,22 @@ func (_m *DeviceState) Get(name string) ari.DeviceStateHandle {
 	return r0
 }
 
-// List provides a mock function with given fields:
-func (_m *DeviceState) List() ([]ari.DeviceStateHandle, error) {
-	ret := _m.Called()
+// List provides a mock function with given fields: filter
+func (_m *DeviceState) List(filter *ari.Key) ([]*ari.Key, error) {
+	ret := _m.Called(filter)
 
-	var r0 []ari.DeviceStateHandle
-	if rf, ok := ret.Get(0).(func() []ari.DeviceStateHandle); ok {
-		r0 = rf()
+	var r0 []*ari.Key
+	if rf, ok := ret.Get(0).(func(*ari.Key) []*ari.Key); ok {
+		r0 = rf(filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ari.DeviceStateHandle)
+			r0 = ret.Get(0).([]*ari.Key)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -84,13 +84,13 @@ func (_m *DeviceState) List() ([]ari.DeviceStateHandle, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: name, state
-func (_m *DeviceState) Update(name string, state string) error {
-	ret := _m.Called(name, state)
+// Update provides a mock function with given fields: key, state
+func (_m *DeviceState) Update(key *ari.Key, state string) error {
+	ret := _m.Called(key, state)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(name, state)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, state)
 	} else {
 		r0 = ret.Error(0)
 	}

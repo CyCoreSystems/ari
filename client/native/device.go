@@ -8,31 +8,39 @@ type DeviceState struct {
 }
 
 // Get returns the lazy handle for the given device name
-func (ds *DeviceState) Get(name string) ari.DeviceStateHandle {
-	return NewDeviceStateHandle(name, ds)
+func (ds *DeviceState) Get(key *ari.Key) ari.DeviceStateHandle {
+	return NewDeviceStateHandle(key, ds)
 }
 
 // List lists the current devices and returns a list of handles
-func (ds *DeviceState) List() (dx []ari.DeviceStateHandle, err error) {
+func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
 
 	type device struct {
 		Name string `json:"name"`
 	}
 
+	if filter == nil {
+		filter = ari.NodeKey(ds.client.ApplicationName(), ds.client.node)
+	}
+
 	var devices []device
 	err = ds.client.get("/deviceStates", &devices)
 	for _, i := range devices {
-		dx = append(dx, ds.Get(i.Name))
+		k := ari.NewKey(ari.DeviceStateKey, i.Name, ari.WithApp(ds.client.ApplicationName()), ari.WithNode(ds.client.node))
+		if filter.Match(k) {
+			dx = append(dx, k)
+		}
 	}
 
 	return
 }
 
 // Data retrieves the current state of the device
-func (ds *DeviceState) Data(name string) (d *ari.DeviceStateData, err error) {
+func (ds *DeviceState) Data(key *ari.Key) (d *ari.DeviceStateData, err error) {
 	device := struct {
 		State string `json:"state"`
 	}{}
+	name := key.ID
 	err = ds.client.get("/deviceStates/"+name, &device)
 	if err != nil {
 		d = nil
@@ -45,16 +53,18 @@ func (ds *DeviceState) Data(name string) (d *ari.DeviceStateData, err error) {
 }
 
 // Update updates the state of the device
-func (ds *DeviceState) Update(name string, state string) (err error) {
+func (ds *DeviceState) Update(key *ari.Key, state string) (err error) {
 	req := map[string]string{
 		"deviceState": state,
 	}
+	name := key.ID
 	err = ds.client.put("/deviceStates/"+name, nil, &req)
 	return
 }
 
 // Delete deletes the device
-func (ds *DeviceState) Delete(name string) (err error) {
+func (ds *DeviceState) Delete(key *ari.Key) (err error) {
+	name := key.ID
 	err = ds.client.del("/deviceStates/"+name, nil, "")
 	return
 }
@@ -62,38 +72,38 @@ func (ds *DeviceState) Delete(name string) (err error) {
 // DeviceStateHandle is a representation of a device state
 // that can be interacted with
 type DeviceStateHandle struct {
-	name string
-	d    *DeviceState
+	key *ari.Key
+	d   *DeviceState
 }
 
 // NewDeviceStateHandle creates a new deviceState handle
-func NewDeviceStateHandle(name string, d *DeviceState) ari.DeviceStateHandle {
+func NewDeviceStateHandle(key *ari.Key, d *DeviceState) ari.DeviceStateHandle {
 	return &DeviceStateHandle{
-		name: name,
-		d:    d,
+		key: key,
+		d:   d,
 	}
 }
 
 // ID returns the identifier for the device
 func (dsh *DeviceStateHandle) ID() string {
-	return dsh.name
+	return dsh.key.ID
 }
 
 // Data gets the device state
 func (dsh *DeviceStateHandle) Data() (d *ari.DeviceStateData, err error) {
-	d, err = dsh.d.Data(dsh.name)
+	d, err = dsh.d.Data(dsh.key)
 	return
 }
 
 // Update updates the device state, implicitly creating it if not exists
 func (dsh *DeviceStateHandle) Update(state string) (err error) {
-	err = dsh.d.Update(dsh.name, state)
+	err = dsh.d.Update(dsh.key, state)
 	return
 }
 
 // Delete deletes the device state
 func (dsh *DeviceStateHandle) Delete() (err error) {
-	err = dsh.d.Delete(dsh.name)
+	err = dsh.d.Delete(dsh.key)
 	//NOTE: if err is not nil,
 	// we could replace 'd' with a version of it
 	// that always returns ErrNotFound. Not required, as the
