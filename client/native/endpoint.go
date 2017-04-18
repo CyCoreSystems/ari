@@ -13,8 +13,8 @@ type Endpoint struct {
 }
 
 // Get gets a lazy handle for the endpoint entity
-func (e *Endpoint) Get(key *ari.Key) ari.EndpointHandle {
-	return NewEndpointHandle(key, e)
+func (e *Endpoint) Get(key *ari.Key) *ari.EndpointHandle {
+	return ari.NewEndpointHandle(key, e)
 }
 
 // List lists the current endpoints and returns a list of handles
@@ -79,44 +79,4 @@ func (e *Endpoint) Data(key *ari.Key) (ed *ari.EndpointData, err error) {
 	}
 
 	return
-}
-
-// NewEndpointHandle creates a new EndpointHandle
-func NewEndpointHandle(key *ari.Key, e *Endpoint) ari.EndpointHandle {
-	return &EndpointHandle{
-		key: key,
-		e:   e,
-	}
-}
-
-// An EndpointHandle is a reference to an endpoint attached to
-// a transport to an asterisk server
-type EndpointHandle struct {
-	key *ari.Key
-	e   *Endpoint
-}
-
-// ID returns the identifier for the endpoint
-func (eh *EndpointHandle) ID() string {
-	return eh.key.ID
-}
-
-// Data returns the state of the endpoint
-func (eh *EndpointHandle) Data() (*ari.EndpointData, error) {
-	return eh.e.Data(eh.key)
-}
-
-// Match returns true if the event matches the endpoint
-func (eh *EndpointHandle) Match(e ari.Event) bool {
-	en, ok := e.(ari.EndpointEvent)
-	if !ok {
-		return false
-	}
-	ids := en.GetEndpointIDs()
-	for _, i := range ids {
-		if i == eh.ID() {
-			return true
-		}
-	}
-	return false
 }

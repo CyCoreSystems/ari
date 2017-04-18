@@ -20,7 +20,7 @@ type Endpoint interface {
 	ListByTech(tech string, filter *Key) ([]*Key, error)
 
 	// Get returns a handle to the endpoint for further operations
-	Get(key *Key) EndpointHandle
+	Get(key *Key) *EndpointHandle
 
 	// Data returns the state of the endpoint
 	Data(key *Key) (*EndpointData, error)
@@ -67,15 +67,42 @@ func FromEndpointID(id string) (tech string, resource string, err error) {
 	return
 }
 
+// NewEndpointHandle creates a new EndpointHandle
+func NewEndpointHandle(key *Key, e Endpoint) *EndpointHandle {
+	return &EndpointHandle{
+		key: key,
+		e:   e,
+	}
+}
+
 // An EndpointHandle is a reference to an endpoint attached to
 // a transport to an asterisk server
-type EndpointHandle interface {
-	// ID returns the identifier for the endpoint
-	ID() string
+type EndpointHandle struct {
+	key *Key
+	e   Endpoint
+}
 
-	// Data returns the state of the endpoint
-	Data() (*EndpointData, error)
+// ID returns the identifier for the endpoint
+func (eh *EndpointHandle) ID() string {
+	return eh.key.ID
+}
 
-	// Match returns true if the event matches the bridge
-	Match(e Event) bool
+// Data returns the state of the endpoint
+func (eh *EndpointHandle) Data() (*EndpointData, error) {
+	return eh.e.Data(eh.key)
+}
+
+// Match returns true if the event matches the endpoint
+func (eh *EndpointHandle) Match(e Event) bool {
+	en, ok := e.(EndpointEvent)
+	if !ok {
+		return false
+	}
+	ids := en.GetEndpointIDs()
+	for _, i := range ids {
+		if i == eh.ID() {
+			return true
+		}
+	}
+	return false
 }

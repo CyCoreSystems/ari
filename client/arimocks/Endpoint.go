@@ -32,15 +32,15 @@ func (_m *Endpoint) Data(key *ari.Key) (*ari.EndpointData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Endpoint) Get(key *ari.Key) ari.EndpointHandle {
+func (_m *Endpoint) Get(key *ari.Key) *ari.EndpointHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.EndpointHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.EndpointHandle); ok {
+	var r0 *ari.EndpointHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.EndpointHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.EndpointHandle)
+			r0 = ret.Get(0).(*ari.EndpointHandle)
 		}
 	}
 
