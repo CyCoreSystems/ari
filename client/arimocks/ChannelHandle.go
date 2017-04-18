@@ -355,6 +355,54 @@ func (_m *ChannelHandle) Snoop(snoopID string, opts *ari.SnoopOptions) (ari.Chan
 	return r0, r1
 }
 
+// StagePlay provides a mock function with given fields: id, mediaURI
+func (_m *ChannelHandle) StagePlay(id string, mediaURI string) ari.PlaybackHandle {
+	ret := _m.Called(id, mediaURI)
+
+	var r0 ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(string, string) ari.PlaybackHandle); ok {
+		r0 = rf(id, mediaURI)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.PlaybackHandle)
+		}
+	}
+
+	return r0
+}
+
+// StageRecord provides a mock function with given fields: name, opts
+func (_m *ChannelHandle) StageRecord(name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
+	ret := _m.Called(name, opts)
+
+	var r0 ari.LiveRecordingHandle
+	if rf, ok := ret.Get(0).(func(string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(name, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.LiveRecordingHandle)
+		}
+	}
+
+	return r0
+}
+
+// StageSnoop provides a mock function with given fields: snoopID, opts
+func (_m *ChannelHandle) StageSnoop(snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+	ret := _m.Called(snoopID, opts)
+
+	var r0 ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+		r0 = rf(snoopID, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.ChannelHandle)
+		}
+	}
+
+	return r0
+}
+
 // StopHold provides a mock function with given fields:
 func (_m *ChannelHandle) StopHold() error {
 	ret := _m.Called()

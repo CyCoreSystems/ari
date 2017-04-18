@@ -76,8 +76,16 @@ type Channel interface {
 	// Play plays the media URI to the channel
 	Play(key *Key, playbackID string, mediaURI string) (PlaybackHandle, error)
 
+	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StagePlay(key *Key, playbackID string, mediaURI string) (ph PlaybackHandle)
+
 	// Record records the channel
 	Record(key *Key, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+
+	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StageRecord(key *Key, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
 
 	// Dial dials a created channel
 	Dial(key *Key, caller string, timeout time.Duration) error
@@ -167,8 +175,16 @@ type ChannelHandle interface {
 	// to the channel, returning the Playback handle
 	Play(id string, mediaURI string) (PlaybackHandle, error)
 
+	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StagePlay(id string, mediaURI string) (ph PlaybackHandle)
+
 	// Record records the channel to the given filename
 	Record(name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+
+	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle)
 
 	// Busy hangs up the channel with the "busy" cause code
 	Busy() error
@@ -224,6 +240,9 @@ type ChannelHandle interface {
 
 	// Snoop spies on a specific channel, creating a new snooping channel placed into the given app
 	Snoop(snoopID string, opts *SnoopOptions) (ChannelHandle, error)
+
+	// StageSnoop stages a `Snoop` operation
+	StageSnoop(snoopID string, opts *SnoopOptions) ChannelHandle
 
 	// Silence plays silence to the channel
 	Silence() error

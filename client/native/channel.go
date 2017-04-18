@@ -271,21 +271,38 @@ func (c *Channel) StopSilence(key *ari.Key) (err error) {
 // Play plays the given media URI on the channel, using the playbackID as
 // the identifier of the created ARI Playback entity
 func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
+	ph = c.StagePlay(key, playbackID, mediaURI)
+	err = ph.Exec()
+	return
+}
+
+// StagePlay stages a `Play` operation on the bridge
+func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle) {
 	resp := make(map[string]interface{})
 	type request struct {
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
 	id := key.ID
-	err = c.client.post("/channels/"+id+"/play/"+playbackID, &resp, &req)
+
 	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
 	ph = c.client.Playback().Get(playbackKey)
-	return
+	return NewPlaybackHandle(playbackKey, c.client.Playback().(*Playback), func(pb *PlaybackHandle) (err error) {
+		err = c.client.post("/channels/"+id+"/play/"+playbackID, &resp, &req)
+		return
+	})
 }
 
 // Record records audio on the channel, using the name parameter as the name of the
 // created LiveRecording entity.
 func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+	rh = c.StageRecord(key, name, opts)
+	err = rh.Exec()
+	return
+}
+
+// StageRecord stages a `Record` opreation
+func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -312,13 +329,10 @@ func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) 
 	}
 
 	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
-
 	id := key.ID
-	err = c.client.post("/channels/"+id+"/record", &resp, &req)
-	if err != nil {
-		rh = c.client.LiveRecording().Get(recordingKey)
-	}
-	return
+	return NewLiveRecordingHandle(recordingKey, c.client.LiveRecording().(*LiveRecording), func() error {
+		return c.client.post("/channels/"+id+"/record", &resp, &req)
+	})
 }
 
 // Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
@@ -492,6 +506,18 @@ func (ch *ChannelHandle) Record(name string, opts *ari.RecordingOptions) (rh ari
 	return
 }
 
+// StagePlay stages a `Play` operation.
+func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (ph ari.PlaybackHandle) {
+	ph = ch.c.StagePlay(ch.key, id, mediaURI)
+	return
+}
+
+// StageRecord stages a `Record` operation
+func (ch *ChannelHandle) StageRecord(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+	rh = ch.c.StageRecord(ch.key, name, opts)
+	return
+}
+
 //---
 // Hangup Operations
 //---
@@ -634,6 +660,11 @@ func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
 // Snoop spies on a specific channel, creating a new snooping channel placed into the given app
 func (ch *ChannelHandle) Snoop(snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
 	return ch.c.Snoop(ch.key, snoopID, opts)
+}
+
+// StageSnoop stages a `Snoop` operation
+func (ch *ChannelHandle) StageSnoop(snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+	return ch.c.StageSnoop(ch.key, snoopID, opts)
 }
 
 // ----

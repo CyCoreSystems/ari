@@ -370,6 +370,38 @@ func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) ari.ChannelHandle {
 	return r0
 }
 
+// StagePlay provides a mock function with given fields: key, playbackID, mediaURI
+func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) ari.PlaybackHandle {
+	ret := _m.Called(key, playbackID, mediaURI)
+
+	var r0 ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, mediaURI)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.PlaybackHandle)
+		}
+	}
+
+	return r0
+}
+
+// StageRecord provides a mock function with given fields: key, name, opts
+func (_m *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
+	ret := _m.Called(key, name, opts)
+
+	var r0 ari.LiveRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(key, name, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.LiveRecordingHandle)
+		}
+	}
+
+	return r0
+}
+
 // StageSnoop provides a mock function with given fields: key, snoopID, opts
 func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
 	ret := _m.Called(key, snoopID, opts)
