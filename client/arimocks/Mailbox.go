@@ -46,15 +46,15 @@ func (_m *Mailbox) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Mailbox) Get(key *ari.Key) ari.MailboxHandle {
+func (_m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.MailboxHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.MailboxHandle); ok {
+	var r0 *ari.MailboxHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.MailboxHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.MailboxHandle)
+			r0 = ret.Get(0).(*ari.MailboxHandle)
 		}
 	}
 

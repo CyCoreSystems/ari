@@ -5,7 +5,7 @@ package ari
 type Mailbox interface {
 
 	// Get gets a handle to the mailbox for further operations
-	Get(key *Key) MailboxHandle
+	Get(key *Key) *MailboxHandle
 
 	// List lists the mailboxes in asterisk
 	List(filter *Key) ([]*Key, error)
@@ -27,18 +27,37 @@ type MailboxData struct {
 	OldMessages int    `json:"old_messages"` // Number of old (read) messages
 }
 
-// MailboxHandle is a wrapper for interacting with a particular mailbox
-type MailboxHandle interface {
+// A MailboxHandle is a handle to a mailbox instance attached to an
+// ari transport
+type MailboxHandle struct {
+	key *Key
+	m   Mailbox
+}
 
-	// ID returns the identifier for the mailbox handle
-	ID() string
+// NewMailboxHandle creates a new mailbox handle given the name and mailbox transport
+func NewMailboxHandle(key *Key, m Mailbox) *MailboxHandle {
+	return &MailboxHandle{
+		key: key,
+		m:   m,
+	}
+}
 
-	// Data gets the current state of the mailbox
-	Data() (*MailboxData, error)
+// ID returns the identifier for the mailbox handle
+func (mh *MailboxHandle) ID() string {
+	return mh.key.ID
+}
 
-	// Update updates the state of the mailbox, or creates if does not exist
-	Update(oldMessages int, newMessages int) error
+// Data gets the current state of the mailbox
+func (mh *MailboxHandle) Data() (*MailboxData, error) {
+	return mh.m.Data(mh.key)
+}
 
-	// Delete deletes the mailbox
-	Delete() error
+// Update updates the state of the mailbox, or creates if does not exist
+func (mh *MailboxHandle) Update(oldMessages int, newMessages int) error {
+	return mh.m.Update(mh.key, oldMessages, newMessages)
+}
+
+// Delete deletes the mailbox
+func (mh *MailboxHandle) Delete() error {
+	return mh.m.Delete(mh.key)
 }

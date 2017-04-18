@@ -12,8 +12,8 @@ type Mailbox struct {
 }
 
 // Get gets a lazy handle for the mailbox name
-func (m *Mailbox) Get(key *ari.Key) ari.MailboxHandle {
-	return NewMailboxHandle(key, m)
+func (m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
+	return ari.NewMailboxHandle(key, m)
 }
 
 // List lists the mailboxes and returns a list of handles
@@ -65,39 +65,4 @@ func (m *Mailbox) Delete(key *ari.Key) (err error) {
 	name := key.ID
 	err = m.client.del("/mailboxes/"+name, nil, "")
 	return
-}
-
-// A MailboxHandle is a handle to a mailbox instance attached to an
-// ari transport
-type MailboxHandle struct {
-	key *ari.Key
-	m   *Mailbox
-}
-
-// NewMailboxHandle creates a new mailbox handle given the name and mailbox transport
-func NewMailboxHandle(key *ari.Key, m *Mailbox) *MailboxHandle {
-	return &MailboxHandle{
-		key: key,
-		m:   m,
-	}
-}
-
-// ID returns the identifier for the mailbox handle
-func (mh *MailboxHandle) ID() string {
-	return mh.key.ID
-}
-
-// Data gets the current state of the mailbox
-func (mh *MailboxHandle) Data() (*ari.MailboxData, error) {
-	return mh.m.Data(mh.key)
-}
-
-// Update updates the state of the mailbox, or creates if does not exist
-func (mh *MailboxHandle) Update(oldMessages int, newMessages int) error {
-	return mh.m.Update(mh.key, oldMessages, newMessages)
-}
-
-// Delete deletes the mailbox
-func (mh *MailboxHandle) Delete() error {
-	return mh.m.Delete(mh.key)
 }
