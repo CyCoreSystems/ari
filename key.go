@@ -32,35 +32,39 @@ type Key struct {
 }
 
 // KeyOptionFunc is a functional argument alias for providing options for ARI keys
-type KeyOptionFunc func(Key)
+type KeyOptionFunc func(Key) Key
 
 // WithDialog sets the given dialog identifier on the key.
 func WithDialog(dialog string) KeyOptionFunc {
-	return func(key Key) {
+	return func(key Key) Key {
 		key.Dialog = dialog
+		return key
 	}
 }
 
 // WithNode sets the given node identifier on the key.
 func WithNode(node string) KeyOptionFunc {
-	return func(key Key) {
+	return func(key Key) Key {
 		key.Node = node
+		return key
 	}
 }
 
 // WithApp sets the given node identifier on the key.
 func WithApp(app string) KeyOptionFunc {
-	return func(key Key) {
+	return func(key Key) Key {
 		key.App = app
+		return key
 	}
 }
 
 // WithParent copies the partial key fields Node, Application, Dialog from the parent key
 func WithParent(parent *Key) KeyOptionFunc {
-	return func(key Key) {
+	return func(key Key) Key {
 		key.Node = parent.Node
 		key.Dialog = parent.Dialog
 		key.App = parent.App
+		return key
 	}
 }
 
@@ -71,7 +75,7 @@ func NewKey(kind string, id string, opts ...KeyOptionFunc) *Key {
 		ID:   id,
 	}
 	for _, o := range opts {
-		o(k)
+		k = o(k)
 	}
 
 	return &k
@@ -90,4 +94,31 @@ func DialogKey(dialog string) *Key {
 // NodeKey returns a key that is bound to the given application and node
 func NodeKey(app, node string) *Key {
 	return NewKey("", "", WithApp(app), WithNode(node))
+}
+
+// Match returns true if the given key matches the subject. Empty partial key fields are wildcards.
+func (k *Key) Match(o *Key) bool {
+	if k == o {
+		return true
+	}
+
+	if k.App != "" && o.App != "" && k.App != o.App {
+		return false
+	}
+	if k.Dialog != "" && o.Dialog != "" && k.Dialog != o.Dialog {
+		return false
+	}
+	if k.Node != "" && o.Node != "" && k.Node != o.Node {
+		return false
+	}
+
+	if k.Kind == "" && k.ID != "" && k.ID != o.ID {
+		return false
+	}
+
+	if k.ID == "" && k.Kind != "" && k.Kind != o.Kind {
+		return false
+	}
+
+	return true
 }
