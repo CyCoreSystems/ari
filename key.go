@@ -30,6 +30,9 @@ const (
 
 	// PlaybackKey is the key kind for the ARI Playback resource
 	PlaybackKey = "playback"
+
+	// SoundKey is the key kind for the ARI Sound resource
+	SoundKey = "sound"
 )
 
 // Key identifies a unique resource in the system

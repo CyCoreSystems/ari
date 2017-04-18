@@ -6,13 +6,13 @@ type Sound interface {
 
 	// List returns available sounds limited by the provided filters.
 	// Valid filters are "lang", "format", and nil (no filter)
-	List(filters map[string]string) ([]SoundHandle, error)
+	List(filters map[string]string, keyFilter *Key) ([]*Key, error)
 
 	// Get returns a handle pointer to the sound for further interaction
-	Get(name string) SoundHandle
+	Get(key *Key) SoundHandle
 
 	// Data returns the Sound's data
-	Data(name string) (*SoundData, error)
+	Data(key *Key) (*SoundData, error)
 }
 
 // SoundData describes a media file which may be played back
