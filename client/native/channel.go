@@ -278,7 +278,8 @@ func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (ph ari
 	req := request{mediaURI}
 	id := key.ID
 	err = c.client.post("/channels/"+id+"/play/"+playbackID, &resp, &req)
-	ph = c.client.Playback().Get(playbackID)
+	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
+	ph = c.client.Playback().Get(playbackKey)
 	return
 }
 

@@ -5,19 +5,19 @@ package ari
 type Playback interface {
 
 	// Get gets the handle to the given playbacl ID
-	Get(id string) PlaybackHandle
+	Get(key *Key) PlaybackHandle
 
 	// Data gets the playback data
-	Data(id string) (*PlaybackData, error)
+	Data(key *Key) (*PlaybackData, error)
 
 	// Control performs the given operation on the current playback
-	Control(id string, op string) error
+	Control(key *Key, op string) error
 
 	// Stop stops the playback
-	Stop(id string) error
+	Stop(key *Key) error
 
 	// Subscribe subscribes on the playback events
-	Subscribe(id string, n ...string) Subscription
+	Subscribe(key *Key, n ...string) Subscription
 }
 
 // A Player is an entity which can play an audio URI

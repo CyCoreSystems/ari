@@ -8,15 +8,16 @@ type Playback struct {
 }
 
 // Get gets a lazy handle for the given playback identifier
-func (a *Playback) Get(id string) (ph ari.PlaybackHandle) {
-	ph = NewPlaybackHandle(id, a, nil)
+func (a *Playback) Get(key *ari.Key) (ph ari.PlaybackHandle) {
+	ph = NewPlaybackHandle(key, a, nil)
 	return
 }
 
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
-func (a *Playback) Data(id string) (p *ari.PlaybackData, err error) {
+func (a *Playback) Data(key *ari.Key) (p *ari.PlaybackData, err error) {
 	p = &ari.PlaybackData{}
+	id := key.ID
 	err = a.client.get("/playbacks/"+id, p)
 	if err != nil {
 		p = nil
@@ -28,13 +29,13 @@ func (a *Playback) Data(id string) (p *ari.PlaybackData, err error) {
 // Control allows the user to manipulate an in-process playback.
 // TODO: list available operations.
 // (Equivalent to POST /playbacks/{playbackID}/control)
-func (a *Playback) Control(id string, op string) (err error) {
+func (a *Playback) Control(key *ari.Key, op string) (err error) {
 
 	//Request structure for controlling playback. Operation is required.
 	type request struct {
 		Operation string `json:"operation"`
 	}
-
+	id := key.ID
 	req := request{op}
 	err = a.client.post("/playbacks/"+id+"/control", nil, &req)
 	return
@@ -42,20 +43,21 @@ func (a *Playback) Control(id string, op string) (err error) {
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
-func (a *Playback) Stop(id string) (err error) {
+func (a *Playback) Stop(key *ari.Key) (err error) {
+	id := key.ID
 	err = a.client.del("/playbacks/"+id, nil, "")
 	return
 }
 
 // Subscribe listens for ARI events for the given playback entity
-func (a *Playback) Subscribe(id string, n ...string) ari.Subscription {
+func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	inSub := a.client.Bus().Subscribe(n...)
 	outSub := newSubscription()
 
 	go func() {
 		defer inSub.Cancel()
 
-		h := a.Get(id)
+		h := a.Get(key)
 
 		for {
 			select {
@@ -77,16 +79,16 @@ func (a *Playback) Subscribe(id string, n ...string) ari.Subscription {
 
 // PlaybackHandle is the handle for performing playback operations
 type PlaybackHandle struct {
-	id       string
+	key      *ari.Key
 	p        *Playback
 	exec     func(pb *PlaybackHandle) error
 	executed bool
 }
 
 // NewPlaybackHandle builds a handle to the playback id
-func NewPlaybackHandle(id string, pb *Playback, exec func(pb *PlaybackHandle) error) ari.PlaybackHandle {
+func NewPlaybackHandle(key *ari.Key, pb *Playback, exec func(pb *PlaybackHandle) error) ari.PlaybackHandle {
 	return &PlaybackHandle{
-		id:   id,
+		key:  key,
 		p:    pb,
 		exec: exec,
 	}
@@ -94,24 +96,24 @@ func NewPlaybackHandle(id string, pb *Playback, exec func(pb *PlaybackHandle) er
 
 // ID returns the identifier for the playback
 func (ph *PlaybackHandle) ID() string {
-	return ph.id
+	return ph.key.ID
 }
 
 // Data gets the playback data
 func (ph *PlaybackHandle) Data() (pd *ari.PlaybackData, err error) {
-	pd, err = ph.p.Data(ph.id)
+	pd, err = ph.p.Data(ph.key)
 	return
 }
 
 // Control performs the given operation
 func (ph *PlaybackHandle) Control(op string) (err error) {
-	err = ph.p.Control(ph.id, op)
+	err = ph.p.Control(ph.key, op)
 	return
 }
 
 // Stop stops the playback
 func (ph *PlaybackHandle) Stop() (err error) {
-	err = ph.p.Stop(ph.id)
+	err = ph.p.Stop(ph.key)
 	return
 }
 
@@ -135,7 +137,7 @@ func (ph *PlaybackHandle) Subscribe(n ...string) ari.Subscription {
 	if ph == nil {
 		return nil
 	}
-	return ph.p.Subscribe(ph.id, n...)
+	return ph.p.Subscribe(ph.key, n...)
 }
 
 // Exec executes any staged operations

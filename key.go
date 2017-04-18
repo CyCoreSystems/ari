@@ -27,6 +27,9 @@ const (
 
 	// ModuleKey is the key kind for the ARI Module resource
 	ModuleKey = "module"
+
+	// PlaybackKey is the key kind for the ARI Playback resource
+	PlaybackKey = "playback"
 )
 
 // Key identifies a unique resource in the system

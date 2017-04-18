@@ -136,8 +136,8 @@ func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph
 		Media string `json:"media"`
 	}
 	req := request{mediaURI}
-
-	return NewPlaybackHandle(playbackID, b.client.Playback().(*Playback), func(pb *PlaybackHandle) (err error) {
+	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
+	return NewPlaybackHandle(playbackKey, b.client.Playback().(*Playback), func(pb *PlaybackHandle) (err error) {
 		err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
 		return
 	})
