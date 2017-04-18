@@ -21,7 +21,7 @@ func (a *Application) Get(key *ari.Key) ari.ApplicationHandle {
 func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 
 	if filter == nil {
-		filter = ari.AppKey(a.client.ApplicationName())
+		filter = ari.NodeKey(a.client.ApplicationName(), a.client.node)
 	}
 
 	var apps = []struct {
@@ -31,7 +31,7 @@ func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 	err = a.client.get("/applications", &apps)
 
 	for _, i := range apps {
-		k := ari.NewKey(ari.ApplicationKey, i.Name, ari.WithParent(filter))
+		k := ari.NewKey(ari.ApplicationKey, i.Name, ari.WithApp(a.client.ApplicationName()), ari.WithNode(a.client.node))
 		if filter.Match(k) {
 			ax = append(ax, k)
 		}

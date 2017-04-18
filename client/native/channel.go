@@ -23,12 +23,12 @@ func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	}{}
 
 	if filter == nil {
-		filter = ari.AppKey(c.client.ApplicationName())
+		filter = ari.NodeKey(c.client.ApplicationName(), c.client.node)
 	}
 
 	err = c.client.get("/channels", &channels)
 	for _, i := range channels {
-		k := ari.NewKey(ari.ChannelKey, i.ID, ari.WithParent(filter))
+		k := ari.NewKey(ari.ChannelKey, i.ID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
 		if filter.Match(k) {
 			cx = append(cx, k)
 		}
@@ -81,7 +81,7 @@ func (c *Channel) StageOriginate(req ari.OriginateRequest) ari.ChannelHandle {
 		req.ChannelID = uuid.NewV1().String()
 	}
 
-	return NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID), c, func(ch *ChannelHandle) error {
+	return NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, func(ch *ChannelHandle) error {
 		type response struct {
 			ID string `json:"id"`
 		}
@@ -109,7 +109,7 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (ari.ChannelHandle, error
 		return nil, err
 	}
 
-	h := NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID), c, nil)
+	h := NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, nil)
 	return h, err
 }
 

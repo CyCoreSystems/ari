@@ -57,7 +57,7 @@ func (l *Logging) List(filter *ari.Key) ([]*ari.Key, error) {
 		return nil, err
 	}
 	if filter == nil {
-		filter = ari.NewKey("", "", ari.WithApp(l.client.ApplicationName()))
+		filter = ari.NodeKey(l.client.ApplicationName(), l.client.node)
 	}
 
 	var ret []*ari.Key

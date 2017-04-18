@@ -24,7 +24,7 @@ func (e *Endpoint) List(filter *ari.Key) (ex []*ari.Key, err error) {
 		Resource string `json:"resource"`
 	}{}
 	if filter == nil {
-		filter = ari.AppKey(e.client.ApplicationName())
+		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
 	err = e.client.get("/endpoints", &endpoints)
 	for _, i := range endpoints {
@@ -45,7 +45,7 @@ func (e *Endpoint) ListByTech(tech string, filter *ari.Key) (ex []*ari.Key, err 
 		Resource string `json:"resource"`
 	}{}
 	if filter == nil {
-		filter = ari.AppKey(e.client.ApplicationName())
+		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
 	err = e.client.get("/endpoints/"+tech, &endpoints)
 	for _, i := range endpoints {

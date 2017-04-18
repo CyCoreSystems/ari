@@ -52,12 +52,12 @@ func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 	}{}
 
 	if filter == nil {
-		filter = ari.AppKey(b.client.ApplicationName())
+		filter = ari.NodeKey(b.client.ApplicationName(), b.client.node)
 	}
 
 	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
-		k := ari.NewKey(ari.BridgeKey, i.ID, ari.WithParent(filter))
+		k := ari.NewKey(ari.BridgeKey, i.ID, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
 		if filter.Match(k) {
 			bx = append(bx, k)
 		}
