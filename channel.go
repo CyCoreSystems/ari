@@ -7,8 +7,8 @@ type Channel interface {
 	// Get returns a handle to a channel for further interaction
 	Get(key *Key) ChannelHandle
 
-	// List lists the channels in asterisk
-	List() ([]*Key, error)
+	// List lists the channels in asterisk, optionally using the key for filtering
+	List(*Key) ([]*Key, error)
 
 	// Originate creates a new channel, returning a handle to it or an
 	// error, if the creation failed

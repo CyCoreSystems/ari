@@ -13,8 +13,8 @@ type Bridge interface {
 	// Get gets the BridgeHandle
 	Get(key *Key) BridgeHandle
 
-	// Lists returns the lists of bridges in asterisk
-	List() ([]*Key, error)
+	// Lists returns the lists of bridges in asterisk, optionally using the key for filtering.
+	List(*Key) ([]*Key, error)
 
 	// Data gets the bridge data
 	Data(key *Key) (*BridgeData, error)

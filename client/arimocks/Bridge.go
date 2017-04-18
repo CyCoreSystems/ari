@@ -98,13 +98,13 @@ func (_m *Bridge) Get(key *ari.Key) ari.BridgeHandle {
 	return r0
 }
 
-// List provides a mock function with given fields:
-func (_m *Bridge) List() ([]*ari.Key, error) {
-	ret := _m.Called()
+// List provides a mock function with given fields: _a0
+func (_m *Bridge) List(_a0 *ari.Key) ([]*ari.Key, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*ari.Key
-	if rf, ok := ret.Get(0).(func() []*ari.Key); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(*ari.Key) []*ari.Key); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*ari.Key)
@@ -112,8 +112,8 @@ func (_m *Bridge) List() ([]*ari.Key, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}

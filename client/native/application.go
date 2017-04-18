@@ -18,7 +18,12 @@ func (a *Application) Get(key *ari.Key) ari.ApplicationHandle {
 }
 
 // List returns the list of applications managed by asterisk
-func (a *Application) List() (ax []*ari.Key, err error) {
+func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
+
+	if filter == nil {
+		filter = ari.AppKey(a.client.ApplicationName())
+	}
+
 	var apps = []struct {
 		Name string `json:"name"`
 	}{}
@@ -26,7 +31,10 @@ func (a *Application) List() (ax []*ari.Key, err error) {
 	err = a.client.get("/applications", &apps)
 
 	for _, i := range apps {
-		ax = append(ax, ari.NewKey(ari.ApplicationKey, i.Name))
+		k := ari.NewKey(ari.ApplicationKey, i.Name, ari.WithParent(filter))
+		if filter.Match(k) {
+			ax = append(ax, k)
+		}
 	}
 
 	err = errors.Wrap(err, "Error listing applications")

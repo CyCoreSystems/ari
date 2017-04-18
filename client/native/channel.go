@@ -17,14 +17,21 @@ type Channel struct {
 }
 
 // List lists the current channels and returns the list of channel handles
-func (c *Channel) List() (cx []*ari.Key, err error) {
+func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	var channels = []struct {
 		ID string `json:"id"`
 	}{}
 
+	if filter == nil {
+		filter = ari.AppKey(c.client.ApplicationName())
+	}
+
 	err = c.client.get("/channels", &channels)
 	for _, i := range channels {
-		cx = append(cx, ari.NewKey(ari.ChannelKey, i.ID))
+		k := ari.NewKey(ari.ChannelKey, i.ID, ari.WithParent(filter))
+		if filter.Match(k) {
+			cx = append(cx, k)
+		}
 	}
 
 	return

@@ -4,8 +4,8 @@ package ari
 // server for application-level resources
 type Application interface {
 
-	// List returns the list of applications in Asterisk
-	List() ([]*Key, error)
+	// List returns the list of applications in Asterisk, optionally using the key for filtering
+	List(*Key) ([]*Key, error)
 
 	// Get returns a handle to the application for further interaction
 	Get(key *Key) ApplicationHandle

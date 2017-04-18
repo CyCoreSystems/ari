@@ -46,14 +46,21 @@ func (b *Bridge) Get(key *ari.Key) ari.BridgeHandle {
 }
 
 // List lists the current bridges and returns a list of lazy handles
-func (b *Bridge) List() (bx []*ari.Key, err error) {
+func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 	var bridges = []struct {
 		ID string `json:"id"`
 	}{}
 
+	if filter == nil {
+		filter = ari.AppKey(b.client.ApplicationName())
+	}
+
 	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
-		bx = append(bx, ari.NewKey(ari.BridgeKey, i.ID))
+		k := ari.NewKey(ari.BridgeKey, i.ID, ari.WithParent(filter))
+		if filter.Match(k) {
+			bx = append(bx, k)
+		}
 	}
 	return
 }
