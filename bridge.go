@@ -36,11 +36,11 @@ type Bridge interface {
 	StagePlay(key *Key, playbackID string, mediaURI string) (ph PlaybackHandle)
 
 	// Record records the bridge
-	Record(key *Key, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StageRecord(key *Key, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
+	StageRecord(key *Key, name string, opts *RecordingOptions) (rh *LiveRecordingHandle)
 
 	// Subscribe subscribes the given bridge events events
 	Subscribe(key *Key, n ...string) Subscription
@@ -130,13 +130,13 @@ func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph PlaybackHandle
 }
 
 // Record records the bridge to the given filename
-func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error) {
+func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
 	rh, err = bh.b.Record(bh.key, name, opts)
 	return
 }
 
 // StageRecord stages a `Record` operation
-func (bh *BridgeHandle) StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle) {
+func (bh *BridgeHandle) StageRecord(name string, opts *RecordingOptions) (rh *LiveRecordingHandle) {
 	rh = bh.b.StageRecord(bh.key, name, opts)
 	return
 }

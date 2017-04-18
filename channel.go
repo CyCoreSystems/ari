@@ -86,11 +86,11 @@ type Channel interface {
 	StagePlay(key *Key, playbackID string, mediaURI string) (ph PlaybackHandle)
 
 	// Record records the channel
-	Record(key *Key, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StageRecord(key *Key, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
+	StageRecord(key *Key, name string, opts *RecordingOptions) (rh *LiveRecordingHandle)
 
 	// Dial dials a created channel
 	Dial(key *Key, caller string, timeout time.Duration) error
@@ -222,7 +222,7 @@ func (ch *ChannelHandle) Play(id string, mediaURI string) (ph PlaybackHandle, er
 }
 
 // Record records the channel to the given filename
-func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh LiveRecordingHandle, err error) {
+func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
 	rh, err = ch.c.Record(ch.key, name, opts)
 	return
 }
@@ -234,7 +234,7 @@ func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (ph PlaybackHandl
 }
 
 // StageRecord stages a `Record` operation
-func (ch *ChannelHandle) StageRecord(name string, opts *RecordingOptions) (rh LiveRecordingHandle) {
+func (ch *ChannelHandle) StageRecord(name string, opts *RecordingOptions) (rh *LiveRecordingHandle) {
 	rh = ch.c.StageRecord(ch.key, name, opts)
 	return
 }

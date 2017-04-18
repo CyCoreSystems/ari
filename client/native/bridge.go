@@ -145,14 +145,14 @@ func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph
 
 // Record attempts to record audio on the bridge, using name as the identifier for
 // the created live recording handle
-func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
 	rh = b.StageRecord(key, name, opts)
 	err = rh.Exec()
 	return
 }
 
 // StageRecord stages a `Record` opreation
-func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle) {
 	id := key.ID
 
 	if opts == nil {
@@ -181,7 +181,7 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 
 	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
 
-	return NewLiveRecordingHandle(recordingKey, b.client.LiveRecording().(*LiveRecording), func() (err error) {
+	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func() (err error) {
 		err = b.client.post("/bridges/"+id+"/record", &resp, &req)
 		return
 	})

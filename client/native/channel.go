@@ -293,14 +293,14 @@ func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (p
 
 // Record records audio on the channel, using the name parameter as the name of the
 // created LiveRecording entity.
-func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
 	rh = c.StageRecord(key, name, opts)
 	err = rh.Exec()
 	return
 }
 
 // StageRecord stages a `Record` opreation
-func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -328,7 +328,7 @@ func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 
 	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
 	id := key.ID
-	return NewLiveRecordingHandle(recordingKey, c.client.LiveRecording().(*LiveRecording), func() error {
+	return ari.NewLiveRecordingHandle(recordingKey, c.client.LiveRecording(), func() error {
 		return c.client.post("/channels/"+id+"/record", &resp, &req)
 	})
 }

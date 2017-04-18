@@ -145,15 +145,15 @@ func (_m *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ari.Pl
 }
 
 // Record provides a mock function with given fields: key, name, opts
-func (_m *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
+func (_m *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 	ret := _m.Called(key, name, opts)
 
-	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+	var r0 *ari.LiveRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) *ari.LiveRecordingHandle); ok {
 		r0 = rf(key, name, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.LiveRecordingHandle)
+			r0 = ret.Get(0).(*ari.LiveRecordingHandle)
 		}
 	}
 
@@ -214,15 +214,15 @@ func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) ar
 }
 
 // StageRecord provides a mock function with given fields: key, name, opts
-func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
+func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) *ari.LiveRecordingHandle {
 	ret := _m.Called(key, name, opts)
 
-	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+	var r0 *ari.LiveRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) *ari.LiveRecordingHandle); ok {
 		r0 = rf(key, name, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.LiveRecordingHandle)
+			r0 = ret.Get(0).(*ari.LiveRecordingHandle)
 		}
 	}
 

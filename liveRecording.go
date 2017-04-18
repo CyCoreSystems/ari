@@ -5,7 +5,7 @@ package ari
 type LiveRecording interface {
 
 	// Get gets the Recording by type
-	Get(key *Key) LiveRecordingHandle
+	Get(key *Key) *LiveRecordingHandle
 
 	// Data gets the data for the live recording
 	Data(key *Key) (*LiveRecordingData, error)
@@ -50,38 +50,99 @@ func (s *LiveRecordingData) ID() string {
 	return s.Name
 }
 
+// NewLiveRecordingHandle creates a new stored recording handle
+func NewLiveRecordingHandle(key *Key, s LiveRecording, exec func() (err error)) *LiveRecordingHandle {
+	return &LiveRecordingHandle{
+		key:  key,
+		s:    s,
+		exec: exec,
+	}
+}
+
 // A LiveRecordingHandle is a reference to a stored recording that can be operated on
-type LiveRecordingHandle interface {
-	// ID returns the identifier of the live recording
-	ID() string
+type LiveRecordingHandle struct {
+	key      *Key
+	s        LiveRecording
+	exec     func() (err error)
+	executed bool
+}
 
-	// Data gets the data for the stored recording
-	Data() (d *LiveRecordingData, err error)
+// ID returns the identifier of the live recording
+func (s *LiveRecordingHandle) ID() string {
+	return s.key.ID
+}
 
-	// Stop stops and saves the recording
-	Stop() (err error)
+// Data gets the data for the stored recording
+func (s *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
+	d, err = s.s.Data(s.key)
+	return
+}
 
-	// Scrap stops and deletes the recording
-	Scrap() (err error)
+// Stop stops and saves the recording
+func (s *LiveRecordingHandle) Stop() (err error) {
+	err = s.s.Stop(s.key)
+	return
+}
 
-	// Delete deletes the recording
-	Delete() (err error)
+// Scrap stops and deletes the recording
+func (s *LiveRecordingHandle) Scrap() (err error) {
+	err = s.s.Scrap(s.key)
+	return
+}
 
-	// Resume resumes the recording
-	Resume() (err error)
+// Delete deletes the recording
+func (s *LiveRecordingHandle) Delete() (err error) {
+	err = s.s.Delete(s.key)
+	return
+}
 
-	// Pause pauses the recording
-	Pause() (err error)
+// Resume resumes the recording
+func (s *LiveRecordingHandle) Resume() (err error) {
+	err = s.s.Resume(s.key)
+	return
+}
 
-	// Mute mutes the recording
-	Mute() (err error)
+// Pause pauses the recording
+func (s *LiveRecordingHandle) Pause() (err error) {
+	err = s.s.Pause(s.key)
+	return
+}
 
-	// Unmute mutes the recording
-	Unmute() (err error)
+// Mute mutes the recording
+func (s *LiveRecordingHandle) Mute() (err error) {
+	err = s.s.Mute(s.key)
+	return
+}
 
-	// Match returns true if the event matches the bridge
-	Match(e Event) bool
+// Unmute mutes the recording
+func (s *LiveRecordingHandle) Unmute() (err error) {
+	err = s.s.Unmute(s.key)
+	return
+}
 
-	// Exec executes any staged operations on the `LiveRecordingHandle`
-	Exec() (err error)
+// Match returns true if the event matches the bridge
+func (s *LiveRecordingHandle) Match(e Event) bool {
+	r, ok := e.(RecordingEvent)
+	if !ok {
+		return false
+	}
+	rIDs := r.GetRecordingIDs()
+	for _, i := range rIDs {
+		if i == s.ID() {
+			return true
+		}
+	}
+	return false
+}
+
+// Exec executes any staged operations attached to the `LiveRecordingHandle`
+func (s *LiveRecordingHandle) Exec() (err error) {
+	if !s.executed {
+		s.executed = true
+		if s.exec != nil {
+			err = s.exec()
+			s.exec = nil
+		}
+	}
+	return
 }
