@@ -21,6 +21,9 @@ const (
 
 	// LoggingKey is the key kind for the ARI Logging resource
 	LoggingKey = "logging"
+
+	// MailboxKey is the key kind for the ARI Mailbox resource
+	MailboxKey = "mailbox"
 )
 
 // Key identifies a unique resource in the system
