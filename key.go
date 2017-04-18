@@ -3,6 +3,9 @@ package ari
 const (
 	// ApplicationKey is the key kind for ARI Application resources.
 	ApplicationKey = "application"
+
+	// BridgeKey is the key kidn for the ARI Bridge resources.
+	BridgeKey = "bridge"
 )
 
 // Key identifies a unique resource in the system

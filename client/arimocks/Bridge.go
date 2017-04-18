@@ -8,13 +8,13 @@ type Bridge struct {
 	mock.Mock
 }
 
-// AddChannel provides a mock function with given fields: bridgeID, channelID
-func (_m *Bridge) AddChannel(bridgeID string, channelID string) error {
-	ret := _m.Called(bridgeID, channelID)
+// AddChannel provides a mock function with given fields: key, channelID
+func (_m *Bridge) AddChannel(key *ari.Key, channelID string) error {
+	ret := _m.Called(key, channelID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(bridgeID, channelID)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, channelID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -22,13 +22,13 @@ func (_m *Bridge) AddChannel(bridgeID string, channelID string) error {
 	return r0
 }
 
-// Create provides a mock function with given fields: id, btype, name
-func (_m *Bridge) Create(id string, btype string, name string) (ari.BridgeHandle, error) {
-	ret := _m.Called(id, btype, name)
+// Create provides a mock function with given fields: key, btype, name
+func (_m *Bridge) Create(key *ari.Key, btype string, name string) (ari.BridgeHandle, error) {
+	ret := _m.Called(key, btype, name)
 
 	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(string, string, string) ari.BridgeHandle); ok {
-		r0 = rf(id, btype, name)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.BridgeHandle); ok {
+		r0 = rf(key, btype, name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.BridgeHandle)
@@ -36,8 +36,8 @@ func (_m *Bridge) Create(id string, btype string, name string) (ari.BridgeHandle
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(id, btype, name)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, btype, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -45,13 +45,13 @@ func (_m *Bridge) Create(id string, btype string, name string) (ari.BridgeHandle
 	return r0, r1
 }
 
-// Data provides a mock function with given fields: id
-func (_m *Bridge) Data(id string) (*ari.BridgeData, error) {
-	ret := _m.Called(id)
+// Data provides a mock function with given fields: key
+func (_m *Bridge) Data(key *ari.Key) (*ari.BridgeData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.BridgeData
-	if rf, ok := ret.Get(0).(func(string) *ari.BridgeData); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.BridgeData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.BridgeData)
@@ -59,8 +59,8 @@ func (_m *Bridge) Data(id string) (*ari.BridgeData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -68,13 +68,13 @@ func (_m *Bridge) Data(id string) (*ari.BridgeData, error) {
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: id
-func (_m *Bridge) Delete(id string) error {
-	ret := _m.Called(id)
+// Delete provides a mock function with given fields: key
+func (_m *Bridge) Delete(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -82,13 +82,13 @@ func (_m *Bridge) Delete(id string) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: id
-func (_m *Bridge) Get(id string) ari.BridgeHandle {
-	ret := _m.Called(id)
+// Get provides a mock function with given fields: key
+func (_m *Bridge) Get(key *ari.Key) ari.BridgeHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(string) ari.BridgeHandle); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.BridgeHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.BridgeHandle)
@@ -99,15 +99,15 @@ func (_m *Bridge) Get(id string) ari.BridgeHandle {
 }
 
 // List provides a mock function with given fields:
-func (_m *Bridge) List() ([]ari.BridgeHandle, error) {
+func (_m *Bridge) List() ([]*ari.Key, error) {
 	ret := _m.Called()
 
-	var r0 []ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func() []ari.BridgeHandle); ok {
+	var r0 []*ari.Key
+	if rf, ok := ret.Get(0).(func() []*ari.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ari.BridgeHandle)
+			r0 = ret.Get(0).([]*ari.Key)
 		}
 	}
 
@@ -121,13 +121,13 @@ func (_m *Bridge) List() ([]ari.BridgeHandle, error) {
 	return r0, r1
 }
 
-// Play provides a mock function with given fields: id, playbackID, mediaURI
-func (_m *Bridge) Play(id string, playbackID string, mediaURI string) (ari.PlaybackHandle, error) {
-	ret := _m.Called(id, playbackID, mediaURI)
+// Play provides a mock function with given fields: key, playbackID, mediaURI
+func (_m *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ari.PlaybackHandle, error) {
+	ret := _m.Called(key, playbackID, mediaURI)
 
 	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(string, string, string) ari.PlaybackHandle); ok {
-		r0 = rf(id, playbackID, mediaURI)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, mediaURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.PlaybackHandle)
@@ -135,8 +135,8 @@ func (_m *Bridge) Play(id string, playbackID string, mediaURI string) (ari.Playb
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(id, playbackID, mediaURI)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, playbackID, mediaURI)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -144,13 +144,13 @@ func (_m *Bridge) Play(id string, playbackID string, mediaURI string) (ari.Playb
 	return r0, r1
 }
 
-// Record provides a mock function with given fields: id, name, opts
-func (_m *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
-	ret := _m.Called(id, name, opts)
+// Record provides a mock function with given fields: key, name, opts
+func (_m *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
+	ret := _m.Called(key, name, opts)
 
 	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(string, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
-		r0 = rf(id, name, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(key, name, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.LiveRecordingHandle)
@@ -158,8 +158,8 @@ func (_m *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (ar
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, *ari.RecordingOptions) error); ok {
-		r1 = rf(id, name, opts)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.RecordingOptions) error); ok {
+		r1 = rf(key, name, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -167,13 +167,13 @@ func (_m *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (ar
 	return r0, r1
 }
 
-// RemoveChannel provides a mock function with given fields: bridgeID, channelID
-func (_m *Bridge) RemoveChannel(bridgeID string, channelID string) error {
-	ret := _m.Called(bridgeID, channelID)
+// RemoveChannel provides a mock function with given fields: key, channelID
+func (_m *Bridge) RemoveChannel(key *ari.Key, channelID string) error {
+	ret := _m.Called(key, channelID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(bridgeID, channelID)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, channelID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -181,13 +181,13 @@ func (_m *Bridge) RemoveChannel(bridgeID string, channelID string) error {
 	return r0
 }
 
-// StageCreate provides a mock function with given fields: id, btype, name
-func (_m *Bridge) StageCreate(id string, btype string, name string) ari.BridgeHandle {
-	ret := _m.Called(id, btype, name)
+// StageCreate provides a mock function with given fields: key, btype, name
+func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) ari.BridgeHandle {
+	ret := _m.Called(key, btype, name)
 
 	var r0 ari.BridgeHandle
-	if rf, ok := ret.Get(0).(func(string, string, string) ari.BridgeHandle); ok {
-		r0 = rf(id, btype, name)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.BridgeHandle); ok {
+		r0 = rf(key, btype, name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.BridgeHandle)
@@ -197,13 +197,13 @@ func (_m *Bridge) StageCreate(id string, btype string, name string) ari.BridgeHa
 	return r0
 }
 
-// StagePlay provides a mock function with given fields: id, playbackID, mediaURI
-func (_m *Bridge) StagePlay(id string, playbackID string, mediaURI string) ari.PlaybackHandle {
-	ret := _m.Called(id, playbackID, mediaURI)
+// StagePlay provides a mock function with given fields: key, playbackID, mediaURI
+func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) ari.PlaybackHandle {
+	ret := _m.Called(key, playbackID, mediaURI)
 
 	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(string, string, string) ari.PlaybackHandle); ok {
-		r0 = rf(id, playbackID, mediaURI)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, mediaURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.PlaybackHandle)
@@ -213,13 +213,13 @@ func (_m *Bridge) StagePlay(id string, playbackID string, mediaURI string) ari.P
 	return r0
 }
 
-// StageRecord provides a mock function with given fields: id, name, opts
-func (_m *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
-	ret := _m.Called(id, name, opts)
+// StageRecord provides a mock function with given fields: key, name, opts
+func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) ari.LiveRecordingHandle {
+	ret := _m.Called(key, name, opts)
 
 	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(string, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
-		r0 = rf(id, name, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(key, name, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.LiveRecordingHandle)
@@ -229,20 +229,20 @@ func (_m *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions
 	return r0
 }
 
-// Subscribe provides a mock function with given fields: id, n
-func (_m *Bridge) Subscribe(id string, n ...string) ari.Subscription {
+// Subscribe provides a mock function with given fields: key, n
+func (_m *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	_va := make([]interface{}, len(n))
 	for _i := range n {
 		_va[_i] = n[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, id)
+	_ca = append(_ca, key)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 ari.Subscription
-	if rf, ok := ret.Get(0).(func(string, ...string) ari.Subscription); ok {
-		r0 = rf(id, n...)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ...string) ari.Subscription); ok {
+		r0 = rf(key, n...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.Subscription)

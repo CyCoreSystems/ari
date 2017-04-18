@@ -5,45 +5,45 @@ package ari
 type Bridge interface {
 
 	// Create creates a bridge
-	Create(id string, btype string, name string) (BridgeHandle, error)
+	Create(key *Key, btype string, name string) (BridgeHandle, error)
 
 	// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
-	StageCreate(id string, btype string, name string) BridgeHandle
+	StageCreate(key *Key, btype string, name string) BridgeHandle
 
 	// Get gets the BridgeHandle
-	Get(id string) BridgeHandle
+	Get(key *Key) BridgeHandle
 
 	// Lists returns the lists of bridges in asterisk
-	List() ([]BridgeHandle, error)
+	List() ([]*Key, error)
 
 	// Data gets the bridge data
-	Data(id string) (*BridgeData, error)
+	Data(key *Key) (*BridgeData, error)
 
 	// AddChannel adds a channel to the bridge
-	AddChannel(bridgeID string, channelID string) error
+	AddChannel(key *Key, channelID string) error
 
 	// RemoveChannel removes a channel from the bridge
-	RemoveChannel(bridgeID string, channelID string) error
+	RemoveChannel(key *Key, channelID string) error
 
 	// Delete deletes the bridge
-	Delete(id string) error
+	Delete(key *Key) error
 
 	// Play plays the media URI to the bridge
-	Play(id string, playbackID string, mediaURI string) (PlaybackHandle, error)
+	Play(key *Key, playbackID string, mediaURI string) (PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(id string, playbackID string, mediaURI string) (ph PlaybackHandle)
+	StagePlay(key *Key, playbackID string, mediaURI string) (ph PlaybackHandle)
 
 	// Record records the bridge
-	Record(id string, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+	Record(key *Key, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
 
 	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StageRecord(id string, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
+	StageRecord(key *Key, name string, opts *RecordingOptions) (rh LiveRecordingHandle)
 
 	// Subscribe subscribes the given bridge events events
-	Subscribe(id string, n ...string) Subscription
+	Subscribe(key *Key, n ...string) Subscription
 }
 
 // BridgeData describes an Asterisk Bridge, the entity which merges media from

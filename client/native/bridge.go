@@ -12,15 +12,15 @@ type Bridge struct {
 }
 
 // Create creates a bridge and returns the lazy handle for the bridge
-func (b *Bridge) Create(id string, t string, name string) (bh ari.BridgeHandle, err error) {
-	bh = b.StageCreate(id, t, name)
+func (b *Bridge) Create(key *ari.Key, t string, name string) (bh ari.BridgeHandle, err error) {
+	bh = b.StageCreate(key, t, name)
 	err = bh.Exec()
 	return
 }
 
 // StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
-func (b *Bridge) StageCreate(id string, t string, name string) ari.BridgeHandle {
-
+func (b *Bridge) StageCreate(key *ari.Key, t string, name string) ari.BridgeHandle {
+	id := key.ID
 	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
 		Type string `json:"type,omitempty"`
@@ -31,7 +31,7 @@ func (b *Bridge) StageCreate(id string, t string, name string) ari.BridgeHandle 
 		Name: name,
 	}
 
-	return NewBridgeHandle(id, b, func(bh *BridgeHandle) (err error) {
+	return NewBridgeHandle(key, b, func(bh *BridgeHandle) (err error) {
 		err = b.client.post("/bridges/"+id, &req, nil)
 		if err != nil {
 			return
@@ -41,27 +41,28 @@ func (b *Bridge) StageCreate(id string, t string, name string) ari.BridgeHandle 
 }
 
 // Get gets the lazy handle for the given bridge id
-func (b *Bridge) Get(id string) ari.BridgeHandle {
-	return NewBridgeHandle(id, b, nil)
+func (b *Bridge) Get(key *ari.Key) ari.BridgeHandle {
+	return NewBridgeHandle(key, b, nil)
 }
 
 // List lists the current bridges and returns a list of lazy handles
-func (b *Bridge) List() (bx []ari.BridgeHandle, err error) {
+func (b *Bridge) List() (bx []*ari.Key, err error) {
 	var bridges = []struct {
 		ID string `json:"id"`
 	}{}
 
 	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
-		bx = append(bx, b.Get(i.ID))
+		bx = append(bx, ari.NewKey(ari.BridgeKey, i.ID))
 	}
 	return
 }
 
 // Data returns the details of a bridge
 // Equivalent to Get /bridges/{bridgeId}
-func (b *Bridge) Data(id string) (bd *ari.BridgeData, err error) {
+func (b *Bridge) Data(key *ari.Key) (bd *ari.BridgeData, err error) {
 	bd = &ari.BridgeData{}
+	id := key.ID
 	err = b.client.get("/bridges/"+id, bd)
 	if err != nil {
 		bd = nil
@@ -72,7 +73,8 @@ func (b *Bridge) Data(id string) (bd *ari.BridgeData, err error) {
 
 // AddChannel adds a channel to a bridge
 // Equivalent to Post /bridges/{id}/addChannel
-func (b *Bridge) AddChannel(bridgeID string, channelID string) (err error) {
+func (b *Bridge) AddChannel(key *ari.Key, channelID string) (err error) {
+	id := key.ID
 
 	type request struct {
 		ChannelID string `json:"channel"`
@@ -80,13 +82,15 @@ func (b *Bridge) AddChannel(bridgeID string, channelID string) (err error) {
 	}
 
 	req := request{channelID, ""}
-	err = b.client.post("/bridges/"+bridgeID+"/addChannel", nil, &req)
+	err = b.client.post("/bridges/"+id+"/addChannel", nil, &req)
 	return
 }
 
 // RemoveChannel removes the specified channel from a bridge
 // Equivalent to Post /bridges/{id}/removeChannel
-func (b *Bridge) RemoveChannel(id string, channelID string) (err error) {
+func (b *Bridge) RemoveChannel(key *ari.Key, channelID string) (err error) {
+	id := key.ID
+
 	req := struct {
 		ChannelID string `json:"channel"`
 	}{
@@ -102,21 +106,23 @@ func (b *Bridge) RemoveChannel(id string, channelID string) (err error) {
 // they will be removed and resume whatever they were doing beforehand.
 // This means that the channels themselves are not deleted.
 // Equivalent to DELETE /bridges/{id}
-func (b *Bridge) Delete(id string) (err error) {
+func (b *Bridge) Delete(key *ari.Key) (err error) {
+	id := key.ID
 	err = b.client.del("/bridges/"+id, nil, "")
 	return
 }
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(id string, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
-	ph = b.StagePlay(id, playbackID, mediaURI)
+func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
+	ph = b.StagePlay(key, playbackID, mediaURI)
 	err = ph.Exec()
 	return
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (b *Bridge) StagePlay(id string, playbackID string, mediaURI string) (ph ari.PlaybackHandle) {
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle) {
+	id := key.ID
 
 	resp := make(map[string]interface{})
 	type request struct {
@@ -132,14 +138,15 @@ func (b *Bridge) StagePlay(id string, playbackID string, mediaURI string) (ph ar
 
 // Record attempts to record audio on the bridge, using name as the identifier for
 // the created live recording handle
-func (b *Bridge) Record(id string, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
-	rh = b.StageRecord(id, name, opts)
+func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
+	rh = b.StageRecord(key, name, opts)
 	err = rh.Exec()
 	return
 }
 
 // StageRecord stages a `Record` opreation
-func (b *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
+	id := key.ID
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
@@ -173,14 +180,14 @@ func (b *Bridge) StageRecord(id string, name string, opts *ari.RecordingOptions)
 
 // Subscribe creates an event subscription for events related to the given
 // bridge␃entity
-func (b *Bridge) Subscribe(id string, n ...string) ari.Subscription {
+func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	inSub := b.client.Bus().Subscribe(n...)
 	outSub := newSubscription()
 
 	go func() {
 		defer inSub.Cancel()
 
-		br := b.Get(id)
+		br := b.Get(key)
 
 		for {
 			select {
@@ -201,9 +208,9 @@ func (b *Bridge) Subscribe(id string, n ...string) ari.Subscription {
 }
 
 // NewBridgeHandle creates a new bridge handle
-func NewBridgeHandle(id string, b *Bridge, exec func(bh *BridgeHandle) error) ari.BridgeHandle {
+func NewBridgeHandle(key *ari.Key, b *Bridge, exec func(bh *BridgeHandle) error) ari.BridgeHandle {
 	return &BridgeHandle{
-		id:   id,
+		key:  key,
 		b:    b,
 		exec: exec,
 	}
@@ -211,7 +218,7 @@ func NewBridgeHandle(id string, b *Bridge, exec func(bh *BridgeHandle) error) ar
 
 // BridgeHandle is the handle to a bridge for performing operations
 type BridgeHandle struct {
-	id       string
+	key      *ari.Key
 	b        *Bridge
 	exec     func(bh *BridgeHandle) error
 	executed bool
@@ -219,7 +226,7 @@ type BridgeHandle struct {
 
 // ID returns the identifier for the bridge
 func (bh *BridgeHandle) ID() string {
-	return bh.id
+	return bh.key.ID
 }
 
 // Exec executes any staged operations attached on the bridge handle
@@ -236,50 +243,50 @@ func (bh *BridgeHandle) Exec() (err error) {
 
 // AddChannel adds a channel to the bridge
 func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
-	err = bh.b.AddChannel(bh.id, channelID)
+	err = bh.b.AddChannel(bh.key, channelID)
 	return
 }
 
 // RemoveChannel removes a channel from the bridge
 func (bh *BridgeHandle) RemoveChannel(channelID string) (err error) {
-	err = bh.b.RemoveChannel(bh.id, channelID)
+	err = bh.b.RemoveChannel(bh.key, channelID)
 	return
 }
 
 // Delete deletes the bridge
 func (bh *BridgeHandle) Delete() (err error) {
-	err = bh.b.Delete(bh.id)
+	err = bh.b.Delete(bh.key)
 	return
 }
 
 // Data gets the bridge data
 func (bh *BridgeHandle) Data() (bd *ari.BridgeData, err error) {
-	bd, err = bh.b.Data(bh.id)
+	bd, err = bh.b.Data(bh.key)
 	return
 }
 
 // Play initiates playback of the specified media uri
 // to the bridge, returning the Playback handle
 func (bh *BridgeHandle) Play(id string, mediaURI string) (ph ari.PlaybackHandle, err error) {
-	ph, err = bh.b.Play(bh.id, id, mediaURI)
+	ph, err = bh.b.Play(bh.key, id, mediaURI)
 	return
 }
 
 // StagePlay stages a `Play` operation.
 func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph ari.PlaybackHandle) {
-	ph = bh.b.StagePlay(bh.id, id, mediaURI)
+	ph = bh.b.StagePlay(bh.key, id, mediaURI)
 	return
 }
 
 // Record records the bridge to the given filename
 func (bh *BridgeHandle) Record(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
-	rh, err = bh.b.Record(bh.id, name, opts)
+	rh, err = bh.b.Record(bh.key, name, opts)
 	return
 }
 
 // StageRecord stages a `Record` operation
 func (bh *BridgeHandle) StageRecord(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
-	rh = bh.b.StageRecord(bh.id, name, opts)
+	rh = bh.b.StageRecord(bh.key, name, opts)
 	return
 }
 
@@ -288,7 +295,7 @@ func (bh *BridgeHandle) Subscribe(n ...string) ari.Subscription {
 	if bh == nil {
 		return nil
 	}
-	return bh.b.Subscribe(bh.id, n...)
+	return bh.b.Subscribe(bh.key, n...)
 }
 
 // Match returns true if the event matches the bridge
@@ -299,7 +306,7 @@ func (bh *BridgeHandle) Match(e ari.Event) bool {
 	}
 	bridgeIDs := bridgeEvent.GetBridgeIDs()
 	for _, i := range bridgeIDs {
-		if i == bh.id {
+		if i == bh.key.ID {
 			return true
 		}
 	}
