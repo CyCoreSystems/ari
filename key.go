@@ -26,6 +26,9 @@ type Key struct {
 
 	// Dialog indicates a named scope of the resource, for receiving events
 	Dialog string `json:"dialog,omitempty"`
+
+	// App indiciates the ARI application that this key is bound to.
+	App string `json:"app,omitempty"`
 }
 
 // KeyOptionFunc is a functional argument alias for providing options for ARI keys
@@ -45,6 +48,22 @@ func WithNode(node string) KeyOptionFunc {
 	}
 }
 
+// WithApp sets the given node identifier on the key.
+func WithApp(app string) KeyOptionFunc {
+	return func(key Key) {
+		key.App = app
+	}
+}
+
+// WithParent copies the partial key fields Node, Application, Dialog from the parent key
+func WithParent(parent *Key) KeyOptionFunc {
+	return func(key Key) {
+		key.Node = parent.Node
+		key.Dialog = parent.Dialog
+		key.App = parent.App
+	}
+}
+
 // NewKey builds a new key given the kind, identifier, and any optional arguments.
 func NewKey(kind string, id string, opts ...KeyOptionFunc) *Key {
 	k := Key{
@@ -56,4 +75,19 @@ func NewKey(kind string, id string, opts ...KeyOptionFunc) *Key {
 	}
 
 	return &k
+}
+
+// AppKey returns a key that is bound to the given application.
+func AppKey(app string) *Key {
+	return NewKey("", "", WithApp(app))
+}
+
+// DialogKey returns a key that is bound to the given dialog.
+func DialogKey(dialog string) *Key {
+	return NewKey("", "", WithDialog(dialog))
+}
+
+// NodeKey returns a key that is bound to the given application and node
+func NodeKey(app, node string) *Key {
+	return NewKey("", "", WithApp(app), WithNode(node))
 }
