@@ -16,9 +16,7 @@ func (_m *Player) Play(_a0 string, _a1 string) (ari.PlaybackHandle, error) {
 	if rf, ok := ret.Get(0).(func(string, string) ari.PlaybackHandle); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.PlaybackHandle)
-		}
+		r0 = ret.Get(0).(ari.PlaybackHandle)
 	}
 
 	var r1 error
@@ -39,9 +37,7 @@ func (_m *Player) StagePlay(_a0 string, _a1 string) ari.PlaybackHandle {
 	if rf, ok := ret.Get(0).(func(string, string) ari.PlaybackHandle); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.PlaybackHandle)
-		}
+		r0 = ret.Get(0).(ari.PlaybackHandle)
 	}
 
 	return r0

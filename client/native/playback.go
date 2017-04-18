@@ -8,8 +8,8 @@ type Playback struct {
 }
 
 // Get gets a lazy handle for the given playback identifier
-func (a *Playback) Get(key *ari.Key) (ph ari.PlaybackHandle) {
-	ph = NewPlaybackHandle(key, a, nil)
+func (a *Playback) Get(key *ari.Key) (ph *ari.PlaybackHandle) {
+	ph = ari.NewPlaybackHandle(key, a, nil)
 	return
 }
 
@@ -75,79 +75,4 @@ func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	}()
 
 	return outSub
-}
-
-// PlaybackHandle is the handle for performing playback operations
-type PlaybackHandle struct {
-	key      *ari.Key
-	p        *Playback
-	exec     func(pb *PlaybackHandle) error
-	executed bool
-}
-
-// NewPlaybackHandle builds a handle to the playback id
-func NewPlaybackHandle(key *ari.Key, pb *Playback, exec func(pb *PlaybackHandle) error) ari.PlaybackHandle {
-	return &PlaybackHandle{
-		key:  key,
-		p:    pb,
-		exec: exec,
-	}
-}
-
-// ID returns the identifier for the playback
-func (ph *PlaybackHandle) ID() string {
-	return ph.key.ID
-}
-
-// Data gets the playback data
-func (ph *PlaybackHandle) Data() (pd *ari.PlaybackData, err error) {
-	pd, err = ph.p.Data(ph.key)
-	return
-}
-
-// Control performs the given operation
-func (ph *PlaybackHandle) Control(op string) (err error) {
-	err = ph.p.Control(ph.key, op)
-	return
-}
-
-// Stop stops the playback
-func (ph *PlaybackHandle) Stop() (err error) {
-	err = ph.p.Stop(ph.key)
-	return
-}
-
-// Match returns true if the event matches the playback
-func (ph *PlaybackHandle) Match(e ari.Event) bool {
-	p, ok := e.(ari.PlaybackEvent)
-	if !ok {
-		return false
-	}
-	ids := p.GetPlaybackIDs()
-	for _, i := range ids {
-		if i == ph.ID() {
-			return true
-		}
-	}
-	return false
-}
-
-// Subscribe subscribes the list of channel events
-func (ph *PlaybackHandle) Subscribe(n ...string) ari.Subscription {
-	if ph == nil {
-		return nil
-	}
-	return ph.p.Subscribe(ph.key, n...)
-}
-
-// Exec executes any staged operations
-func (ph *PlaybackHandle) Exec() (err error) {
-	if !ph.executed {
-		ph.executed = true
-		if ph.exec != nil {
-			err = ph.exec(ph)
-			ph.exec = nil
-		}
-	}
-	return
 }

@@ -121,14 +121,14 @@ func (b *Bridge) Delete(key *ari.Key) (err error) {
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle, err error) {
+func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
 	ph = b.StagePlay(key, playbackID, mediaURI)
 	err = ph.Exec()
 	return
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph ari.PlaybackHandle) {
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle) {
 	id := key.ID
 
 	resp := make(map[string]interface{})
@@ -137,7 +137,7 @@ func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph
 	}
 	req := request{mediaURI}
 	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
-	return NewPlaybackHandle(playbackKey, b.client.Playback().(*Playback), func(pb *PlaybackHandle) (err error) {
+	return ari.NewPlaybackHandle(playbackKey, b.client.Playback(), func(pb *ari.PlaybackHandle) (err error) {
 		err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
 		return
 	})

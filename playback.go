@@ -5,7 +5,7 @@ package ari
 type Playback interface {
 
 	// Get gets the handle to the given playbacl ID
-	Get(key *Key) PlaybackHandle
+	Get(key *Key) *PlaybackHandle
 
 	// Data gets the playback data
 	Data(key *Key) (*PlaybackData, error)
@@ -41,26 +41,76 @@ type PlaybackData struct {
 }
 
 // PlaybackHandle is the handle for performing playback operations
-type PlaybackHandle interface {
+type PlaybackHandle struct {
+	key      *Key
+	p        Playback
+	exec     func(pb *PlaybackHandle) error
+	executed bool
+}
 
-	// ID returns the identifier for the playback
-	ID() string
+// NewPlaybackHandle builds a handle to the playback id
+func NewPlaybackHandle(key *Key, pb Playback, exec func(pb *PlaybackHandle) error) *PlaybackHandle {
+	return &PlaybackHandle{
+		key:  key,
+		p:    pb,
+		exec: exec,
+	}
+}
 
-	// Data gets the playback data
-	Data() (pd *PlaybackData, err error)
+// ID returns the identifier for the playback
+func (ph *PlaybackHandle) ID() string {
+	return ph.key.ID
+}
 
-	// Control performs the given operation
-	Control(op string) (err error)
+// Data gets the playback data
+func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
+	pd, err = ph.p.Data(ph.key)
+	return
+}
 
-	// Stop stops the playback
-	Stop() (err error)
+// Control performs the given operation
+func (ph *PlaybackHandle) Control(op string) (err error) {
+	err = ph.p.Control(ph.key, op)
+	return
+}
 
-	// Match returns true if the event matches the playback
-	Match(e Event) bool
+// Stop stops the playback
+func (ph *PlaybackHandle) Stop() (err error) {
+	err = ph.p.Stop(ph.key)
+	return
+}
 
-	// Subscribe subscribes the list of channel events
-	Subscribe(n ...string) Subscription
+// Match returns true if the event matches the playback
+func (ph *PlaybackHandle) Match(e Event) bool {
+	p, ok := e.(PlaybackEvent)
+	if !ok {
+		return false
+	}
+	ids := p.GetPlaybackIDs()
+	for _, i := range ids {
+		if i == ph.ID() {
+			return true
+		}
+	}
+	return false
+}
 
-	// Exec executes any staged operations
-	Exec() (err error)
+// Subscribe subscribes the list of channel events
+func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
+	if ph == nil {
+		return nil
+	}
+	return ph.p.Subscribe(ph.key, n...)
+}
+
+// Exec executes any staged operations
+func (ph *PlaybackHandle) Exec() (err error) {
+	if !ph.executed {
+		ph.executed = true
+		if ph.exec != nil {
+			err = ph.exec(ph)
+			ph.exec = nil
+		}
+	}
+	return
 }

@@ -46,15 +46,15 @@ func (_m *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Playback) Get(key *ari.Key) ari.PlaybackHandle {
+func (_m *Playback) Get(key *ari.Key) *ari.PlaybackHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.PlaybackHandle); ok {
+	var r0 *ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.PlaybackHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.PlaybackHandle)
+			r0 = ret.Get(0).(*ari.PlaybackHandle)
 		}
 	}
 

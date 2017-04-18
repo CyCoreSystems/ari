@@ -29,11 +29,11 @@ type Bridge interface {
 	Delete(key *Key) error
 
 	// Play plays the media URI to the bridge
-	Play(key *Key, playbackID string, mediaURI string) (PlaybackHandle, error)
+	Play(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(key *Key, playbackID string, mediaURI string) (ph PlaybackHandle)
+	StagePlay(key *Key, playbackID string, mediaURI string) (ph *PlaybackHandle)
 
 	// Record records the bridge
 	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
@@ -118,13 +118,13 @@ func (bh *BridgeHandle) Data() (bd *BridgeData, err error) {
 
 // Play initiates playback of the specified media uri
 // to the bridge, returning the Playback handle
-func (bh *BridgeHandle) Play(id string, mediaURI string) (ph PlaybackHandle, err error) {
+func (bh *BridgeHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
 	ph, err = bh.b.Play(bh.key, id, mediaURI)
 	return
 }
 
 // StagePlay stages a `Play` operation.
-func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph PlaybackHandle) {
+func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph *PlaybackHandle) {
 	ph = bh.b.StagePlay(bh.key, id, mediaURI)
 	return
 }

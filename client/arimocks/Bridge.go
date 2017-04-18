@@ -122,15 +122,15 @@ func (_m *Bridge) List(_a0 *ari.Key) ([]*ari.Key, error) {
 }
 
 // Play provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ari.PlaybackHandle, error) {
+func (_m *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	ret := _m.Called(key, playbackID, mediaURI)
 
-	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+	var r0 *ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) *ari.PlaybackHandle); ok {
 		r0 = rf(key, playbackID, mediaURI)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.PlaybackHandle)
+			r0 = ret.Get(0).(*ari.PlaybackHandle)
 		}
 	}
 
@@ -198,15 +198,15 @@ func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) *ari.Brid
 }
 
 // StagePlay provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) ari.PlaybackHandle {
+func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) *ari.PlaybackHandle {
 	ret := _m.Called(key, playbackID, mediaURI)
 
-	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+	var r0 *ari.PlaybackHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) *ari.PlaybackHandle); ok {
 		r0 = rf(key, playbackID, mediaURI)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.PlaybackHandle)
+			r0 = ret.Get(0).(*ari.PlaybackHandle)
 		}
 	}
 
