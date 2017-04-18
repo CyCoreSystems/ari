@@ -33,6 +33,9 @@ const (
 
 	// SoundKey is the key kind for the ARI Sound resource
 	SoundKey = "sound"
+
+	// StoredRecordingKey is the key kind for the ARI StoredRecording resource
+	StoredRecordingKey = "storedrecording"
 )
 
 // Key identifies a unique resource in the system

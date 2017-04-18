@@ -5,22 +5,22 @@ package ari
 type StoredRecording interface {
 
 	// List lists the recordings
-	List() ([]StoredRecordingHandle, error)
+	List(filter *Key) ([]*Key, error)
 
 	// Get gets the Recording by type
-	Get(name string) StoredRecordingHandle
+	Get(key *Key) StoredRecordingHandle
 
 	// data gets the data for the stored recording
-	Data(name string) (*StoredRecordingData, error)
+	Data(key *Key) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
-	Copy(name string, dest string) (StoredRecordingHandle, error)
+	Copy(key *Key, dest string) (StoredRecordingHandle, error)
 
 	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-	StageCopy(name string, dest string) StoredRecordingHandle
+	StageCopy(key *Key, dest string) StoredRecordingHandle
 
 	// Delete deletes the recording
-	Delete(name string) error
+	Delete(key *Key) error
 }
 
 // StoredRecordingData is the data for a stored recording
