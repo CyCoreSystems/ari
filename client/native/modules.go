@@ -8,8 +8,8 @@ type Modules struct {
 }
 
 // Get obtains a lazy handle to an asterisk module
-func (m *Modules) Get(key *ari.Key) ari.ModuleHandle {
-	return NewModuleHandle(key, m)
+func (m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
+	return ari.NewModuleHandle(key, m)
 }
 
 // List lists the modules and returns lists of handles
@@ -63,40 +63,4 @@ func (m *Modules) Data(key *ari.Key) (md *ari.ModuleData, err error) {
 		err = dataGetError(err, "module", "%v", name)
 	}
 	return
-}
-
-// ModuleHandle is the reference to an asterisk module
-type ModuleHandle struct {
-	key *ari.Key
-	m   *Modules
-}
-
-// NewModuleHandle returns a new module handle
-func NewModuleHandle(key *ari.Key, m *Modules) ari.ModuleHandle {
-	return &ModuleHandle{key, m}
-}
-
-// ID returns the identifier for the module
-func (mh *ModuleHandle) ID() string {
-	return mh.key.ID
-}
-
-// Reload reloads the module
-func (mh *ModuleHandle) Reload() error {
-	return mh.m.Reload(mh.key)
-}
-
-// Unload unloads the module
-func (mh *ModuleHandle) Unload() error {
-	return mh.m.Unload(mh.key)
-}
-
-// Load loads the module
-func (mh *ModuleHandle) Load() error {
-	return mh.m.Load(mh.key)
-}
-
-// Data gets the module data
-func (mh *ModuleHandle) Data() (*ari.ModuleData, error) {
-	return mh.m.Data(mh.key)
 }

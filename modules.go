@@ -3,7 +3,7 @@ package ari
 // Modules is the communication path for interacting with the
 // asterisk modules resource
 type Modules interface {
-	Get(key *Key) ModuleHandle
+	Get(key *Key) *ModuleHandle
 
 	List(filter *Key) ([]*Key, error)
 
@@ -26,20 +26,37 @@ type ModuleData struct {
 }
 
 // ModuleHandle is the reference to an asterisk module
-type ModuleHandle interface {
+type ModuleHandle struct {
+	key *Key
+	m   Modules
+}
 
-	// ID returns the identifier for the module
-	ID() string
+// NewModuleHandle returns a new module handle
+func NewModuleHandle(key *Key, m Modules) *ModuleHandle {
+	return &ModuleHandle{key, m}
+}
 
-	// Reload reloads the module
-	Reload() error
+// ID returns the identifier for the module
+func (mh *ModuleHandle) ID() string {
+	return mh.key.ID
+}
 
-	// Unload unloads the module
-	Unload() error
+// Reload reloads the module
+func (mh *ModuleHandle) Reload() error {
+	return mh.m.Reload(mh.key)
+}
 
-	// Load loads the module
-	Load() error
+// Unload unloads the module
+func (mh *ModuleHandle) Unload() error {
+	return mh.m.Unload(mh.key)
+}
 
-	// Data gets the module data
-	Data() (*ModuleData, error)
+// Load loads the module
+func (mh *ModuleHandle) Load() error {
+	return mh.m.Load(mh.key)
+}
+
+// Data gets the module data
+func (mh *ModuleHandle) Data() (*ModuleData, error) {
+	return mh.m.Data(mh.key)
 }
