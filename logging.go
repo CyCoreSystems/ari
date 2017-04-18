@@ -5,22 +5,22 @@ package ari
 type Logging interface {
 
 	// Create creates a new log
-	Create(name string, level string) error
+	Create(key *Key, level string) error
 
 	// Data retrives the data for a logging channel
-	Data(name string) (*LogData, error)
+	Data(key *Key) (*LogData, error)
 
 	// Data retrives the data for a logging channel
-	Get(name string) LogHandle
+	Get(key *Key) LogHandle
 
 	// List the logs
-	List() ([]LogHandle, error)
+	List(filter *Key) ([]*Key, error)
 
 	// Rotate rotates the log
-	Rotate(name string) error
+	Rotate(key *Key) error
 
 	// Delete deletes the log
-	Delete(name string) error
+	Delete(key *Key) error
 }
 
 // LogData represents the log data

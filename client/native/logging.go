@@ -12,19 +12,20 @@ type Logging struct {
 }
 
 // Create creates a logging level
-func (l *Logging) Create(name, level string) (err error) {
+func (l *Logging) Create(key *ari.Key, level string) (err error) {
 	type request struct {
 		Configuration string `json:"configuration"`
 	}
 	req := request{level}
+	name := key.ID
 	err = l.client.post("/asterisk/logging/"+name, nil, &req)
 	return
 }
 
 // Get returns a logging channel handle
-func (l *Logging) Get(name string) ari.LogHandle {
+func (l *Logging) Get(key *ari.Key) ari.LogHandle {
 	return &LogHandle{
-		name: name,
+		key: key,
 	}
 }
 
@@ -35,34 +36,43 @@ func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
 }
 
 // Data returns the data of a logging channel
-func (l *Logging) Data(name string) (*ari.LogData, error) {
+func (l *Logging) Data(key *ari.Key) (*ari.LogData, error) {
 	ld, err := l.getLoggingChannels()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, i := range ld {
-		return i, nil
+		if i.Name == key.ID {
+			return i, nil
+		}
 	}
 	return nil, errors.New("not found")
 }
 
 // List lists the logging entities
-func (l *Logging) List() ([]ari.LogHandle, error) {
+func (l *Logging) List(filter *ari.Key) ([]*ari.Key, error) {
 	ld, err := l.getLoggingChannels()
 	if err != nil {
 		return nil, err
 	}
+	if filter == nil {
+		filter = ari.NewKey("", "", ari.WithApp(l.client.ApplicationName()))
+	}
 
-	var ret []ari.LogHandle
+	var ret []*ari.Key
 	for _, i := range ld {
-		ret = append(ret, l.Get(i.Name))
+		k := ari.NewKey(ari.LoggingKey, i.Name, ari.WithApp(l.client.ApplicationName()), ari.WithNode(l.client.node))
+		if filter.Match(k) {
+			ret = append(ret, k)
+		}
 	}
 	return ret, nil
 }
 
 // Rotate rotates the given log
-func (l *Logging) Rotate(name string) (err error) {
+func (l *Logging) Rotate(key *ari.Key) (err error) {
+	name := key.ID
 	if name == "" {
 		err = errors.New("Not allowed to rotate unnamed channels")
 		return
@@ -72,7 +82,8 @@ func (l *Logging) Rotate(name string) (err error) {
 }
 
 // Delete deletes the named log
-func (l *Logging) Delete(name string) (err error) {
+func (l *Logging) Delete(key *ari.Key) (err error) {
+	name := key.ID
 	if name == "" {
 		err = errors.New("Not allowed to delete unnamed channels")
 		return
@@ -83,26 +94,26 @@ func (l *Logging) Delete(name string) (err error) {
 
 // LogHandle provides an interface to manipulate a logging channel
 type LogHandle struct {
-	name string
-	c    *Logging
+	key *ari.Key
+	c   *Logging
 }
 
 // ID returns the ID (name) of the logging channel
 func (l *LogHandle) ID() string {
-	return l.name
+	return l.key.ID
 }
 
 // Data returns the data for the logging channel
 func (l *LogHandle) Data() (*ari.LogData, error) {
-	return l.c.Data(l.name)
+	return l.c.Data(l.key)
 }
 
 // Rotate causes the logging channel's logfiles to be rotated
 func (l *LogHandle) Rotate() error {
-	return l.c.Rotate(l.name)
+	return l.c.Rotate(l.key)
 }
 
 // Delete removes the logging channel from Asterisk
 func (l *LogHandle) Delete() error {
-	return l.c.Delete(l.name)
+	return l.c.Delete(l.key)
 }
