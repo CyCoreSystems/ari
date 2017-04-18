@@ -71,7 +71,7 @@ type Control struct {
 	stopCh  chan struct{}
 
 	p  ari.Player
-	pb ari.PlaybackHandle
+	pb *ari.PlaybackHandle
 
 	status Status
 	err    error
@@ -84,7 +84,7 @@ type Control struct {
 }
 
 // Handle returns the ARI reference to the playback object
-func (c *Control) Handle() ari.PlaybackHandle {
+func (c *Control) Handle() *ari.PlaybackHandle {
 	return c.pb
 }
 
