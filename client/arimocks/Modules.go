@@ -8,13 +8,13 @@ type Modules struct {
 	mock.Mock
 }
 
-// Data provides a mock function with given fields: name
-func (_m *Modules) Data(name string) (*ari.ModuleData, error) {
-	ret := _m.Called(name)
+// Data provides a mock function with given fields: key
+func (_m *Modules) Data(key *ari.Key) (*ari.ModuleData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.ModuleData
-	if rf, ok := ret.Get(0).(func(string) *ari.ModuleData); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ModuleData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ModuleData)
@@ -22,8 +22,8 @@ func (_m *Modules) Data(name string) (*ari.ModuleData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -31,13 +31,13 @@ func (_m *Modules) Data(name string) (*ari.ModuleData, error) {
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: name
-func (_m *Modules) Get(name string) ari.ModuleHandle {
-	ret := _m.Called(name)
+// Get provides a mock function with given fields: key
+func (_m *Modules) Get(key *ari.Key) ari.ModuleHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.ModuleHandle
-	if rf, ok := ret.Get(0).(func(string) ari.ModuleHandle); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ModuleHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.ModuleHandle)
@@ -47,22 +47,22 @@ func (_m *Modules) Get(name string) ari.ModuleHandle {
 	return r0
 }
 
-// List provides a mock function with given fields:
-func (_m *Modules) List() ([]ari.ModuleHandle, error) {
-	ret := _m.Called()
+// List provides a mock function with given fields: filter
+func (_m *Modules) List(filter *ari.Key) ([]*ari.Key, error) {
+	ret := _m.Called(filter)
 
-	var r0 []ari.ModuleHandle
-	if rf, ok := ret.Get(0).(func() []ari.ModuleHandle); ok {
-		r0 = rf()
+	var r0 []*ari.Key
+	if rf, ok := ret.Get(0).(func(*ari.Key) []*ari.Key); ok {
+		r0 = rf(filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ari.ModuleHandle)
+			r0 = ret.Get(0).([]*ari.Key)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -70,13 +70,13 @@ func (_m *Modules) List() ([]ari.ModuleHandle, error) {
 	return r0, r1
 }
 
-// Load provides a mock function with given fields: name
-func (_m *Modules) Load(name string) error {
-	ret := _m.Called(name)
+// Load provides a mock function with given fields: key
+func (_m *Modules) Load(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -84,13 +84,13 @@ func (_m *Modules) Load(name string) error {
 	return r0
 }
 
-// Reload provides a mock function with given fields: name
-func (_m *Modules) Reload(name string) error {
-	ret := _m.Called(name)
+// Reload provides a mock function with given fields: key
+func (_m *Modules) Reload(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -98,13 +98,13 @@ func (_m *Modules) Reload(name string) error {
 	return r0
 }
 
-// Unload provides a mock function with given fields: name
-func (_m *Modules) Unload(name string) error {
-	ret := _m.Called(name)
+// Unload provides a mock function with given fields: key
+func (_m *Modules) Unload(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}

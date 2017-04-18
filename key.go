@@ -24,6 +24,9 @@ const (
 
 	// MailboxKey is the key kind for the ARI Mailbox resource
 	MailboxKey = "mailbox"
+
+	// ModuleKey is the key kind for the ARI Module resource
+	ModuleKey = "module"
 )
 
 // Key identifies a unique resource in the system

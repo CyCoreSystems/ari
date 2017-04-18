@@ -60,8 +60,9 @@ func (a *Asterisk) Info(only string) (m *ari.AsteriskInfo, err error) {
 }
 
 // ReloadModule tells asterisk to load the given module
-func (a *Asterisk) ReloadModule(name string) (err error) {
-	err = a.Modules().Reload(name)
+func (a *Asterisk) ReloadModule(key *ari.Key) (err error) {
+	name := key.ID
+	err = a.Modules().Reload(key)
 	err = errors.Wrapf(err, "Error reloading asterisk module '%v'", name)
 	return
 }

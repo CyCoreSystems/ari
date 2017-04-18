@@ -79,13 +79,13 @@ func (_m *Asterisk) Modules() ari.Modules {
 	return r0
 }
 
-// ReloadModule provides a mock function with given fields: name
-func (_m *Asterisk) ReloadModule(name string) error {
-	ret := _m.Called(name)
+// ReloadModule provides a mock function with given fields: key
+func (_m *Asterisk) ReloadModule(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}

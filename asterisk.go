@@ -20,7 +20,7 @@ type Asterisk interface {
 	Config() Config
 
 	// ReloadModule tells asterisk to load the given module
-	ReloadModule(name string) error
+	ReloadModule(key *Key) error
 }
 
 // AsteriskInfo describes a running asterisk system
