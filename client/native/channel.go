@@ -2,11 +2,9 @@ package native
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
-	"github.com/pkg/errors"
 
 	"github.com/satori/go.uuid"
 )
@@ -60,14 +58,14 @@ func (c *Channel) Data(key *ari.Key) (cd *ari.ChannelData, err error) {
 }
 
 // Get gets the lazy handle for the given channel
-func (c *Channel) Get(key *ari.Key) ari.ChannelHandle {
+func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 	//TODO: does Get need to do anything else??
-	return NewChannelHandle(key, c, nil)
+	return ari.NewChannelHandle(key, c, nil)
 }
 
 // Originate originates a channel and returns the handle TODO: expand
 // differences between originate and create
-func (c *Channel) Originate(req ari.OriginateRequest) (ari.ChannelHandle, error) {
+func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
 	h := c.StageOriginate(req)
 	err := h.Exec()
 	return h, err
@@ -75,13 +73,13 @@ func (c *Channel) Originate(req ari.OriginateRequest) (ari.ChannelHandle, error)
 
 // StageOriginate creates a new channel handle with a channel originate request
 // staged.
-func (c *Channel) StageOriginate(req ari.OriginateRequest) ari.ChannelHandle {
+func (c *Channel) StageOriginate(req ari.OriginateRequest) *ari.ChannelHandle {
 
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}
 
-	return NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, func(ch *ChannelHandle) error {
+	return ari.NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, func(ch *ari.ChannelHandle) error {
 		type response struct {
 			ID string `json:"id"`
 		}
@@ -99,7 +97,7 @@ func (c *Channel) StageOriginate(req ari.OriginateRequest) ari.ChannelHandle {
 
 // Create creates a channel and returns the handle. TODO: expand
 // differences between originate and create.
-func (c *Channel) Create(req ari.ChannelCreateRequest) (ari.ChannelHandle, error) {
+func (c *Channel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}
@@ -109,7 +107,7 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (ari.ChannelHandle, error
 		return nil, err
 	}
 
-	h := NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, nil)
+	h := ari.NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, nil)
 	return h, err
 }
 
@@ -336,14 +334,14 @@ func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 }
 
 // Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
-func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (ch ari.ChannelHandle, err error) {
+func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
 	ch = c.StageSnoop(key, snoopID, opts)
 	err = ch.Exec()
 	return
 }
 
 // StageSnoop creates a new `ChannelHandle` with a `Snoop` operation staged.
-func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) *ari.ChannelHandle {
 	if opts == nil {
 		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
@@ -351,7 +349,7 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 		snoopID = uuid.NewV1().String()
 	}
 	id := key.ID
-	return NewChannelHandle(key, c, func(ch *ChannelHandle) (err error) {
+	return ari.NewChannelHandle(key, c, func(ch *ari.ChannelHandle) (err error) {
 		err = c.client.post("/channels/"+id+"/snoop/"+snoopID, nil, &opts)
 		return
 	})
@@ -441,292 +439,4 @@ func (v *ChannelVariables) Set(key string, value string) error {
 
 	err := v.client.post(path, nil, &req)
 	return err
-}
-
-// ChannelHandle provides a wrapper on the Channel interface for operations on a particular channel ID.
-type ChannelHandle struct {
-	key *ari.Key
-	c   *Channel
-
-	exec func(ch *ChannelHandle) error
-
-	executed bool
-}
-
-// NewChannelHandle returns a handle to the given ARI channel
-func NewChannelHandle(key *ari.Key, c *Channel, exec func(ch *ChannelHandle) error) *ChannelHandle {
-	return &ChannelHandle{
-		key:  key,
-		c:    c,
-		exec: exec,
-	}
-}
-
-// ID returns the identifier for the channel handle
-func (ch *ChannelHandle) ID() string {
-	return ch.key.ID
-}
-
-// Exec executes any staged channel operations attached to this handle.
-func (ch *ChannelHandle) Exec() (err error) {
-	if !ch.executed {
-		ch.executed = true
-		if ch.exec != nil {
-			err = ch.exec(ch)
-			ch.exec = nil
-		}
-	}
-	return err
-}
-
-// Data returns the channel's data
-func (ch *ChannelHandle) Data() (*ari.ChannelData, error) {
-	return ch.c.Data(ch.key)
-}
-
-// Continue tells Asterisk to return the channel to the dialplan
-func (ch *ChannelHandle) Continue(context, extension string, priority int) error {
-	return ch.c.Continue(ch.key, context, extension, priority)
-}
-
-//---
-// Play/Record operations
-//---
-
-// Play initiates playback of the specified media uri
-// to the channel, returning the Playback handle
-func (ch *ChannelHandle) Play(id string, mediaURI string) (ph ari.PlaybackHandle, err error) {
-	ph, err = ch.c.Play(ch.key, id, mediaURI)
-	return
-}
-
-// Record records the channel to the given filename
-func (ch *ChannelHandle) Record(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle, err error) {
-	rh, err = ch.c.Record(ch.key, name, opts)
-	return
-}
-
-// StagePlay stages a `Play` operation.
-func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (ph ari.PlaybackHandle) {
-	ph = ch.c.StagePlay(ch.key, id, mediaURI)
-	return
-}
-
-// StageRecord stages a `Record` operation
-func (ch *ChannelHandle) StageRecord(name string, opts *ari.RecordingOptions) (rh ari.LiveRecordingHandle) {
-	rh = ch.c.StageRecord(ch.key, name, opts)
-	return
-}
-
-//---
-// Hangup Operations
-//---
-
-// Busy hangs up the channel with the "busy" cause code
-func (ch *ChannelHandle) Busy() error {
-	return ch.c.Busy(ch.key)
-}
-
-// Congestion hangs up the channel with the congestion cause code
-func (ch *ChannelHandle) Congestion() error {
-	return ch.c.Congestion(ch.key)
-}
-
-// Hangup hangs up the channel with the normal cause code
-func (ch *ChannelHandle) Hangup() error {
-	return ch.c.Hangup(ch.key, "normal")
-}
-
-//--
-
-// --
-// Answer operations
-// --
-
-// Answer answers the channel
-func (ch *ChannelHandle) Answer() error {
-	return ch.c.Answer(ch.key)
-}
-
-// IsAnswered checks the current state of the channel to see if it is "Up"
-func (ch *ChannelHandle) IsAnswered() (bool, error) {
-	updated, err := ch.Data()
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to get updated channel")
-	}
-	return strings.ToLower(updated.State) == "up", nil
-}
-
-// ------
-
-// --
-// Ring Operations
-// --
-
-// Ring indicates ringing to the channel
-func (ch *ChannelHandle) Ring() error {
-	return ch.c.Ring(ch.key)
-}
-
-// StopRing stops ringing on the channel
-func (ch *ChannelHandle) StopRing() error {
-	return ch.c.StopRing(ch.key)
-}
-
-// ------
-
-// --
-// Mute operations
-// --
-
-// Mute mutes the channel in the given direction (in, out, both)
-func (ch *ChannelHandle) Mute(dir ari.Direction) (err error) {
-	if dir == "" {
-		dir = ari.DirectionIn
-	}
-
-	return ch.c.Mute(ch.key, dir)
-}
-
-// Unmute unmutes the channel in the given direction (in, out, both)
-func (ch *ChannelHandle) Unmute(dir ari.Direction) (err error) {
-	if dir == "" {
-		dir = ari.DirectionIn
-	}
-
-	return ch.c.Unmute(ch.key, dir)
-}
-
-// ----
-
-// --
-// Hold operations
-// --
-
-// Hold puts the channel on hold
-func (ch *ChannelHandle) Hold() error {
-	return ch.c.Hold(ch.key)
-}
-
-// StopHold retrieves the channel from hold
-func (ch *ChannelHandle) StopHold() error {
-	return ch.c.StopHold(ch.key)
-}
-
-// ----
-
-// --
-// Music on hold operations
-// --
-
-// MOH plays music on hold of the given class
-// to the channel
-func (ch *ChannelHandle) MOH(mohClass string) error {
-	return ch.c.MOH(ch.key, mohClass)
-}
-
-// StopMOH stops playing of music on hold to the channel
-func (ch *ChannelHandle) StopMOH() error {
-	return ch.c.StopMOH(ch.key)
-}
-
-// ----
-
-// Variables returns the channel variables
-func (ch *ChannelHandle) Variables() ari.Variables {
-	return ch.c.Variables(ch.key)
-}
-
-// --
-// Misc
-// --
-
-// Originate creates (and dials) a new channel using the present channel as its Originator.
-func (ch *ChannelHandle) Originate(req ari.OriginateRequest) (ari.ChannelHandle, error) {
-	if req.Originator == "" {
-		req.Originator = ch.ID()
-	}
-	return ch.c.Originate(req)
-}
-
-// Dial dials a created channel.  `caller` is the optional
-// channel ID of the calling party (if there is one).  Timeout
-// is the length of time to wait before the dial is answered
-// before aborting.
-func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
-	return ch.c.Dial(ch.key, caller, timeout)
-}
-
-// Snoop spies on a specific channel, creating a new snooping channel placed into the given app
-func (ch *ChannelHandle) Snoop(snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
-	return ch.c.Snoop(ch.key, snoopID, opts)
-}
-
-// StageSnoop stages a `Snoop` operation
-func (ch *ChannelHandle) StageSnoop(snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
-	return ch.c.StageSnoop(ch.key, snoopID, opts)
-}
-
-// ----
-
-// --
-// Silence operations
-// --
-
-// Silence plays silence to the channel
-func (ch *ChannelHandle) Silence() error {
-	return ch.c.Silence(ch.key)
-}
-
-// StopSilence stops silence to the channel
-func (ch *ChannelHandle) StopSilence() error {
-	return ch.c.StopSilence(ch.key)
-}
-
-// ----
-
-// --
-// Subscription
-// --
-
-// Subscribe subscribes the list of channel events
-func (ch *ChannelHandle) Subscribe(n ...string) ari.Subscription {
-	if ch == nil {
-		return nil
-	}
-	return ch.c.Subscribe(ch.key, n...)
-}
-
-// TODO: rest of ChannelHandle
-
-// --
-// DTMF
-// --
-
-// SendDTMF sends the DTMF information to the server
-func (ch *ChannelHandle) SendDTMF(dtmf string, opts *ari.DTMFOptions) error {
-	return ch.c.SendDTMF(ch.key, dtmf, opts)
-}
-
-// Match returns true if the event matches the channel
-func (ch *ChannelHandle) Match(e ari.Event) bool {
-	channelEvent, ok := e.(ari.ChannelEvent)
-	if !ok {
-		return false
-	}
-
-	//channel ID comparisons
-	//	do we compare based on id;N, where id == id and the N's are different
-	//		 -> this happens in Local channels
-
-	// NOTE: this code considers local channels equal
-	//leftChannel := strings.Split(ch.key, ";")[0]
-	channelIDs := channelEvent.GetChannelIDs()
-	for _, i := range channelIDs {
-		//rightChannel := strings.Split(i, ";")[0]
-		if ch.key.ID == i {
-			return true
-		}
-	}
-	return false
 }

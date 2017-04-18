@@ -66,15 +66,15 @@ func (_m *Channel) Continue(key *ari.Key, context string, extension string, prio
 }
 
 // Create provides a mock function with given fields: _a0
-func (_m *Channel) Create(_a0 ari.ChannelCreateRequest) (ari.ChannelHandle, error) {
+func (_m *Channel) Create(_a0 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	ret := _m.Called(_a0)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.ChannelCreateRequest) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(ari.ChannelCreateRequest) *ari.ChannelHandle); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
@@ -126,15 +126,15 @@ func (_m *Channel) Dial(key *ari.Key, caller string, timeout time.Duration) erro
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Channel) Get(key *ari.Key) ari.ChannelHandle {
+func (_m *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ChannelHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
@@ -221,15 +221,15 @@ func (_m *Channel) Mute(key *ari.Key, dir ari.Direction) error {
 }
 
 // Originate provides a mock function with given fields: _a0
-func (_m *Channel) Originate(_a0 ari.OriginateRequest) (ari.ChannelHandle, error) {
+func (_m *Channel) Originate(_a0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
 	ret := _m.Called(_a0)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) *ari.ChannelHandle); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
@@ -332,15 +332,15 @@ func (_m *Channel) Silence(key *ari.Key) error {
 }
 
 // Snoop provides a mock function with given fields: key, snoopID, opts
-func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
+func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
 	ret := _m.Called(key, snoopID, opts)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) *ari.ChannelHandle); ok {
 		r0 = rf(key, snoopID, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
@@ -355,15 +355,15 @@ func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (
 }
 
 // StageOriginate provides a mock function with given fields: _a0
-func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) ari.ChannelHandle {
+func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) *ari.ChannelHandle {
 	ret := _m.Called(_a0)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) *ari.ChannelHandle); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
@@ -403,15 +403,15 @@ func (_m *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpt
 }
 
 // StageSnoop provides a mock function with given fields: key, snoopID, opts
-func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) *ari.ChannelHandle {
 	ret := _m.Called(key, snoopID, opts)
 
-	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+	var r0 *ari.ChannelHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) *ari.ChannelHandle); ok {
 		r0 = rf(key, snoopID, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelHandle)
 		}
 	}
 
