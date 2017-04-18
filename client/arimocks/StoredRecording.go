@@ -9,15 +9,15 @@ type StoredRecording struct {
 }
 
 // Copy provides a mock function with given fields: key, dest
-func (_m *StoredRecording) Copy(key *ari.Key, dest string) (ari.StoredRecordingHandle, error) {
+func (_m *StoredRecording) Copy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
 	ret := _m.Called(key, dest)
 
-	var r0 ari.StoredRecordingHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string) ari.StoredRecordingHandle); ok {
+	var r0 *ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) *ari.StoredRecordingHandle); ok {
 		r0 = rf(key, dest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.StoredRecordingHandle)
+			r0 = ret.Get(0).(*ari.StoredRecordingHandle)
 		}
 	}
 
@@ -69,15 +69,15 @@ func (_m *StoredRecording) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *StoredRecording) Get(key *ari.Key) ari.StoredRecordingHandle {
+func (_m *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.StoredRecordingHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.StoredRecordingHandle); ok {
+	var r0 *ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.StoredRecordingHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.StoredRecordingHandle)
+			r0 = ret.Get(0).(*ari.StoredRecordingHandle)
 		}
 	}
 
@@ -108,15 +108,15 @@ func (_m *StoredRecording) List(filter *ari.Key) ([]*ari.Key, error) {
 }
 
 // StageCopy provides a mock function with given fields: key, dest
-func (_m *StoredRecording) StageCopy(key *ari.Key, dest string) ari.StoredRecordingHandle {
+func (_m *StoredRecording) StageCopy(key *ari.Key, dest string) *ari.StoredRecordingHandle {
 	ret := _m.Called(key, dest)
 
-	var r0 ari.StoredRecordingHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string) ari.StoredRecordingHandle); ok {
+	var r0 *ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) *ari.StoredRecordingHandle); ok {
 		r0 = rf(key, dest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.StoredRecordingHandle)
+			r0 = ret.Get(0).(*ari.StoredRecordingHandle)
 		}
 	}
 

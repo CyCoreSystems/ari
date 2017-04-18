@@ -8,16 +8,16 @@ type StoredRecording interface {
 	List(filter *Key) ([]*Key, error)
 
 	// Get gets the Recording by type
-	Get(key *Key) StoredRecordingHandle
+	Get(key *Key) *StoredRecordingHandle
 
 	// data gets the data for the stored recording
 	Data(key *Key) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
-	Copy(key *Key, dest string) (StoredRecordingHandle, error)
+	Copy(key *Key, dest string) (*StoredRecordingHandle, error)
 
 	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-	StageCopy(key *Key, dest string) StoredRecordingHandle
+	StageCopy(key *Key, dest string) *StoredRecordingHandle
 
 	// Delete deletes the recording
 	Delete(key *Key) error
@@ -35,22 +35,59 @@ func (d StoredRecordingData) ID() string {
 }
 
 // A StoredRecordingHandle is a reference to a stored recording that can be operated on
-type StoredRecordingHandle interface {
-	// ID returns the identifier for the stored recording
-	ID() string
+type StoredRecordingHandle struct {
+	key      *Key
+	s        StoredRecording
+	exec     func(a *StoredRecordingHandle) error
+	executed bool
+}
 
-	// Data gets the data for the stored recording
-	Data() (d *StoredRecordingData, err error)
+// NewStoredRecordingHandle creates a new stored recording handle
+func NewStoredRecordingHandle(key *Key, s StoredRecording, exec func(a *StoredRecordingHandle) error) *StoredRecordingHandle {
+	return &StoredRecordingHandle{
+		key:  key,
+		s:    s,
+		exec: exec,
+	}
+}
 
-	// Copy copies the stored recording
-	Copy(dest string) (h StoredRecordingHandle, err error)
+// ID returns the identifier for the stored recording
+func (s *StoredRecordingHandle) ID() string {
+	return s.key.ID
+}
 
-	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-	StageCopy(dest string) (h StoredRecordingHandle)
+// Exec executes any staged operations
+func (s *StoredRecordingHandle) Exec() (err error) {
+	if !s.executed {
+		s.executed = true
+		if s.exec != nil {
+			err = s.exec(s)
+			s.exec = nil
+		}
+	}
+	return
+}
 
-	// Delete deletes the recording
-	Delete() (err error)
+// Data gets the data for the stored recording
+func (s *StoredRecordingHandle) Data() (d *StoredRecordingData, err error) {
+	d, err = s.s.Data(s.key)
+	return
+}
 
-	// Exec executes any staged operations attached to the handle.
-	Exec() (err error)
+// Copy copies the stored recording
+func (s *StoredRecordingHandle) Copy(dest string) (h *StoredRecordingHandle, err error) {
+	h, err = s.s.Copy(s.key, dest)
+	return
+}
+
+// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+func (s *StoredRecordingHandle) StageCopy(dest string) (h *StoredRecordingHandle) {
+	h = s.s.StageCopy(s.key, dest)
+	return
+}
+
+// Delete deletes the recording
+func (s *StoredRecordingHandle) Delete() (err error) {
+	err = s.s.Delete(s.key)
+	return
 }
