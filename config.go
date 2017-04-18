@@ -5,16 +5,16 @@ package ari
 type Config interface {
 
 	// Get gets the reference to a config object
-	Get(configClass, objectType string, key *Key) ConfigHandle
+	Get(configClass, objectType, id string) ConfigHandle
 
 	// Data gets the data for the config object
-	Data(configClass, objectType string, key *Key) (*ConfigData, error)
+	Data(configClass, objectType, id string) (*ConfigData, error)
 
 	// Update creates or updates the given tuples
-	Update(configClass, objectType string, key *Key, tuples []ConfigTuple) error
+	Update(configClass, objectType, id string, tuples []ConfigTuple) error
 
 	// Delete deletes the dynamic configuration object.
-	Delete(configClass, objectType string, key *Key) error
+	Delete(configClass, objectType, id string) error
 }
 
 // ConfigData contains the data for a given configuration object
