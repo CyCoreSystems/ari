@@ -32,15 +32,15 @@ func (_m *Application) Data(key *ari.Key) (*ari.ApplicationData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Application) Get(key *ari.Key) ari.ApplicationHandle {
+func (_m *Application) Get(key *ari.Key) *ari.ApplicationHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.ApplicationHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ApplicationHandle); ok {
+	var r0 *ari.ApplicationHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ApplicationHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.ApplicationHandle)
+			r0 = ret.Get(0).(*ari.ApplicationHandle)
 		}
 	}
 

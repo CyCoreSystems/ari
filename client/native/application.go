@@ -13,8 +13,8 @@ type Application struct {
 }
 
 // Get returns a managed handle to an ARI application
-func (a *Application) Get(key *ari.Key) ari.ApplicationHandle {
-	return NewApplicationHandle(key, a)
+func (a *Application) Get(key *ari.Key) *ari.ApplicationHandle {
+	return ari.NewApplicationHandle(key, a)
 }
 
 // List returns the list of applications managed by asterisk
@@ -76,54 +76,4 @@ func (a *Application) Unsubscribe(key *ari.Key, eventSource string) (err error) 
 	err = a.client.del("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
 	err = errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
 	return
-}
-
-// ApplicationHandle provides a wrapper to an Application interface for
-// operations on a specific application
-type ApplicationHandle struct {
-	key *ari.Key
-	a   *Application
-}
-
-// NewApplicationHandle creates a new handle to the application name
-func NewApplicationHandle(key *ari.Key, app *Application) ari.ApplicationHandle {
-	return &ApplicationHandle{
-		key: key,
-		a:   app,
-	}
-}
-
-// ID returns the identifier for the application
-func (ah *ApplicationHandle) ID() string {
-	return ah.key.ID
-}
-
-// Data retrives the data for the application
-func (ah *ApplicationHandle) Data() (ad *ari.ApplicationData, err error) {
-	ad, err = ah.a.Data(ah.key)
-	return
-}
-
-// Subscribe subscribes the application to an event source
-// event source may be one of:
-//  - channel:<channelId>
-//  - bridge:<bridgeId>
-//  - endpoint:<tech>/<resource> (e.g. SIP/102)
-//  - deviceState:<deviceName>
-func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
-	err = ah.a.Subscribe(ah.key, eventSource)
-	return
-}
-
-// Unsubscribe unsubscribes (removes a subscription to) a given
-// ARI application from the provided event source
-// Equivalent to DELETE /applications/{applicationName}/subscription
-func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
-	err = ah.a.Unsubscribe(ah.key, eventSource)
-	return
-}
-
-// Match returns true fo the event matches the application
-func (ah *ApplicationHandle) Match(e ari.Event) bool {
-	return e.GetApplication() == ah.key.ID
 }

@@ -8,7 +8,7 @@ type Application interface {
 	List(*Key) ([]*Key, error)
 
 	// Get returns a handle to the application for further interaction
-	Get(key *Key) ApplicationHandle
+	Get(key *Key) *ApplicationHandle
 
 	// Data returns the applications data
 	Data(key *Key) (*ApplicationData, error)
@@ -38,26 +38,50 @@ type ApplicationData struct {
 
 // ApplicationHandle provides a wrapper to an Application interface for
 // operations on a specific application
-type ApplicationHandle interface {
-	// ID returns the identifier for the application
-	ID() string
+type ApplicationHandle struct {
+	key *Key
+	a   Application
+}
 
-	// Data retrives the data for the application
-	Data() (ad *ApplicationData, err error)
+// NewApplicationHandle creates a new handle to the application name
+func NewApplicationHandle(key *Key, app Application) *ApplicationHandle {
+	return &ApplicationHandle{
+		key: key,
+		a:   app,
+	}
+}
 
-	// Subscribe subscribes the application to an event source
-	// event source may be one of:
-	//  - channel:<channelId>
-	//  - bridge:<bridgeId>
-	//  - endpoint:<tech>/<resource> (e.g. SIP/102)
-	//  - deviceState:<deviceName>
-	Subscribe(eventSource string) (err error)
+// ID returns the identifier for the application
+func (ah *ApplicationHandle) ID() string {
+	return ah.key.ID
+}
 
-	// Unsubscribe unsubscribes (removes a subscription to) a given
-	// ARI application from the provided event source
-	// Equivalent to DELETE /applications/{applicationName}/subscription
-	Unsubscribe(eventSource string) (err error)
+// Data retrives the data for the application
+func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
+	ad, err = ah.a.Data(ah.key)
+	return
+}
 
-	// Match returns true fo the event matches the application
-	Match(evt Event) bool
+// Subscribe subscribes the application to an event source
+// event source may be one of:
+//  - channel:<channelId>
+//  - bridge:<bridgeId>
+//  - endpoint:<tech>/<resource> (e.g. SIP/102)
+//  - deviceState:<deviceName>
+func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
+	err = ah.a.Subscribe(ah.key, eventSource)
+	return
+}
+
+// Unsubscribe unsubscribes (removes a subscription to) a given
+// ARI application from the provided event source
+// Equivalent to DELETE /applications/{applicationName}/subscription
+func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
+	err = ah.a.Unsubscribe(ah.key, eventSource)
+	return
+}
+
+// Match returns true fo the event matches the application
+func (ah *ApplicationHandle) Match(e Event) bool {
+	return e.GetApplication() == ah.key.ID
 }
