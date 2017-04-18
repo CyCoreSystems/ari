@@ -60,15 +60,15 @@ func (_m *Logging) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Logging) Get(key *ari.Key) ari.LogHandle {
+func (_m *Logging) Get(key *ari.Key) *ari.LogHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.LogHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.LogHandle); ok {
+	var r0 *ari.LogHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.LogHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.LogHandle)
+			r0 = ret.Get(0).(*ari.LogHandle)
 		}
 	}
 

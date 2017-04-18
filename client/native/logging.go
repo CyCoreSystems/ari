@@ -23,10 +23,8 @@ func (l *Logging) Create(key *ari.Key, level string) (err error) {
 }
 
 // Get returns a logging channel handle
-func (l *Logging) Get(key *ari.Key) ari.LogHandle {
-	return &LogHandle{
-		key: key,
-	}
+func (l *Logging) Get(key *ari.Key) *ari.LogHandle {
+	return ari.NewLogHandle(key, l)
 }
 
 func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
@@ -90,30 +88,4 @@ func (l *Logging) Delete(key *ari.Key) (err error) {
 	}
 	err = l.client.del("/asterisk/logging/"+name, nil, "")
 	return
-}
-
-// LogHandle provides an interface to manipulate a logging channel
-type LogHandle struct {
-	key *ari.Key
-	c   *Logging
-}
-
-// ID returns the ID (name) of the logging channel
-func (l *LogHandle) ID() string {
-	return l.key.ID
-}
-
-// Data returns the data for the logging channel
-func (l *LogHandle) Data() (*ari.LogData, error) {
-	return l.c.Data(l.key)
-}
-
-// Rotate causes the logging channel's logfiles to be rotated
-func (l *LogHandle) Rotate() error {
-	return l.c.Rotate(l.key)
-}
-
-// Delete removes the logging channel from Asterisk
-func (l *LogHandle) Delete() error {
-	return l.c.Delete(l.key)
 }
