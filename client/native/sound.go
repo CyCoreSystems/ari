@@ -12,8 +12,8 @@ type Sound struct {
 }
 
 // Get returns a managed handle to a SoundData
-func (s *Sound) Get(key *ari.Key) ari.SoundHandle {
-	return NewSoundHandle(key, s)
+func (s *Sound) Get(key *ari.Key) *ari.SoundHandle {
+	return ari.NewSoundHandle(key, s)
 }
 
 // Data returns the details of a given ARI Sound
@@ -62,30 +62,4 @@ func (s *Sound) List(filters map[string]string, keyFilter *ari.Key) (sh []*ari.K
 	}
 
 	return sh, err
-}
-
-// SoundHandle provides a wrapper to a Sound interface for
-// operations on a specific Sound
-type SoundHandle struct {
-	key *ari.Key
-	s   *Sound
-}
-
-// NewSoundHandle creates a new handle to the sound name
-func NewSoundHandle(key *ari.Key, snd *Sound) ari.SoundHandle {
-	return &SoundHandle{
-		key: key,
-		s:   snd,
-	}
-}
-
-// ID returns the identifier for the sound
-func (sh *SoundHandle) ID() string {
-	return sh.key.ID
-}
-
-// Data retrieves the data for the Sound
-func (sh *SoundHandle) Data() (sd *ari.SoundData, err error) {
-	sd, err = sh.s.Data(sh.key)
-	return sd, err
 }

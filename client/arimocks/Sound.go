@@ -32,15 +32,15 @@ func (_m *Sound) Data(key *ari.Key) (*ari.SoundData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Sound) Get(key *ari.Key) ari.SoundHandle {
+func (_m *Sound) Get(key *ari.Key) *ari.SoundHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.SoundHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.SoundHandle); ok {
+	var r0 *ari.SoundHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.SoundHandle); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.SoundHandle)
+			r0 = ret.Get(0).(*ari.SoundHandle)
 		}
 	}
 

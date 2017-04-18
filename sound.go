@@ -9,7 +9,7 @@ type Sound interface {
 	List(filters map[string]string, keyFilter *Key) ([]*Key, error)
 
 	// Get returns a handle pointer to the sound for further interaction
-	Get(key *Key) SoundHandle
+	Get(key *Key) *SoundHandle
 
 	// Data returns the Sound's data
 	Data(key *Key) (*SoundData, error)
@@ -30,11 +30,26 @@ type FormatLangPair struct {
 
 // SoundHandle provides a wrapper to a Sound interface for
 // operations on a specific Sound
-type SoundHandle interface {
+type SoundHandle struct {
+	key *Key
+	s   Sound
+}
 
-	// ID returns the identifier for the sound
-	ID() string
+// NewSoundHandle creates a new handle to the sound name
+func NewSoundHandle(key *Key, snd Sound) *SoundHandle {
+	return &SoundHandle{
+		key: key,
+		s:   snd,
+	}
+}
 
-	// Data retrieves the data for the Sound
-	Data() (sd *SoundData, err error)
+// ID returns the identifier for the sound
+func (sh *SoundHandle) ID() string {
+	return sh.key.ID
+}
+
+// Data retrieves the data for the Sound
+func (sh *SoundHandle) Data() (sd *SoundData, err error) {
+	sd, err = sh.s.Data(sh.key)
+	return sd, err
 }
