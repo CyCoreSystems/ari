@@ -5,10 +5,10 @@ import "time"
 // Channel represents a communication path interacting with an Asterisk server.
 type Channel interface {
 	// Get returns a handle to a channel for further interaction
-	Get(id string) ChannelHandle
+	Get(key *Key) ChannelHandle
 
 	// List lists the channels in asterisk
-	List() ([]ChannelHandle, error)
+	List() ([]*Key, error)
 
 	// Originate creates a new channel, returning a handle to it or an
 	// error, if the creation failed
@@ -23,77 +23,77 @@ type Channel interface {
 	Create(ChannelCreateRequest) (ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
-	Data(id string) (*ChannelData, error)
+	Data(key *Key) (*ChannelData, error)
 
 	// Continue tells Asterisk to return a channel to the dialplan
-	Continue(id, context, extension string, priority int) error
+	Continue(key *Key, context, extension string, priority int) error
 
 	// Busy hangs up the channel with the "busy" cause code
-	Busy(id string) error
+	Busy(key *Key) error
 
 	// Congestion hangs up the channel with the "congestion" cause code
-	Congestion(id string) error
+	Congestion(key *Key) error
 
 	// Answer answers the channel
-	Answer(id string) error
+	Answer(key *Key) error
 
 	// Hangup hangs up the given channel
-	Hangup(id string, reason string) error
+	Hangup(key *Key, reason string) error
 
 	// Ring indicates ringing to the channel
-	Ring(id string) error
+	Ring(key *Key) error
 
 	// StopRing stops ringing on the channel
-	StopRing(id string) error
+	StopRing(key *Key) error
 
 	// SendDTMF sends DTMF to the channel
-	SendDTMF(id string, dtmf string, opts *DTMFOptions) error
+	SendDTMF(key *Key, dtmf string, opts *DTMFOptions) error
 
 	// Hold puts the channel on hold
-	Hold(id string) error
+	Hold(key *Key) error
 
 	// StopHold retrieves the channel from hold
-	StopHold(id string) error
+	StopHold(key *Key) error
 
 	// Mute mutes a channel in the given direction (in,out,both)
-	Mute(id string, dir Direction) error
+	Mute(key *Key, dir Direction) error
 
 	// Unmute unmutes a channel in the given direction (in,out,both)
-	Unmute(id string, dir Direction) error
+	Unmute(key *Key, dir Direction) error
 
 	// MOH plays music on hold
-	MOH(id string, moh string) error
+	MOH(key *Key, moh string) error
 
 	// StopMOH stops music on hold
-	StopMOH(id string) error
+	StopMOH(key *Key) error
 
 	// Silence plays silence to the channel
-	Silence(id string) error
+	Silence(key *Key) error
 
 	// StopSilence stops the silence on the channel
-	StopSilence(id string) error
+	StopSilence(key *Key) error
 
 	// Play plays the media URI to the channel
-	Play(id string, playbackID string, mediaURI string) (PlaybackHandle, error)
+	Play(key *Key, playbackID string, mediaURI string) (PlaybackHandle, error)
 
 	// Record records the channel
-	Record(id string, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
+	Record(key *Key, name string, opts *RecordingOptions) (LiveRecordingHandle, error)
 
 	// Dial dials a created channel
-	Dial(id string, caller string, timeout time.Duration) error
+	Dial(key *Key, caller string, timeout time.Duration) error
 
 	// Snoop spies on a specific channel, creating a new snooping channel
-	Snoop(id string, snoopID string, opts *SnoopOptions) (ChannelHandle, error)
+	Snoop(key *Key, snoopID string, opts *SnoopOptions) (ChannelHandle, error)
 
 	// StageSnoop creates a new `ChannelHandle`, when `Exec`ed, snoops on the given channel ID and
 	// creates a new snooping channel.
-	StageSnoop(id string, snoopID string, opts *SnoopOptions) ChannelHandle
+	StageSnoop(key *Key, snoopID string, opts *SnoopOptions) ChannelHandle
 
 	// Subscribe subscribes on the channel events
-	Subscribe(id string, n ...string) Subscription
+	Subscribe(key *Key, n ...string) Subscription
 
 	// Variables gets the channel Variables
-	Variables(id string) Variables
+	Variables(key *Key) Variables
 }
 
 // ChannelData is the data for a specific channel

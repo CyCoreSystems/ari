@@ -9,13 +9,13 @@ type Channel struct {
 	mock.Mock
 }
 
-// Answer provides a mock function with given fields: id
-func (_m *Channel) Answer(id string) error {
-	ret := _m.Called(id)
+// Answer provides a mock function with given fields: key
+func (_m *Channel) Answer(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -23,13 +23,13 @@ func (_m *Channel) Answer(id string) error {
 	return r0
 }
 
-// Busy provides a mock function with given fields: id
-func (_m *Channel) Busy(id string) error {
-	ret := _m.Called(id)
+// Busy provides a mock function with given fields: key
+func (_m *Channel) Busy(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -37,13 +37,13 @@ func (_m *Channel) Busy(id string) error {
 	return r0
 }
 
-// Congestion provides a mock function with given fields: id
-func (_m *Channel) Congestion(id string) error {
-	ret := _m.Called(id)
+// Congestion provides a mock function with given fields: key
+func (_m *Channel) Congestion(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -51,13 +51,13 @@ func (_m *Channel) Congestion(id string) error {
 	return r0
 }
 
-// Continue provides a mock function with given fields: id, context, extension, priority
-func (_m *Channel) Continue(id string, context string, extension string, priority int) error {
-	ret := _m.Called(id, context, extension, priority)
+// Continue provides a mock function with given fields: key, context, extension, priority
+func (_m *Channel) Continue(key *ari.Key, context string, extension string, priority int) error {
+	ret := _m.Called(key, context, extension, priority)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string, int) error); ok {
-		r0 = rf(id, context, extension, priority)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string, int) error); ok {
+		r0 = rf(key, context, extension, priority)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -88,13 +88,13 @@ func (_m *Channel) Create(_a0 ari.ChannelCreateRequest) (ari.ChannelHandle, erro
 	return r0, r1
 }
 
-// Data provides a mock function with given fields: id
-func (_m *Channel) Data(id string) (*ari.ChannelData, error) {
-	ret := _m.Called(id)
+// Data provides a mock function with given fields: key
+func (_m *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.ChannelData
-	if rf, ok := ret.Get(0).(func(string) *ari.ChannelData); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ChannelData); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ChannelData)
@@ -102,8 +102,8 @@ func (_m *Channel) Data(id string) (*ari.ChannelData, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -111,13 +111,13 @@ func (_m *Channel) Data(id string) (*ari.ChannelData, error) {
 	return r0, r1
 }
 
-// Dial provides a mock function with given fields: id, caller, timeout
-func (_m *Channel) Dial(id string, caller string, timeout time.Duration) error {
-	ret := _m.Called(id, caller, timeout)
+// Dial provides a mock function with given fields: key, caller, timeout
+func (_m *Channel) Dial(key *ari.Key, caller string, timeout time.Duration) error {
+	ret := _m.Called(key, caller, timeout)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, time.Duration) error); ok {
-		r0 = rf(id, caller, timeout)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, time.Duration) error); ok {
+		r0 = rf(key, caller, timeout)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -125,13 +125,13 @@ func (_m *Channel) Dial(id string, caller string, timeout time.Duration) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: id
-func (_m *Channel) Get(id string) ari.ChannelHandle {
-	ret := _m.Called(id)
+// Get provides a mock function with given fields: key
+func (_m *Channel) Get(key *ari.Key) ari.ChannelHandle {
+	ret := _m.Called(key)
 
 	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(string) ari.ChannelHandle); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ChannelHandle); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.ChannelHandle)
@@ -141,13 +141,13 @@ func (_m *Channel) Get(id string) ari.ChannelHandle {
 	return r0
 }
 
-// Hangup provides a mock function with given fields: id, reason
-func (_m *Channel) Hangup(id string, reason string) error {
-	ret := _m.Called(id, reason)
+// Hangup provides a mock function with given fields: key, reason
+func (_m *Channel) Hangup(key *ari.Key, reason string) error {
+	ret := _m.Called(key, reason)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(id, reason)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -155,13 +155,13 @@ func (_m *Channel) Hangup(id string, reason string) error {
 	return r0
 }
 
-// Hold provides a mock function with given fields: id
-func (_m *Channel) Hold(id string) error {
-	ret := _m.Called(id)
+// Hold provides a mock function with given fields: key
+func (_m *Channel) Hold(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -170,15 +170,15 @@ func (_m *Channel) Hold(id string) error {
 }
 
 // List provides a mock function with given fields:
-func (_m *Channel) List() ([]ari.ChannelHandle, error) {
+func (_m *Channel) List() ([]*ari.Key, error) {
 	ret := _m.Called()
 
-	var r0 []ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func() []ari.ChannelHandle); ok {
+	var r0 []*ari.Key
+	if rf, ok := ret.Get(0).(func() []*ari.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ari.ChannelHandle)
+			r0 = ret.Get(0).([]*ari.Key)
 		}
 	}
 
@@ -192,13 +192,13 @@ func (_m *Channel) List() ([]ari.ChannelHandle, error) {
 	return r0, r1
 }
 
-// MOH provides a mock function with given fields: id, moh
-func (_m *Channel) MOH(id string, moh string) error {
-	ret := _m.Called(id, moh)
+// MOH provides a mock function with given fields: key, moh
+func (_m *Channel) MOH(key *ari.Key, moh string) error {
+	ret := _m.Called(key, moh)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(id, moh)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, moh)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -206,13 +206,13 @@ func (_m *Channel) MOH(id string, moh string) error {
 	return r0
 }
 
-// Mute provides a mock function with given fields: id, dir
-func (_m *Channel) Mute(id string, dir ari.Direction) error {
-	ret := _m.Called(id, dir)
+// Mute provides a mock function with given fields: key, dir
+func (_m *Channel) Mute(key *ari.Key, dir ari.Direction) error {
+	ret := _m.Called(key, dir)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, ari.Direction) error); ok {
-		r0 = rf(id, dir)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.Direction) error); ok {
+		r0 = rf(key, dir)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -243,13 +243,13 @@ func (_m *Channel) Originate(_a0 ari.OriginateRequest) (ari.ChannelHandle, error
 	return r0, r1
 }
 
-// Play provides a mock function with given fields: id, playbackID, mediaURI
-func (_m *Channel) Play(id string, playbackID string, mediaURI string) (ari.PlaybackHandle, error) {
-	ret := _m.Called(id, playbackID, mediaURI)
+// Play provides a mock function with given fields: key, playbackID, mediaURI
+func (_m *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (ari.PlaybackHandle, error) {
+	ret := _m.Called(key, playbackID, mediaURI)
 
 	var r0 ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(string, string, string) ari.PlaybackHandle); ok {
-		r0 = rf(id, playbackID, mediaURI)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, mediaURI)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.PlaybackHandle)
@@ -257,8 +257,8 @@ func (_m *Channel) Play(id string, playbackID string, mediaURI string) (ari.Play
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(id, playbackID, mediaURI)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, playbackID, mediaURI)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -266,13 +266,13 @@ func (_m *Channel) Play(id string, playbackID string, mediaURI string) (ari.Play
 	return r0, r1
 }
 
-// Record provides a mock function with given fields: id, name, opts
-func (_m *Channel) Record(id string, name string, opts *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
-	ret := _m.Called(id, name, opts)
+// Record provides a mock function with given fields: key, name, opts
+func (_m *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (ari.LiveRecordingHandle, error) {
+	ret := _m.Called(key, name, opts)
 
 	var r0 ari.LiveRecordingHandle
-	if rf, ok := ret.Get(0).(func(string, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
-		r0 = rf(id, name, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.RecordingOptions) ari.LiveRecordingHandle); ok {
+		r0 = rf(key, name, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.LiveRecordingHandle)
@@ -280,8 +280,8 @@ func (_m *Channel) Record(id string, name string, opts *ari.RecordingOptions) (a
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, *ari.RecordingOptions) error); ok {
-		r1 = rf(id, name, opts)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.RecordingOptions) error); ok {
+		r1 = rf(key, name, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -289,13 +289,13 @@ func (_m *Channel) Record(id string, name string, opts *ari.RecordingOptions) (a
 	return r0, r1
 }
 
-// Ring provides a mock function with given fields: id
-func (_m *Channel) Ring(id string) error {
-	ret := _m.Called(id)
+// Ring provides a mock function with given fields: key
+func (_m *Channel) Ring(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -303,13 +303,13 @@ func (_m *Channel) Ring(id string) error {
 	return r0
 }
 
-// SendDTMF provides a mock function with given fields: id, dtmf, opts
-func (_m *Channel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) error {
-	ret := _m.Called(id, dtmf, opts)
+// SendDTMF provides a mock function with given fields: key, dtmf, opts
+func (_m *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) error {
+	ret := _m.Called(key, dtmf, opts)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, *ari.DTMFOptions) error); ok {
-		r0 = rf(id, dtmf, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.DTMFOptions) error); ok {
+		r0 = rf(key, dtmf, opts)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -317,13 +317,13 @@ func (_m *Channel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) error
 	return r0
 }
 
-// Silence provides a mock function with given fields: id
-func (_m *Channel) Silence(id string) error {
-	ret := _m.Called(id)
+// Silence provides a mock function with given fields: key
+func (_m *Channel) Silence(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -331,13 +331,13 @@ func (_m *Channel) Silence(id string) error {
 	return r0
 }
 
-// Snoop provides a mock function with given fields: id, snoopID, opts
-func (_m *Channel) Snoop(id string, snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
-	ret := _m.Called(id, snoopID, opts)
+// Snoop provides a mock function with given fields: key, snoopID, opts
+func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (ari.ChannelHandle, error) {
+	ret := _m.Called(key, snoopID, opts)
 
 	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(string, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
-		r0 = rf(id, snoopID, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+		r0 = rf(key, snoopID, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.ChannelHandle)
@@ -345,8 +345,8 @@ func (_m *Channel) Snoop(id string, snoopID string, opts *ari.SnoopOptions) (ari
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, *ari.SnoopOptions) error); ok {
-		r1 = rf(id, snoopID, opts)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.SnoopOptions) error); ok {
+		r1 = rf(key, snoopID, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -370,13 +370,13 @@ func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) ari.ChannelHandle {
 	return r0
 }
 
-// StageSnoop provides a mock function with given fields: id, snoopID, opts
-func (_m *Channel) StageSnoop(id string, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
-	ret := _m.Called(id, snoopID, opts)
+// StageSnoop provides a mock function with given fields: key, snoopID, opts
+func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) ari.ChannelHandle {
+	ret := _m.Called(key, snoopID, opts)
 
 	var r0 ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(string, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
-		r0 = rf(id, snoopID, opts)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.SnoopOptions) ari.ChannelHandle); ok {
+		r0 = rf(key, snoopID, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.ChannelHandle)
@@ -386,13 +386,13 @@ func (_m *Channel) StageSnoop(id string, snoopID string, opts *ari.SnoopOptions)
 	return r0
 }
 
-// StopHold provides a mock function with given fields: id
-func (_m *Channel) StopHold(id string) error {
-	ret := _m.Called(id)
+// StopHold provides a mock function with given fields: key
+func (_m *Channel) StopHold(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -400,13 +400,13 @@ func (_m *Channel) StopHold(id string) error {
 	return r0
 }
 
-// StopMOH provides a mock function with given fields: id
-func (_m *Channel) StopMOH(id string) error {
-	ret := _m.Called(id)
+// StopMOH provides a mock function with given fields: key
+func (_m *Channel) StopMOH(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -414,13 +414,13 @@ func (_m *Channel) StopMOH(id string) error {
 	return r0
 }
 
-// StopRing provides a mock function with given fields: id
-func (_m *Channel) StopRing(id string) error {
-	ret := _m.Called(id)
+// StopRing provides a mock function with given fields: key
+func (_m *Channel) StopRing(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -428,13 +428,13 @@ func (_m *Channel) StopRing(id string) error {
 	return r0
 }
 
-// StopSilence provides a mock function with given fields: id
-func (_m *Channel) StopSilence(id string) error {
-	ret := _m.Called(id)
+// StopSilence provides a mock function with given fields: key
+func (_m *Channel) StopSilence(key *ari.Key) error {
+	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -442,20 +442,20 @@ func (_m *Channel) StopSilence(id string) error {
 	return r0
 }
 
-// Subscribe provides a mock function with given fields: id, n
-func (_m *Channel) Subscribe(id string, n ...string) ari.Subscription {
+// Subscribe provides a mock function with given fields: key, n
+func (_m *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	_va := make([]interface{}, len(n))
 	for _i := range n {
 		_va[_i] = n[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, id)
+	_ca = append(_ca, key)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 ari.Subscription
-	if rf, ok := ret.Get(0).(func(string, ...string) ari.Subscription); ok {
-		r0 = rf(id, n...)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ...string) ari.Subscription); ok {
+		r0 = rf(key, n...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.Subscription)
@@ -465,13 +465,13 @@ func (_m *Channel) Subscribe(id string, n ...string) ari.Subscription {
 	return r0
 }
 
-// Unmute provides a mock function with given fields: id, dir
-func (_m *Channel) Unmute(id string, dir ari.Direction) error {
-	ret := _m.Called(id, dir)
+// Unmute provides a mock function with given fields: key, dir
+func (_m *Channel) Unmute(key *ari.Key, dir ari.Direction) error {
+	ret := _m.Called(key, dir)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, ari.Direction) error); ok {
-		r0 = rf(id, dir)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.Direction) error); ok {
+		r0 = rf(key, dir)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -479,13 +479,13 @@ func (_m *Channel) Unmute(id string, dir ari.Direction) error {
 	return r0
 }
 
-// Variables provides a mock function with given fields: id
-func (_m *Channel) Variables(id string) ari.Variables {
-	ret := _m.Called(id)
+// Variables provides a mock function with given fields: key
+func (_m *Channel) Variables(key *ari.Key) ari.Variables {
+	ret := _m.Called(key)
 
 	var r0 ari.Variables
-	if rf, ok := ret.Get(0).(func(string) ari.Variables); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(*ari.Key) ari.Variables); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.Variables)

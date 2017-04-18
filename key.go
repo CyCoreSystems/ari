@@ -4,8 +4,11 @@ const (
 	// ApplicationKey is the key kind for ARI Application resources.
 	ApplicationKey = "application"
 
-	// BridgeKey is the key kidn for the ARI Bridge resources.
+	// BridgeKey is the key kind for the ARI Bridge resources.
 	BridgeKey = "bridge"
+
+	// ChannelKey is the key kind for the ARI Channel resource
+	ChannelKey = "channel"
 )
 
 // Key identifies a unique resource in the system
