@@ -429,6 +429,7 @@ func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
 	return ch.c.SendDTMF(ch.key, dtmf, opts)
 }
 
+/*
 // Match returns true if the event matches the channel
 func (ch *ChannelHandle) Match(e Event) bool {
 	channelEvent, ok := e.(ChannelEvent)
@@ -451,3 +452,4 @@ func (ch *ChannelHandle) Match(e Event) bool {
 	}
 	return false
 }
+*/

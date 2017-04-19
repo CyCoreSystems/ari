@@ -120,21 +120,6 @@ func (s *LiveRecordingHandle) Unmute() (err error) {
 	return
 }
 
-// Match returns true if the event matches the bridge
-func (s *LiveRecordingHandle) Match(e Event) bool {
-	r, ok := e.(RecordingEvent)
-	if !ok {
-		return false
-	}
-	rIDs := r.GetRecordingIDs()
-	for _, i := range rIDs {
-		if i == s.ID() {
-			return true
-		}
-	}
-	return false
-}
-
 // Exec executes any staged operations attached to the `LiveRecordingHandle`
 func (s *LiveRecordingHandle) Exec() (err error) {
 	if !s.executed {

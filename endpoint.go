@@ -91,18 +91,3 @@ func (eh *EndpointHandle) ID() string {
 func (eh *EndpointHandle) Data() (*EndpointData, error) {
 	return eh.e.Data(eh.key)
 }
-
-// Match returns true if the event matches the endpoint
-func (eh *EndpointHandle) Match(e Event) bool {
-	en, ok := e.(EndpointEvent)
-	if !ok {
-		return false
-	}
-	ids := en.GetEndpointIDs()
-	for _, i := range ids {
-		if i == eh.ID() {
-			return true
-		}
-	}
-	return false
-}

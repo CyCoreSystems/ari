@@ -57,8 +57,6 @@ func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	go func() {
 		defer inSub.Cancel()
 
-		h := a.Get(key)
-
 		for {
 			select {
 			case <-outSub.closedChan:
@@ -67,8 +65,12 @@ func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 				if !ok {
 					return
 				}
-				if h.Match(e) {
-					outSub.events <- e
+				keys := e.Keys(ari.NodeKey(a.client.ApplicationName(), a.client.node))
+				for _, k := range keys {
+					if k.Match(key) {
+						outSub.events <- e
+					}
+					break
 				}
 			}
 		}

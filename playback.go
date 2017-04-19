@@ -80,21 +80,6 @@ func (ph *PlaybackHandle) Stop() (err error) {
 	return
 }
 
-// Match returns true if the event matches the playback
-func (ph *PlaybackHandle) Match(e Event) bool {
-	p, ok := e.(PlaybackEvent)
-	if !ok {
-		return false
-	}
-	ids := p.GetPlaybackIDs()
-	for _, i := range ids {
-		if i == ph.ID() {
-			return true
-		}
-	}
-	return false
-}
-
 // Subscribe subscribes the list of channel events
 func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
 	if ph == nil {

@@ -148,18 +148,3 @@ func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	}
 	return bh.b.Subscribe(bh.key, n...)
 }
-
-// Match returns true if the event matches the bridge
-func (bh *BridgeHandle) Match(e Event) bool {
-	bridgeEvent, ok := e.(BridgeEvent)
-	if !ok {
-		return false
-	}
-	bridgeIDs := bridgeEvent.GetBridgeIDs()
-	for _, i := range bridgeIDs {
-		if i == bh.key.ID {
-			return true
-		}
-	}
-	return false
-}

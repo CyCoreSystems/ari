@@ -380,8 +380,6 @@ func (c *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	go func() {
 		defer inSub.Cancel()
 
-		ch := c.Get(key)
-
 		for {
 			select {
 			case <-outSub.closedChan:
@@ -390,8 +388,12 @@ func (c *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 				if !ok {
 					return
 				}
-				if ch.Match(e) {
-					outSub.events <- e
+				keys := e.Keys(ari.NodeKey(c.client.ApplicationName(), c.client.node))
+				for _, k := range keys {
+					if k.Match(key) {
+						outSub.events <- e
+					}
+					break
 				}
 			}
 		}
