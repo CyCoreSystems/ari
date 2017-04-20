@@ -49,6 +49,9 @@ type Bridge interface {
 // BridgeData describes an Asterisk Bridge, the entity which merges media from
 // one or more channels into a common audio output
 type BridgeData struct {
+	// Key is the cluster-unique identifier for this bridge
+	Key *Key `json:"key"`
+
 	ID         string   `json:"id"`           // Unique Id for this bridge
 	Class      string   `json:"bridge_class"` // Class of the bridge
 	Type       string   `json:"bridge_type"`  // Type of bridge (mixing, holding, dtmf_events, proxy_media)

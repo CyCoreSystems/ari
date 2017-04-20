@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // DeviceState provides the ARI DeviceState accessors for the native client
 type DeviceState struct {
@@ -36,20 +40,18 @@ func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
 }
 
 // Data retrieves the current state of the device
-func (ds *DeviceState) Data(key *ari.Key) (d *ari.DeviceStateData, err error) {
-	device := struct {
-		State string `json:"state"`
-	}{}
-	name := key.ID
-	err = ds.client.get("/deviceStates/"+name, &device)
-	if err != nil {
-		d = nil
-		err = dataGetError(err, "deviceState", "%v", name)
-		return
+func (ds *DeviceState) Data(key *ari.Key) (*ari.DeviceStateData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("device key not supplied")
 	}
-	x := ari.DeviceStateData(device.State) //TODO: we can make DeviceStateData implement MarshalJSON/UnmarshalJSON
-	d = &x
-	return
+
+	var data = new(ari.DeviceStateData)
+	if err := ds.client.get("/deviceStates/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "deviceState", "%v", key.ID)
+	}
+
+	data.Key = ds.client.stamp(key)
+	return data, nil
 }
 
 // Update updates the state of the device

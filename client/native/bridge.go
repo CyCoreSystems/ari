@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
@@ -67,15 +68,18 @@ func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 
 // Data returns the details of a bridge
 // Equivalent to Get /bridges/{bridgeId}
-func (b *Bridge) Data(key *ari.Key) (bd *ari.BridgeData, err error) {
-	bd = &ari.BridgeData{}
-	id := key.ID
-	err = b.client.get("/bridges/"+id, bd)
-	if err != nil {
-		bd = nil
-		err = dataGetError(err, "bridge", "%v", id)
+func (b *Bridge) Data(key *ari.Key) (*ari.BridgeData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("bridge key not supplied")
 	}
-	return
+
+	var data = new(ari.BridgeData)
+	if err := b.client.get("/bridges/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "bridge", "%v", key.ID)
+	}
+
+	data.Key = b.client.stamp(key)
+	return data, nil
 }
 
 // AddChannel adds a channel to a bridge

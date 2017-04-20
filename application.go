@@ -29,6 +29,9 @@ type Application interface {
 
 // ApplicationData describes the data for a Stasis (Ari) application
 type ApplicationData struct {
+	// Key is the unique identifier for this application instance in the cluster
+	Key *Key `json:"key"`
+
 	BridgeIDs   []string `json:"bridge_ids"`   // Subscribed BridgeIds
 	ChannelIDs  []string `json:"channel_ids"`  // Subscribed ChannelIds
 	DeviceNames []string `json:"device_names"` // Subscribed Device names

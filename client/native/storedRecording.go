@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // StoredRecording provides the ARI StoredRecording accessors for the native client
 type StoredRecording struct {
@@ -29,22 +33,23 @@ func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 }
 
 // Get gets a lazy handle for the given stored recording name
-func (sr *StoredRecording) Get(key *ari.Key) (s *ari.StoredRecordingHandle) {
-	s = ari.NewStoredRecordingHandle(key, sr, nil)
-	return
+func (sr *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
+	return ari.NewStoredRecordingHandle(key, sr, nil)
 }
 
 // Data retrieves the state of the stored recording
 func (sr *StoredRecording) Data(key *ari.Key) (d *ari.StoredRecordingData, err error) {
-	d = &ari.StoredRecordingData{}
-	name := key.ID
-	err = sr.client.get("/recordings/stored/"+name, d)
-	if err != nil {
-		d = nil
-		err = dataGetError(err, "storedRecording", "%v", name)
-		return
+	if key == nil || key.ID == "" {
+		return nil, errors.New("storedRecording key not supplied")
 	}
-	return
+
+	var data = new(ari.StoredRecordingData)
+	if err := sr.client.get("/recordings/stored/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "storedRecording", "%v", key.ID)
+	}
+
+	data.Key = sr.client.stamp(key)
+	return data, nil
 }
 
 // Copy copies a stored recording and returns the new handle

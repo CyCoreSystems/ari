@@ -15,7 +15,12 @@ type DeviceState interface {
 }
 
 // DeviceStateData is the device state for the device
-type DeviceStateData string
+type DeviceStateData struct {
+	// Key is the cluster-unique identifier for this device state
+	Key *Key `json:"key"`
+
+	State string `json:"state"`
+}
 
 // DeviceStateHandle is a representation of a device state
 // that can be interacted with

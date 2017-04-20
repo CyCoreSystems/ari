@@ -25,6 +25,9 @@ type StoredRecording interface {
 
 // StoredRecordingData is the data for a stored recording
 type StoredRecordingData struct {
+	// Key is the cluster-unique identifier for this stored recording
+	Key *Key `json:"key"`
+
 	Format string `json:"format"`
 	Name   string `json:"name"`
 }

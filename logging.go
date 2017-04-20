@@ -25,6 +25,9 @@ type Logging interface {
 
 // LogData represents the log data
 type LogData struct {
+	// Key is the cluster-unique identifier for this logging channel
+	Key *Key `json:"key"`
+
 	Name          string `json:"channel"`
 	Configuration string `json:"configuration"`
 	Type          string `json:"type"`

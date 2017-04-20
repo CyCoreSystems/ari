@@ -22,6 +22,9 @@ type Mailbox interface {
 
 // MailboxData respresents the state of an Asterisk (voice) mailbox
 type MailboxData struct {
+	// Key is the cluster-unique identifier for this mailbox
+	Key *Key `json:"key"`
+
 	Name        string `json:"name"`
 	NewMessages int    `json:"new_messages"` // Number of new (unread) messages
 	OldMessages int    `json:"old_messages"` // Number of old (read) messages

@@ -17,6 +17,9 @@ type Sound interface {
 
 // SoundData describes a media file which may be played back
 type SoundData struct {
+	// Key is the cluster-unique identifier for this sound
+	Key *Key `json:"key"`
+
 	Formats []FormatLangPair `json:"formats"`
 	ID      string           `json:"id"`
 	Text    string           `json:"text,omitempty"`

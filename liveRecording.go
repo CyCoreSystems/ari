@@ -33,8 +33,11 @@ type LiveRecording interface {
 	Scrap(key *Key) error
 }
 
-// LiveRecordingData is the data for a stored recording
+// LiveRecordingData is the data for a live recording
 type LiveRecordingData struct {
+	// Key is the cluster-unique identifier for this live recording
+	Key *Key `json:"key"`
+
 	Cause     string      `json:"cause,omitempty"`            // If failed, the cause of the failure
 	Duration  DurationSec `json:"duration,omitempty"`         // Length of recording in seconds
 	Format    string      `json:"format"`                     // Format of recording (wav, gsm, etc)
@@ -50,7 +53,7 @@ func (s *LiveRecordingData) ID() string {
 	return s.Name
 }
 
-// NewLiveRecordingHandle creates a new stored recording handle
+// NewLiveRecordingHandle creates a new live recording handle
 func NewLiveRecordingHandle(key *Key, s LiveRecording, exec func() (err error)) *LiveRecordingHandle {
 	return &LiveRecordingHandle{
 		key:  key,
@@ -59,7 +62,7 @@ func NewLiveRecordingHandle(key *Key, s LiveRecording, exec func() (err error)) 
 	}
 }
 
-// A LiveRecordingHandle is a reference to a stored recording that can be operated on
+// A LiveRecordingHandle is a reference to a live recording that can be operated on
 type LiveRecordingHandle struct {
 	key      *Key
 	s        LiveRecording
@@ -72,7 +75,7 @@ func (s *LiveRecordingHandle) ID() string {
 	return s.key.ID
 }
 
-// Data gets the data for the stored recording
+// Data gets the data for the live recording
 func (s *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
 	d, err = s.s.Data(s.key)
 	return

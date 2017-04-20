@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"net/url"
 
 	"github.com/CyCoreSystems/ari"
@@ -18,15 +19,18 @@ func (s *Sound) Get(key *ari.Key) *ari.SoundHandle {
 
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
-func (s *Sound) Data(key *ari.Key) (sd *ari.SoundData, err error) {
-	sd = &ari.SoundData{}
-	name := key.ID
-	err = s.client.get("/sounds/"+name, sd)
-	if err != nil {
-		sd = nil
-		err = dataGetError(err, "sound", "%v", name)
+func (s *Sound) Data(key *ari.Key) (*ari.SoundData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("sound key not supplied")
 	}
-	return
+
+	var data = new(ari.SoundData)
+	if err := s.client.get("/sounds/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "sound", "%v", key.ID)
+	}
+
+	data.Key = s.client.stamp(key)
+	return data, nil
 }
 
 // List returns available sounds limited by the provided filters.

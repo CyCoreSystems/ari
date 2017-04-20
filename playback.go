@@ -4,7 +4,7 @@ package ari
 // with an Asterisk server for playback resources
 type Playback interface {
 
-	// Get gets the handle to the given playbacl ID
+	// Get gets the handle to the given playback ID
 	Get(key *Key) *PlaybackHandle
 
 	// Data gets the playback data
@@ -33,6 +33,9 @@ type Player interface {
 
 // PlaybackData represents the state of a playback
 type PlaybackData struct {
+	// Key is the cluster-unique identifier for this playback
+	Key *Key `json:"key"`
+
 	ID        string `json:"id"` // Unique ID for this playback session
 	Language  string `json:"language,omitempty"`
 	MediaURI  string `json:"media_uri"`  // URI for the media which is to be played

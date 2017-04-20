@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -46,15 +47,16 @@ func (c *Channel) Hangup(key *ari.Key, reason string) error {
 }
 
 // Data retrieves the current state of the channel
-func (c *Channel) Data(key *ari.Key) (cd *ari.ChannelData, err error) {
-	id := key.ID
-	cd = &ari.ChannelData{}
-	err = c.client.get("/channels/"+id, cd)
-	if err != nil {
-		cd = nil
-		err = dataGetError(err, "channel", "%v", id)
+func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("channel key not supplied")
 	}
-	return
+
+	var data = new(ari.ChannelData)
+	if err := c.client.get("/channels/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "channel", "%v", key.ID)
+	}
+	return data, nil
 }
 
 // Get gets the lazy handle for the given channel

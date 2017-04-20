@@ -347,6 +347,18 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 	return errChan
 }
 
+// stamp imprints the node metadata onto the given Key
+func (c *Client) stamp(key *ari.Key) *ari.Key {
+	if key == nil {
+		key = &ari.Key{}
+	}
+
+	ret := *key
+	ret.App = c.appName
+	ret.Node = c.node
+	return &ret
+}
+
 // basicAuth (stolen from net/http/client.go) creates a basic authentication header
 func basicAuth(username, password string) string {
 	auth := username + ":" + password

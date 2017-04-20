@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // Modules provides the ARI modules accessors for a native client
 type Modules struct {
@@ -13,7 +17,7 @@ func (m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
 }
 
 // List lists the modules and returns lists of handles
-func (m *Modules) List(filter *ari.Key) (hx []*ari.Key, err error) {
+func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 	var modules = []struct {
 		Name string `json:"name"`
 	}{}
@@ -22,10 +26,14 @@ func (m *Modules) List(filter *ari.Key) (hx []*ari.Key, err error) {
 	}
 
 	err = m.client.get("/asterisk/modules", &modules)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, i := range modules {
 		k := ari.NewKey(ari.ModuleKey, i.Name, ari.WithNode(m.client.node), ari.WithApp(m.client.ApplicationName()))
 		if filter.Match(k) {
-			hx = append(hx, k)
+			ret = append(ret, k)
 		}
 	}
 
@@ -33,34 +41,31 @@ func (m *Modules) List(filter *ari.Key) (hx []*ari.Key, err error) {
 }
 
 // Load loads the named asterisk module
-func (m *Modules) Load(key *ari.Key) (err error) {
-	name := key.ID
-	err = m.client.post("/asterisk/modules/"+name, nil, nil)
-	return
+func (m *Modules) Load(key *ari.Key) error {
+	return m.client.post("/asterisk/modules/"+key.ID, nil, nil)
 }
 
 // Reload reloads the named asterisk module
-func (m *Modules) Reload(key *ari.Key) (err error) {
-	name := key.ID
-	err = m.client.put("/asterisk/modules/"+name, nil, nil)
-	return
+func (m *Modules) Reload(key *ari.Key) error {
+	return m.client.put("/asterisk/modules/"+key.ID, nil, nil)
 }
 
 // Unload unloads the named asterisk module
-func (m *Modules) Unload(key *ari.Key) (err error) {
-	name := key.ID
-	err = m.client.del("/asterisk/modules/"+name, nil, "")
-	return
+func (m *Modules) Unload(key *ari.Key) error {
+	return m.client.del("/asterisk/modules/"+key.ID, nil, "")
 }
 
 // Data retrieves the state of the named asterisk module
-func (m *Modules) Data(key *ari.Key) (md *ari.ModuleData, err error) {
-	md = &ari.ModuleData{}
-	name := key.ID
-	err = m.client.get("/asterisk/modules/"+name, &md)
-	if err != nil {
-		md = nil
-		err = dataGetError(err, "module", "%v", name)
+func (m *Modules) Data(key *ari.Key) (*ari.ModuleData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("module key not supplied")
 	}
-	return
+
+	var data = new(ari.ModuleData)
+	if err := m.client.get("/asterisk/modules/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "module", "%v", key.ID)
+	}
+
+	data.Key = m.client.stamp(key)
+	return data, nil
 }

@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // LiveRecording provides the ARI LiveRecording accessors for the native client
 type LiveRecording struct {
@@ -15,15 +19,17 @@ func (lr *LiveRecording) Get(key *ari.Key) (h *ari.LiveRecordingHandle) {
 
 // Data retrieves the state of the live recording
 func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error) {
-	d = &ari.LiveRecordingData{}
-	name := key.ID
-	err = lr.client.get("/recordings/live/"+name, &d)
-	if err != nil {
-		d = nil
-		err = dataGetError(err, "liveRecording", "%v", name)
-		return
+	if key == nil || key.ID == "" {
+		return nil, errors.New("liveRecording key not supplied")
 	}
-	return
+
+	var data = new(ari.LiveRecordingData)
+	if err := lr.client.get("/recordings/live/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "liveRecording", "%v", key.ID)
+	}
+
+	data.Key = lr.client.stamp(key)
+	return data, nil
 }
 
 // Stop stops the live recording (TODO: does it error if the live recording is already stopped)

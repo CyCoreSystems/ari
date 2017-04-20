@@ -13,7 +13,6 @@ const EndpointIDSeparator = "|" //TODO: confirm separator isn't terrible
 type Endpoint interface {
 
 	// List lists the endpoints
-	// TODO: associated with the application, or on the entire system?
 	List(filter *Key) ([]*Key, error)
 
 	// List available endpoints for a given endpoint technology
@@ -36,6 +35,9 @@ func NewEndpointKey(tech, resource string, opts ...KeyOptionFunc) *Key {
 //
 // Allowed states:  'unknown', 'offline', 'online'
 type EndpointData struct {
+	// Key is the cluster-unique identifier for this Endpoint
+	Key *Key `json:"key"`
+
 	ChannelIDs []string `json:"channel_ids"`     // List of channel Ids which are associated with this endpoint
 	Resource   string   `json:"resource"`        // The endpoint's resource name
 	State      string   `json:"state,omitempty"` // The state of the endpoint

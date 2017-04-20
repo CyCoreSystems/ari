@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/CyCoreSystems/ari"
@@ -38,15 +39,18 @@ func (m *Mailbox) List(filter *ari.Key) (mx []*ari.Key, err error) {
 }
 
 // Data retrieves the state of the given mailbox
-func (m *Mailbox) Data(key *ari.Key) (md *ari.MailboxData, err error) {
-	md = &ari.MailboxData{}
-	name := key.ID
-	err = m.client.get("/mailboxes/"+name, &md)
-	if err != nil {
-		md = nil
-		err = dataGetError(err, "mailbox", "%v", name)
+func (m *Mailbox) Data(key *ari.Key) (*ari.MailboxData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("mailbox key not supplied")
 	}
-	return
+
+	var data = new(ari.MailboxData)
+	if err := m.client.get("/mailboxes/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "mailbox", "%v", key.ID)
+	}
+
+	data.Key = m.client.stamp(key)
+	return data, nil
 }
 
 // Update updates the new and old message counts of the mailbox
@@ -55,14 +59,10 @@ func (m *Mailbox) Update(key *ari.Key, oldMessages int, newMessages int) (err er
 		"oldMessages": strconv.Itoa(oldMessages),
 		"newMessages": strconv.Itoa(newMessages),
 	}
-	name := key.ID
-	err = m.client.put("/mailboxes/"+name, nil, &req)
-	return err
+	return m.client.put("/mailboxes/"+key.ID, nil, &req)
 }
 
 // Delete deletes the mailbox
 func (m *Mailbox) Delete(key *ari.Key) (err error) {
-	name := key.ID
-	err = m.client.del("/mailboxes/"+name, nil, "")
-	return
+	return m.client.del("/mailboxes/"+key.ID, nil, "")
 }

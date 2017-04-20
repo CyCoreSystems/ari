@@ -18,6 +18,9 @@ type Modules interface {
 
 // ModuleData is the data for an asterisk module
 type ModuleData struct {
+	// Key is the cluster-unique identifier for this module
+	Key *Key `json:"key"`
+
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	SupportLevel string `json:"support_level"`

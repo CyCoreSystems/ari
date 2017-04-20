@@ -1,6 +1,10 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
+
+	"github.com/CyCoreSystems/ari"
+)
 
 // Playback provides the ARI Playback accessors for the native client
 type Playback struct {
@@ -15,38 +19,36 @@ func (a *Playback) Get(key *ari.Key) (ph *ari.PlaybackHandle) {
 
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
-func (a *Playback) Data(key *ari.Key) (p *ari.PlaybackData, err error) {
-	p = &ari.PlaybackData{}
-	id := key.ID
-	err = a.client.get("/playbacks/"+id, p)
-	if err != nil {
-		p = nil
-		err = dataGetError(err, "playback", "%v", id)
+func (a *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("playback key not supplied")
 	}
-	return
+
+	var data = new(ari.PlaybackData)
+	if err := a.client.get("/playbacks/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "playback", "%v", key.ID)
+	}
+
+	data.Key = a.client.stamp(key)
+	return data, nil
 }
 
 // Control allows the user to manipulate an in-process playback.
 // TODO: list available operations.
 // (Equivalent to POST /playbacks/{playbackID}/control)
 func (a *Playback) Control(key *ari.Key, op string) (err error) {
-
-	//Request structure for controlling playback. Operation is required.
-	type request struct {
+	req := struct {
 		Operation string `json:"operation"`
+	}{
+		Operation: op,
 	}
-	id := key.ID
-	req := request{op}
-	err = a.client.post("/playbacks/"+id+"/control", nil, &req)
-	return
+	return a.client.post("/playbacks/"+key.ID+"/control", nil, &req)
 }
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
 func (a *Playback) Stop(key *ari.Key) (err error) {
-	id := key.ID
-	err = a.client.del("/playbacks/"+id, nil, "")
-	return
+	return a.client.del("/playbacks/"+key.ID, nil, "")
 }
 
 // Subscribe listens for ARI events for the given playback entity

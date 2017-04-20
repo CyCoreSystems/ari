@@ -2,7 +2,6 @@ package native
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/CyCoreSystems/ari"
 )
@@ -59,24 +58,19 @@ func (e *Endpoint) ListByTech(tech string, filter *ari.Key) (ex []*ari.Key, err 
 }
 
 // Data retrieves the current state of the endpoint
-func (e *Endpoint) Data(key *ari.Key) (ed *ari.EndpointData, err error) {
+func (e *Endpoint) Data(key *ari.Key) (*ari.EndpointData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("endpoint key not supplied")
+	}
 	if key.Kind != ari.EndpointKey {
-		err = errors.New("wrong key type")
-		return
-	}
-	items := strings.Split(key.ID, "/")
-	if len(items) != 2 {
-		err = errors.New("malformed key")
-		return
-	}
-	tech := items[0]
-	resource := items[1]
-	ed = &ari.EndpointData{}
-	err = e.client.get("/endpoints/"+tech+"/"+resource, ed)
-	if err != nil {
-		ed = nil
-		err = dataGetError(err, "endpoint", "%v/%v", tech, resource)
+		return nil, errors.New("wrong key type")
 	}
 
-	return
+	var data = new(ari.EndpointData)
+	if err := e.client.get("/endpoints/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "endpoint", "%s", key.ID)
+	}
+
+	data.Key = e.client.stamp(key)
+	return data, nil
 }

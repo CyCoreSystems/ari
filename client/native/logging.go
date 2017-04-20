@@ -1,9 +1,8 @@
 package native
 
 import (
-	"errors"
-
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
 // Logging provides the ARI Logging accessors for a native client
@@ -35,13 +34,18 @@ func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
 
 // Data returns the data of a logging channel
 func (l *Logging) Data(key *ari.Key) (*ari.LogData, error) {
-	ld, err := l.getLoggingChannels()
-	if err != nil {
-		return nil, err
+	if key == nil || key.ID == "" {
+		return nil, errors.New("logging key not supplied")
 	}
 
-	for _, i := range ld {
+	logChannels, err := l.getLoggingChannels()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get list of logging channels")
+	}
+
+	for _, i := range logChannels {
 		if i.Name == key.ID {
+			i.Key = l.client.stamp(key)
 			return i, nil
 		}
 	}

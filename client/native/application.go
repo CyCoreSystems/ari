@@ -43,37 +43,37 @@ func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 
 // Data returns the details of a given ARI application
 // Equivalent to GET /applications/{applicationName}
-func (a *Application) Data(key *ari.Key) (d *ari.ApplicationData, err error) {
-	d = &ari.ApplicationData{}
-	name := key.ID
-	err = a.client.get("/applications/"+name, d)
-	if err != nil {
-		d = nil
-		err = dataGetError(err, "application", "%v", name)
+func (a *Application) Data(key *ari.Key) (*ari.ApplicationData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("application key not supplied")
 	}
-	return
+
+	var data = new(ari.ApplicationData)
+	if err := a.client.get("/applications/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "application", "%v", key.ID)
+	}
+
+	data.Key = a.client.stamp(key)
+	return data, nil
 }
 
 // Subscribe subscribes the given application to an event source
 // Equivalent to POST /applications/{applicationName}/subscription
-func (a *Application) Subscribe(key *ari.Key, eventSource string) (err error) {
+func (a *Application) Subscribe(key *ari.Key, eventSource string) error {
 	req := struct {
 		EventSource string `json:"eventSource"`
 	}{
 		EventSource: eventSource,
 	}
-	name := key.ID
-	err = a.client.post("/applications/"+name+"/subscription", nil, &req)
-	err = errors.Wrapf(err, "Error subscribing application '%v' for event source '%v'", name, eventSource)
-	return
+	err := a.client.post("/applications/"+key.ID+"/subscription", nil, &req)
+	return errors.Wrapf(err, "Error subscribing application '%v' for event source '%v'", key.ID, eventSource)
 }
 
 // Unsubscribe unsubscribes (removes a subscription to) a given
 // ARI application from the provided event source
 // Equivalent to DELETE /applications/{applicationName}/subscription
-func (a *Application) Unsubscribe(key *ari.Key, eventSource string) (err error) {
+func (a *Application) Unsubscribe(key *ari.Key, eventSource string) error {
 	name := key.ID
-	err = a.client.del("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
-	err = errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
-	return
+	err := a.client.del("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
+	return errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
 }
