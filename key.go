@@ -88,9 +88,11 @@ func WithApp(app string) KeyOptionFunc {
 // WithParent copies the partial key fields Node, Application, Dialog from the parent key
 func WithParent(parent *Key) KeyOptionFunc {
 	return func(key Key) Key {
-		key.Node = parent.Node
-		key.Dialog = parent.Dialog
-		key.App = parent.App
+		if parent != nil {
+			key.Node = parent.Node
+			key.Dialog = parent.Dialog
+			key.App = parent.App
+		}
 		return key
 	}
 }
