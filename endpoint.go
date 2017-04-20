@@ -44,7 +44,7 @@ type EndpointData struct {
 
 // ID returns the ID for the endpoint
 func (ed *EndpointData) ID() string {
-	return ed.Technology + "/" + ed.Resource
+	return ed.Technology + EndpointIDSeparator + ed.Resource
 }
 
 // FromEndpointID converts the endpoint ID to the tech, resource pair.
