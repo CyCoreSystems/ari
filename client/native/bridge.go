@@ -204,12 +204,11 @@ func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 				if !ok {
 					return
 				}
-				keys := e.Keys()
-				for _, k := range keys {
+				for _, k := range e.Keys() {
 					if k.Match(key) {
 						outSub.events <- e
+						break
 					}
-					break
 				}
 			}
 		}
