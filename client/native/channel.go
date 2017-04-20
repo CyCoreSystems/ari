@@ -275,18 +275,17 @@ func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (ph *ar
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle) {
+func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) *ari.PlaybackHandle {
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Media string `json:"media"`
+	}{
+		Media: mediaURI,
 	}
-	req := request{mediaURI}
-	id := key.ID
 
 	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
-	ph = c.client.Playback().Get(playbackKey)
 	return ari.NewPlaybackHandle(playbackKey, c.client.Playback(), func(pb *ari.PlaybackHandle) (err error) {
-		err = c.client.post("/channels/"+id+"/play/"+playbackID, &resp, &req)
+		err = c.client.post("/channels/"+key.ID+"/play/"+playbackID, &resp, &req)
 		return
 	})
 }
