@@ -113,8 +113,8 @@ func DecodeEvent(data []byte) (Event, error) {
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
 type RawEvent struct {
+	EventData
 	Header Header `json:"header"`
-	Type   string `json:"type"`
 
 	// ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."
 	ApplicationReplaced *ApplicationReplaced `json:",inline,omitempty"`
@@ -337,123 +337,163 @@ func (r *RawEvent) ToEvent() (Event, error) {
 	switch r.Type {
 	case Events.ApplicationReplaced:
 		r.ApplicationReplaced.Header = r.Header
+		r.ApplicationReplaced.EventData = r.EventData
 		return r.ApplicationReplaced, nil
 	case Events.BridgeAttendedTransfer:
 		r.BridgeAttendedTransfer.Header = r.Header
+		r.BridgeAttendedTransfer.EventData = r.EventData
 		return r.BridgeAttendedTransfer, nil
 	case Events.BridgeBlindTransfer:
 		r.BridgeBlindTransfer.Header = r.Header
+		r.BridgeBlindTransfer.EventData = r.EventData
 		return r.BridgeBlindTransfer, nil
 	case Events.BridgeCreated:
 		r.BridgeCreated.Header = r.Header
+		r.BridgeCreated.EventData = r.EventData
 		return r.BridgeCreated, nil
 	case Events.BridgeDestroyed:
 		r.BridgeDestroyed.Header = r.Header
+		r.BridgeDestroyed.EventData = r.EventData
 		return r.BridgeDestroyed, nil
 	case Events.BridgeMerged:
 		r.BridgeMerged.Header = r.Header
+		r.BridgeMerged.EventData = r.EventData
 		return r.BridgeMerged, nil
 	case Events.BridgeVideoSourceChanged:
 		r.BridgeVideoSourceChanged.Header = r.Header
+		r.BridgeVideoSourceChanged.EventData = r.EventData
 		return r.BridgeVideoSourceChanged, nil
 	case Events.ChannelCallerID:
 		r.ChannelCallerID.Header = r.Header
+		r.ChannelCallerID.EventData = r.EventData
 		return r.ChannelCallerID, nil
 	case Events.ChannelConnectedLine:
 		r.ChannelConnectedLine.Header = r.Header
+		r.ChannelConnectedLine.EventData = r.EventData
 		return r.ChannelConnectedLine, nil
 	case Events.ChannelCreated:
 		r.ChannelCreated.Header = r.Header
+		r.ChannelCreated.EventData = r.EventData
 		return r.ChannelCreated, nil
 	case Events.ChannelDestroyed:
 		r.ChannelDestroyed.Header = r.Header
+		r.ChannelDestroyed.EventData = r.EventData
 		return r.ChannelDestroyed, nil
 	case Events.ChannelDialplan:
 		r.ChannelDialplan.Header = r.Header
+		r.ChannelDialplan.EventData = r.EventData
 		return r.ChannelDialplan, nil
 	case Events.ChannelDtmfReceived:
 		r.ChannelDtmfReceived.Header = r.Header
+		r.ChannelDtmfReceived.EventData = r.EventData
 		return r.ChannelDtmfReceived, nil
 	case Events.ChannelEnteredBridge:
 		r.ChannelEnteredBridge.Header = r.Header
+		r.ChannelEnteredBridge.EventData = r.EventData
 		return r.ChannelEnteredBridge, nil
 	case Events.ChannelHangupRequest:
 		r.ChannelHangupRequest.Header = r.Header
+		r.ChannelHangupRequest.EventData = r.EventData
 		return r.ChannelHangupRequest, nil
 	case Events.ChannelHold:
 		r.ChannelHold.Header = r.Header
+		r.ChannelHold.EventData = r.EventData
 		return r.ChannelHold, nil
 	case Events.ChannelLeftBridge:
 		r.ChannelLeftBridge.Header = r.Header
+		r.ChannelLeftBridge.EventData = r.EventData
 		return r.ChannelLeftBridge, nil
 	case Events.ChannelStateChange:
 		r.ChannelStateChange.Header = r.Header
+		r.ChannelStateChange.EventData = r.EventData
 		return r.ChannelStateChange, nil
 	case Events.ChannelTalkingFinished:
 		r.ChannelTalkingFinished.Header = r.Header
+		r.ChannelTalkingFinished.EventData = r.EventData
 		return r.ChannelTalkingFinished, nil
 	case Events.ChannelTalkingStarted:
 		r.ChannelTalkingStarted.Header = r.Header
+		r.ChannelTalkingStarted.EventData = r.EventData
 		return r.ChannelTalkingStarted, nil
 	case Events.ChannelUnhold:
 		r.ChannelUnhold.Header = r.Header
+		r.ChannelUnhold.EventData = r.EventData
 		return r.ChannelUnhold, nil
 	case Events.ChannelUserevent:
 		r.ChannelUserevent.Header = r.Header
+		r.ChannelUserevent.EventData = r.EventData
 		return r.ChannelUserevent, nil
 	case Events.ChannelVarset:
 		r.ChannelVarset.Header = r.Header
+		r.ChannelVarset.EventData = r.EventData
 		return r.ChannelVarset, nil
 	case Events.ContactInfo:
 		r.ContactInfo.Header = r.Header
+		r.ContactInfo.EventData = r.EventData
 		return r.ContactInfo, nil
 	case Events.ContactStatusChange:
 		r.ContactStatusChange.Header = r.Header
+		r.ContactStatusChange.EventData = r.EventData
 		return r.ContactStatusChange, nil
 	case Events.DeviceStateChanged:
 		r.DeviceStateChanged.Header = r.Header
+		r.DeviceStateChanged.EventData = r.EventData
 		return r.DeviceStateChanged, nil
 	case Events.Dial:
 		r.Dial.Header = r.Header
+		r.Dial.EventData = r.EventData
 		return r.Dial, nil
 	case Events.EndpointStateChange:
 		r.EndpointStateChange.Header = r.Header
+		r.EndpointStateChange.EventData = r.EventData
 		return r.EndpointStateChange, nil
 	case Events.MissingParams:
 		r.MissingParams.Header = r.Header
+		r.MissingParams.EventData = r.EventData
 		return r.MissingParams, nil
 	case Events.Peer:
 		r.Peer.Header = r.Header
+		r.Peer.EventData = r.EventData
 		return r.Peer, nil
 	case Events.PeerStatusChange:
 		r.PeerStatusChange.Header = r.Header
+		r.PeerStatusChange.EventData = r.EventData
 		return r.PeerStatusChange, nil
 	case Events.PlaybackContinuing:
 		r.PlaybackContinuing.Header = r.Header
+		r.PlaybackContinuing.EventData = r.EventData
 		return r.PlaybackContinuing, nil
 	case Events.PlaybackFinished:
 		r.PlaybackFinished.Header = r.Header
+		r.PlaybackFinished.EventData = r.EventData
 		return r.PlaybackFinished, nil
 	case Events.PlaybackStarted:
 		r.PlaybackStarted.Header = r.Header
+		r.PlaybackStarted.EventData = r.EventData
 		return r.PlaybackStarted, nil
 	case Events.RecordingFailed:
 		r.RecordingFailed.Header = r.Header
+		r.RecordingFailed.EventData = r.EventData
 		return r.RecordingFailed, nil
 	case Events.RecordingFinished:
 		r.RecordingFinished.Header = r.Header
+		r.RecordingFinished.EventData = r.EventData
 		return r.RecordingFinished, nil
 	case Events.RecordingStarted:
 		r.RecordingStarted.Header = r.Header
+		r.RecordingStarted.EventData = r.EventData
 		return r.RecordingStarted, nil
 	case Events.StasisEnd:
 		r.StasisEnd.Header = r.Header
+		r.StasisEnd.EventData = r.EventData
 		return r.StasisEnd, nil
 	case Events.StasisStart:
 		r.StasisStart.Header = r.Header
+		r.StasisStart.EventData = r.EventData
 		return r.StasisStart, nil
 	case Events.TextMessageReceived:
 		r.TextMessageReceived.Header = r.Header
+		r.TextMessageReceived.EventData = r.EventData
 		return r.TextMessageReceived, nil
 
 	default:

@@ -204,7 +204,7 @@ func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 				if !ok {
 					return
 				}
-				keys := e.Keys(ari.NodeKey(b.client.ApplicationName(), b.client.node))
+				keys := e.Keys()
 				for _, k := range keys {
 					if k.Match(key) {
 						outSub.events <- e

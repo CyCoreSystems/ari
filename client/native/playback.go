@@ -65,7 +65,7 @@ func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 				if !ok {
 					return
 				}
-				keys := e.Keys(ari.NodeKey(a.client.ApplicationName(), a.client.node))
+				keys := e.Keys()
 				for _, k := range keys {
 					if k.Match(key) {
 						outSub.events <- e

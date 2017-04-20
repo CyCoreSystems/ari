@@ -36,8 +36,9 @@ func DecodeEvent(data []byte) (Event, error) {
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
 type RawEvent struct {
+   EventData
    Header Header  `json:"header"`
-   Type string `json:"type"`
+   
 
 {{range .}}
    // {{.Name}} - "{{.Description}}"
@@ -67,6 +68,7 @@ func (r *RawEvent) ToEvent() (Event, error) {
 	switch r.Type {
 	{{range .}}case Events.{{.Name}}:
       r.{{.Name}}.Header = r.Header
+      r.{{.Name}}.EventData = r.EventData
       return r.{{.Name}}, nil
 	{{end}}
 	default:

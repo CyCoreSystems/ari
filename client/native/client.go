@@ -329,6 +329,11 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 				errChan <- errors.Wrap(err, "failed to decode websocket message")
 				return
 			}
+
+			// Tag the event with our metadata
+			raw.Application = c.appName
+			raw.Node = c.node
+
 			e, err := raw.ToEvent()
 			if err != nil {
 				Logger.Error("failed to convert message to event", "error", err)

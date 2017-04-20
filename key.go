@@ -85,13 +85,13 @@ func WithApp(app string) KeyOptionFunc {
 	}
 }
 
-// WithParent copies the partial key fields Node, Application, Dialog from the parent key
-func WithParent(parent *Key) KeyOptionFunc {
+// WithLocationOf copies the partial key fields Node, Application, Dialog from the reference key
+func WithLocationOf(ref *Key) KeyOptionFunc {
 	return func(key Key) Key {
-		if parent != nil {
-			key.Node = parent.Node
-			key.Dialog = parent.Dialog
-			key.App = parent.App
+		if ref != nil {
+			key.Node = ref.Node
+			key.Dialog = ref.Dialog
+			key.App = ref.App
 		}
 		return key
 	}
