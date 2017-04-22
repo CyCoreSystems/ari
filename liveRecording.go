@@ -75,6 +75,11 @@ func (s *LiveRecordingHandle) ID() string {
 	return s.key.ID
 }
 
+// Key returns the key of the live recording
+func (s *LiveRecordingHandle) Key() *Key {
+	return s.key
+}
+
 // Data gets the data for the live recording
 func (s *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
 	d, err = s.s.Data(s.key)

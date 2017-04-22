@@ -50,6 +50,11 @@ func (mh *MailboxHandle) ID() string {
 	return mh.key.ID
 }
 
+// Key returns the key for the mailbox handle
+func (mh *MailboxHandle) Key() *Key {
+	return mh.key
+}
+
 // Data gets the current state of the mailbox
 func (mh *MailboxHandle) Data() (*MailboxData, error) {
 	return mh.m.Data(mh.key)

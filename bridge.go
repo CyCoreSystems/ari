@@ -83,6 +83,11 @@ func (bh *BridgeHandle) ID() string {
 	return bh.key.ID
 }
 
+// Key returns the Key of the bridge
+func (bh *BridgeHandle) Key() *Key {
+	return bh.key
+}
+
 // Exec executes any staged operations attached on the bridge handle
 func (bh *BridgeHandle) Exec() (err error) {
 	if !bh.executed {

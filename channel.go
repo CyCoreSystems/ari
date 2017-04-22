@@ -191,6 +191,11 @@ func (ch *ChannelHandle) ID() string {
 	return ch.key.ID
 }
 
+// Key returns the key for the channel handle
+func (ch *ChannelHandle) Key() *Key {
+	return ch.key
+}
+
 // Exec executes any staged channel operations attached to this handle.
 func (ch *ChannelHandle) Exec() (err error) {
 	if !ch.executed {

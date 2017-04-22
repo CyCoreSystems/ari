@@ -51,6 +51,11 @@ func (sh *SoundHandle) ID() string {
 	return sh.key.ID
 }
 
+// Key returns the Key for the sound
+func (sh *SoundHandle) Key() *Key {
+	return sh.key
+}
+
 // Data retrieves the data for the Sound
 func (sh *SoundHandle) Data() (sd *SoundData, err error) {
 	sd, err = sh.s.Data(sh.key)

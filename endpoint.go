@@ -89,6 +89,11 @@ func (eh *EndpointHandle) ID() string {
 	return eh.key.ID
 }
 
+// Key returns the key for the endpoint
+func (eh *EndpointHandle) Key() *Key {
+	return eh.key
+}
+
 // Data returns the state of the endpoint
 func (eh *EndpointHandle) Data() (*EndpointData, error) {
 	return eh.e.Data(eh.key)

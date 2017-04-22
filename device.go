@@ -42,6 +42,11 @@ func (dsh *DeviceStateHandle) ID() string {
 	return dsh.key.ID
 }
 
+// Key returns the key for the device
+func (dsh *DeviceStateHandle) Key() *Key {
+	return dsh.key
+}
+
 // Data gets the device state
 func (dsh *DeviceStateHandle) Data() (d *DeviceStateData, err error) {
 	d, err = dsh.d.Data(dsh.key)

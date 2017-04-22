@@ -59,6 +59,11 @@ func (ah *ApplicationHandle) ID() string {
 	return ah.key.ID
 }
 
+// Key returns the key of the application
+func (ah *ApplicationHandle) Key() *Key {
+	return ah.key
+}
+
 // Data retrives the data for the application
 func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
 	ad, err = ah.a.Data(ah.key)

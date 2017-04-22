@@ -53,6 +53,11 @@ func (l *LogHandle) ID() string {
 	return l.key.ID
 }
 
+// Key returns the Key of the logging channel
+func (l *LogHandle) Key() *Key {
+	return l.key
+}
+
 // Data returns the data for the logging channel
 func (l *LogHandle) Data() (*LogData, error) {
 	return l.c.Data(l.key)

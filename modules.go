@@ -44,6 +44,11 @@ func (mh *ModuleHandle) ID() string {
 	return mh.key.ID
 }
 
+// Key returns the key for the module
+func (mh *ModuleHandle) Key() *Key {
+	return mh.key
+}
+
 // Reload reloads the module
 func (mh *ModuleHandle) Reload() error {
 	return mh.m.Reload(mh.key)

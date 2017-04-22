@@ -65,6 +65,11 @@ func (ph *PlaybackHandle) ID() string {
 	return ph.key.ID
 }
 
+// Key returns the Key for the playback
+func (ph *PlaybackHandle) Key() *Key {
+	return ph.key
+}
+
 // Data gets the playback data
 func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
 	pd, err = ph.p.Data(ph.key)

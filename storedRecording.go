@@ -59,6 +59,11 @@ func (s *StoredRecordingHandle) ID() string {
 	return s.key.ID
 }
 
+// Key returns the Key for the stored recording
+func (s *StoredRecordingHandle) Key() *Key {
+	return s.key
+}
+
 // Exec executes any staged operations
 func (s *StoredRecordingHandle) Exec() (err error) {
 	if !s.executed {
