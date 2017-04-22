@@ -48,13 +48,11 @@ func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
 
 // List lists the current bridges and returns a list of lazy handles
 func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
+	// native client ignores filter
+
 	var bridges = []struct {
 		ID string `json:"id"`
 	}{}
-
-	if filter == nil {
-		filter = ari.NodeKey(b.client.ApplicationName(), b.client.node)
-	}
 
 	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
