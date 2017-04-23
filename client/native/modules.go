@@ -18,12 +18,12 @@ func (m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
 
 // List lists the modules and returns lists of handles
 func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
+	if filter == nil {
+		filter = ari.NodeKey(m.client.appName, m.client.node)
+	}
 	var modules = []struct {
 		Name string `json:"name"`
 	}{}
-	if filter == nil {
-		filter = ari.NodeKey(m.client.ApplicationName(), m.client.node)
-	}
 
 	err = m.client.get("/asterisk/modules", &modules)
 	if err != nil {
@@ -31,8 +31,11 @@ func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 	}
 
 	for _, i := range modules {
-		k := ari.NewKey(ari.ModuleKey, i.Name, ari.WithNode(m.client.node), ari.WithApp(m.client.ApplicationName()))
+		k := ari.NewKey(ari.ModuleKey, i.Name, ari.WithNode(m.client.node), ari.WithApp(m.client.appName))
 		if filter.Match(k) {
+			if filter.Dialog != "" {
+				k.Dialog = filter.Dialog
+			}
 			ret = append(ret, k)
 		}
 	}

@@ -12,6 +12,9 @@ type Channel interface {
 	// Get returns a handle to a channel for further interaction
 	Get(key *Key) *ChannelHandle
 
+	// GetVariable retrieves the value of a channel variable
+	GetVariable(*Key, string) (string, error)
+
 	// List lists the channels in asterisk, optionally using the key for filtering
 	List(*Key) ([]*Key, error)
 
@@ -69,6 +72,9 @@ type Channel interface {
 	// MOH plays music on hold
 	MOH(key *Key, moh string) error
 
+	// SetVariable sets a channel variable
+	SetVariable(key *Key, name, value string) error
+
 	// StopMOH stops music on hold
 	StopMOH(key *Key) error
 
@@ -104,9 +110,6 @@ type Channel interface {
 
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
-
-	// Variables gets the channel Variables
-	Variables(key *Key) Variables
 }
 
 // ChannelData is the data for a specific channel
@@ -361,9 +364,14 @@ func (ch *ChannelHandle) StopMOH() error {
 
 // ----
 
-// Variables returns the channel variables
-func (ch *ChannelHandle) Variables() Variables {
-	return ch.c.Variables(ch.key)
+// GetVariable returns the value of a channel variable
+func (ch *ChannelHandle) GetVariable(name string) (string, error) {
+	return ch.c.GetVariable(ch.key, name)
+}
+
+// SetVariable sets the value of a channel variable
+func (ch *ChannelHandle) SetVariable(name, value string) error {
+	return ch.c.SetVariable(ch.key, name, value)
 }
 
 // --
@@ -436,28 +444,3 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
 	return ch.c.SendDTMF(ch.key, dtmf, opts)
 }
-
-/*
-// Match returns true if the event matches the channel
-func (ch *ChannelHandle) Match(e Event) bool {
-	channelEvent, ok := e.(ChannelEvent)
-	if !ok {
-		return false
-	}
-
-	//channel ID comparisons
-	//	do we compare based on id;N, where id == id and the N's are different
-	//		 -> this happens in Local channels
-
-	// NOTE: this code considers local channels equal
-	//leftChannel := strings.Split(ch.key, ";")[0]
-	channelIDs := channelEvent.GetChannelIDs()
-	for _, i := range channelIDs {
-		//rightChannel := strings.Split(i, ";")[0]
-		if ch.key.ID == i {
-			return true
-		}
-	}
-	return false
-}
-*/

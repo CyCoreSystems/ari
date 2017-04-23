@@ -1,11 +1,11 @@
 package native
 
 import (
+	"fmt"
+
 	"github.com/CyCoreSystems/ari"
 	"github.com/pkg/errors"
 )
-
-var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
 
 // Asterisk provides the ARI Asterisk accessors for a native client
 type Asterisk struct {
@@ -37,34 +37,12 @@ func (a *Asterisk) Config() ari.Config {
 
 // Info returns various data about the Asterisk system
 // Equivalent to GET /asterisk/info
-func (a *Asterisk) Info(only string) (m *ari.AsteriskInfo, err error) {
-	m = &ari.AsteriskInfo{}
-	path := "/asterisk/info"
-
-	// If we are passed an 'only' parameter
-	// pass it on as the 'only' querystring parameter
-	if only != "" {
-		path += "?only=" + only
-		return m, errOnlyUnsupported
-	}
-	// TODO: handle "only" parameter
-	// the problem is that responses with "only" do not
-	// conform to the AsteriskInfo model; they just return
-	// the subobjects requested
-	// That means we should probably break this
-	// method into multiple submethods
-
-	err = a.client.get(path, &m)
-	err = errors.Wrap(err, "Error getting asterisk info")
-	return m, err
-}
-
-// ReloadModule tells asterisk to load the given module
-func (a *Asterisk) ReloadModule(key *ari.Key) (err error) {
-	name := key.ID
-	err = a.Modules().Reload(key)
-	err = errors.Wrapf(err, "Error reloading asterisk module '%v'", name)
-	return
+func (a *Asterisk) Info(key *ari.Key) (*ari.AsteriskInfo, error) {
+	var m ari.AsteriskInfo
+	return &m, errors.Wrap(
+		a.client.get("/asterisk/info", &m),
+		"failed to get asterisk info",
+	)
 }
 
 // AsteriskVariables provides the ARI Variables accessors for server-level variables
@@ -73,42 +51,36 @@ type AsteriskVariables struct {
 }
 
 // Variables returns the variables interface for the Asterisk server
-func (a *Asterisk) Variables() ari.Variables {
+func (a *Asterisk) Variables() ari.AsteriskVariables {
 	return &AsteriskVariables{a.client}
 }
 
 // Get returns the value of the given global variable
 // Equivalent to GET /asterisk/variable
-func (a *AsteriskVariables) Get(key string) (val string, err error) {
-	type variable struct {
+func (a *AsteriskVariables) Get(key *ari.Key) (string, error) {
+	var m struct {
 		Value string `json:"value"`
 	}
-
-	var m variable
-
-	path := "/asterisk/variable?variable=" + key
-
-	err = a.client.get(path, &m)
+	err := a.client.get(fmt.Sprintf("/asterisk/variable?variable=%s", key.ID), &m)
 	if err != nil {
-		err = errors.Wrapf(err, "Error getting asterisk variable '%v'", key)
-		return
+		return "", errors.Wrapf(err, "Error getting asterisk variable '%v'", key.ID)
 	}
-	val = m.Value
-	return
+	return m.Value, nil
 }
 
 // Set sets a global channel variable
 // (Equivalent to POST /asterisk/variable)
-func (a *AsteriskVariables) Set(key string, value string) (err error) {
-	path := "/asterisk/variable"
-
-	type request struct {
+func (a *AsteriskVariables) Set(key *ari.Key, value string) (err error) {
+	req := struct {
 		Variable string `json:"variable"`
 		Value    string `json:"value,omitempty"`
+	}{
+		Variable: key.ID,
+		Value:    value,
 	}
-	req := request{key, value}
 
-	err = a.client.post(path, nil, &req)
-	err = errors.Wrapf(err, "Error setting asterisk variable '%v'", key) //TODO: include value?
-	return err
+	return errors.Wrapf(
+		a.client.post("/asterisk/variable", nil, &req),
+		"Error setting asterisk variable '%s' to '%s'", key.ID, value,
+	)
 }

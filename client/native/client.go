@@ -68,7 +68,7 @@ func Connect(ctx context.Context, opts Options) (ari.Client, error) {
 		return c, err
 	}
 
-	info, err := c.Asterisk().Info("")
+	info, err := c.Asterisk().Info(nil)
 	if err != nil {
 		return c, err
 	}

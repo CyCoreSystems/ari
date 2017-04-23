@@ -61,7 +61,6 @@ func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
 
 // Get gets the lazy handle for the given channel
 func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
-	//TODO: does Get need to do anything else??
 	return ari.NewChannelHandle(key, c, nil)
 }
 
@@ -402,43 +401,25 @@ func (c *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	return outSub
 }
 
-// ChannelVariables provides the ARI Variables accessor scoped to a channel identifier for the native client
-type ChannelVariables struct {
-	client *Client
-	key    *ari.Key
-}
-
-// Variables returns the variables interface for channel
-func (c *Channel) Variables(key *ari.Key) ari.Variables {
-	return &ChannelVariables{c.client, key}
-}
-
-// Get gets the value of the given variable
-func (v *ChannelVariables) Get(key string) (string, error) {
-	type variable struct {
+// GetVariable gets the value of the given variable
+func (c *Channel) GetVariable(key *ari.Key, name string) (string, error) {
+	var m struct {
 		Value string `json:"value"`
 	}
 
-	var m variable
-
-	path := "/channels/" + v.key.ID + "/variable?variable=" + key
-	err := v.client.get(path, &m)
-	if err != nil {
-		return "", err
-	}
-	return m.Value, nil
+	err := c.client.get(fmt.Sprintf("/channels/%s/variable?variable=%s", key.ID, name), &m)
+	return m.Value, err
 }
 
-// Set sets the value of the given variable
-func (v *ChannelVariables) Set(key string, value string) error {
-	path := "/channels/" + v.key.ID + "/variable"
-
-	type request struct {
-		Variable string `json:"variable"`
-		Value    string `json:"value,omitempty"`
+// SetVariable sets the value of the given channel variable
+func (c *Channel) SetVariable(key *ari.Key, name, value string) error {
+	req := struct {
+		Name  string `json:"variable"`
+		Value string `json:"value,omitempty"`
+	}{
+		Name:  name,
+		Value: value,
 	}
-	req := request{key, value}
 
-	err := v.client.post(path, nil, &req)
-	return err
+	return c.client.post(fmt.Sprintf("/channels/%s/variable", key.ID), nil, &req)
 }
