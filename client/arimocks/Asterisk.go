@@ -24,13 +24,13 @@ func (_m *Asterisk) Config() ari.Config {
 	return r0
 }
 
-// Info provides a mock function with given fields: only
-func (_m *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
-	ret := _m.Called(only)
+// Info provides a mock function with given fields: key
+func (_m *Asterisk) Info(key *ari.Key) (*ari.AsteriskInfo, error) {
+	ret := _m.Called(key)
 
 	var r0 *ari.AsteriskInfo
-	if rf, ok := ret.Get(0).(func(string) *ari.AsteriskInfo); ok {
-		r0 = rf(only)
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.AsteriskInfo); ok {
+		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.AsteriskInfo)
@@ -38,8 +38,8 @@ func (_m *Asterisk) Info(only string) (*ari.AsteriskInfo, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(only)
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -79,30 +79,16 @@ func (_m *Asterisk) Modules() ari.Modules {
 	return r0
 }
 
-// ReloadModule provides a mock function with given fields: key
-func (_m *Asterisk) ReloadModule(key *ari.Key) error {
-	ret := _m.Called(key)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
-		r0 = rf(key)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Variables provides a mock function with given fields:
-func (_m *Asterisk) Variables() ari.Variables {
+func (_m *Asterisk) Variables() ari.AsteriskVariables {
 	ret := _m.Called()
 
-	var r0 ari.Variables
-	if rf, ok := ret.Get(0).(func() ari.Variables); ok {
+	var r0 ari.AsteriskVariables
+	if rf, ok := ret.Get(0).(func() ari.AsteriskVariables); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.Variables)
+			r0 = ret.Get(0).(ari.AsteriskVariables)
 		}
 	}
 

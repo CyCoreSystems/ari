@@ -141,6 +141,27 @@ func (_m *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 	return r0
 }
 
+// GetVariable provides a mock function with given fields: _a0, _a1
+func (_m *Channel) GetVariable(_a0 *ari.Key, _a1 string) (string, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) string); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Hangup provides a mock function with given fields: key, reason
 func (_m *Channel) Hangup(key *ari.Key, reason string) error {
 	ret := _m.Called(key, reason)
@@ -310,6 +331,20 @@ func (_m *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) er
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.DTMFOptions) error); ok {
 		r0 = rf(key, dtmf, opts)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SetVariable provides a mock function with given fields: key, name, value
+func (_m *Channel) SetVariable(key *ari.Key, name string, value string) error {
+	ret := _m.Called(key, name, value)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, string) error); ok {
+		r0 = rf(key, name, value)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -506,22 +541,6 @@ func (_m *Channel) Unmute(key *ari.Key, dir ari.Direction) error {
 		r0 = rf(key, dir)
 	} else {
 		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Variables provides a mock function with given fields: key
-func (_m *Channel) Variables(key *ari.Key) ari.Variables {
-	ret := _m.Called(key)
-
-	var r0 ari.Variables
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.Variables); ok {
-		r0 = rf(key)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ari.Variables)
-		}
 	}
 
 	return r0

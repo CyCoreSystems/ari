@@ -1,16 +1,6 @@
 package audio
 
-import (
-	"testing"
-	"time"
-
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/golang/mock/gomock"
-
-	"golang.org/x/net/context"
-)
-
+/*
 func init() {
 	PlaybackStartTimeout = 5 * time.Millisecond
 }
@@ -233,3 +223,5 @@ func TestWaitStartStarted(t *testing.T) {
 		t.Error("waitStart returned the wrong state", c.status)
 	}
 }
+
+*/

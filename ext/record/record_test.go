@@ -1,16 +1,6 @@
 package record
 
-import (
-	"errors"
-	"testing"
-	"time"
-
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/CyCoreSystems/ari/internal/testutils"
-	"github.com/golang/mock/gomock"
-)
-
+/*
 func TestRecordTimeout(t *testing.T) {
 	RecordingStartTimeout = 100 * time.Millisecond
 
@@ -329,3 +319,5 @@ var recordingFailed = func(id string) ari.Event {
 		},
 	}
 }
+
+*/

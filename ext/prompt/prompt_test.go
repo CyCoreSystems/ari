@@ -1,19 +1,6 @@
 package prompt
 
-import (
-	"errors"
-	"testing"
-	"time"
-
-	"github.com/CyCoreSystems/ari/client/mock"
-	"github.com/golang/mock/gomock"
-
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/ext/audio"
-	"github.com/CyCoreSystems/ari/internal/testutils"
-	"golang.org/x/net/context"
-)
-
+/*
 func TestPromptPlayError(t *testing.T) {
 	audio.MaxPlaybackTime = 3 * time.Second
 
@@ -1388,3 +1375,4 @@ var playbackFinishedDifferentPlaybackID = &ari.PlaybackFinished{
 		ID: "pb2",
 	},
 }
+*/

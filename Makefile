@@ -26,6 +26,9 @@ events:
 	@./bin/eventgen internal/eventgen/template.tmpl ${EVENT_SPEC_FILE} |goimports > events_gen.go
 	
 mock:
+	go get -u github.com/vektra/mockery/.../
+	rm -Rf vendor/ client/arimocks
 	mockery -all -outpkg arimocks -output client/arimocks
+	glide i
 
 ci: check
