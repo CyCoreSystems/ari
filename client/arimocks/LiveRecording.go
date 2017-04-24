@@ -31,20 +31,6 @@ func (_m *LiveRecording) Data(key *ari.Key) (*ari.LiveRecordingData, error) {
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: key
-func (_m *LiveRecording) Delete(key *ari.Key) error {
-	ret := _m.Called(key)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
-		r0 = rf(key)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Get provides a mock function with given fields: key
 func (_m *LiveRecording) Get(key *ari.Key) *ari.LiveRecordingHandle {
 	ret := _m.Called(key)

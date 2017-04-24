@@ -390,7 +390,7 @@ func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (
 }
 
 // StageOriginate provides a mock function with given fields: _a0
-func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) *ari.ChannelHandle {
+func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
 	ret := _m.Called(_a0)
 
 	var r0 *ari.ChannelHandle
@@ -402,11 +402,18 @@ func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) *ari.ChannelHandle {
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(ari.OriginateRequest) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StagePlay provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) *ari.PlaybackHandle {
+func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	ret := _m.Called(key, playbackID, mediaURI)
 
 	var r0 *ari.PlaybackHandle
@@ -418,11 +425,18 @@ func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) *
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, playbackID, mediaURI)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StageRecord provides a mock function with given fields: key, name, opts
-func (_m *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) *ari.LiveRecordingHandle {
+func (_m *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 	ret := _m.Called(key, name, opts)
 
 	var r0 *ari.LiveRecordingHandle
@@ -434,11 +448,18 @@ func (_m *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpt
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.RecordingOptions) error); ok {
+		r1 = rf(key, name, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StageSnoop provides a mock function with given fields: key, snoopID, opts
-func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) *ari.ChannelHandle {
+func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
 	ret := _m.Called(key, snoopID, opts)
 
 	var r0 *ari.ChannelHandle
@@ -450,7 +471,14 @@ func (_m *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptio
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.SnoopOptions) error); ok {
+		r1 = rf(key, snoopID, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StopHold provides a mock function with given fields: key

@@ -13,7 +13,7 @@ type LiveRecording struct {
 
 // Get gets a lazy handle for the live recording name
 func (lr *LiveRecording) Get(key *ari.Key) (h *ari.LiveRecordingHandle) {
-	h = ari.NewLiveRecordingHandle(key, lr, nil)
+	h = ari.NewLiveRecordingHandle(lr.client.stamp(key), lr, nil)
 	return
 }
 
@@ -33,52 +33,31 @@ func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error
 }
 
 // Stop stops the live recording (TODO: does it error if the live recording is already stopped)
-func (lr *LiveRecording) Stop(key *ari.Key) (err error) {
-	name := key.ID
-	err = lr.client.post("/recordings/live/"+name+"/stop", nil, nil)
-	return
+func (lr *LiveRecording) Stop(key *ari.Key) error {
+	return lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
 }
 
 // Pause pauses the live recording (TODO: does it error if the live recording is already paused)
-func (lr *LiveRecording) Pause(key *ari.Key) (err error) {
-	name := key.ID
-	err = lr.client.post("/recordings/live/"+name+"/pause", nil, nil)
-	return
+func (lr *LiveRecording) Pause(key *ari.Key) error {
+	return lr.client.post("/recordings/live/"+key.ID+"/pause", nil, nil)
 }
 
 // Resume resumes the live recording (TODO: does it error if the live recording is already resumed)
-func (lr *LiveRecording) Resume(key *ari.Key) (err error) {
-	name := key.ID
-	err = lr.client.del("/recordings/live/"+name+"/pause", nil, "")
-	return
+func (lr *LiveRecording) Resume(key *ari.Key) error {
+	return lr.client.del("/recordings/live/"+key.ID+"/pause", nil, "")
 }
 
 // Mute mutes the live recording (TODO: does it error if the live recording is already muted)
-func (lr *LiveRecording) Mute(key *ari.Key) (err error) {
-	name := key.ID
-	err = lr.client.post("/recordings/live/"+name+"/mute", nil, nil)
-	return
+func (lr *LiveRecording) Mute(key *ari.Key) error {
+	return lr.client.post("/recordings/live/"+key.ID+"/mute", nil, nil)
 }
 
 // Unmute unmutes the live recording (TODO: does it error if the live recording is already muted)
-func (lr *LiveRecording) Unmute(key *ari.Key) (err error) {
-	name := key.ID
-	err = lr.client.del("/recordings/live/"+name+"/mute", nil, "")
-	return
-}
-
-// Delete deletes the live recording (TODO: describe difference between scrap and delete)
-func (lr *LiveRecording) Delete(key *ari.Key) (err error) {
-	//NOTE: original code used 'stored' for this even though it's live
-	name := key.ID
-	err = lr.client.del("/recordings/stored/"+name, nil, "")
-	return
+func (lr *LiveRecording) Unmute(key *ari.Key) error {
+	return lr.client.del("/recordings/live/"+key.ID+"/mute", nil, "")
 }
 
 // Scrap removes a live recording (TODO: describe difference between scrap and delete)
-func (lr *LiveRecording) Scrap(key *ari.Key) (err error) {
-	//TODO reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
-	name := key.ID
-	err = lr.client.del("/recordings/live/"+name, nil, "")
-	return
+func (lr *LiveRecording) Scrap(key *ari.Key) error {
+	return lr.client.del("/recordings/live/"+key.ID, nil, "")
 }

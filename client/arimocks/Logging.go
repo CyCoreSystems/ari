@@ -8,18 +8,27 @@ type Logging struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: key, level
-func (_m *Logging) Create(key *ari.Key, level string) error {
-	ret := _m.Called(key, level)
+// Create provides a mock function with given fields: key, levels
+func (_m *Logging) Create(key *ari.Key, levels string) (*ari.LogHandle, error) {
+	ret := _m.Called(key, levels)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
-		r0 = rf(key, level)
+	var r0 *ari.LogHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) *ari.LogHandle); ok {
+		r0 = rf(key, levels)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ari.LogHandle)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string) error); ok {
+		r1 = rf(key, levels)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Data provides a mock function with given fields: key

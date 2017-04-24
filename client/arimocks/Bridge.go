@@ -182,7 +182,7 @@ func (_m *Bridge) RemoveChannel(key *ari.Key, channelID string) error {
 }
 
 // StageCreate provides a mock function with given fields: key, btype, name
-func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) *ari.BridgeHandle {
+func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) (*ari.BridgeHandle, error) {
 	ret := _m.Called(key, btype, name)
 
 	var r0 *ari.BridgeHandle
@@ -194,11 +194,18 @@ func (_m *Bridge) StageCreate(key *ari.Key, btype string, name string) *ari.Brid
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, btype, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StagePlay provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) *ari.PlaybackHandle {
+func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	ret := _m.Called(key, playbackID, mediaURI)
 
 	var r0 *ari.PlaybackHandle
@@ -210,11 +217,18 @@ func (_m *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) *a
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, string) error); ok {
+		r1 = rf(key, playbackID, mediaURI)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // StageRecord provides a mock function with given fields: key, name, opts
-func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) *ari.LiveRecordingHandle {
+func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 	ret := _m.Called(key, name, opts)
 
 	var r0 *ari.LiveRecordingHandle
@@ -226,7 +240,14 @@ func (_m *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, *ari.RecordingOptions) error); ok {
+		r1 = rf(key, name, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Subscribe provides a mock function with given fields: key, n

@@ -4,8 +4,10 @@ package ari
 // Asterisk server for working with logging resources
 type Logging interface {
 
-	// Create creates a new log
-	Create(key *Key, level string) error
+	// Create creates a new log.  The levels are a comma-separated list of
+	// logging levels on which this channel should operate.  The name of the
+	// channel should be the key's ID.
+	Create(key *Key, levels string) (*LogHandle, error)
 
 	// Data retrives the data for a logging channel
 	Data(key *Key) (*LogData, error)
@@ -28,10 +30,17 @@ type LogData struct {
 	// Key is the cluster-unique identifier for this logging channel
 	Key *Key `json:"key"`
 
-	Name          string `json:"channel"`
-	Configuration string `json:"configuration"`
-	Type          string `json:"type"`
-	Status        string `json:"status"`
+	// Name is the name of the logging channel
+	Name string `json:"channel"`
+
+	// Levels is a comma-separated list of logging levels for this channel
+	Levels string `json:"levels"`
+
+	// Type indicates the type of logs for this channel
+	Types string `json:"types"`
+
+	// Status indicates whether this logging channel is enabled
+	Status string `json:"status"`
 }
 
 // NewLogHandle builds a new log handle given the `Key` and `Logging`` client

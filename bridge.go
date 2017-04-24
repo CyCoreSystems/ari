@@ -8,7 +8,7 @@ type Bridge interface {
 	Create(key *Key, btype string, name string) (*BridgeHandle, error)
 
 	// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
-	StageCreate(key *Key, btype string, name string) *BridgeHandle
+	StageCreate(key *Key, btype string, name string) (*BridgeHandle, error)
 
 	// Get gets the BridgeHandle
 	Get(key *Key) *BridgeHandle
@@ -33,14 +33,14 @@ type Bridge interface {
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(key *Key, playbackID string, mediaURI string) (ph *PlaybackHandle)
+	StagePlay(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
 	// Record records the bridge
 	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StageRecord(key *Key, name string, opts *RecordingOptions) (rh *LiveRecordingHandle)
+	StageRecord(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// Subscribe subscribes the given bridge events events
 	Subscribe(key *Key, n ...string) Subscription
@@ -89,27 +89,26 @@ func (bh *BridgeHandle) Key() *Key {
 }
 
 // Exec executes any staged operations attached on the bridge handle
-func (bh *BridgeHandle) Exec() (err error) {
+func (bh *BridgeHandle) Exec() error {
 	if !bh.executed {
 		bh.executed = true
 		if bh.exec != nil {
-			err = bh.exec(bh)
+			err := bh.exec(bh)
 			bh.exec = nil
+			return err
 		}
 	}
-	return
+	return nil
 }
 
 // AddChannel adds a channel to the bridge
-func (bh *BridgeHandle) AddChannel(channelID string) (err error) {
-	err = bh.b.AddChannel(bh.key, channelID)
-	return
+func (bh *BridgeHandle) AddChannel(channelID string) error {
+	return bh.b.AddChannel(bh.key, channelID)
 }
 
 // RemoveChannel removes a channel from the bridge
-func (bh *BridgeHandle) RemoveChannel(channelID string) (err error) {
-	err = bh.b.RemoveChannel(bh.key, channelID)
-	return
+func (bh *BridgeHandle) RemoveChannel(channelID string) error {
+	return bh.b.RemoveChannel(bh.key, channelID)
 }
 
 // Delete deletes the bridge
@@ -119,34 +118,29 @@ func (bh *BridgeHandle) Delete() (err error) {
 }
 
 // Data gets the bridge data
-func (bh *BridgeHandle) Data() (bd *BridgeData, err error) {
-	bd, err = bh.b.Data(bh.key)
-	return
+func (bh *BridgeHandle) Data() (*BridgeData, error) {
+	return bh.b.Data(bh.key)
 }
 
 // Play initiates playback of the specified media uri
 // to the bridge, returning the Playback handle
-func (bh *BridgeHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
-	ph, err = bh.b.Play(bh.key, id, mediaURI)
-	return
+func (bh *BridgeHandle) Play(id string, mediaURI string) (*PlaybackHandle, error) {
+	return bh.b.Play(bh.key, id, mediaURI)
 }
 
 // StagePlay stages a `Play` operation.
-func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (ph *PlaybackHandle) {
-	ph = bh.b.StagePlay(bh.key, id, mediaURI)
-	return
+func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (*PlaybackHandle, error) {
+	return bh.b.StagePlay(bh.key, id, mediaURI)
 }
 
 // Record records the bridge to the given filename
-func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
-	rh, err = bh.b.Record(bh.key, name, opts)
-	return
+func (bh *BridgeHandle) Record(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return bh.b.Record(bh.key, name, opts)
 }
 
 // StageRecord stages a `Record` operation
-func (bh *BridgeHandle) StageRecord(name string, opts *RecordingOptions) (rh *LiveRecordingHandle) {
-	rh = bh.b.StageRecord(bh.key, name, opts)
-	return
+func (bh *BridgeHandle) StageRecord(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return bh.b.StageRecord(bh.key, name, opts)
 }
 
 // Subscribe creates a subscription to the list of events

@@ -31,22 +31,6 @@ func (_m *Sound) Data(key *ari.Key) (*ari.SoundData, error) {
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: key
-func (_m *Sound) Get(key *ari.Key) *ari.SoundHandle {
-	ret := _m.Called(key)
-
-	var r0 *ari.SoundHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.SoundHandle); ok {
-		r0 = rf(key)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ari.SoundHandle)
-		}
-	}
-
-	return r0
-}
-
 // List provides a mock function with given fields: filters, keyFilter
 func (_m *Sound) List(filters map[string]string, keyFilter *ari.Key) ([]*ari.Key, error) {
 	ret := _m.Called(filters, keyFilter)

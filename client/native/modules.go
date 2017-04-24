@@ -13,7 +13,7 @@ type Modules struct {
 
 // Get obtains a lazy handle to an asterisk module
 func (m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
-	return ari.NewModuleHandle(key, m)
+	return ari.NewModuleHandle(m.client.stamp(key), m)
 }
 
 // List lists the modules and returns lists of handles
@@ -21,6 +21,7 @@ func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 	if filter == nil {
 		filter = ari.NodeKey(m.client.appName, m.client.node)
 	}
+
 	var modules = []struct {
 		Name string `json:"name"`
 	}{}
@@ -31,7 +32,7 @@ func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 	}
 
 	for _, i := range modules {
-		k := ari.NewKey(ari.ModuleKey, i.Name, ari.WithNode(m.client.node), ari.WithApp(m.client.appName))
+		k := m.client.stamp(ari.NewKey(ari.ModuleKey, i.Name))
 		if filter.Match(k) {
 			if filter.Dialog != "" {
 				k.Dialog = filter.Dialog

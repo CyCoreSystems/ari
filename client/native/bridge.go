@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Bridge provides the ARI Bridge accessors for the native client
@@ -14,36 +15,37 @@ type Bridge struct {
 
 // Create creates a bridge and returns the lazy handle for the bridge
 func (b *Bridge) Create(key *ari.Key, t string, name string) (bh *ari.BridgeHandle, err error) {
-	bh = b.StageCreate(key, t, name)
-	err = bh.Exec()
-	return
+	bh, err = b.StageCreate(key, t, name)
+	if err != nil {
+		return nil, err
+	}
+	return bh, bh.Exec()
 }
 
 // StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
-func (b *Bridge) StageCreate(key *ari.Key, t string, name string) *ari.BridgeHandle {
-	id := key.ID
+func (b *Bridge) StageCreate(key *ari.Key, btype, name string) (*ari.BridgeHandle, error) {
+	if key.ID == "" {
+		key.ID = uuid.NewV1().String()
+	}
+
 	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
 		Type string `json:"type,omitempty"`
 		Name string `json:"name,omitempty"`
 	}{
-		ID:   id,
-		Type: t,
+		ID:   key.ID,
+		Type: btype,
 		Name: name,
 	}
 
-	return ari.NewBridgeHandle(key, b, func(bh *ari.BridgeHandle) (err error) {
-		err = b.client.post("/bridges/"+id, &req, nil)
-		if err != nil {
-			return
-		}
-		return
-	})
+	return ari.NewBridgeHandle(b.client.stamp(key), b, func(bh *ari.BridgeHandle) (err error) {
+		return b.client.post("/bridges/"+key.ID, &req, nil)
+	}), nil
 }
 
 // Get gets the lazy handle for the given bridge id
 func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
-	return ari.NewBridgeHandle(key, b, nil)
+	return ari.NewBridgeHandle(b.client.stamp(key), b, nil)
 }
 
 // List lists the current bridges and returns a list of lazy handles
@@ -56,7 +58,7 @@ func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 
 	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
-		k := ari.NewKey(ari.BridgeKey, i.ID, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
+		k := b.client.stamp(ari.NewKey(ari.BridgeKey, i.ID))
 		if filter.Match(k) {
 			bx = append(bx, k)
 		}
@@ -77,6 +79,7 @@ func (b *Bridge) Data(key *ari.Key) (*ari.BridgeData, error) {
 	}
 
 	data.Key = b.client.stamp(key)
+
 	return data, nil
 }
 
@@ -123,46 +126,51 @@ func (b *Bridge) Delete(key *ari.Key) (err error) {
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
-	ph = b.StagePlay(key, playbackID, mediaURI)
-	err = ph.Exec()
-	return
+func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	h, err := b.StagePlay(key, playbackID, mediaURI)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle) {
-	id := key.ID
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	if playbackID == "" {
+		playbackID = uuid.NewV1().String()
+	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Media string `json:"media"`
+	}{
+		Media: mediaURI,
 	}
-	req := request{mediaURI}
-	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
-	return ari.NewPlaybackHandle(playbackKey, b.client.Playback(), func(pb *ari.PlaybackHandle) (err error) {
-		err = b.client.post("/bridges/"+id+"/play/"+playbackID, &resp, &req)
-		return
-	})
+	playbackKey := b.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
+
+	return ari.NewPlaybackHandle(playbackKey, b.client.Playback(), func(h *ari.PlaybackHandle) error {
+		return b.client.post("/bridges/"+key.ID+"/play/"+playbackID, &resp, &req)
+	}), nil
 }
 
 // Record attempts to record audio on the bridge, using name as the identifier for
 // the created live recording handle
-func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
-	rh = b.StageRecord(key, name, opts)
-	err = rh.Exec()
-	return
+func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+	h, err := b.StageRecord(key, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StageRecord stages a `Record` opreation
-func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle) {
-	id := key.ID
-
+func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
 	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Name        string `json:"name"`
 		Format      string `json:"format"`
 		MaxDuration int    `json:"maxDurationSeconds"`
@@ -170,8 +178,7 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 		IfExists    string `json:"ifExists,omitempty"`
 		Beep        bool   `json:"beep"`
 		TerminateOn string `json:"terminateOn,omitempty"`
-	}
-	req := request{
+	}{
 		Name:        name,
 		Format:      opts.Format,
 		MaxDuration: int(opts.MaxDuration / time.Second),
@@ -181,12 +188,11 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 		TerminateOn: opts.Terminate,
 	}
 
-	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(b.client.ApplicationName()), ari.WithNode(b.client.node))
+	recordingKey := b.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
 
-	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func() (err error) {
-		err = b.client.post("/bridges/"+id+"/record", &resp, &req)
-		return
-	})
+	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func() error {
+		return b.client.post("/bridges/"+key.ID+"/record", &resp, &req)
+	}), nil
 }
 
 // Subscribe creates an event subscription for events related to the given

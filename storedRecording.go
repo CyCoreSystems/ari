@@ -17,7 +17,7 @@ type StoredRecording interface {
 	Copy(key *Key, dest string) (*StoredRecordingHandle, error)
 
 	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-	StageCopy(key *Key, dest string) *StoredRecordingHandle
+	StageCopy(key *Key, dest string) (*StoredRecordingHandle, error)
 
 	// Delete deletes the recording
 	Delete(key *Key) error
@@ -77,25 +77,21 @@ func (s *StoredRecordingHandle) Exec() (err error) {
 }
 
 // Data gets the data for the stored recording
-func (s *StoredRecordingHandle) Data() (d *StoredRecordingData, err error) {
-	d, err = s.s.Data(s.key)
-	return
+func (s *StoredRecordingHandle) Data() (*StoredRecordingData, error) {
+	return s.s.Data(s.key)
 }
 
 // Copy copies the stored recording
-func (s *StoredRecordingHandle) Copy(dest string) (h *StoredRecordingHandle, err error) {
-	h, err = s.s.Copy(s.key, dest)
-	return
+func (s *StoredRecordingHandle) Copy(dest string) (*StoredRecordingHandle, error) {
+	return s.s.Copy(s.key, dest)
 }
 
 // StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-func (s *StoredRecordingHandle) StageCopy(dest string) (h *StoredRecordingHandle) {
-	h = s.s.StageCopy(s.key, dest)
-	return
+func (s *StoredRecordingHandle) StageCopy(dest string) (*StoredRecordingHandle, error) {
+	return s.s.StageCopy(s.key, dest)
 }
 
 // Delete deletes the recording
-func (s *StoredRecordingHandle) Delete() (err error) {
-	err = s.s.Delete(s.key)
-	return
+func (s *StoredRecordingHandle) Delete() error {
+	return s.s.Delete(s.key)
 }

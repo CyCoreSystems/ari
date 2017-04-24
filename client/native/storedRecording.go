@@ -18,12 +18,12 @@ func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 	}
 
 	if filter == nil {
-		filter = ari.NodeKey(sr.client.ApplicationName(), sr.client.node)
+		filter = sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, ""))
 	}
 
 	err = sr.client.get("/recordings/stored", &recs)
 	for _, rec := range recs {
-		k := ari.NewKey(ari.StoredRecordingKey, rec.Name, ari.WithNode(sr.client.node), ari.WithApp(sr.client.ApplicationName()))
+		k := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, rec.Name))
 		if filter.Match(k) {
 			sx = append(sx, k)
 		}
@@ -38,7 +38,7 @@ func (sr *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
 }
 
 // Data retrieves the state of the stored recording
-func (sr *StoredRecording) Data(key *ari.Key) (d *ari.StoredRecordingData, err error) {
+func (sr *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) {
 	if key == nil || key.ID == "" {
 		return nil, errors.New("storedRecording key not supplied")
 	}
@@ -53,37 +53,35 @@ func (sr *StoredRecording) Data(key *ari.Key) (d *ari.StoredRecordingData, err e
 }
 
 // Copy copies a stored recording and returns the new handle
-func (sr *StoredRecording) Copy(key *ari.Key, dest string) (h *ari.StoredRecordingHandle, err error) {
-	h = sr.StageCopy(key, dest)
-	err = h.Exec()
-	return
+func (sr *StoredRecording) Copy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
+	h, err := sr.StageCopy(key, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	return h, h.Exec()
 }
 
 // StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (h *ari.StoredRecordingHandle) {
+func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
 
 	var resp struct {
 		Name string `json:"name"`
 	}
 
-	var request struct {
+	req := struct {
 		Dest string `json:"destinationRecordingName"`
+	}{
+		Dest: dest,
 	}
 
-	request.Dest = dest
-
-	name := key.ID
-
-	destKey := ari.NewKey(ari.StoredRecordingKey, dest, ari.WithNode(sr.client.node), ari.WithApp(sr.client.ApplicationName()))
-	return ari.NewStoredRecordingHandle(destKey, sr, func(h *ari.StoredRecordingHandle) (err error) {
-		err = sr.client.post("/recordings/stored/"+name+"/copy", &resp, &request)
-		return
-	})
+	destKey := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, dest))
+	return ari.NewStoredRecordingHandle(destKey, sr, func(h *ari.StoredRecordingHandle) error {
+		return sr.client.post("/recordings/stored/"+key.ID+"/copy", &resp, &req)
+	}), nil
 }
 
 // Delete deletes the stored recording
-func (sr *StoredRecording) Delete(key *ari.Key) (err error) {
-	name := key.ID
-	err = sr.client.del("/recordings/stored/"+name+"", nil, "")
-	return
+func (sr *StoredRecording) Delete(key *ari.Key) error {
+	return sr.client.del("/recordings/stored/"+key.ID+"", nil, "")
 }

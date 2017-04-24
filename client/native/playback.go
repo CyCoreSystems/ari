@@ -12,9 +12,8 @@ type Playback struct {
 }
 
 // Get gets a lazy handle for the given playback identifier
-func (a *Playback) Get(key *ari.Key) (ph *ari.PlaybackHandle) {
-	ph = ari.NewPlaybackHandle(key, a, nil)
-	return
+func (a *Playback) Get(key *ari.Key) *ari.PlaybackHandle {
+	return ari.NewPlaybackHandle(a.client.stamp(key), a, nil)
 }
 
 // Data returns a playback's details.
@@ -33,10 +32,13 @@ func (a *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
 	return data, nil
 }
 
-// Control allows the user to manipulate an in-process playback.
-// TODO: list available operations.
-// (Equivalent to POST /playbacks/{playbackID}/control)
-func (a *Playback) Control(key *ari.Key, op string) (err error) {
+// Control performs the given operation on the current playback.  Available operations are:
+//   - restart
+//   - pause
+//   - unpause
+//   - reverse
+//   - forward
+func (a *Playback) Control(key *ari.Key, op string) error {
 	req := struct {
 		Operation string `json:"operation"`
 	}{
@@ -47,7 +49,7 @@ func (a *Playback) Control(key *ari.Key, op string) (err error) {
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
-func (a *Playback) Stop(key *ari.Key) (err error) {
+func (a *Playback) Stop(key *ari.Key) error {
 	return a.client.del("/playbacks/"+key.ID, nil, "")
 }
 

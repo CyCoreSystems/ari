@@ -108,7 +108,7 @@ func (_m *StoredRecording) List(filter *ari.Key) ([]*ari.Key, error) {
 }
 
 // StageCopy provides a mock function with given fields: key, dest
-func (_m *StoredRecording) StageCopy(key *ari.Key, dest string) *ari.StoredRecordingHandle {
+func (_m *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
 	ret := _m.Called(key, dest)
 
 	var r0 *ari.StoredRecordingHandle
@@ -120,5 +120,12 @@ func (_m *StoredRecording) StageCopy(key *ari.Key, dest string) *ari.StoredRecor
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key, string) error); ok {
+		r1 = rf(key, dest)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

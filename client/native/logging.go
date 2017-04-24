@@ -11,19 +11,24 @@ type Logging struct {
 }
 
 // Create creates a logging level
-func (l *Logging) Create(key *ari.Key, level string) (err error) {
-	type request struct {
-		Configuration string `json:"configuration"`
+func (l *Logging) Create(key *ari.Key, levels string) (*ari.LogHandle, error) {
+	req := struct {
+		Levels string `json:"configuration"`
+	}{
+		Levels: levels,
 	}
-	req := request{level}
-	name := key.ID
-	err = l.client.post("/asterisk/logging/"+name, nil, &req)
-	return
+
+	err := l.client.post("/asterisk/logging/"+key.ID, nil, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return l.Get(key), nil
 }
 
 // Get returns a logging channel handle
 func (l *Logging) Get(key *ari.Key) *ari.LogHandle {
-	return ari.NewLogHandle(key, l)
+	return ari.NewLogHandle(l.client.stamp(key), l)
 }
 
 func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {

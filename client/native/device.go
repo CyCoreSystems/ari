@@ -13,7 +13,7 @@ type DeviceState struct {
 
 // Get returns the lazy handle for the given device name
 func (ds *DeviceState) Get(key *ari.Key) *ari.DeviceStateHandle {
-	return ari.NewDeviceStateHandle(key, ds)
+	return ari.NewDeviceStateHandle(ds.client.stamp(key), ds)
 }
 
 // List lists the current devices and returns a list of handles
@@ -24,13 +24,17 @@ func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
 	}
 
 	if filter == nil {
-		filter = ari.NodeKey(ds.client.ApplicationName(), ds.client.node)
+		filter = ds.client.stamp(ari.NewKey(ari.DeviceStateKey, ""))
 	}
 
 	var devices []device
 	err = ds.client.get("/deviceStates", &devices)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, i := range devices {
-		k := ari.NewKey(ari.DeviceStateKey, i.Name, ari.WithApp(ds.client.ApplicationName()), ari.WithNode(ds.client.node))
+		k := ds.client.stamp(ari.NewKey(ari.DeviceStateKey, i.Name))
 		if filter.Match(k) {
 			dx = append(dx, k)
 		}
@@ -55,18 +59,14 @@ func (ds *DeviceState) Data(key *ari.Key) (*ari.DeviceStateData, error) {
 }
 
 // Update updates the state of the device
-func (ds *DeviceState) Update(key *ari.Key, state string) (err error) {
+func (ds *DeviceState) Update(key *ari.Key, state string) error {
 	req := map[string]string{
 		"deviceState": state,
 	}
-	name := key.ID
-	err = ds.client.put("/deviceStates/"+name, nil, &req)
-	return
+	return ds.client.put("/deviceStates/"+key.ID, nil, &req)
 }
 
 // Delete deletes the device
-func (ds *DeviceState) Delete(key *ari.Key) (err error) {
-	name := key.ID
-	err = ds.client.del("/deviceStates/"+name, nil, "")
-	return
+func (ds *DeviceState) Delete(key *ari.Key) error {
+	return ds.client.del("/deviceStates/"+key.ID, nil, "")
 }

@@ -22,12 +22,12 @@ func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	}{}
 
 	if filter == nil {
-		filter = ari.NodeKey(c.client.ApplicationName(), c.client.node)
+		filter = ari.NewKey(ari.ChannelKey, "")
 	}
 
 	err = c.client.get("/channels", &channels)
 	for _, i := range channels {
-		k := ari.NewKey(ari.ChannelKey, i.ID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
+		k := c.client.stamp(ari.NewKey(ari.ChannelKey, i.ID))
 		if filter.Match(k) {
 			cx = append(cx, k)
 		}
@@ -56,44 +56,49 @@ func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
 	if err := c.client.get("/channels/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "channel", "%v", key.ID)
 	}
+	data.Key = c.client.stamp(key)
+
 	return data, nil
 }
 
 // Get gets the lazy handle for the given channel
 func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
-	return ari.NewChannelHandle(key, c, nil)
+	return ari.NewChannelHandle(c.client.stamp(key), c, nil)
 }
 
-// Originate originates a channel and returns the handle TODO: expand
-// differences between originate and create
+// Originate originates a channel and returns the handle
 func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	h := c.StageOriginate(req)
-	err := h.Exec()
-	return h, err
+	h, err := c.StageOriginate(req)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StageOriginate creates a new channel handle with a channel originate request
 // staged.
-func (c *Channel) StageOriginate(req ari.OriginateRequest) *ari.ChannelHandle {
+func (c *Channel) StageOriginate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
 
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}
 
-	return ari.NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, func(ch *ari.ChannelHandle) error {
-		type response struct {
-			ID string `json:"id"`
-		}
+	return ari.NewChannelHandle(c.client.stamp(ari.NewKey(ari.ChannelKey, req.ChannelID)), c,
+		func(ch *ari.ChannelHandle) error {
+			type response struct {
+				ID string `json:"id"`
+			}
 
-		var resp response
+			var resp response
 
-		err := c.client.post("/channels", &resp, &req)
-		if err != nil {
-			return nil
-		}
+			err := c.client.post("/channels", &resp, &req)
+			if err != nil {
+				return nil
+			}
 
-		return err
-	})
+			return err
+		},
+	), nil
 }
 
 // Create creates a channel and returns the handle. TODO: expand
@@ -108,175 +113,149 @@ func (c *Channel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, erro
 		return nil, err
 	}
 
-	h := ari.NewChannelHandle(ari.NewKey(ari.ChannelKey, req.ChannelID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node)), c, nil)
-	return h, err
+	return ari.NewChannelHandle(c.client.stamp(ari.NewKey(ari.ChannelKey, req.ChannelID)), c, nil), nil
 }
 
 // Continue tells a channel to process to the given ARI context and extension
 func (c *Channel) Continue(key *ari.Key, context, extension string, priority int) (err error) {
-	id := key.ID
-	type request struct {
+	req := struct {
 		Context   string `json:"context"`
 		Extension string `json:"extension"`
 		Priority  int    `json:"priority"`
+	}{
+		Context:   context,
+		Extension: extension,
+		Priority:  priority,
 	}
-	req := request{Context: context, Extension: extension, Priority: priority}
-	err = c.client.post("/channels/"+id+"/continue", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/continue", nil, &req)
 }
 
 // Busy sends the busy status code to the channel (TODO: does this play a busy signal too)
-func (c *Channel) Busy(key *ari.Key) (err error) {
-	err = c.Hangup(key, "busy")
-	return
+func (c *Channel) Busy(key *ari.Key) error {
+	return c.Hangup(key, "busy")
 }
 
 // Congestion sends the congestion status code to the channel (TODO: does this play a tone?)
-func (c *Channel) Congestion(key *ari.Key) (err error) {
-	err = c.Hangup(key, "congestion")
-	return
+func (c *Channel) Congestion(key *ari.Key) error {
+	return c.Hangup(key, "congestion")
 }
 
 // Answer answers a channel, if ringing (TODO: does this return an error if already answered?)
-func (c *Channel) Answer(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/answer", nil, nil)
-	return
+func (c *Channel) Answer(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/answer", nil, nil)
 }
 
 // Ring causes a channel to start ringing (TODO: does this return an error if already ringing?)
-func (c *Channel) Ring(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/ring", nil, nil)
-	return
+func (c *Channel) Ring(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/ring", nil, nil)
 }
 
 // StopRing causes a channel to stop ringing (TODO: does this return an error if not ringing?)
-func (c *Channel) StopRing(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.del("/channels/"+id+"/ring", nil, "")
-	return
+func (c *Channel) StopRing(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/ring", nil, "")
 }
 
 // Hold puts a channel on hold (TODO: does this return an error if already on hold?)
-func (c *Channel) Hold(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/hold", nil, nil)
-	return
+func (c *Channel) Hold(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/hold", nil, nil)
 }
 
 // StopHold removes a channel from hold (TODO: does this return an error if not on hold)
 func (c *Channel) StopHold(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.del("/channels/"+id+"/hold", nil, "")
-	return
+	return c.client.del("/channels/"+key.ID+"/hold", nil, "")
 }
 
 // Mute mutes a channel in the given direction (TODO: does this return an error if already muted)
-// TODO: enumerate direction
-func (c *Channel) Mute(key *ari.Key, dir ari.Direction) (err error) {
+func (c *Channel) Mute(key *ari.Key, dir ari.Direction) error {
 	if dir == "" {
-		dir = ari.DirectionIn
+		dir = ari.DirectionBoth
 	}
-	id := key.ID
+
 	req := struct {
 		Direction ari.Direction `json:"direction,omitempty"`
 	}{
 		Direction: dir,
 	}
-	return c.client.post("/channels/"+id+"/mute", nil, &req)
+	return c.client.post("/channels/"+key.ID+"/mute", nil, &req)
 }
 
 // Unmute unmutes a channel in the given direction (TODO: does this return an error if unmuted)
-// TODO: enumerate direction
 func (c *Channel) Unmute(key *ari.Key, dir ari.Direction) (err error) {
 	if dir == "" {
-		dir = ari.DirectionIn
+		dir = ari.DirectionBoth
 	}
 	req := fmt.Sprintf("direction=%s", dir)
-	id := key.ID
-	return c.client.del("/channels/"+id+"/mute", nil, req)
+	return c.client.del("/channels/"+key.ID+"/mute", nil, req)
 }
 
 // SendDTMF sends a string of digits and symbols to the channel
-func (c *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) (err error) {
+func (c *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) error {
 
-	type request struct {
+	if opts == nil {
+		opts = &ari.DTMFOptions{}
+	}
+
+	if opts.Duration < 1 {
+		opts.Duration = 100 // ARI default, for documenation
+	}
+	if opts.Between < 1 {
+		opts.Between = 100 // ARI default, for documentation
+	}
+
+	req := struct {
 		Dtmf     string `json:"dtmf,omitempty"`
-		Before   *int   `json:"before,omitempty"`
-		Between  *int   `json:"between,omitempty"`
-		Duration *int   `json:"duration,omitempty"`
-		After    *int   `json:"after,omitempty"`
-	}
-	req := request{}
-
-	if opts != nil {
-		if opts.Before != 0 {
-			req.Before = new(int)
-			*req.Before = int(opts.Before / time.Millisecond)
-		}
-		if opts.After != 0 {
-			req.After = new(int)
-			*req.After = int(opts.After / time.Millisecond)
-		}
-		if opts.Duration != 0 {
-			req.Duration = new(int)
-			*req.Duration = int(opts.Duration / time.Millisecond)
-		}
-		if opts.Between != 0 {
-			req.Between = new(int)
-			*req.Between = int(opts.Between / time.Millisecond)
-		}
+		Before   int    `json:"before,omitempty"`
+		Between  int    `json:"between,omitempty"`
+		Duration int    `json:"duration,omitempty"`
+		After    int    `json:"after,omitempty"`
+	}{
+		Dtmf:     dtmf,
+		Before:   int(opts.Before / time.Millisecond),
+		After:    int(opts.After / time.Millisecond),
+		Duration: int(opts.Duration / time.Millisecond),
+		Between:  int(opts.Between / time.Millisecond),
 	}
 
-	req.Dtmf = dtmf
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/dtmf", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/dtmf", nil, &req)
 }
 
 // MOH plays the given music on hold class to the channel TODO: does this error when already playing MOH?
-func (c *Channel) MOH(key *ari.Key, mohClass string) (err error) {
-	type request struct {
-		MohClass string `json:"mohClass,omitempty"`
+func (c *Channel) MOH(key *ari.Key, class string) error {
+	req := struct {
+		Class string `json:"mohClass,omitempty"`
+	}{
+		Class: class,
 	}
-	id := key.ID
-	req := request{mohClass}
-	err = c.client.post("/channels/"+id+"/moh", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/moh", nil, &req)
 }
 
 // StopMOH stops any music on hold playing on the channel (TODO: does this error when no MOH is playing?)
-func (c *Channel) StopMOH(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.del("/channels/"+id+"/moh", nil, "")
-	return
+func (c *Channel) StopMOH(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/moh", nil, "")
 }
 
 // Silence silences a channel (TODO: does this error when already silences)
-func (c *Channel) Silence(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/silence", nil, nil)
-	return
+func (c *Channel) Silence(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/silence", nil, nil)
 }
 
 // StopSilence stops the silence on a channel (TODO: does this error when not silenced)
-func (c *Channel) StopSilence(key *ari.Key) (err error) {
-	id := key.ID
-	err = c.client.del("/channels/"+id+"/silence", nil, "")
-	return
+func (c *Channel) StopSilence(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/silence", nil, "")
 }
 
 // Play plays the given media URI on the channel, using the playbackID as
 // the identifier of the created ARI Playback entity
-func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
-	ph = c.StagePlay(key, playbackID, mediaURI)
-	err = ph.Exec()
-	return
+func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	h, err := c.StagePlay(key, playbackID, mediaURI)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) *ari.PlaybackHandle {
+func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	resp := make(map[string]interface{})
 	req := struct {
 		Media string `json:"media"`
@@ -284,30 +263,31 @@ func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) *a
 		Media: mediaURI,
 	}
 
-	playbackKey := ari.NewKey(ari.PlaybackKey, playbackID, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
-	return ari.NewPlaybackHandle(playbackKey, c.client.Playback(), func(pb *ari.PlaybackHandle) (err error) {
-		err = c.client.post("/channels/"+key.ID+"/play/"+playbackID, &resp, &req)
-		return
-	})
+	playbackKey := c.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
+	return ari.NewPlaybackHandle(playbackKey, c.client.Playback(), func(pb *ari.PlaybackHandle) error {
+		return c.client.post("/channels/"+key.ID+"/play/"+playbackID, &resp, &req)
+	}), nil
 }
 
 // Record records audio on the channel, using the name parameter as the name of the
 // created LiveRecording entity.
-func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
-	rh = c.StageRecord(key, name, opts)
-	err = rh.Exec()
-	return
+func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+	h, err := c.StageRecord(key, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StageRecord stages a `Record` opreation
-func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle) {
+func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
 	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Name        string `json:"name"`
 		Format      string `json:"format"`
 		MaxDuration int    `json:"maxDurationSeconds"`
@@ -315,8 +295,7 @@ func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 		IfExists    string `json:"ifExists,omitempty"`
 		Beep        bool   `json:"beep"`
 		TerminateOn string `json:"terminateOn,omitempty"`
-	}
-	req := request{
+	}{
 		Name:        name,
 		Format:      opts.Format,
 		MaxDuration: int(opts.MaxDuration / time.Second),
@@ -326,37 +305,41 @@ func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 		TerminateOn: opts.Terminate,
 	}
 
-	recordingKey := ari.NewKey(ari.LiveRecordingKey, name, ari.WithApp(c.client.ApplicationName()), ari.WithNode(c.client.node))
-	id := key.ID
+	recordingKey := c.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
+
 	return ari.NewLiveRecordingHandle(recordingKey, c.client.LiveRecording(), func() error {
-		return c.client.post("/channels/"+id+"/record", &resp, &req)
-	})
+		return c.client.post("/channels/"+key.ID+"/record", &resp, &req)
+	}), nil
 }
 
 // Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
-func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
-	ch = c.StageSnoop(key, snoopID, opts)
-	err = ch.Exec()
-	return
+func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
+	h, err := c.StageSnoop(key, snoopID, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
 }
 
 // StageSnoop creates a new `ChannelHandle` with a `Snoop` operation staged.
-func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) *ari.ChannelHandle {
+func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
 	if opts == nil {
 		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
 	if snoopID == "" {
 		snoopID = uuid.NewV1().String()
 	}
-	id := key.ID
-	return ari.NewChannelHandle(key, c, func(ch *ari.ChannelHandle) (err error) {
-		err = c.client.post("/channels/"+id+"/snoop/"+snoopID, nil, &opts)
-		return
-	})
+
+	// Create the snooping channel's key
+	k := c.client.stamp(ari.NewKey(ari.ChannelKey, snoopID))
+
+	return ari.NewChannelHandle(k, c, func(ch *ari.ChannelHandle) error {
+		return c.client.post("/channels/"+key.ID+"/snoop/"+snoopID, nil, &opts)
+	}), nil
 }
 
 // Dial dials the given calling channel identifier
-func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Duration) (err error) {
+func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Duration) error {
 	req := struct {
 		// Caller is the (optional) channel ID of another channel to which media negotiations for the newly-dialed channel will be associated.
 		Caller string `json:"caller,omitempty"`
@@ -367,9 +350,8 @@ func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Durat
 		Caller:  callingChannelID,
 		Timeout: int(timeout.Seconds()),
 	}
-	id := key.ID
-	err = c.client.post("/channels/"+id+"/dial", nil, &req)
-	return
+
+	return c.client.post("/channels/"+key.ID+"/dial", nil, &req)
 }
 
 // Subscribe creates a new subscription for ARI events related to this channel

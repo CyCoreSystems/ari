@@ -10,7 +10,12 @@ type Playback interface {
 	// Data gets the playback data
 	Data(key *Key) (*PlaybackData, error)
 
-	// Control performs the given operation on the current playback
+	// Control performs the given operation on the current playback.  Available operations are:
+	//   - restart
+	//   - pause
+	//   - unpause
+	//   - reverse
+	//   - forward
 	Control(key *Key, op string) error
 
 	// Stop stops the playback

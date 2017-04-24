@@ -12,11 +12,6 @@ type Sound struct {
 	client *Client
 }
 
-// Get returns a managed handle to a SoundData
-func (s *Sound) Get(key *ari.Key) *ari.SoundHandle {
-	return ari.NewSoundHandle(key, s)
-}
-
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
 func (s *Sound) Data(key *ari.Key) (*ari.SoundData, error) {
@@ -52,14 +47,17 @@ func (s *Sound) List(filters map[string]string, keyFilter *ari.Key) (sh []*ari.K
 	}
 
 	if keyFilter == nil {
-		keyFilter = ari.NodeKey(s.client.ApplicationName(), s.client.node)
+		keyFilter = s.client.stamp(ari.NewKey(ari.SoundKey, ""))
 	}
 
 	err = s.client.get(uri, &sounds)
+	if err != nil {
+		return nil, err
+	}
 
 	// Store whatever we received, even if incomplete or error
 	for _, i := range sounds {
-		k := ari.NewKey(ari.SoundKey, i.Name, ari.WithApp(s.client.ApplicationName()), ari.WithNode(s.client.node))
+		k := s.client.stamp(ari.NewKey(ari.SoundKey, i.Name))
 		if keyFilter.Match(k) {
 			sh = append(sh, k)
 		}

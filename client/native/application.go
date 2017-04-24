@@ -14,14 +14,14 @@ type Application struct {
 
 // Get returns a managed handle to an ARI application
 func (a *Application) Get(key *ari.Key) *ari.ApplicationHandle {
-	return ari.NewApplicationHandle(key, a)
+	return ari.NewApplicationHandle(a.client.stamp(key), a)
 }
 
 // List returns the list of applications managed by asterisk
 func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 
 	if filter == nil {
-		filter = ari.NodeKey(a.client.ApplicationName(), a.client.node)
+		filter = ari.NewKey(ari.ApplicationKey, "")
 	}
 
 	var apps = []struct {
@@ -31,7 +31,7 @@ func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 	err = a.client.get("/applications", &apps)
 
 	for _, i := range apps {
-		k := ari.NewKey(ari.ApplicationKey, i.Name, ari.WithApp(a.client.ApplicationName()), ari.WithNode(a.client.node))
+		k := a.client.stamp(ari.NewKey(ari.ApplicationKey, i.Name))
 		if filter.Match(k) {
 			ax = append(ax, k)
 		}

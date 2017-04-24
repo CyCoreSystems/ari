@@ -25,11 +25,7 @@ type LiveRecording interface {
 	// Unmute unmutes the live recording
 	Unmute(key *Key) error
 
-	// Delete deletes the live recording
-	Delete(key *Key) error
-
 	// Scrap Stops and deletes the current LiveRecording
-	//TODO: reproduce this error in isolation: does not delete. Cannot delete any recording produced by this.
 	Scrap(key *Key) error
 }
 
@@ -95,12 +91,6 @@ func (s *LiveRecordingHandle) Stop() (err error) {
 // Scrap stops and deletes the recording
 func (s *LiveRecordingHandle) Scrap() (err error) {
 	err = s.s.Scrap(s.key)
-	return
-}
-
-// Delete deletes the recording
-func (s *LiveRecordingHandle) Delete() (err error) {
-	err = s.s.Delete(s.key)
 	return
 }
 

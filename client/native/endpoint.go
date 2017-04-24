@@ -13,7 +13,7 @@ type Endpoint struct {
 
 // Get gets a lazy handle for the endpoint entity
 func (e *Endpoint) Get(key *ari.Key) *ari.EndpointHandle {
-	return ari.NewEndpointHandle(key, e)
+	return ari.NewEndpointHandle(e.client.stamp(key), e)
 }
 
 // List lists the current endpoints and returns a list of handles
@@ -22,12 +22,17 @@ func (e *Endpoint) List(filter *ari.Key) (ex []*ari.Key, err error) {
 		Tech     string `json:"technology"`
 		Resource string `json:"resource"`
 	}{}
+
 	if filter == nil {
 		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
 	err = e.client.get("/endpoints", &endpoints)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, i := range endpoints {
-		k := ari.NewEndpointKey(i.Tech, i.Resource, ari.WithApp(e.client.ApplicationName()), ari.WithNode(e.client.node))
+		k := e.client.stamp(ari.NewEndpointKey(i.Tech, i.Resource))
 		if filter.Match(k) {
 			ex = append(ex, k)
 		}
@@ -43,12 +48,17 @@ func (e *Endpoint) ListByTech(tech string, filter *ari.Key) (ex []*ari.Key, err 
 		Tech     string `json:"technology"`
 		Resource string `json:"resource"`
 	}{}
+
 	if filter == nil {
 		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
 	err = e.client.get("/endpoints/"+tech, &endpoints)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, i := range endpoints {
-		k := ari.NewEndpointKey(i.Tech, i.Resource, ari.WithApp(e.client.ApplicationName()), ari.WithNode(e.client.node))
+		k := e.client.stamp(ari.NewEndpointKey(i.Tech, i.Resource))
 		if filter.Match(k) {
 			ex = append(ex, k)
 		}

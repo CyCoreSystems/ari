@@ -24,7 +24,7 @@ type Channel interface {
 
 	// StageOriginate creates a new Originate, created when the `Exec` method
 	// on `ChannelHandle` is invoked
-	StageOriginate(OriginateRequest) *ChannelHandle
+	StageOriginate(OriginateRequest) (*ChannelHandle, error)
 
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed. Create is already Staged via `Dial`.
@@ -89,14 +89,14 @@ type Channel interface {
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(key *Key, playbackID string, mediaURI string) (ph *PlaybackHandle)
+	StagePlay(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
 	// Record records the channel
 	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StageRecord(key *Key, name string, opts *RecordingOptions) (rh *LiveRecordingHandle)
+	StageRecord(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// Dial dials a created channel
 	Dial(key *Key, caller string, timeout time.Duration) error
@@ -106,7 +106,7 @@ type Channel interface {
 
 	// StageSnoop creates a new `ChannelHandle`, when `Exec`ed, snoops on the given channel ID and
 	// creates a new snooping channel.
-	StageSnoop(key *Key, snoopID string, opts *SnoopOptions) *ChannelHandle
+	StageSnoop(key *Key, snoopID string, opts *SnoopOptions) (*ChannelHandle, error)
 
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
@@ -228,26 +228,22 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 // Play initiates playback of the specified media uri
 // to the channel, returning the Playback handle
 func (ch *ChannelHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
-	ph, err = ch.c.Play(ch.key, id, mediaURI)
-	return
+	return ch.c.Play(ch.key, id, mediaURI)
 }
 
 // Record records the channel to the given filename
-func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
-	rh, err = ch.c.Record(ch.key, name, opts)
-	return
+func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return ch.c.Record(ch.key, name, opts)
 }
 
 // StagePlay stages a `Play` operation.
-func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (ph *PlaybackHandle) {
-	ph = ch.c.StagePlay(ch.key, id, mediaURI)
-	return
+func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (*PlaybackHandle, error) {
+	return ch.c.StagePlay(ch.key, id, mediaURI)
 }
 
 // StageRecord stages a `Record` operation
-func (ch *ChannelHandle) StageRecord(name string, opts *RecordingOptions) (rh *LiveRecordingHandle) {
-	rh = ch.c.StageRecord(ch.key, name, opts)
-	return
+func (ch *ChannelHandle) StageRecord(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return ch.c.StageRecord(ch.key, name, opts)
 }
 
 //---
@@ -386,6 +382,15 @@ func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error)
 	return ch.c.Originate(req)
 }
 
+// StageOriginate stages an originate (channel creation and dial) to be Executed later.
+func (ch *ChannelHandle) StageOriginate(req OriginateRequest) (*ChannelHandle, error) {
+	if req.Originator == "" {
+		req.Originator = ch.ID()
+	}
+
+	return ch.c.StageOriginate(req)
+}
+
 // Dial dials a created channel.  `caller` is the optional
 // channel ID of the calling party (if there is one).  Timeout
 // is the length of time to wait before the dial is answered
@@ -400,7 +405,7 @@ func (ch *ChannelHandle) Snoop(snoopID string, opts *SnoopOptions) (*ChannelHand
 }
 
 // StageSnoop stages a `Snoop` operation
-func (ch *ChannelHandle) StageSnoop(snoopID string, opts *SnoopOptions) *ChannelHandle {
+func (ch *ChannelHandle) StageSnoop(snoopID string, opts *SnoopOptions) (*ChannelHandle, error) {
 	return ch.c.StageSnoop(ch.key, snoopID, opts)
 }
 
