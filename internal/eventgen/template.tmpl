@@ -31,7 +31,15 @@ func DecodeEvent(data []byte) (Event, error) {
 		return nil, err
 	}
 
-	return raw.ToEvent()
+	evt, err := raw.ToEvent()
+      if err != nil {
+            return nil, err
+      }
+      err = json.Unmarshal(data, evt)
+      if err != nil {
+            return nil, err
+      }
+      return evt, nil
 }
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
@@ -67,9 +75,7 @@ func (r *RawEvent) ToEvent() (Event, error) {
 
 	switch r.Type {
 	{{range .}}case Events.{{.Name}}:
-      if r.{{.Name}} == nil {
-         return nil, errors.New("invalid event data for {{.Name}}")
-      }
+      r.{{.Name}} = &{{.Name}}{}      
       r.{{.Name}}.Header = r.Header
       r.{{.Name}}.EventData = r.EventData
       return r.{{.Name}}, nil

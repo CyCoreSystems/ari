@@ -118,5 +118,15 @@ func TestEvents(t *testing.T) {
 			t.Error("received empty event")
 			return
 		}
+
+		dtmf, ok := e.(*ari.ChannelDtmfReceived)
+		if !ok {
+			t.Errorf("event is not a DTMF received event")
+			return
+		}
+		if dtmf.Channel.ID != "9ae755c1-28a1-11e7-a1b1-0a580a480105" {
+			t.Errorf("Failed to parse channel subentity on DTMF event")
+			return
+		}
 	}
 }

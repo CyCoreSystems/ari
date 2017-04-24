@@ -108,7 +108,15 @@ func DecodeEvent(data []byte) (Event, error) {
 		return nil, err
 	}
 
-	return raw.ToEvent()
+	evt, err := raw.ToEvent()
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(data, evt)
+	if err != nil {
+		return nil, err
+	}
+	return evt, nil
 }
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
@@ -336,282 +344,202 @@ func (r *RawEvent) ToEvent() (Event, error) {
 
 	switch r.Type {
 	case Events.ApplicationReplaced:
-		if r.ApplicationReplaced == nil {
-			return nil, errors.New("invalid event data for ApplicationReplaced")
-		}
+		r.ApplicationReplaced = &ApplicationReplaced{}
 		r.ApplicationReplaced.Header = r.Header
 		r.ApplicationReplaced.EventData = r.EventData
 		return r.ApplicationReplaced, nil
 	case Events.BridgeAttendedTransfer:
-		if r.BridgeAttendedTransfer == nil {
-			return nil, errors.New("invalid event data for BridgeAttendedTransfer")
-		}
+		r.BridgeAttendedTransfer = &BridgeAttendedTransfer{}
 		r.BridgeAttendedTransfer.Header = r.Header
 		r.BridgeAttendedTransfer.EventData = r.EventData
 		return r.BridgeAttendedTransfer, nil
 	case Events.BridgeBlindTransfer:
-		if r.BridgeBlindTransfer == nil {
-			return nil, errors.New("invalid event data for BridgeBlindTransfer")
-		}
+		r.BridgeBlindTransfer = &BridgeBlindTransfer{}
 		r.BridgeBlindTransfer.Header = r.Header
 		r.BridgeBlindTransfer.EventData = r.EventData
 		return r.BridgeBlindTransfer, nil
 	case Events.BridgeCreated:
-		if r.BridgeCreated == nil {
-			return nil, errors.New("invalid event data for BridgeCreated")
-		}
+		r.BridgeCreated = &BridgeCreated{}
 		r.BridgeCreated.Header = r.Header
 		r.BridgeCreated.EventData = r.EventData
 		return r.BridgeCreated, nil
 	case Events.BridgeDestroyed:
-		if r.BridgeDestroyed == nil {
-			return nil, errors.New("invalid event data for BridgeDestroyed")
-		}
+		r.BridgeDestroyed = &BridgeDestroyed{}
 		r.BridgeDestroyed.Header = r.Header
 		r.BridgeDestroyed.EventData = r.EventData
 		return r.BridgeDestroyed, nil
 	case Events.BridgeMerged:
-		if r.BridgeMerged == nil {
-			return nil, errors.New("invalid event data for BridgeMerged")
-		}
+		r.BridgeMerged = &BridgeMerged{}
 		r.BridgeMerged.Header = r.Header
 		r.BridgeMerged.EventData = r.EventData
 		return r.BridgeMerged, nil
 	case Events.BridgeVideoSourceChanged:
-		if r.BridgeVideoSourceChanged == nil {
-			return nil, errors.New("invalid event data for BridgeVideoSourceChanged")
-		}
+		r.BridgeVideoSourceChanged = &BridgeVideoSourceChanged{}
 		r.BridgeVideoSourceChanged.Header = r.Header
 		r.BridgeVideoSourceChanged.EventData = r.EventData
 		return r.BridgeVideoSourceChanged, nil
 	case Events.ChannelCallerID:
-		if r.ChannelCallerID == nil {
-			return nil, errors.New("invalid event data for ChannelCallerID")
-		}
+		r.ChannelCallerID = &ChannelCallerID{}
 		r.ChannelCallerID.Header = r.Header
 		r.ChannelCallerID.EventData = r.EventData
 		return r.ChannelCallerID, nil
 	case Events.ChannelConnectedLine:
-		if r.ChannelConnectedLine == nil {
-			return nil, errors.New("invalid event data for ChannelConnectedLine")
-		}
+		r.ChannelConnectedLine = &ChannelConnectedLine{}
 		r.ChannelConnectedLine.Header = r.Header
 		r.ChannelConnectedLine.EventData = r.EventData
 		return r.ChannelConnectedLine, nil
 	case Events.ChannelCreated:
-		if r.ChannelCreated == nil {
-			return nil, errors.New("invalid event data for ChannelCreated")
-		}
+		r.ChannelCreated = &ChannelCreated{}
 		r.ChannelCreated.Header = r.Header
 		r.ChannelCreated.EventData = r.EventData
 		return r.ChannelCreated, nil
 	case Events.ChannelDestroyed:
-		if r.ChannelDestroyed == nil {
-			return nil, errors.New("invalid event data for ChannelDestroyed")
-		}
+		r.ChannelDestroyed = &ChannelDestroyed{}
 		r.ChannelDestroyed.Header = r.Header
 		r.ChannelDestroyed.EventData = r.EventData
 		return r.ChannelDestroyed, nil
 	case Events.ChannelDialplan:
-		if r.ChannelDialplan == nil {
-			return nil, errors.New("invalid event data for ChannelDialplan")
-		}
+		r.ChannelDialplan = &ChannelDialplan{}
 		r.ChannelDialplan.Header = r.Header
 		r.ChannelDialplan.EventData = r.EventData
 		return r.ChannelDialplan, nil
 	case Events.ChannelDtmfReceived:
-		if r.ChannelDtmfReceived == nil {
-			return nil, errors.New("invalid event data for ChannelDtmfReceived")
-		}
+		r.ChannelDtmfReceived = &ChannelDtmfReceived{}
 		r.ChannelDtmfReceived.Header = r.Header
 		r.ChannelDtmfReceived.EventData = r.EventData
 		return r.ChannelDtmfReceived, nil
 	case Events.ChannelEnteredBridge:
-		if r.ChannelEnteredBridge == nil {
-			return nil, errors.New("invalid event data for ChannelEnteredBridge")
-		}
+		r.ChannelEnteredBridge = &ChannelEnteredBridge{}
 		r.ChannelEnteredBridge.Header = r.Header
 		r.ChannelEnteredBridge.EventData = r.EventData
 		return r.ChannelEnteredBridge, nil
 	case Events.ChannelHangupRequest:
-		if r.ChannelHangupRequest == nil {
-			return nil, errors.New("invalid event data for ChannelHangupRequest")
-		}
+		r.ChannelHangupRequest = &ChannelHangupRequest{}
 		r.ChannelHangupRequest.Header = r.Header
 		r.ChannelHangupRequest.EventData = r.EventData
 		return r.ChannelHangupRequest, nil
 	case Events.ChannelHold:
-		if r.ChannelHold == nil {
-			return nil, errors.New("invalid event data for ChannelHold")
-		}
+		r.ChannelHold = &ChannelHold{}
 		r.ChannelHold.Header = r.Header
 		r.ChannelHold.EventData = r.EventData
 		return r.ChannelHold, nil
 	case Events.ChannelLeftBridge:
-		if r.ChannelLeftBridge == nil {
-			return nil, errors.New("invalid event data for ChannelLeftBridge")
-		}
+		r.ChannelLeftBridge = &ChannelLeftBridge{}
 		r.ChannelLeftBridge.Header = r.Header
 		r.ChannelLeftBridge.EventData = r.EventData
 		return r.ChannelLeftBridge, nil
 	case Events.ChannelStateChange:
-		if r.ChannelStateChange == nil {
-			return nil, errors.New("invalid event data for ChannelStateChange")
-		}
+		r.ChannelStateChange = &ChannelStateChange{}
 		r.ChannelStateChange.Header = r.Header
 		r.ChannelStateChange.EventData = r.EventData
 		return r.ChannelStateChange, nil
 	case Events.ChannelTalkingFinished:
-		if r.ChannelTalkingFinished == nil {
-			return nil, errors.New("invalid event data for ChannelTalkingFinished")
-		}
+		r.ChannelTalkingFinished = &ChannelTalkingFinished{}
 		r.ChannelTalkingFinished.Header = r.Header
 		r.ChannelTalkingFinished.EventData = r.EventData
 		return r.ChannelTalkingFinished, nil
 	case Events.ChannelTalkingStarted:
-		if r.ChannelTalkingStarted == nil {
-			return nil, errors.New("invalid event data for ChannelTalkingStarted")
-		}
+		r.ChannelTalkingStarted = &ChannelTalkingStarted{}
 		r.ChannelTalkingStarted.Header = r.Header
 		r.ChannelTalkingStarted.EventData = r.EventData
 		return r.ChannelTalkingStarted, nil
 	case Events.ChannelUnhold:
-		if r.ChannelUnhold == nil {
-			return nil, errors.New("invalid event data for ChannelUnhold")
-		}
+		r.ChannelUnhold = &ChannelUnhold{}
 		r.ChannelUnhold.Header = r.Header
 		r.ChannelUnhold.EventData = r.EventData
 		return r.ChannelUnhold, nil
 	case Events.ChannelUserevent:
-		if r.ChannelUserevent == nil {
-			return nil, errors.New("invalid event data for ChannelUserevent")
-		}
+		r.ChannelUserevent = &ChannelUserevent{}
 		r.ChannelUserevent.Header = r.Header
 		r.ChannelUserevent.EventData = r.EventData
 		return r.ChannelUserevent, nil
 	case Events.ChannelVarset:
-		if r.ChannelVarset == nil {
-			return nil, errors.New("invalid event data for ChannelVarset")
-		}
+		r.ChannelVarset = &ChannelVarset{}
 		r.ChannelVarset.Header = r.Header
 		r.ChannelVarset.EventData = r.EventData
 		return r.ChannelVarset, nil
 	case Events.ContactInfo:
-		if r.ContactInfo == nil {
-			return nil, errors.New("invalid event data for ContactInfo")
-		}
+		r.ContactInfo = &ContactInfo{}
 		r.ContactInfo.Header = r.Header
 		r.ContactInfo.EventData = r.EventData
 		return r.ContactInfo, nil
 	case Events.ContactStatusChange:
-		if r.ContactStatusChange == nil {
-			return nil, errors.New("invalid event data for ContactStatusChange")
-		}
+		r.ContactStatusChange = &ContactStatusChange{}
 		r.ContactStatusChange.Header = r.Header
 		r.ContactStatusChange.EventData = r.EventData
 		return r.ContactStatusChange, nil
 	case Events.DeviceStateChanged:
-		if r.DeviceStateChanged == nil {
-			return nil, errors.New("invalid event data for DeviceStateChanged")
-		}
+		r.DeviceStateChanged = &DeviceStateChanged{}
 		r.DeviceStateChanged.Header = r.Header
 		r.DeviceStateChanged.EventData = r.EventData
 		return r.DeviceStateChanged, nil
 	case Events.Dial:
-		if r.Dial == nil {
-			return nil, errors.New("invalid event data for Dial")
-		}
+		r.Dial = &Dial{}
 		r.Dial.Header = r.Header
 		r.Dial.EventData = r.EventData
 		return r.Dial, nil
 	case Events.EndpointStateChange:
-		if r.EndpointStateChange == nil {
-			return nil, errors.New("invalid event data for EndpointStateChange")
-		}
+		r.EndpointStateChange = &EndpointStateChange{}
 		r.EndpointStateChange.Header = r.Header
 		r.EndpointStateChange.EventData = r.EventData
 		return r.EndpointStateChange, nil
 	case Events.MissingParams:
-		if r.MissingParams == nil {
-			return nil, errors.New("invalid event data for MissingParams")
-		}
+		r.MissingParams = &MissingParams{}
 		r.MissingParams.Header = r.Header
 		r.MissingParams.EventData = r.EventData
 		return r.MissingParams, nil
 	case Events.Peer:
-		if r.Peer == nil {
-			return nil, errors.New("invalid event data for Peer")
-		}
+		r.Peer = &Peer{}
 		r.Peer.Header = r.Header
 		r.Peer.EventData = r.EventData
 		return r.Peer, nil
 	case Events.PeerStatusChange:
-		if r.PeerStatusChange == nil {
-			return nil, errors.New("invalid event data for PeerStatusChange")
-		}
+		r.PeerStatusChange = &PeerStatusChange{}
 		r.PeerStatusChange.Header = r.Header
 		r.PeerStatusChange.EventData = r.EventData
 		return r.PeerStatusChange, nil
 	case Events.PlaybackContinuing:
-		if r.PlaybackContinuing == nil {
-			return nil, errors.New("invalid event data for PlaybackContinuing")
-		}
+		r.PlaybackContinuing = &PlaybackContinuing{}
 		r.PlaybackContinuing.Header = r.Header
 		r.PlaybackContinuing.EventData = r.EventData
 		return r.PlaybackContinuing, nil
 	case Events.PlaybackFinished:
-		if r.PlaybackFinished == nil {
-			return nil, errors.New("invalid event data for PlaybackFinished")
-		}
+		r.PlaybackFinished = &PlaybackFinished{}
 		r.PlaybackFinished.Header = r.Header
 		r.PlaybackFinished.EventData = r.EventData
 		return r.PlaybackFinished, nil
 	case Events.PlaybackStarted:
-		if r.PlaybackStarted == nil {
-			return nil, errors.New("invalid event data for PlaybackStarted")
-		}
+		r.PlaybackStarted = &PlaybackStarted{}
 		r.PlaybackStarted.Header = r.Header
 		r.PlaybackStarted.EventData = r.EventData
 		return r.PlaybackStarted, nil
 	case Events.RecordingFailed:
-		if r.RecordingFailed == nil {
-			return nil, errors.New("invalid event data for RecordingFailed")
-		}
+		r.RecordingFailed = &RecordingFailed{}
 		r.RecordingFailed.Header = r.Header
 		r.RecordingFailed.EventData = r.EventData
 		return r.RecordingFailed, nil
 	case Events.RecordingFinished:
-		if r.RecordingFinished == nil {
-			return nil, errors.New("invalid event data for RecordingFinished")
-		}
+		r.RecordingFinished = &RecordingFinished{}
 		r.RecordingFinished.Header = r.Header
 		r.RecordingFinished.EventData = r.EventData
 		return r.RecordingFinished, nil
 	case Events.RecordingStarted:
-		if r.RecordingStarted == nil {
-			return nil, errors.New("invalid event data for RecordingStarted")
-		}
+		r.RecordingStarted = &RecordingStarted{}
 		r.RecordingStarted.Header = r.Header
 		r.RecordingStarted.EventData = r.EventData
 		return r.RecordingStarted, nil
 	case Events.StasisEnd:
-		if r.StasisEnd == nil {
-			return nil, errors.New("invalid event data for StasisEnd")
-		}
+		r.StasisEnd = &StasisEnd{}
 		r.StasisEnd.Header = r.Header
 		r.StasisEnd.EventData = r.EventData
 		return r.StasisEnd, nil
 	case Events.StasisStart:
-		if r.StasisStart == nil {
-			return nil, errors.New("invalid event data for StasisStart")
-		}
+		r.StasisStart = &StasisStart{}
 		r.StasisStart.Header = r.Header
 		r.StasisStart.EventData = r.EventData
 		return r.StasisStart, nil
 	case Events.TextMessageReceived:
-		if r.TextMessageReceived == nil {
-			return nil, errors.New("invalid event data for TextMessageReceived")
-		}
+		r.TextMessageReceived = &TextMessageReceived{}
 		r.TextMessageReceived.Header = r.Header
 		r.TextMessageReceived.EventData = r.EventData
 		return r.TextMessageReceived, nil
