@@ -32,7 +32,7 @@ func (_m *Player) Play(_a0 string, _a1 string) (*ari.PlaybackHandle, error) {
 }
 
 // StagePlay provides a mock function with given fields: _a0, _a1
-func (_m *Player) StagePlay(_a0 string, _a1 string) *ari.PlaybackHandle {
+func (_m *Player) StagePlay(_a0 string, _a1 string) (*ari.PlaybackHandle, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *ari.PlaybackHandle
@@ -44,7 +44,14 @@ func (_m *Player) StagePlay(_a0 string, _a1 string) *ari.PlaybackHandle {
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Subscribe provides a mock function with given fields: n

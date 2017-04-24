@@ -65,13 +65,13 @@ func (_m *Channel) Continue(key *ari.Key, context string, extension string, prio
 	return r0
 }
 
-// Create provides a mock function with given fields: _a0
-func (_m *Channel) Create(_a0 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
-	ret := _m.Called(_a0)
+// Create provides a mock function with given fields: _a0, _a1
+func (_m *Channel) Create(_a0 *ari.Key, _a1 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.ChannelCreateRequest) *ari.ChannelHandle); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.ChannelCreateRequest) *ari.ChannelHandle); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ChannelHandle)
@@ -79,8 +79,8 @@ func (_m *Channel) Create(_a0 ari.ChannelCreateRequest) (*ari.ChannelHandle, err
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(ari.ChannelCreateRequest) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(*ari.Key, ari.ChannelCreateRequest) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -241,13 +241,13 @@ func (_m *Channel) Mute(key *ari.Key, dir ari.Direction) error {
 	return r0
 }
 
-// Originate provides a mock function with given fields: _a0
-func (_m *Channel) Originate(_a0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	ret := _m.Called(_a0)
+// Originate provides a mock function with given fields: _a0, _a1
+func (_m *Channel) Originate(_a0 *ari.Key, _a1 ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) *ari.ChannelHandle); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.OriginateRequest) *ari.ChannelHandle); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ChannelHandle)
@@ -255,8 +255,8 @@ func (_m *Channel) Originate(_a0 ari.OriginateRequest) (*ari.ChannelHandle, erro
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(ari.OriginateRequest) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(*ari.Key, ari.OriginateRequest) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -389,13 +389,13 @@ func (_m *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (
 	return r0, r1
 }
 
-// StageOriginate provides a mock function with given fields: _a0
-func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	ret := _m.Called(_a0)
+// StageOriginate provides a mock function with given fields: _a0, _a1
+func (_m *Channel) StageOriginate(_a0 *ari.Key, _a1 ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(ari.OriginateRequest) *ari.ChannelHandle); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.OriginateRequest) *ari.ChannelHandle); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.ChannelHandle)
@@ -403,8 +403,8 @@ func (_m *Channel) StageOriginate(_a0 ari.OriginateRequest) (*ari.ChannelHandle,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(ari.OriginateRequest) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(*ari.Key, ari.OriginateRequest) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

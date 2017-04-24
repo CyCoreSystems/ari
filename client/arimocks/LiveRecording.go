@@ -117,6 +117,29 @@ func (_m *LiveRecording) Stop(key *ari.Key) error {
 	return r0
 }
 
+// Subscribe provides a mock function with given fields: key, n
+func (_m *LiveRecording) Subscribe(key *ari.Key, n ...string) ari.Subscription {
+	_va := make([]interface{}, len(n))
+	for _i := range n {
+		_va[_i] = n[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, key)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 ari.Subscription
+	if rf, ok := ret.Get(0).(func(*ari.Key, ...string) ari.Subscription); ok {
+		r0 = rf(key, n...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(ari.Subscription)
+		}
+	}
+
+	return r0
+}
+
 // Unmute provides a mock function with given fields: key
 func (_m *LiveRecording) Unmute(key *ari.Key) error {
 	ret := _m.Called(key)
