@@ -46,14 +46,16 @@ func (_m *Config) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Config) Get(key *ari.Key) ari.ConfigHandle {
+func (_m *Config) Get(key *ari.Key) *ari.ConfigHandle {
 	ret := _m.Called(key)
 
-	var r0 ari.ConfigHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key) ari.ConfigHandle); ok {
+	var r0 *ari.ConfigHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.ConfigHandle); ok {
 		r0 = rf(key)
 	} else {
-		r0 = ret.Get(0).(ari.ConfigHandle)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ari.ConfigHandle)
+		}
 	}
 
 	return r0
