@@ -1,5 +1,7 @@
 package ari
 
+import "fmt"
+
 const (
 	// ApplicationKey is the key kind for ARI Application resources.
 	ApplicationKey = "application"
@@ -113,6 +115,16 @@ func NewKey(kind string, id string, opts ...KeyOptionFunc) *Key {
 // AppKey returns a key that is bound to the given application.
 func AppKey(app string) *Key {
 	return NewKey("", "", WithApp(app))
+}
+
+// ConfigID returns the configuration Key ID for the given configuration class, type/kind, and id.
+func ConfigID(class, kind, id string) string {
+	return fmt.Sprintf("%s/%s/%s", class, kind, id)
+}
+
+// EndpointID returns the endpoint Key ID for the given tech and resource
+func EndpointID(tech, resource string) string {
+	return fmt.Sprintf("%s/%s", tech, resource)
 }
 
 // DialogKey returns a key that is bound to the given dialog.

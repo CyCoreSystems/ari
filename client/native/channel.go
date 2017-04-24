@@ -314,7 +314,7 @@ func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOpti
 
 	recordingKey := c.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
 
-	return ari.NewLiveRecordingHandle(recordingKey, c.client.LiveRecording(), func() error {
+	return ari.NewLiveRecordingHandle(recordingKey, c.client.LiveRecording(), func(h *ari.LiveRecordingHandle) error {
 		return c.client.post("/channels/"+key.ID+"/record", &resp, &req)
 	}), nil
 }

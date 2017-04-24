@@ -190,7 +190,7 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 
 	recordingKey := b.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
 
-	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func() error {
+	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func(h *ari.LiveRecordingHandle) error {
 		return b.client.post("/bridges/"+key.ID+"/record", &resp, &req)
 	}), nil
 }

@@ -11,7 +11,7 @@ type Config struct {
 }
 
 // Get gets a lazy handle to a configuration object
-func (c *Config) Get(key *ari.Key) ari.ConfigHandle {
+func (c *Config) Get(key *ari.Key) *ari.ConfigHandle {
 	return ari.NewConfigHandle(key, c)
 }
 

@@ -11,7 +11,7 @@ import (
 type Config interface {
 
 	// Get gets the reference to a config object
-	Get(key *Key) ConfigHandle
+	Get(key *Key) *ConfigHandle
 
 	// Data gets the data for the config object
 	Data(key *Key) (*ConfigData, error)

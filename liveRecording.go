@@ -53,7 +53,7 @@ func (s *LiveRecordingData) ID() string {
 }
 
 // NewLiveRecordingHandle creates a new live recording handle
-func NewLiveRecordingHandle(key *Key, r LiveRecording, exec func() (err error)) *LiveRecordingHandle {
+func NewLiveRecordingHandle(key *Key, r LiveRecording, exec func(*LiveRecordingHandle) (err error)) *LiveRecordingHandle {
 	return &LiveRecordingHandle{
 		key:  key,
 		r:    r,
@@ -65,7 +65,7 @@ func NewLiveRecordingHandle(key *Key, r LiveRecording, exec func() (err error)) 
 type LiveRecordingHandle struct {
 	key      *Key
 	r        LiveRecording
-	exec     func() (err error)
+	exec     func(*LiveRecordingHandle) (err error)
 	executed bool
 }
 
@@ -126,7 +126,7 @@ func (h *LiveRecordingHandle) Exec() (err error) {
 	if !h.executed {
 		h.executed = true
 		if h.exec != nil {
-			err = h.exec()
+			err = h.exec(h)
 			h.exec = nil
 		}
 	}
