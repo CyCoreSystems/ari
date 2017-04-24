@@ -33,8 +33,8 @@ func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 }
 
 // Get gets a lazy handle for the given stored recording name
-func (sr *StoredRecording) Get(key *ari.Key) (*ari.StoredRecordingHandle, error) {
-	return ari.NewStoredRecordingHandle(key, sr, nil), nil
+func (sr *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
+	return ari.NewStoredRecordingHandle(key, sr, nil)
 }
 
 // Data retrieves the state of the stored recording

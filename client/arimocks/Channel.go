@@ -126,7 +126,7 @@ func (_m *Channel) Dial(key *ari.Key, caller string, timeout time.Duration) erro
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Channel) Get(key *ari.Key) (*ari.ChannelHandle, error) {
+func (_m *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.ChannelHandle
@@ -138,14 +138,7 @@ func (_m *Channel) Get(key *ari.Key) (*ari.ChannelHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetVariable provides a mock function with given fields: _a0, _a1

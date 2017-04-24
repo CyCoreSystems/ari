@@ -8,7 +8,7 @@ type Application interface {
 	List(*Key) ([]*Key, error)
 
 	// Get returns a handle to the application for further interaction
-	Get(key *Key) (*ApplicationHandle, error)
+	Get(key *Key) *ApplicationHandle
 
 	// Data returns the applications data
 	Data(key *Key) (*ApplicationData, error)

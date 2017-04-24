@@ -12,8 +12,8 @@ type Endpoint struct {
 }
 
 // Get gets a lazy handle for the endpoint entity
-func (e *Endpoint) Get(key *ari.Key) (*ari.EndpointHandle, error) {
-	return ari.NewEndpointHandle(e.client.stamp(key), e), nil
+func (e *Endpoint) Get(key *ari.Key) *ari.EndpointHandle {
+	return ari.NewEndpointHandle(e.client.stamp(key), e)
 }
 
 // List lists the current endpoints and returns a list of handles

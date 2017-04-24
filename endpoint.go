@@ -19,7 +19,7 @@ type Endpoint interface {
 	ListByTech(tech string, filter *Key) ([]*Key, error)
 
 	// Get returns a handle to the endpoint for further operations
-	Get(key *Key) (*EndpointHandle, error)
+	Get(key *Key) *EndpointHandle
 
 	// Data returns the state of the endpoint
 	Data(key *Key) (*EndpointData, error)

@@ -83,7 +83,7 @@ func (_m *Bridge) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Bridge) Get(key *ari.Key) (*ari.BridgeHandle, error) {
+func (_m *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.BridgeHandle
@@ -95,14 +95,7 @@ func (_m *Bridge) Get(key *ari.Key) (*ari.BridgeHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // List provides a mock function with given fields: _a0

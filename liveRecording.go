@@ -5,7 +5,7 @@ package ari
 type LiveRecording interface {
 
 	// Get gets the Recording by type
-	Get(key *Key) (*LiveRecordingHandle, error)
+	Get(key *Key) *LiveRecordingHandle
 
 	// Data gets the data for the live recording
 	Data(key *Key) (*LiveRecordingData, error)

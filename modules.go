@@ -3,7 +3,7 @@ package ari
 // Modules is the communication path for interacting with the
 // asterisk modules resource
 type Modules interface {
-	Get(key *Key) (*ModuleHandle, error)
+	Get(key *Key) *ModuleHandle
 
 	List(filter *Key) ([]*Key, error)
 

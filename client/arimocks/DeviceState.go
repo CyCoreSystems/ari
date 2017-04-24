@@ -46,7 +46,7 @@ func (_m *DeviceState) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *DeviceState) Get(key *ari.Key) (*ari.DeviceStateHandle, error) {
+func (_m *DeviceState) Get(key *ari.Key) *ari.DeviceStateHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.DeviceStateHandle
@@ -58,14 +58,7 @@ func (_m *DeviceState) Get(key *ari.Key) (*ari.DeviceStateHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // List provides a mock function with given fields: filter

@@ -32,7 +32,7 @@ func (_m *Modules) Data(key *ari.Key) (*ari.ModuleData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Modules) Get(key *ari.Key) (*ari.ModuleHandle, error) {
+func (_m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.ModuleHandle
@@ -44,14 +44,7 @@ func (_m *Modules) Get(key *ari.Key) (*ari.ModuleHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // List provides a mock function with given fields: filter

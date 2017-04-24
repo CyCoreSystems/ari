@@ -11,7 +11,7 @@ type Bridge interface {
 	StageCreate(key *Key, btype string, name string) (*BridgeHandle, error)
 
 	// Get gets the BridgeHandle
-	Get(key *Key) (*BridgeHandle, error)
+	Get(key *Key) *BridgeHandle
 
 	// Lists returns the lists of bridges in asterisk, optionally using the key for filtering.
 	List(*Key) ([]*Key, error)

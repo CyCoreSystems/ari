@@ -12,7 +12,7 @@ type LiveRecording struct {
 }
 
 // Get gets a lazy handle for the live recording name
-func (lr *LiveRecording) Get(key *ari.Key) (h *ari.LiveRecordingHandle, err error) {
+func (lr *LiveRecording) Get(key *ari.Key) (h *ari.LiveRecordingHandle) {
 	h = ari.NewLiveRecordingHandle(lr.client.stamp(key), lr, nil)
 	return
 }

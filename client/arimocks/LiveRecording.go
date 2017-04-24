@@ -32,7 +32,7 @@ func (_m *LiveRecording) Data(key *ari.Key) (*ari.LiveRecordingData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *LiveRecording) Get(key *ari.Key) (*ari.LiveRecordingHandle, error) {
+func (_m *LiveRecording) Get(key *ari.Key) *ari.LiveRecordingHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.LiveRecordingHandle
@@ -44,14 +44,7 @@ func (_m *LiveRecording) Get(key *ari.Key) (*ari.LiveRecordingHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Mute provides a mock function with given fields: key

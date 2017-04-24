@@ -5,7 +5,7 @@ package ari
 type Playback interface {
 
 	// Get gets the handle to the given playback ID
-	Get(key *Key) (*PlaybackHandle, error)
+	Get(key *Key) *PlaybackHandle
 
 	// Data gets the playback data
 	Data(key *Key) (*PlaybackData, error)

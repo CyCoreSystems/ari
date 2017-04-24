@@ -12,8 +12,8 @@ type Modules struct {
 }
 
 // Get obtains a lazy handle to an asterisk module
-func (m *Modules) Get(key *ari.Key) (*ari.ModuleHandle, error) {
-	return ari.NewModuleHandle(m.client.stamp(key), m), nil
+func (m *Modules) Get(key *ari.Key) *ari.ModuleHandle {
+	return ari.NewModuleHandle(m.client.stamp(key), m)
 }
 
 // List lists the modules and returns lists of handles

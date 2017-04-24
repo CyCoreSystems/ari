@@ -69,7 +69,7 @@ func (_m *StoredRecording) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *StoredRecording) Get(key *ari.Key) (*ari.StoredRecordingHandle, error) {
+func (_m *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.StoredRecordingHandle
@@ -81,14 +81,7 @@ func (_m *StoredRecording) Get(key *ari.Key) (*ari.StoredRecordingHandle, error)
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // List provides a mock function with given fields: filter

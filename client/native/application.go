@@ -13,8 +13,8 @@ type Application struct {
 }
 
 // Get returns a managed handle to an ARI application
-func (a *Application) Get(key *ari.Key) (*ari.ApplicationHandle, error) {
-	return ari.NewApplicationHandle(a.client.stamp(key), a), nil
+func (a *Application) Get(key *ari.Key) *ari.ApplicationHandle {
+	return ari.NewApplicationHandle(a.client.stamp(key), a)
 }
 
 // List returns the list of applications managed by asterisk

@@ -46,7 +46,7 @@ func (_m *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Playback) Get(key *ari.Key) (*ari.PlaybackHandle, error) {
+func (_m *Playback) Get(key *ari.Key) *ari.PlaybackHandle {
 	ret := _m.Called(key)
 
 	var r0 *ari.PlaybackHandle
@@ -58,14 +58,7 @@ func (_m *Playback) Get(key *ari.Key) (*ari.PlaybackHandle, error) {
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
-		r1 = rf(key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Stop provides a mock function with given fields: key
