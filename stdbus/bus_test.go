@@ -9,38 +9,43 @@ import (
 
 var dtmfTestEventData = `
 {
-	"asterisk_id": "aa:bb:cc:dd:ee:ff",
-	"type": "ChannelDtmfReceived",
-	"application": "test",
-	"timestamp": "2017-03-13T17:15:40.000-0400",
-	"channel": {
-		"accountcode": "testAccount",
-		"caller": {
-			"name": "testCallerName",
-			"number": "testCallerNumber"
-		},
-		"connected": {
-			"name": "testConnectedName",
-			"number": "testConnectedNumber"
-		},
-		"creationtime": "2017-03-13T17:15:39.000-0400",
-		"dialplan": {
-
-		},
-		"id": "testChannelID"
-	},
-	"digit": "1",
-	"duration_ms": "100"
+  "channel": {
+    "id": "9ae755c1-28a1-11e7-a1b1-0a580a480105",
+    "dialplan": {
+      "priority": 1,
+      "context": "default",
+      "exten": "9ae88e27-28a1-11e7-ba20-0a580a480707"
+    },
+    "creationtime": "2017-04-24T03:53:41.188+0000",
+    "name": "Local/9ae88e27-28a1-11e7-ba20-0a580a480707@default-0000008b;1",
+    "state": "Up",
+    "connected": {
+      "name": "",
+      "number": ""
+    },
+    "caller": {
+      "name": "",
+      "number": ""
+    },
+    "accountcode": "",
+    "language": "en"
+  },
+  "duration_ms": 240,
+  "type": "ChannelDtmfReceived",
+  "application": "sdp",
+  "timestamp": "2017-04-24T03:53:42.155+0000",
+  "digit": "1",
+  "asterisk_id": "42:01:0a:64:00:06"
 }
 `
 
-var dtmfTestEvent *ari.Message
+var dtmfTestEvent ari.Event
 
 func init() {
 	var err error
-	dtmfTestEvent, err = ari.NewMessage([]byte(dtmfTestEventData))
+	dtmfTestEvent, err = ari.DecodeEvent([]byte(dtmfTestEventData))
 	if err != nil {
-		panic("failed to construct dtmf test event")
+		panic("failed to construct dtmf test event: " + err.Error())
 	}
 }
 
@@ -51,7 +56,7 @@ func TestSubscribe(t *testing.T) {
 
 	defer b.Close()
 
-	sub := b.Subscribe(ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
 	if len(b.subs) != 1 {
 		t.Error("failed to add subscription to bus")
 	}
@@ -66,11 +71,11 @@ func TestClose(t *testing.T) {
 	}()
 
 	b := New()
-	sub := b.Subscribe(ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
 	sub.Cancel()
 	sub.Cancel()
 
-	sub2 := b.Subscribe(ari.Events.ChannelDestroyed).(*subscription)
+	sub2 := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDestroyed).(*subscription)
 
 	b.Close()
 	b.Close()
@@ -95,7 +100,7 @@ func TestEvents(t *testing.T) {
 	b := New()
 	defer b.Close()
 
-	sub := b.Subscribe(ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
 	defer sub.Cancel()
 
 	b.Send(dtmfTestEvent)

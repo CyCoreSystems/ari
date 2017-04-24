@@ -356,31 +356,7 @@ func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Durat
 
 // Subscribe creates a new subscription for ARI events related to this channel
 func (c *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
-	inSub := c.client.Bus().Subscribe(n...)
-	outSub := newSubscription()
-
-	go func() {
-		defer inSub.Cancel()
-
-		for {
-			select {
-			case <-outSub.closedChan:
-				return
-			case e, ok := <-inSub.Events():
-				if !ok {
-					return
-				}
-				for _, k := range e.Keys() {
-					if k.Match(key) {
-						outSub.events <- e
-						break
-					}
-				}
-			}
-		}
-	}()
-
-	return outSub
+	return c.client.Bus().Subscribe(key, n...)
 }
 
 // GetVariable gets the value of the given variable

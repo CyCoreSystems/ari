@@ -61,3 +61,9 @@ func (lr *LiveRecording) Unmute(key *ari.Key) error {
 func (lr *LiveRecording) Scrap(key *ari.Key) error {
 	return lr.client.del("/recordings/live/"+key.ID, nil, "")
 }
+
+// Subscribe is a shim to enable recording handles to subscribe to their
+// underlying bridge/channel for events.  It should not be called directly.
+func (lr *LiveRecording) Subscribe(key *ari.Key, n ...string) ari.Subscription {
+	return lr.Subscribe(key, n...)
+}

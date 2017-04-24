@@ -55,29 +55,5 @@ func (a *Playback) Stop(key *ari.Key) error {
 
 // Subscribe listens for ARI events for the given playback entity
 func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
-	inSub := a.client.Bus().Subscribe(n...)
-	outSub := newSubscription()
-
-	go func() {
-		defer inSub.Cancel()
-
-		for {
-			select {
-			case <-outSub.closedChan:
-				return
-			case e, ok := <-inSub.Events():
-				if !ok {
-					return
-				}
-				for _, k := range e.Keys() {
-					if k.Match(key) {
-						outSub.events <- e
-						break
-					}
-				}
-			}
-		}
-	}()
-
-	return outSub
+	return a.client.Bus().Subscribe(key, n...)
 }

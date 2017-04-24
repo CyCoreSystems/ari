@@ -17,7 +17,7 @@ type Sender interface {
 
 // A Subscriber is an entity which can create ARI event subscriptions
 type Subscriber interface {
-	Subscribe(n ...string) Subscription
+	Subscribe(key *Key, n ...string) Subscription
 }
 
 // A Subscription is a subscription on series of ARI events
@@ -31,8 +31,8 @@ type Subscription interface {
 
 // Once listens for the first event of the provided types,
 // returning a channel which supplies that event.
-func Once(ctx context.Context, bus Bus, eTypes ...string) <-chan Event {
-	s := bus.Subscribe(eTypes...)
+func Once(ctx context.Context, bus Bus, key *Key, eTypes ...string) <-chan Event {
+	s := bus.Subscribe(key, eTypes...)
 
 	ret := make(chan Event)
 

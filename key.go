@@ -131,6 +131,10 @@ func (k *Key) Match(o *Key) bool {
 		return true
 	}
 
+	if k == nil || o == nil {
+		return false
+	}
+
 	if k.App != "" && o.App != "" && k.App != o.App {
 		return false
 	}
@@ -141,11 +145,11 @@ func (k *Key) Match(o *Key) bool {
 		return false
 	}
 
-	if k.Kind == "" && k.ID != "" && k.ID != o.ID {
+	if k.Kind != "" && o.Kind != "" && k.ID != o.ID {
 		return false
 	}
 
-	if k.ID == "" && k.Kind != "" && k.Kind != o.Kind {
+	if k.ID != "" && o.ID != "" && k.ID != o.ID {
 		return false
 	}
 

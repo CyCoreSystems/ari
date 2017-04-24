@@ -36,7 +36,7 @@ func DecodeEvent(data []byte) (Event, error) {
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
 type RawEvent struct {
-   EventData
+   EventData `json:",inline"`
    Header Header  `json:"header"`
    
 
@@ -59,7 +59,7 @@ func EventToRaw(e Event) *RawEvent {
    return raw
 }
 
-// ToEvent converts a RawEvent to an Evert, preseving any transport Headers associated with the RawEvent.
+// ToEvent converts a RawEvent to an Event, preseving any transport Headers associated with the RawEvent.
 func (r *RawEvent) ToEvent() (Event, error) {
    if r.Header == nil {
       r.Header = make(Header)
@@ -67,6 +67,9 @@ func (r *RawEvent) ToEvent() (Event, error) {
 
 	switch r.Type {
 	{{range .}}case Events.{{.Name}}:
+      if r.{{.Name}} == nil {
+         return nil, errors.New("invalid event data for {{.Name}}")
+      }
       r.{{.Name}}.Header = r.Header
       r.{{.Name}}.EventData = r.EventData
       return r.{{.Name}}, nil
@@ -79,7 +82,7 @@ func (r *RawEvent) ToEvent() (Event, error) {
 {{range .}}
 // {{.Name}} - "{{.Description}}"
 type {{.Name}} struct {
-   EventData
+   EventData `json:",inline"`
 
    // Header describes any transport-related metadata
    Header Header `json:"-"`

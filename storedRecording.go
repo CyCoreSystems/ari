@@ -16,9 +16,6 @@ type StoredRecording interface {
 	// Copy copies the recording to the destination name
 	Copy(key *Key, dest string) (*StoredRecordingHandle, error)
 
-	// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-	StageCopy(key *Key, dest string) (*StoredRecordingHandle, error)
-
 	// Delete deletes the recording
 	Delete(key *Key) error
 }
@@ -84,11 +81,6 @@ func (s *StoredRecordingHandle) Data() (*StoredRecordingData, error) {
 // Copy copies the stored recording
 func (s *StoredRecordingHandle) Copy(dest string) (*StoredRecordingHandle, error) {
 	return s.s.Copy(s.key, dest)
-}
-
-// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
-func (s *StoredRecordingHandle) StageCopy(dest string) (*StoredRecordingHandle, error) {
-	return s.s.StageCopy(s.key, dest)
 }
 
 // Delete deletes the recording

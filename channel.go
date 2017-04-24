@@ -115,7 +115,7 @@ type Channel interface {
 // ChannelData is the data for a specific channel
 type ChannelData struct {
 	// Key is the unique identifier for a channel in the cluster
-	Key *Key `json:"key"`
+	Key *Key `json:"key,omitempty"`
 
 	ID           string      `json:"id"`    // Unique id for this channel (same as for AMI)
 	Name         string      `json:"name"`  // Name of this channel (tech/name-id format)

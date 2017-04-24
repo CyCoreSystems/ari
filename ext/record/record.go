@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
 // RecordingStartTimeout is the amount of time to wait for a recording to start
@@ -16,7 +17,7 @@ var RecordingStartTimeout = 1 * time.Second
 // Record starts a recording on the given Recorder.
 // TODO: simplify
 // nolint:gocyclo
-func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOptions) (rec *Recording) {
+func Record(r Recorder, name string, opts *ari.RecordingOptions) (rec *Recording) {
 
 	Logger.Debug("Starting record", "name", name, "opts", opts)
 
@@ -27,6 +28,16 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 	ctx, cancel := context.WithCancel(context.Background())
 	rec.cancel = cancel
 
+	// Create recording handle
+	h, err := r.StageRecord(name, opts)
+	if err != nil {
+		rec.err = err
+		rec.status = Failed
+		close(rec.doneCh)
+		return
+	}
+	rec.handle = h
+
 	// TODO: we have no way to track hangups because we do
 	// not have the affiliated channel ID.  We _may_ be able
 	// to compare a ChannelHangupRequest event's channel with
@@ -34,41 +45,30 @@ func Record(bus ari.Subscriber, r Recorder, name string, opts *ari.RecordingOpti
 	// for channels.
 
 	go func() {
+		defer close(rec.doneCh)
 
 		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
 
 		// Listen for start, stop, and failed events
-		startSub := bus.Subscribe(ari.Events.RecordingStarted)
+		startSub := h.Subscribe(ari.Events.RecordingStarted)
 		defer startSub.Cancel()
 
-		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
-
-		failedSub := bus.Subscribe(ari.Events.RecordingFailed)
+		failedSub := h.Subscribe(ari.Events.RecordingFailed)
 		defer failedSub.Cancel()
 
-		Logger.Debug("Grabbing subscriptions", "name", name, "opts", opts)
-
-		finishedSub := bus.Subscribe(ari.Events.RecordingFinished)
+		finishedSub := h.Subscribe(ari.Events.RecordingFinished)
 		defer finishedSub.Cancel()
 
-		Logger.Debug("Calling record on recorder", "name", name, "opts", opts)
-
-		// Start recording
-		handle, err := r.Record(name, opts)
+		Logger.Debug("Starting recording", "name", name, "opts", opts)
+		err := h.Exec()
 		if err != nil {
-			rec.err = err
 			rec.status = Failed
-			close(rec.doneCh)
+			rec.err = errors.Wrap(err, "failed to start recording")
 			return
 		}
 
-		defer close(rec.doneCh)
-
-		rec.handle = handle
-
-		Logger.Debug("Starting record event loop", "name", name, "opts", opts)
-
 		// Wait for the recording to start
+		Logger.Debug("Starting record event loop", "name", name, "opts", opts)
 		startTimer := time.NewTimer(RecordingStartTimeout)
 		for {
 			select {

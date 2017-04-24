@@ -46,11 +46,15 @@ func (b *bus) Close() {
 func (b *bus) Send(e ari.Event) {
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
-		for _, topic := range s.events {
-			if topic == e.GetType() || topic == ari.Events.All {
-				select {
-				case s.C <- e:
-				default: // never block
+		for _, k := range e.Keys() {
+			if s.key.Match(k) {
+				for _, topic := range s.events {
+					if topic == e.GetType() || topic == ari.Events.All {
+						select {
+						case s.C <- e:
+						default: // never block
+						}
+					}
 				}
 			}
 		}
@@ -59,8 +63,8 @@ func (b *bus) Send(e ari.Event) {
 
 // Subscribe returns a subscription to the given list
 // of event types
-func (b *bus) Subscribe(eTypes ...string) ari.Subscription {
-	s := newSubscription(b, eTypes...)
+func (b *bus) Subscribe(key *ari.Key, eTypes ...string) ari.Subscription {
+	s := newSubscription(b, key, eTypes...)
 	b.add(s)
 	return s
 }
@@ -91,6 +95,7 @@ func (b *bus) remove(s *subscription) {
 // A Subscription is a wrapped channel for receiving
 // events from the ARI event bus.
 type subscription struct {
+	key    *ari.Key
 	b      *bus     // reference to the event bus
 	events []string // list of events to listen for
 
@@ -99,8 +104,9 @@ type subscription struct {
 }
 
 // newSubscription creates a new, unattached subscription
-func newSubscription(b *bus, eTypes ...string) *subscription {
+func newSubscription(b *bus, key *ari.Key, eTypes ...string) *subscription {
 	return &subscription{
+		key:    key,
 		b:      b,
 		events: eTypes,
 		C:      make(chan ari.Event, subscriptionEventBufferSize),

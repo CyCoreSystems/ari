@@ -113,8 +113,8 @@ func DecodeEvent(data []byte) (Event, error) {
 
 // RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
 type RawEvent struct {
-	EventData
-	Header Header `json:"header"`
+	EventData `json:",inline"`
+	Header    Header `json:"header"`
 
 	// ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."
 	ApplicationReplaced *ApplicationReplaced `json:",inline,omitempty"`
@@ -328,7 +328,7 @@ func EventToRaw(e Event) *RawEvent {
 	return raw
 }
 
-// ToEvent converts a RawEvent to an Evert, preseving any transport Headers associated with the RawEvent.
+// ToEvent converts a RawEvent to an Event, preseving any transport Headers associated with the RawEvent.
 func (r *RawEvent) ToEvent() (Event, error) {
 	if r.Header == nil {
 		r.Header = make(Header)
@@ -336,162 +336,282 @@ func (r *RawEvent) ToEvent() (Event, error) {
 
 	switch r.Type {
 	case Events.ApplicationReplaced:
+		if r.ApplicationReplaced == nil {
+			return nil, errors.New("invalid event data for ApplicationReplaced")
+		}
 		r.ApplicationReplaced.Header = r.Header
 		r.ApplicationReplaced.EventData = r.EventData
 		return r.ApplicationReplaced, nil
 	case Events.BridgeAttendedTransfer:
+		if r.BridgeAttendedTransfer == nil {
+			return nil, errors.New("invalid event data for BridgeAttendedTransfer")
+		}
 		r.BridgeAttendedTransfer.Header = r.Header
 		r.BridgeAttendedTransfer.EventData = r.EventData
 		return r.BridgeAttendedTransfer, nil
 	case Events.BridgeBlindTransfer:
+		if r.BridgeBlindTransfer == nil {
+			return nil, errors.New("invalid event data for BridgeBlindTransfer")
+		}
 		r.BridgeBlindTransfer.Header = r.Header
 		r.BridgeBlindTransfer.EventData = r.EventData
 		return r.BridgeBlindTransfer, nil
 	case Events.BridgeCreated:
+		if r.BridgeCreated == nil {
+			return nil, errors.New("invalid event data for BridgeCreated")
+		}
 		r.BridgeCreated.Header = r.Header
 		r.BridgeCreated.EventData = r.EventData
 		return r.BridgeCreated, nil
 	case Events.BridgeDestroyed:
+		if r.BridgeDestroyed == nil {
+			return nil, errors.New("invalid event data for BridgeDestroyed")
+		}
 		r.BridgeDestroyed.Header = r.Header
 		r.BridgeDestroyed.EventData = r.EventData
 		return r.BridgeDestroyed, nil
 	case Events.BridgeMerged:
+		if r.BridgeMerged == nil {
+			return nil, errors.New("invalid event data for BridgeMerged")
+		}
 		r.BridgeMerged.Header = r.Header
 		r.BridgeMerged.EventData = r.EventData
 		return r.BridgeMerged, nil
 	case Events.BridgeVideoSourceChanged:
+		if r.BridgeVideoSourceChanged == nil {
+			return nil, errors.New("invalid event data for BridgeVideoSourceChanged")
+		}
 		r.BridgeVideoSourceChanged.Header = r.Header
 		r.BridgeVideoSourceChanged.EventData = r.EventData
 		return r.BridgeVideoSourceChanged, nil
 	case Events.ChannelCallerID:
+		if r.ChannelCallerID == nil {
+			return nil, errors.New("invalid event data for ChannelCallerID")
+		}
 		r.ChannelCallerID.Header = r.Header
 		r.ChannelCallerID.EventData = r.EventData
 		return r.ChannelCallerID, nil
 	case Events.ChannelConnectedLine:
+		if r.ChannelConnectedLine == nil {
+			return nil, errors.New("invalid event data for ChannelConnectedLine")
+		}
 		r.ChannelConnectedLine.Header = r.Header
 		r.ChannelConnectedLine.EventData = r.EventData
 		return r.ChannelConnectedLine, nil
 	case Events.ChannelCreated:
+		if r.ChannelCreated == nil {
+			return nil, errors.New("invalid event data for ChannelCreated")
+		}
 		r.ChannelCreated.Header = r.Header
 		r.ChannelCreated.EventData = r.EventData
 		return r.ChannelCreated, nil
 	case Events.ChannelDestroyed:
+		if r.ChannelDestroyed == nil {
+			return nil, errors.New("invalid event data for ChannelDestroyed")
+		}
 		r.ChannelDestroyed.Header = r.Header
 		r.ChannelDestroyed.EventData = r.EventData
 		return r.ChannelDestroyed, nil
 	case Events.ChannelDialplan:
+		if r.ChannelDialplan == nil {
+			return nil, errors.New("invalid event data for ChannelDialplan")
+		}
 		r.ChannelDialplan.Header = r.Header
 		r.ChannelDialplan.EventData = r.EventData
 		return r.ChannelDialplan, nil
 	case Events.ChannelDtmfReceived:
+		if r.ChannelDtmfReceived == nil {
+			return nil, errors.New("invalid event data for ChannelDtmfReceived")
+		}
 		r.ChannelDtmfReceived.Header = r.Header
 		r.ChannelDtmfReceived.EventData = r.EventData
 		return r.ChannelDtmfReceived, nil
 	case Events.ChannelEnteredBridge:
+		if r.ChannelEnteredBridge == nil {
+			return nil, errors.New("invalid event data for ChannelEnteredBridge")
+		}
 		r.ChannelEnteredBridge.Header = r.Header
 		r.ChannelEnteredBridge.EventData = r.EventData
 		return r.ChannelEnteredBridge, nil
 	case Events.ChannelHangupRequest:
+		if r.ChannelHangupRequest == nil {
+			return nil, errors.New("invalid event data for ChannelHangupRequest")
+		}
 		r.ChannelHangupRequest.Header = r.Header
 		r.ChannelHangupRequest.EventData = r.EventData
 		return r.ChannelHangupRequest, nil
 	case Events.ChannelHold:
+		if r.ChannelHold == nil {
+			return nil, errors.New("invalid event data for ChannelHold")
+		}
 		r.ChannelHold.Header = r.Header
 		r.ChannelHold.EventData = r.EventData
 		return r.ChannelHold, nil
 	case Events.ChannelLeftBridge:
+		if r.ChannelLeftBridge == nil {
+			return nil, errors.New("invalid event data for ChannelLeftBridge")
+		}
 		r.ChannelLeftBridge.Header = r.Header
 		r.ChannelLeftBridge.EventData = r.EventData
 		return r.ChannelLeftBridge, nil
 	case Events.ChannelStateChange:
+		if r.ChannelStateChange == nil {
+			return nil, errors.New("invalid event data for ChannelStateChange")
+		}
 		r.ChannelStateChange.Header = r.Header
 		r.ChannelStateChange.EventData = r.EventData
 		return r.ChannelStateChange, nil
 	case Events.ChannelTalkingFinished:
+		if r.ChannelTalkingFinished == nil {
+			return nil, errors.New("invalid event data for ChannelTalkingFinished")
+		}
 		r.ChannelTalkingFinished.Header = r.Header
 		r.ChannelTalkingFinished.EventData = r.EventData
 		return r.ChannelTalkingFinished, nil
 	case Events.ChannelTalkingStarted:
+		if r.ChannelTalkingStarted == nil {
+			return nil, errors.New("invalid event data for ChannelTalkingStarted")
+		}
 		r.ChannelTalkingStarted.Header = r.Header
 		r.ChannelTalkingStarted.EventData = r.EventData
 		return r.ChannelTalkingStarted, nil
 	case Events.ChannelUnhold:
+		if r.ChannelUnhold == nil {
+			return nil, errors.New("invalid event data for ChannelUnhold")
+		}
 		r.ChannelUnhold.Header = r.Header
 		r.ChannelUnhold.EventData = r.EventData
 		return r.ChannelUnhold, nil
 	case Events.ChannelUserevent:
+		if r.ChannelUserevent == nil {
+			return nil, errors.New("invalid event data for ChannelUserevent")
+		}
 		r.ChannelUserevent.Header = r.Header
 		r.ChannelUserevent.EventData = r.EventData
 		return r.ChannelUserevent, nil
 	case Events.ChannelVarset:
+		if r.ChannelVarset == nil {
+			return nil, errors.New("invalid event data for ChannelVarset")
+		}
 		r.ChannelVarset.Header = r.Header
 		r.ChannelVarset.EventData = r.EventData
 		return r.ChannelVarset, nil
 	case Events.ContactInfo:
+		if r.ContactInfo == nil {
+			return nil, errors.New("invalid event data for ContactInfo")
+		}
 		r.ContactInfo.Header = r.Header
 		r.ContactInfo.EventData = r.EventData
 		return r.ContactInfo, nil
 	case Events.ContactStatusChange:
+		if r.ContactStatusChange == nil {
+			return nil, errors.New("invalid event data for ContactStatusChange")
+		}
 		r.ContactStatusChange.Header = r.Header
 		r.ContactStatusChange.EventData = r.EventData
 		return r.ContactStatusChange, nil
 	case Events.DeviceStateChanged:
+		if r.DeviceStateChanged == nil {
+			return nil, errors.New("invalid event data for DeviceStateChanged")
+		}
 		r.DeviceStateChanged.Header = r.Header
 		r.DeviceStateChanged.EventData = r.EventData
 		return r.DeviceStateChanged, nil
 	case Events.Dial:
+		if r.Dial == nil {
+			return nil, errors.New("invalid event data for Dial")
+		}
 		r.Dial.Header = r.Header
 		r.Dial.EventData = r.EventData
 		return r.Dial, nil
 	case Events.EndpointStateChange:
+		if r.EndpointStateChange == nil {
+			return nil, errors.New("invalid event data for EndpointStateChange")
+		}
 		r.EndpointStateChange.Header = r.Header
 		r.EndpointStateChange.EventData = r.EventData
 		return r.EndpointStateChange, nil
 	case Events.MissingParams:
+		if r.MissingParams == nil {
+			return nil, errors.New("invalid event data for MissingParams")
+		}
 		r.MissingParams.Header = r.Header
 		r.MissingParams.EventData = r.EventData
 		return r.MissingParams, nil
 	case Events.Peer:
+		if r.Peer == nil {
+			return nil, errors.New("invalid event data for Peer")
+		}
 		r.Peer.Header = r.Header
 		r.Peer.EventData = r.EventData
 		return r.Peer, nil
 	case Events.PeerStatusChange:
+		if r.PeerStatusChange == nil {
+			return nil, errors.New("invalid event data for PeerStatusChange")
+		}
 		r.PeerStatusChange.Header = r.Header
 		r.PeerStatusChange.EventData = r.EventData
 		return r.PeerStatusChange, nil
 	case Events.PlaybackContinuing:
+		if r.PlaybackContinuing == nil {
+			return nil, errors.New("invalid event data for PlaybackContinuing")
+		}
 		r.PlaybackContinuing.Header = r.Header
 		r.PlaybackContinuing.EventData = r.EventData
 		return r.PlaybackContinuing, nil
 	case Events.PlaybackFinished:
+		if r.PlaybackFinished == nil {
+			return nil, errors.New("invalid event data for PlaybackFinished")
+		}
 		r.PlaybackFinished.Header = r.Header
 		r.PlaybackFinished.EventData = r.EventData
 		return r.PlaybackFinished, nil
 	case Events.PlaybackStarted:
+		if r.PlaybackStarted == nil {
+			return nil, errors.New("invalid event data for PlaybackStarted")
+		}
 		r.PlaybackStarted.Header = r.Header
 		r.PlaybackStarted.EventData = r.EventData
 		return r.PlaybackStarted, nil
 	case Events.RecordingFailed:
+		if r.RecordingFailed == nil {
+			return nil, errors.New("invalid event data for RecordingFailed")
+		}
 		r.RecordingFailed.Header = r.Header
 		r.RecordingFailed.EventData = r.EventData
 		return r.RecordingFailed, nil
 	case Events.RecordingFinished:
+		if r.RecordingFinished == nil {
+			return nil, errors.New("invalid event data for RecordingFinished")
+		}
 		r.RecordingFinished.Header = r.Header
 		r.RecordingFinished.EventData = r.EventData
 		return r.RecordingFinished, nil
 	case Events.RecordingStarted:
+		if r.RecordingStarted == nil {
+			return nil, errors.New("invalid event data for RecordingStarted")
+		}
 		r.RecordingStarted.Header = r.Header
 		r.RecordingStarted.EventData = r.EventData
 		return r.RecordingStarted, nil
 	case Events.StasisEnd:
+		if r.StasisEnd == nil {
+			return nil, errors.New("invalid event data for StasisEnd")
+		}
 		r.StasisEnd.Header = r.Header
 		r.StasisEnd.EventData = r.EventData
 		return r.StasisEnd, nil
 	case Events.StasisStart:
+		if r.StasisStart == nil {
+			return nil, errors.New("invalid event data for StasisStart")
+		}
 		r.StasisStart.Header = r.Header
 		r.StasisStart.EventData = r.EventData
 		return r.StasisStart, nil
 	case Events.TextMessageReceived:
+		if r.TextMessageReceived == nil {
+			return nil, errors.New("invalid event data for TextMessageReceived")
+		}
 		r.TextMessageReceived.Header = r.Header
 		r.TextMessageReceived.EventData = r.EventData
 		return r.TextMessageReceived, nil
@@ -503,7 +623,7 @@ func (r *RawEvent) ToEvent() (Event, error) {
 
 // ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."
 type ApplicationReplaced struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -511,7 +631,7 @@ type ApplicationReplaced struct {
 
 // BridgeAttendedTransfer - "Notification that an attended transfer has occurred."
 type BridgeAttendedTransfer struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -536,7 +656,7 @@ type BridgeAttendedTransfer struct {
 
 // BridgeBlindTransfer - "Notification that a blind transfer has occurred."
 type BridgeBlindTransfer struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -553,7 +673,7 @@ type BridgeBlindTransfer struct {
 
 // BridgeCreated - "Notification that a bridge has been created."
 type BridgeCreated struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -563,7 +683,7 @@ type BridgeCreated struct {
 
 // BridgeDestroyed - "Notification that a bridge has been destroyed."
 type BridgeDestroyed struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -573,7 +693,7 @@ type BridgeDestroyed struct {
 
 // BridgeMerged - "Notification that one bridge has merged into another."
 type BridgeMerged struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -584,7 +704,7 @@ type BridgeMerged struct {
 
 // BridgeVideoSourceChanged - "Notification that the source of video in a bridge has changed."
 type BridgeVideoSourceChanged struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -595,7 +715,7 @@ type BridgeVideoSourceChanged struct {
 
 // ChannelCallerID - "Channel changed Caller ID."
 type ChannelCallerID struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -607,7 +727,7 @@ type ChannelCallerID struct {
 
 // ChannelConnectedLine - "Channel changed Connected Line."
 type ChannelConnectedLine struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -617,7 +737,7 @@ type ChannelConnectedLine struct {
 
 // ChannelCreated - "Notification that a channel has been created."
 type ChannelCreated struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -627,7 +747,7 @@ type ChannelCreated struct {
 
 // ChannelDestroyed - "Notification that a channel has been destroyed."
 type ChannelDestroyed struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -639,7 +759,7 @@ type ChannelDestroyed struct {
 
 // ChannelDialplan - "Channel changed location in the dialplan."
 type ChannelDialplan struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -651,7 +771,7 @@ type ChannelDialplan struct {
 
 // ChannelDtmfReceived - "DTMF received on a channel.This event is sent when the DTMF ends. There is no notification about the start of DTMF"
 type ChannelDtmfReceived struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -663,7 +783,7 @@ type ChannelDtmfReceived struct {
 
 // ChannelEnteredBridge - "Notification that a channel has entered a bridge."
 type ChannelEnteredBridge struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -674,7 +794,7 @@ type ChannelEnteredBridge struct {
 
 // ChannelHangupRequest - "A hangup was requested on the channel."
 type ChannelHangupRequest struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -686,7 +806,7 @@ type ChannelHangupRequest struct {
 
 // ChannelHold - "A channel initiated a media hold."
 type ChannelHold struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -697,7 +817,7 @@ type ChannelHold struct {
 
 // ChannelLeftBridge - "Notification that a channel has left a bridge."
 type ChannelLeftBridge struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -708,7 +828,7 @@ type ChannelLeftBridge struct {
 
 // ChannelStateChange - "Notification of a channel's state change."
 type ChannelStateChange struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -718,7 +838,7 @@ type ChannelStateChange struct {
 
 // ChannelTalkingFinished - "Talking is no longer detected on the channel."
 type ChannelTalkingFinished struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -729,7 +849,7 @@ type ChannelTalkingFinished struct {
 
 // ChannelTalkingStarted - "Talking was detected on the channel."
 type ChannelTalkingStarted struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -739,7 +859,7 @@ type ChannelTalkingStarted struct {
 
 // ChannelUnhold - "A channel initiated a media unhold."
 type ChannelUnhold struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -749,7 +869,7 @@ type ChannelUnhold struct {
 
 // ChannelUserevent - "User-generated event with additional user-defined fields in the object."
 type ChannelUserevent struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -763,7 +883,7 @@ type ChannelUserevent struct {
 
 // ChannelVarset - "Channel variable changed."
 type ChannelVarset struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -775,7 +895,7 @@ type ChannelVarset struct {
 
 // ContactInfo - "Detailed information about a contact on an endpoint."
 type ContactInfo struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -788,7 +908,7 @@ type ContactInfo struct {
 
 // ContactStatusChange - "The state of a contact on an endpoint has changed."
 type ContactStatusChange struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -799,7 +919,7 @@ type ContactStatusChange struct {
 
 // DeviceStateChanged - "Notification that a device state has changed."
 type DeviceStateChanged struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -809,7 +929,7 @@ type DeviceStateChanged struct {
 
 // Dial - "Dialing state has changed."
 type Dial struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -824,7 +944,7 @@ type Dial struct {
 
 // EndpointStateChange - "Endpoint state changed."
 type EndpointStateChange struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -834,7 +954,7 @@ type EndpointStateChange struct {
 
 // MissingParams - "Error event sent when required params are missing."
 type MissingParams struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -844,7 +964,7 @@ type MissingParams struct {
 
 // Peer - "Detailed information about a remote peer that communicates with Asterisk."
 type Peer struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -858,7 +978,7 @@ type Peer struct {
 
 // PeerStatusChange - "The state of a peer associated with an endpoint has changed."
 type PeerStatusChange struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -869,7 +989,7 @@ type PeerStatusChange struct {
 
 // PlaybackContinuing - "Event showing the continuation of a media playback operation from one media URI to the next in the list."
 type PlaybackContinuing struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -879,7 +999,7 @@ type PlaybackContinuing struct {
 
 // PlaybackFinished - "Event showing the completion of a media playback operation."
 type PlaybackFinished struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -889,7 +1009,7 @@ type PlaybackFinished struct {
 
 // PlaybackStarted - "Event showing the start of a media playback operation."
 type PlaybackStarted struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -899,7 +1019,7 @@ type PlaybackStarted struct {
 
 // RecordingFailed - "Event showing failure of a recording operation."
 type RecordingFailed struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -909,7 +1029,7 @@ type RecordingFailed struct {
 
 // RecordingFinished - "Event showing the completion of a recording operation."
 type RecordingFinished struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -919,7 +1039,7 @@ type RecordingFinished struct {
 
 // RecordingStarted - "Event showing the start of a recording operation."
 type RecordingStarted struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -929,7 +1049,7 @@ type RecordingStarted struct {
 
 // StasisEnd - "Notification that a channel has left a Stasis application."
 type StasisEnd struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -939,7 +1059,7 @@ type StasisEnd struct {
 
 // StasisStart - "Notification that a channel has entered a Stasis application."
 type StasisStart struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
@@ -951,7 +1071,7 @@ type StasisStart struct {
 
 // TextMessageReceived - "A text message was received from an endpoint."
 type TextMessageReceived struct {
-	EventData
+	EventData `json:",inline"`
 
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`

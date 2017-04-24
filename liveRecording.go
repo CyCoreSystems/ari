@@ -27,6 +27,9 @@ type LiveRecording interface {
 
 	// Scrap Stops and deletes the current LiveRecording
 	Scrap(key *Key) error
+
+	// Subscribe subscribes to events
+	Subscribe(key *Key, n ...string) Subscription
 }
 
 // LiveRecordingData is the data for a live recording
@@ -50,10 +53,10 @@ func (s *LiveRecordingData) ID() string {
 }
 
 // NewLiveRecordingHandle creates a new live recording handle
-func NewLiveRecordingHandle(key *Key, s LiveRecording, exec func() (err error)) *LiveRecordingHandle {
+func NewLiveRecordingHandle(key *Key, r LiveRecording, exec func() (err error)) *LiveRecordingHandle {
 	return &LiveRecordingHandle{
 		key:  key,
-		s:    s,
+		r:    r,
 		exec: exec,
 	}
 }
@@ -61,71 +64,77 @@ func NewLiveRecordingHandle(key *Key, s LiveRecording, exec func() (err error)) 
 // A LiveRecordingHandle is a reference to a live recording that can be operated on
 type LiveRecordingHandle struct {
 	key      *Key
-	s        LiveRecording
+	r        LiveRecording
 	exec     func() (err error)
 	executed bool
 }
 
 // ID returns the identifier of the live recording
-func (s *LiveRecordingHandle) ID() string {
-	return s.key.ID
+func (h *LiveRecordingHandle) ID() string {
+	return h.key.ID
 }
 
 // Key returns the key of the live recording
-func (s *LiveRecordingHandle) Key() *Key {
-	return s.key
+func (h *LiveRecordingHandle) Key() *Key {
+	return h.key
 }
 
 // Data gets the data for the live recording
-func (s *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
-	d, err = s.s.Data(s.key)
+func (h *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
+	d, err = h.r.Data(h.key)
 	return
 }
 
 // Stop stops and saves the recording
-func (s *LiveRecordingHandle) Stop() (err error) {
-	err = s.s.Stop(s.key)
+func (h *LiveRecordingHandle) Stop() (err error) {
+	err = h.r.Stop(h.key)
 	return
 }
 
 // Scrap stops and deletes the recording
-func (s *LiveRecordingHandle) Scrap() (err error) {
-	err = s.s.Scrap(s.key)
+func (h *LiveRecordingHandle) Scrap() (err error) {
+	err = h.r.Scrap(h.key)
 	return
 }
 
 // Resume resumes the recording
-func (s *LiveRecordingHandle) Resume() (err error) {
-	err = s.s.Resume(s.key)
+func (h *LiveRecordingHandle) Resume() (err error) {
+	err = h.r.Resume(h.key)
 	return
 }
 
 // Pause pauses the recording
-func (s *LiveRecordingHandle) Pause() (err error) {
-	err = s.s.Pause(s.key)
+func (h *LiveRecordingHandle) Pause() (err error) {
+	err = h.r.Pause(h.key)
 	return
 }
 
 // Mute mutes the recording
-func (s *LiveRecordingHandle) Mute() (err error) {
-	err = s.s.Mute(s.key)
+func (h *LiveRecordingHandle) Mute() (err error) {
+	err = h.r.Mute(h.key)
 	return
 }
 
 // Unmute mutes the recording
-func (s *LiveRecordingHandle) Unmute() (err error) {
-	err = s.s.Unmute(s.key)
+func (h *LiveRecordingHandle) Unmute() (err error) {
+	err = h.r.Unmute(h.key)
 	return
 }
 
 // Exec executes any staged operations attached to the `LiveRecordingHandle`
-func (s *LiveRecordingHandle) Exec() (err error) {
-	if !s.executed {
-		s.executed = true
-		if s.exec != nil {
-			err = s.exec()
-			s.exec = nil
+func (h *LiveRecordingHandle) Exec() (err error) {
+	if !h.executed {
+		h.executed = true
+		if h.exec != nil {
+			err = h.exec()
+			h.exec = nil
 		}
 	}
 	return
+}
+
+// Subscribe subscribes the recording handle's underlying recorder to
+// the provided event types.
+func (h *LiveRecordingHandle) Subscribe(n ...string) Subscription {
+	return h.r.Subscribe(h.key, n...)
 }

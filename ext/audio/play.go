@@ -46,14 +46,20 @@ func PlayAsync(ctx context.Context, p ari.Player, mediaURI string) *Control {
 		cancel:  cancel,
 	}
 
+	c.pb, err = p.StagePlay(c.id, mediaURI)
+	if err != nil {
+		c.err = errors.Wrap(err, "failed to create playback")
+		c.status = Failed
+	}
+
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go c.watchEvents(ctx, wg)
 	wg.Wait()
 
-	c.pb, err = p.Play(c.id, mediaURI)
+	err = c.pb.Exec()
 	if err != nil {
-		c.err = errors.Wrap(err, "failed to execute Play on player")
+		c.err = errors.Wrap(err, "failed to start playback")
 		c.status = Failed
 	}
 
@@ -138,13 +144,13 @@ type stateFn func(context.Context) stateFn
 func (c *Control) watchEvents(ctx context.Context, wg *sync.WaitGroup) {
 	defer c.Cancel()
 
-	c.startedSub = c.p.Subscribe(ari.Events.PlaybackStarted)
+	c.startedSub = c.pb.Subscribe(ari.Events.PlaybackStarted)
 	defer c.startedSub.Cancel()
-	c.finishedSub = c.p.Subscribe(ari.Events.PlaybackFinished)
+	c.finishedSub = c.pb.Subscribe(ari.Events.PlaybackFinished)
 	defer c.finishedSub.Cancel()
 
 	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
-	c.hangupSub = c.p.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
+	c.hangupSub = c.pb.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
 	defer c.hangupSub.Cancel()
 
 	wg.Done()

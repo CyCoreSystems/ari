@@ -198,29 +198,5 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 // Subscribe creates an event subscription for events related to the given
 // bridge␃entity
 func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
-	inSub := b.client.Bus().Subscribe(n...)
-	outSub := newSubscription()
-
-	go func() {
-		defer inSub.Cancel()
-
-		for {
-			select {
-			case <-outSub.closedChan:
-				return
-			case e, ok := <-inSub.Events():
-				if !ok {
-					return
-				}
-				for _, k := range e.Keys() {
-					if k.Match(key) {
-						outSub.events <- e
-						break
-					}
-				}
-			}
-		}
-	}()
-
-	return outSub
+	return b.client.Bus().Subscribe(key, n...)
 }

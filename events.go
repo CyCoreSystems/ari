@@ -32,7 +32,7 @@ type EventData struct {
 	Dialog string `json:"dialog,omitempty"`
 
 	// Node indicates the unique identifier of the source Asterisk box for this event
-	Node string `json:"node,omitempty"`
+	Node string `json:"asterisk_id,omitempty"`
 
 	// Timestamp indicates the time this event was generated
 	Timestamp DateTime `json:"timestamp,omitempty"`
