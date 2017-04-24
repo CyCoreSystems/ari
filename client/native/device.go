@@ -12,8 +12,8 @@ type DeviceState struct {
 }
 
 // Get returns the lazy handle for the given device name
-func (ds *DeviceState) Get(key *ari.Key) *ari.DeviceStateHandle {
-	return ari.NewDeviceStateHandle(ds.client.stamp(key), ds)
+func (ds *DeviceState) Get(key *ari.Key) (*ari.DeviceStateHandle, error) {
+	return ari.NewDeviceStateHandle(ds.client.stamp(key), ds), nil
 }
 
 // List lists the current devices and returns a list of handles

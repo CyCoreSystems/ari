@@ -46,7 +46,7 @@ func (_m *Mailbox) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
+func (_m *Mailbox) Get(key *ari.Key) (*ari.MailboxHandle, error) {
 	ret := _m.Called(key)
 
 	var r0 *ari.MailboxHandle
@@ -58,7 +58,14 @@ func (_m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // List provides a mock function with given fields: filter

@@ -10,7 +10,7 @@ import (
 // Channel represents a communication path interacting with an Asterisk server.
 type Channel interface {
 	// Get returns a handle to a channel for further interaction
-	Get(key *Key) *ChannelHandle
+	Get(key *Key) (*ChannelHandle, error)
 
 	// GetVariable retrieves the value of a channel variable
 	GetVariable(*Key, string) (string, error)

@@ -3,7 +3,7 @@ package ari
 // DeviceState represents a communication path interacting with an
 // Asterisk server for device state resources
 type DeviceState interface {
-	Get(key *Key) *DeviceStateHandle
+	Get(key *Key) (*DeviceStateHandle, error)
 
 	List(filter *Key) ([]*Key, error)
 

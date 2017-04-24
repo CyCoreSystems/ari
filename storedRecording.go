@@ -8,7 +8,7 @@ type StoredRecording interface {
 	List(filter *Key) ([]*Key, error)
 
 	// Get gets the Recording by type
-	Get(key *Key) *StoredRecordingHandle
+	Get(key *Key) (*StoredRecordingHandle, error)
 
 	// data gets the data for the stored recording
 	Data(key *Key) (*StoredRecordingData, error)

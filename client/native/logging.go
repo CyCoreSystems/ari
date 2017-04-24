@@ -23,12 +23,12 @@ func (l *Logging) Create(key *ari.Key, levels string) (*ari.LogHandle, error) {
 		return nil, err
 	}
 
-	return l.Get(key), nil
+	return l.Get(key)
 }
 
 // Get returns a logging channel handle
-func (l *Logging) Get(key *ari.Key) *ari.LogHandle {
-	return ari.NewLogHandle(l.client.stamp(key), l)
+func (l *Logging) Get(key *ari.Key) (*ari.LogHandle, error) {
+	return ari.NewLogHandle(l.client.stamp(key), l), nil
 }
 
 func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {

@@ -12,8 +12,8 @@ type Playback struct {
 }
 
 // Get gets a lazy handle for the given playback identifier
-func (a *Playback) Get(key *ari.Key) *ari.PlaybackHandle {
-	return ari.NewPlaybackHandle(a.client.stamp(key), a, nil)
+func (a *Playback) Get(key *ari.Key) (*ari.PlaybackHandle, error) {
+	return ari.NewPlaybackHandle(a.client.stamp(key), a, nil), nil
 }
 
 // Data returns a playback's details.

@@ -62,8 +62,8 @@ func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
 }
 
 // Get gets the lazy handle for the given channel
-func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
-	return ari.NewChannelHandle(c.client.stamp(key), c, nil)
+func (c *Channel) Get(key *ari.Key) (*ari.ChannelHandle, error) {
+	return ari.NewChannelHandle(c.client.stamp(key), c, nil), nil
 }
 
 // Originate originates a channel and returns the handle

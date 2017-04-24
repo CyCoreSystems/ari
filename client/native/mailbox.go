@@ -13,8 +13,8 @@ type Mailbox struct {
 }
 
 // Get gets a lazy handle for the mailbox name
-func (m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
-	return ari.NewMailboxHandle(m.client.stamp(key), m)
+func (m *Mailbox) Get(key *ari.Key) (*ari.MailboxHandle, error) {
+	return ari.NewMailboxHandle(m.client.stamp(key), m), nil
 }
 
 // List lists the mailboxes and returns a list of handles

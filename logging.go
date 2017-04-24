@@ -13,7 +13,7 @@ type Logging interface {
 	Data(key *Key) (*LogData, error)
 
 	// Data retrives the data for a logging channel
-	Get(key *Key) *LogHandle
+	Get(key *Key) (*LogHandle, error)
 
 	// List the logs
 	List(filter *Key) ([]*Key, error)

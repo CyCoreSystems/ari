@@ -44,8 +44,8 @@ func (b *Bridge) StageCreate(key *ari.Key, btype, name string) (*ari.BridgeHandl
 }
 
 // Get gets the lazy handle for the given bridge id
-func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
-	return ari.NewBridgeHandle(b.client.stamp(key), b, nil)
+func (b *Bridge) Get(key *ari.Key) (*ari.BridgeHandle, error) {
+	return ari.NewBridgeHandle(b.client.stamp(key), b, nil), nil
 }
 
 // List lists the current bridges and returns a list of lazy handles

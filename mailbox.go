@@ -5,7 +5,7 @@ package ari
 type Mailbox interface {
 
 	// Get gets a handle to the mailbox for further operations
-	Get(key *Key) *MailboxHandle
+	Get(key *Key) (*MailboxHandle, error)
 
 	// List lists the mailboxes in asterisk
 	List(filter *Key) ([]*Key, error)

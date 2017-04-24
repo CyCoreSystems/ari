@@ -69,7 +69,7 @@ func (_m *Logging) Delete(key *ari.Key) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *Logging) Get(key *ari.Key) *ari.LogHandle {
+func (_m *Logging) Get(key *ari.Key) (*ari.LogHandle, error) {
 	ret := _m.Called(key)
 
 	var r0 *ari.LogHandle
@@ -81,7 +81,14 @@ func (_m *Logging) Get(key *ari.Key) *ari.LogHandle {
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // List provides a mock function with given fields: filter
