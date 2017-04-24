@@ -38,6 +38,9 @@ const (
 
 	// StoredRecordingKey is the key kind for the ARI StoredRecording resource
 	StoredRecordingKey = "storedrecording"
+
+	// VariableKey is the key kind for the ARI Asterisk Variable resource
+	VariableKey = "variable"
 )
 
 // Key identifies a unique resource in the system
