@@ -48,19 +48,38 @@ type ConfigTuple struct {
 
 // A ConfigHandle is a reference to a Config object
 // on the asterisk service
-type ConfigHandle interface {
+type ConfigHandle struct {
+	key *Key
 
-	// ID returns the unique identifier for the config object
-	ID() string
+	c Config
+}
 
-	// Data gets the current data for the config handle
-	Data() (*ConfigData, error)
+// NewConfigHandle builds a new config handle
+func NewConfigHandle(key *Key, c Config) *ConfigHandle {
+	return &ConfigHandle{
+		key: key,
+		c:   c,
+	}
+}
 
-	// Update creates or updates the given config tuples
-	Update(tuples []ConfigTuple) error
+// ID returns the unique identifier for the config object
+func (h *ConfigHandle) ID() string {
+	return h.key.ID
+}
 
-	// Delete deletes the dynamic configuration object
-	Delete() error
+// Data gets the current data for the config handle
+func (h *ConfigHandle) Data() (*ConfigData, error) {
+	return h.c.Data(h.key)
+}
+
+// Update creates or updates the given config tuples
+func (h *ConfigHandle) Update(tuples []ConfigTuple) error {
+	return h.c.Update(h.key, tuples)
+}
+
+// Delete deletes the dynamic configuration object
+func (h *ConfigHandle) Delete() error {
+	return h.c.Delete(h.key)
 }
 
 // ParseConfigID parses the provided Config ID into its Class, Type, and ID components

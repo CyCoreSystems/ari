@@ -12,7 +12,7 @@ type Config struct {
 
 // Get gets a lazy handle to a configuration object
 func (c *Config) Get(key *ari.Key) ari.ConfigHandle {
-	return NewConfigHandle(key, c)
+	return ari.NewConfigHandle(key, c)
 }
 
 // Data retrieves the state of a configuration object
@@ -55,40 +55,4 @@ func (c *Config) Delete(key *ari.Key) error {
 		return errors.Wrap(err, "failed to parse key")
 	}
 	return c.client.del("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, "")
-}
-
-// NewConfigHandle builds a new config handle
-func NewConfigHandle(key *ari.Key, c *Config) ari.ConfigHandle {
-	return &ConfigHandle{
-		key: key,
-		c:   c,
-	}
-}
-
-// A ConfigHandle is a reference to a Config object
-// on the asterisk service
-type ConfigHandle struct {
-	key *ari.Key
-
-	c *Config
-}
-
-// ID returns the unique identifier for the config object
-func (ch *ConfigHandle) ID() string {
-	return ch.key.ID
-}
-
-// Data gets the current data for the config handle
-func (ch *ConfigHandle) Data() (*ari.ConfigData, error) {
-	return ch.c.Data(ch.key)
-}
-
-// Update creates or updates the given config tuples
-func (ch *ConfigHandle) Update(tuples []ari.ConfigTuple) error {
-	return ch.c.Update(ch.key, tuples)
-}
-
-// Delete deletes the dynamic configuration object
-func (ch *ConfigHandle) Delete() error {
-	return ch.c.Delete(ch.key)
 }
