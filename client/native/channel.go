@@ -67,8 +67,8 @@ func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 }
 
 // Originate originates a channel and returns the handle
-func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	h, err := c.StageOriginate(req)
+func (c *Channel) Originate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	h, err := c.StageOriginate(key, req)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,10 @@ func (c *Channel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error
 
 // StageOriginate creates a new channel handle with a channel originate request
 // staged.
-func (c *Channel) StageOriginate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+func (c *Channel) StageOriginate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	if key != nil && req.Originator == "" && key.Kind == ari.ChannelKey {
+		req.Originator = key.ID
+	}
 
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
@@ -103,7 +106,11 @@ func (c *Channel) StageOriginate(req ari.OriginateRequest) (*ari.ChannelHandle, 
 
 // Create creates a channel and returns the handle. TODO: expand
 // differences between originate and create.
-func (c *Channel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+func (c *Channel) Create(key *ari.Key, req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+	if key != nil && req.Originator == "" && key.Kind == ari.ChannelKey {
+		req.Originator = key.ID
+	}
+
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}

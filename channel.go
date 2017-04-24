@@ -18,17 +18,23 @@ type Channel interface {
 	// List lists the channels in asterisk, optionally using the key for filtering
 	List(*Key) ([]*Key, error)
 
-	// Originate creates a new channel, returning a handle to it or an
-	// error, if the creation failed
-	Originate(OriginateRequest) (*ChannelHandle, error)
+	// Originate creates a new channel, returning a handle to it or an error, if
+	// the creation failed.
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	Originate(*Key, OriginateRequest) (*ChannelHandle, error)
 
 	// StageOriginate creates a new Originate, created when the `Exec` method
-	// on `ChannelHandle` is invoked
-	StageOriginate(OriginateRequest) (*ChannelHandle, error)
+	// on `ChannelHandle` is invoked.
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	StageOriginate(*Key, OriginateRequest) (*ChannelHandle, error)
 
 	// Create creates a new channel, returning a handle to it or an
 	// error, if the creation failed. Create is already Staged via `Dial`.
-	Create(ChannelCreateRequest) (*ChannelHandle, error)
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	Create(*Key, ChannelCreateRequest) (*ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
 	Data(key *Key) (*ChannelData, error)
@@ -379,7 +385,7 @@ func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error)
 	if req.Originator == "" {
 		req.Originator = ch.ID()
 	}
-	return ch.c.Originate(req)
+	return ch.c.Originate(ch.key, req)
 }
 
 // StageOriginate stages an originate (channel creation and dial) to be Executed later.
@@ -388,7 +394,16 @@ func (ch *ChannelHandle) StageOriginate(req OriginateRequest) (*ChannelHandle, e
 		req.Originator = ch.ID()
 	}
 
-	return ch.c.StageOriginate(req)
+	return ch.c.StageOriginate(ch.key, req)
+}
+
+// Create creates (but does not dial) a new channel, using the present channel as its Originator.
+func (ch *ChannelHandle) Create(req ChannelCreateRequest) (*ChannelHandle, error) {
+	if req.Originator == "" {
+		req.Originator = ch.ID()
+	}
+
+	return ch.c.Create(ch.key, req)
 }
 
 // Dial dials a created channel.  `caller` is the optional
