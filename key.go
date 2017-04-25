@@ -168,3 +168,19 @@ func (k *Key) Match(o *Key) bool {
 
 	return true
 }
+
+func (k *Key) String() string {
+	if k.ID != "" {
+		return k.ID
+	}
+
+	if k.Dialog != "" {
+		return "[" + k.Dialog + "]"
+	}
+
+	if k.Node != "" {
+		return k.App + "@" + k.Node
+	}
+
+	return "emptyKey"
+}
