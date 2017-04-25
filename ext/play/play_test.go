@@ -9,6 +9,7 @@ import (
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/arimocks"
+	"github.com/stretchr/testify/mock"
 )
 
 type playStagedTest struct {
@@ -49,10 +50,6 @@ func (p *playStagedTest) Setup() {
 	p.playback.On("Subscribe", p.key, ari.Events.PlaybackFinished).Return(p.playbackEnd)
 
 	p.handle = ari.NewPlaybackHandle(p.key, p.playback, p.handleExec)
-}
-
-type timeoutTest struct {
-	playStagedTest
 }
 
 func TestPlayStaged(t *testing.T) {
@@ -205,228 +202,107 @@ func testPlayStagedCancelAfterStart(t *testing.T) {
 	}
 }
 
-/*
-func init() {
-	PlaybackStartTimeout = 5 * time.Millisecond
+type playTest struct {
+	ps playStagedTest
+
+	dtmfChannel    chan ari.Event
+	dtmfChannelSub *arimocks.Subscription
+	player         *arimocks.Player
 }
 
-func TestWaitStartCancel(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func (p *playTest) Setup() {
+	p.ps.Setup()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	p.dtmfChannel = make(chan ari.Event)
+	p.dtmfChannelSub = &arimocks.Subscription{}
+	p.dtmfChannelSub.On("Events").Return((<-chan ari.Event)(p.dtmfChannel))
+	p.dtmfChannelSub.On("Cancel").Return(nil)
 
-	var c Control
-
-	otherSub := mock.NewMockSubscription(ctrl)
-	otherSub.EXPECT().Events().AnyTimes().Return(nil)
-	otherSub.EXPECT().Cancel().AnyTimes()
-
-	c.hangupSub = otherSub
-	c.startedSub = otherSub
-	c.finishedSub = otherSub
-
-	doneCh := make(chan struct{})
-
-	go func() {
-		f := c.waitStart(ctx)
-		if f != nil {
-			t.Error("waitStart did not return a nil state")
-		}
-		close(doneCh)
-	}()
-
-	select {
-	case <-time.After(2 * time.Millisecond):
-		t.Error("waitStart failed to detect context closure")
-	case <-doneCh:
-	}
-
-	if c.status != Canceled {
-		t.Error("waitStart returned the wrong state")
-	}
+	p.player = &arimocks.Player{}
+	p.player.On("Subscribe", ari.Events.ChannelDtmfReceived).Return(p.dtmfChannelSub)
+	p.player.On("StagePlay", mock.Anything, "sound:1").Return(p.ps.handle, nil)
 }
 
-func TestWaitStartTimeout(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func TestPlay(t *testing.T) {
+	t.Run("testPlayNoURI", testPlayNoURI)
+	t.Run("testPlay", testPlay)
+	t.Run("testPlayDtmf", testPlayDtmf)
+}
 
+func testPlayNoURI(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var c Control
+	var p playTest
+	p.Setup()
 
-	// Prepare mock subscriptions
-	otherSub := mock.NewMockSubscription(ctrl)
-	otherSub.EXPECT().Events().AnyTimes().Return(nil)
-	otherSub.EXPECT().Cancel().AnyTimes()
-
-	c.hangupSub = otherSub
-	c.startedSub = otherSub
-	c.finishedSub = otherSub
-
-	doneCh := make(chan struct{})
-
-	go func() {
-		f := c.waitStart(ctx)
-		if f != nil {
-			t.Error("waitStart did not return a nil state")
-		}
-		close(doneCh)
-	}()
-
-	select {
-	case <-time.After(PlaybackStartTimeout * 2):
-		t.Error("waitStart failed to detect timeout")
-	case <-doneCh:
+	res := Play(ctx, p.player)
+	if res.Err() == nil || res.Err().Error() != "empty playback URI list" {
+		t.Errorf("Expected error '%v', got '%v'", "empty playback URI list", res.Err())
 	}
-
-	if c.status != Timeout {
-		t.Error("waitStart returned the wrong state")
+	if res.DTMF != "" {
+		t.Errorf("Unexpected DTMF: %s", res.DTMF)
 	}
-
 }
 
-func TestWaitStartHangup(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func testPlay(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var c Control
-
-	// Prepare mock subscriptions
-	eventChan := make(chan ari.Event)
-	close(eventChan)
-	sub := mock.NewMockSubscription(ctrl)
-	sub.EXPECT().Events().Return(eventChan)
-	sub.EXPECT().Cancel()
-	otherSub := mock.NewMockSubscription(ctrl)
-	otherSub.EXPECT().Events().AnyTimes().Return(nil)
-	otherSub.EXPECT().Cancel().AnyTimes()
-
-	c.hangupSub = sub
-	c.startedSub = otherSub
-	c.finishedSub = otherSub
-
-	doneCh := make(chan struct{})
+	var p playTest
+	p.Setup()
 
 	go func() {
-		f := c.waitStart(ctx)
-		if f != nil {
-			t.Error("waitStart did not return a nil state")
-		}
-		close(doneCh)
+		p.ps.playbackStartedChan <- &ari.PlaybackStarted{}
+		<-time.After(200 * time.Millisecond)
+		p.ps.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	c.hangupSub.Cancel()
-
-	select {
-	case <-time.After(time.Millisecond):
-		t.Error("waitStart failed to detect hangup")
-	case <-doneCh:
+	res := Play(ctx, p.player, URI("sound:1"))
+	if res.Err() != nil {
+		t.Errorf("Unexpected error '%v'", res.Err())
 	}
-
-	if c.status != Hangup {
-		t.Error("waitStart returned the wrong state")
+	if res.Status != Finished {
+		t.Errorf("Expected status '%v', got '%v'", Finished, res.Status)
+	}
+	if res.DTMF != "" {
+		t.Errorf("Unexpected DTMF: %s", res.DTMF)
 	}
 }
 
-func TestWaitStartFinished(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func testPlayDtmf(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c := Control{
-		stopCh: make(chan struct{}),
-	}
-
-	// Prepare mock subscriptions
-	eventChan := make(chan ari.Event)
-	close(eventChan)
-	sub := mock.NewMockSubscription(ctrl)
-	sub.EXPECT().Events().Return(eventChan)
-	sub.EXPECT().Cancel().AnyTimes()
-	otherSub := mock.NewMockSubscription(ctrl)
-	otherSub.EXPECT().Events().AnyTimes().Return(nil)
-	otherSub.EXPECT().Cancel().AnyTimes()
-
-	c.hangupSub = otherSub
-	c.startedSub = otherSub
-	c.finishedSub = sub
-
-	doneCh := make(chan struct{})
+	var p playTest
+	p.Setup()
 
 	go func() {
-		f := c.waitStart(ctx)
-		if f != nil {
-			t.Error("waitStart did not return a nil state")
+		p.ps.playbackStartedChan <- &ari.PlaybackStarted{}
+		<-time.After(200 * time.Millisecond)
+
+		p.dtmfChannel <- &ari.ChannelDtmfReceived{
+			Digit: "1",
 		}
-		close(doneCh)
+		<-time.After(200 * time.Millisecond)
+
+		p.ps.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	c.hangupSub.Cancel()
-
-	select {
-	case <-time.After(time.Millisecond):
-		t.Error("waitStart failed to detect playback started")
-	case <-doneCh:
+	res := Play(ctx, p.player, URI("sound:1"))
+	if res.Err() != nil {
+		t.Errorf("Unexpected error '%v'", res.Err())
 	}
 
-	if c.status != Finished {
-		t.Error("waitStart returned the wrong state", c.status)
+	//FIXME: when a DTMF digit comes into a play, what should the
+	// result of the operation be? `Finished` or Cancelled?
+	//		If duration between DTMF event and playback finished event are minimal, you get 'Finished'. Otherwise
+	//		you get 'Canceled'
+
+	if res.Status != Cancelled {
+		t.Errorf("Expected status '%v', got '%v'", Cancelled, res.Status)
 	}
-}
-func TestWaitStartStarted(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	c := Control{
-		startCh: make(chan struct{}),
-	}
-
-	// Prepare mock subscriptions
-	eventChan := make(chan ari.Event)
-	close(eventChan)
-	sub := mock.NewMockSubscription(ctrl)
-	sub.EXPECT().Events().Return(eventChan)
-	sub.EXPECT().Cancel().AnyTimes()
-	otherSub := mock.NewMockSubscription(ctrl)
-	otherSub.EXPECT().Events().AnyTimes().Return(nil)
-	otherSub.EXPECT().Cancel().AnyTimes()
-
-	c.hangupSub = otherSub
-	c.startedSub = sub
-	c.finishedSub = otherSub
-
-	doneCh := make(chan struct{})
-
-	go func() {
-		f := c.waitStart(ctx)
-		if f == nil {
-			t.Error("waitStart returned a nil state instead of c.waitStop")
-		}
-		close(doneCh)
-	}()
-
-	c.hangupSub.Cancel()
-
-	select {
-	case <-time.After(time.Millisecond):
-		t.Error("waitStart failed to detect playback started")
-	case <-doneCh:
-	}
-
-	if c.status != InProgress {
-		t.Error("waitStart returned the wrong state", c.status)
+	if res.DTMF != "1" {
+		t.Errorf("Expected DTMF %s, got DTMF %s", "1", res.DTMF)
 	}
 }
-
-*/
