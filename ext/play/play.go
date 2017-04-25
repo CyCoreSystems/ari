@@ -49,7 +49,7 @@ func playStaged(ctx context.Context, h *ari.PlaybackHandle, opts *Options) (Stat
 }
 
 // NewPlay creates a new audio Options suitable for general audio playback
-func NewPlay(ctx context.Context, p ari.Player, opts ...func(*Options) error) (*Options, error) {
+func NewPlay(ctx context.Context, p ari.Player, opts ...OptionFunc) (*Options, error) {
 	o := NewDefaultOptions()
 	err := o.ApplyOptions(opts...)
 
@@ -57,7 +57,7 @@ func NewPlay(ctx context.Context, p ari.Player, opts ...func(*Options) error) (*
 }
 
 // Play plays the given media URI
-func Play(ctx context.Context, p ari.Player, opts ...func(*Options) error) *Result {
+func Play(ctx context.Context, p ari.Player, opts ...OptionFunc) *Result {
 	o, err := NewPlay(ctx, p, opts...)
 	if err != nil && o.result.Error != nil {
 		o.result.Error = err

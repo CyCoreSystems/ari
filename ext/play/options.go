@@ -266,8 +266,8 @@ func NewDefaultOptions() *Options {
 	}
 }
 
-// ApplyOptions applies a set of options to the Playback
-func (o *Options) ApplyOptions(opts ...func(*Options) error) (err error) {
+// ApplyOptions applies a set of OptionFuncs to the Playback
+func (o *Options) ApplyOptions(opts ...OptionFunc) (err error) {
 	for _, f := range opts {
 		err = f(o)
 		if err != nil {
@@ -295,8 +295,11 @@ func NewPromptOptions() *Options {
 	return opts
 }
 
+// OptionFunc defines an interface for functions which can modify a play session's Options
+type OptionFunc func(*Options) error
+
 // URI adds a set of audio URIs to a playback
-func URI(uri ...string) func(*Options) error {
+func URI(uri ...string) OptionFunc {
 	return func(o *Options) error {
 		o.mu.Lock()
 		defer o.mu.Unlock()
@@ -315,7 +318,7 @@ func URI(uri ...string) func(*Options) error {
 }
 
 // PlaybackStartTimeout overrides the default playback start timeout
-func PlaybackStartTimeout(timeout time.Duration) func(*Options) error {
+func PlaybackStartTimeout(timeout time.Duration) OptionFunc {
 	return func(o *Options) error {
 		o.playbackStartTimeout = timeout
 		return nil
@@ -323,7 +326,7 @@ func PlaybackStartTimeout(timeout time.Duration) func(*Options) error {
 }
 
 // Replays sets the number of replays of the audio sequence before exiting
-func Replays(count int) func(*Options) error {
+func Replays(count int) OptionFunc {
 	return func(o *Options) error {
 		o.maxReplays = count
 		return nil
@@ -332,7 +335,7 @@ func Replays(count int) func(*Options) error {
 
 // MatchAny indicates that the playback should be considered Matched and terminated if
 // any DTMF digit is received during the playback or post-playback time.
-func MatchAny() func(*Options) error {
+func MatchAny() OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			if len(pat) > 0 {
@@ -345,7 +348,7 @@ func MatchAny() func(*Options) error {
 }
 
 // MatchHash indicates that the playback should be considered Matched and terminated if it contains a hash (#).  The hash (and any subsequent digits) is removed from the final result.
-func MatchHash() func(*Options) error {
+func MatchHash() OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			if strings.Contains(pat, "#") {
@@ -358,7 +361,7 @@ func MatchHash() func(*Options) error {
 }
 
 // MatchTerminator indicates that the playback shoiuld be considered Matched and terminated if it contains the provided Terminator string.  The terminator (and any subsequent digits) is removed from the final result.
-func MatchTerminator(terminator string) func(*Options) error {
+func MatchTerminator(terminator string) OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			if strings.Contains(pat, terminator) {
@@ -371,7 +374,7 @@ func MatchTerminator(terminator string) func(*Options) error {
 }
 
 // MatchLen indicates that the playback should be considered Matched and terminated if the given number of DTMF digits are receieved.
-func MatchLen(length int) func(*Options) error {
+func MatchLen(length int) OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			if len(pat) >= length {
@@ -384,7 +387,7 @@ func MatchLen(length int) func(*Options) error {
 }
 
 // MatchLenOrTerminator indicates that the playback should be considered Matched and terminated if the given number of DTMF digits are receieved or if the given terminator is received.  If the terminator is present, it and any subsequent digits will be removed from the final result.
-func MatchLenOrTerminator(length int, terminator string) func(*Options) error {
+func MatchLenOrTerminator(length int, terminator string) OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			if len(pat) >= length {
@@ -400,7 +403,7 @@ func MatchLenOrTerminator(length int, terminator string) func(*Options) error {
 }
 
 // MatchFunc uses the provided match function to determine when the playback should be terminated based on DTMF input.
-func MatchFunc(f func(string) (string, MatchResult)) func(*Options) error {
+func MatchFunc(f func(string) (string, MatchResult)) OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = f
 		return nil
