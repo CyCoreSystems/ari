@@ -160,7 +160,7 @@ func (k *Key) Match(o *Key) bool {
 		return false
 	}
 
-	if k.Kind != "" && o.Kind != "" && k.ID != o.ID {
+	if k.Kind != "" && o.Kind != "" && k.ID != "" && k.ID != o.ID {
 		return false
 	}
 
