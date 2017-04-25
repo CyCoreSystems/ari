@@ -4,12 +4,11 @@ import (
 	"sync"
 
 	"github.com/CyCoreSystems/ari"
-
-	"golang.org/x/net/context"
 )
 
-// busChannelBuffer defines the buffer size of the subscription channels
-var busChannelBuffer = 100
+// subscriptionEventBufferSize defines the number of events that each
+// subscription will queue before accepting more events.
+var subscriptionEventBufferSize = 100
 
 // bus is an event bus for ARI events.  It receives and
 // redistributes events based on a subscription
@@ -18,15 +17,67 @@ type bus struct {
 	subs []*subscription // The list of subscriptions
 
 	mu sync.Mutex
+
+	closed bool
 }
 
-func (b *bus) addSubscription(s *subscription) {
+// New creates and returns the event bus.
+func New() ari.Bus {
+	b := &bus{
+		subs: []*subscription{},
+	}
+
+	return b
+}
+
+// Close closes out all subscriptions in the bus.
+func (b *bus) Close() {
+	if b.closed {
+		return
+	}
+	b.closed = true
+
+	for _, s := range b.subs {
+		s.Cancel()
+	}
+}
+
+// Send sends the message to the bus
+func (b *bus) Send(e ari.Event) {
+	// Disseminate the message to the subscribers
+	for _, s := range b.subs {
+		for _, k := range e.Keys() {
+			if s.key.Match(k) {
+				for _, topic := range s.events {
+					if topic == e.GetType() || topic == ari.Events.All {
+						select {
+						case s.C <- e:
+						default: // never block
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Subscribe returns a subscription to the given list
+// of event types
+func (b *bus) Subscribe(key *ari.Key, eTypes ...string) ari.Subscription {
+	s := newSubscription(b, key, eTypes...)
+	b.add(s)
+	return s
+}
+
+// add appends a new subscription to the bus
+func (b *bus) add(s *subscription) {
 	b.mu.Lock()
 	b.subs = append(b.subs, s)
 	b.mu.Unlock()
 }
 
-func (b *bus) removeSubscription(s *subscription) {
+// remove deletes the given subscription from the bus
+func (b *bus) remove(s *subscription) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	for i, si := range b.subs {
@@ -41,131 +92,30 @@ func (b *bus) removeSubscription(s *subscription) {
 	}
 }
 
-// Close closes out all subscriptions in the bus.
-func (b *bus) Close() {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	for _, s := range b.subs {
-		s.Cancel()
-	}
-	b.subs = nil
-}
-
-// Send sends the message on the bus
-func (b *bus) Send(msg *ari.Message) {
-	b.send(msg)
-}
-
-func (b *bus) send(msg *ari.Message) {
-	e := ari.Events.Parse(msg)
-
-	//	Logger.Debug("Received event", "event", e)
-
-	// Disseminate the message to the subscribers
-	for _, s := range b.subs {
-		for _, topic := range s.events {
-			if topic == e.GetType() || topic == ari.Events.All {
-				select {
-				case s.C <- e:
-				default: // never block
-				}
-			}
-		}
-	}
-}
-
-// Start creates and returns the event bus.
-func Start(ctx context.Context) ari.Bus {
-	b := &bus{
-		subs: []*subscription{},
-	}
-
-	// Listen for stop and shut down subscriptions, as required
-	go func() {
-		<-ctx.Done()
-		b.Stop()
-		return
-	}()
-
-	return b
-}
-
-// Stop the bus.  Cancels all subscriptions
-// and stops listening for events.
-func (b *bus) Stop() {
-	// Close all subscriptions
-	b.mu.Lock()
-	if b.subs != nil {
-		for i, s := range b.subs {
-			s.closeChan()
-			b.subs[i] = nil
-		}
-		b.subs = nil
-	}
-	b.mu.Unlock()
-}
-
 // A Subscription is a wrapped channel for receiving
 // events from the ARI event bus.
 type subscription struct {
-	b      *bus           // reference to the event bus
-	events []string       // list of events to listen for
+	key    *ari.Key
+	b      *bus     // reference to the event bus
+	events []string // list of events to listen for
+
+	closed bool           // channel closure protection flag
 	C      chan ari.Event // channel for sending events to the subscriber
-	mu     sync.Mutex
-	Closed bool
 }
 
 // newSubscription creates a new, unattached subscription
-func newSubscription(eTypes ...string) *subscription {
+func newSubscription(b *bus, key *ari.Key, eTypes ...string) *subscription {
 	return &subscription{
+		key:    key,
+		b:      b,
 		events: eTypes,
-		C:      make(chan ari.Event, busChannelBuffer),
+		C:      make(chan ari.Event, subscriptionEventBufferSize),
 	}
-}
-
-// Subscribe returns a subscription to the given list
-// of event types
-func (b *bus) Subscribe(eTypes ...string) ari.Subscription {
-	return b.subscribe(eTypes...)
-}
-
-// subscribe returns a subscription to the given list
-// of event types
-func (b *bus) subscribe(eTypes ...string) *subscription {
-	s := newSubscription(eTypes...)
-	s.b = b
-	b.addSubscription(s)
-	return s
 }
 
 // Events returns the events channel
-func (s *subscription) Events() chan ari.Event {
+func (s *subscription) Events() <-chan ari.Event {
 	return s.C
-}
-
-// Next blocks for the next event in the subscription,
-// returning that event when it arrives or nil if
-// the subscription is canceled.
-// Normally, one would listen to subscription.C directly,
-// but this is a convenience function for providing a
-// context to alternately cancel.
-func (s *subscription) Next(ctx context.Context) ari.Event {
-	select {
-	case <-ctx.Done():
-		return nil
-	case e := <-s.C:
-		return e
-	}
-}
-
-func (s *subscription) closeChan() {
-	s.mu.Lock()
-	if s.C != nil {
-		close(s.C)
-		s.C = nil
-	}
-	s.Closed = true
-	s.mu.Unlock()
 }
 
 // Cancel cancels the subscription and removes it from
@@ -174,27 +124,19 @@ func (s *subscription) Cancel() {
 	if s == nil {
 		return
 	}
+
+	// Remove the subscription from the bus
 	if s.b != nil {
-		s.b.removeSubscription(s)
+		s.b.remove(s)
 	}
-	s.closeChan()
-}
 
-// Once listens for the first event of the provided types,
-// returning a channel which supplies that event.
-func (b *bus) Once(ctx context.Context, eTypes ...string) <-chan ari.Event {
-	s := b.subscribe(eTypes...)
+	if s.closed {
+		return
+	}
 
-	ret := make(chan ari.Event, busChannelBuffer)
-
-	// Stop subscription after one event
-	go func() {
-		select {
-		case ret <- <-s.C:
-		case <-ctx.Done():
-		}
-		close(ret)
-		s.Cancel()
-	}()
-	return ret
+	// Close the subscription's deliver channel
+	if s.C != nil {
+		s.closed = true
+		close(s.C)
+	}
 }

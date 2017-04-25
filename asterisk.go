@@ -5,10 +5,10 @@ package ari
 type Asterisk interface {
 
 	// Info gets data about the asterisk system
-	Info(only string) (*AsteriskInfo, error)
+	Info(key *Key) (*AsteriskInfo, error)
 
 	// Variables returns the global asterisk variables
-	Variables() Variables
+	Variables() AsteriskVariables
 
 	// Logging returns the interface for working with asterisk logs
 	Logging() Logging
@@ -18,9 +18,6 @@ type Asterisk interface {
 
 	// Config returns the interface for working with dynamic configuration
 	Config() Config
-
-	// ReloadModule tells asterisk to load the given module
-	ReloadModule(name string) error
 }
 
 // AsteriskInfo describes a running asterisk system
@@ -67,4 +64,14 @@ type StatusInfo struct {
 type SystemInfo struct {
 	EntityID string `json:"entity_id"`
 	Version  string `json:"version"`
+}
+
+// AsteriskVariables is an interface to interact with Asterisk global variables
+type AsteriskVariables interface {
+
+	// Get returns the value of the given variable; the ID field of the Key is the variable name
+	Get(key *Key) (string, error)
+
+	// Set sets the variable; the ID field of the Key is the variable name
+	Set(key *Key, value string) error
 }

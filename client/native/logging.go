@@ -1,43 +1,100 @@
 package native
 
 import (
-	"errors"
-
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
-type nativeLogging struct {
-	conn *Conn
+// Logging provides the ARI Logging accessors for a native client
+type Logging struct {
+	client *Client
 }
 
-func (l *nativeLogging) Create(name, level string) (err error) {
-	type request struct {
-		Configuration string `json:"configuration"`
+// Create creates a logging level
+func (l *Logging) Create(key *ari.Key, levels string) (*ari.LogHandle, error) {
+	req := struct {
+		Levels string `json:"configuration"`
+	}{
+		Levels: levels,
 	}
-	req := request{level}
-	err = Post(l.conn, "/asterisk/logging/"+name, nil, &req)
-	return
+
+	err := l.client.post("/asterisk/logging/"+key.ID, nil, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return l.Get(key), nil
 }
 
-func (l *nativeLogging) List() (ld []ari.LogData, err error) {
-	err = Get(l.conn, "/asterisk/logging", &ld)
-	return
+// Get returns a logging channel handle
+func (l *Logging) Get(key *ari.Key) *ari.LogHandle {
+	return ari.NewLogHandle(l.client.stamp(key), l)
 }
 
-func (l *nativeLogging) Rotate(name string) (err error) {
+func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
+	var ld []*ari.LogData
+	err := l.client.get("/asterisk/logging", &ld)
+	return ld, err
+}
+
+// Data returns the data of a logging channel
+func (l *Logging) Data(key *ari.Key) (*ari.LogData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("logging key not supplied")
+	}
+
+	logChannels, err := l.getLoggingChannels()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get list of logging channels")
+	}
+
+	for _, i := range logChannels {
+		if i.Name == key.ID {
+			i.Key = l.client.stamp(key)
+			return i, nil
+		}
+	}
+	return nil, errors.New("not found")
+}
+
+// List lists the logging entities
+func (l *Logging) List(filter *ari.Key) ([]*ari.Key, error) {
+	ld, err := l.getLoggingChannels()
+	if err != nil {
+		return nil, err
+	}
+	if filter == nil {
+		filter = ari.NodeKey(l.client.ApplicationName(), l.client.node)
+	}
+
+	var ret []*ari.Key
+	for _, i := range ld {
+		k := ari.NewKey(ari.LoggingKey, i.Name, ari.WithApp(l.client.ApplicationName()), ari.WithNode(l.client.node))
+		if filter.Match(k) {
+			ret = append(ret, k)
+		}
+	}
+	return ret, nil
+}
+
+// Rotate rotates the given log
+func (l *Logging) Rotate(key *ari.Key) (err error) {
+	name := key.ID
 	if name == "" {
 		err = errors.New("Not allowed to rotate unnamed channels")
 		return
 	}
-	err = Put(l.conn, "/asterisk/logging/"+name+"/rotate", nil, nil)
+	err = l.client.put("/asterisk/logging/"+name+"/rotate", nil, nil)
 	return
 }
 
-func (l *nativeLogging) Delete(name string) (err error) {
+// Delete deletes the named log
+func (l *Logging) Delete(key *ari.Key) (err error) {
+	name := key.ID
 	if name == "" {
 		err = errors.New("Not allowed to delete unnamed channels")
 		return
 	}
-	err = Delete(l.conn, "/asterisk/logging/"+name, nil, "")
+	err = l.client.del("/asterisk/logging/"+name, nil, "")
 	return
 }

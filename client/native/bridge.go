@@ -1,69 +1,92 @@
 package native
 
 import (
+	"errors"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	uuid "github.com/satori/go.uuid"
 )
 
-type nativeBridge struct {
-	conn          *Conn
-	subscriber    ari.Subscriber
-	playback      ari.Playback
-	liveRecording ari.LiveRecording
+// Bridge provides the ARI Bridge accessors for the native client
+type Bridge struct {
+	client *Client
 }
 
-func (b *nativeBridge) Playback() ari.Playback {
-	return b.playback
+// Create creates a bridge and returns the lazy handle for the bridge
+func (b *Bridge) Create(key *ari.Key, t string, name string) (bh *ari.BridgeHandle, err error) {
+	bh, err = b.StageCreate(key, t, name)
+	if err != nil {
+		return nil, err
+	}
+	return bh, bh.Exec()
 }
 
-func (b *nativeBridge) Create(id string, t string, name string) (bh *ari.BridgeHandle, err error) {
+// StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
+func (b *Bridge) StageCreate(key *ari.Key, btype, name string) (*ari.BridgeHandle, error) {
+	if key.ID == "" {
+		key.ID = uuid.NewV1().String()
+	}
 
 	req := struct {
 		ID   string `json:"bridgeId,omitempty"`
 		Type string `json:"type,omitempty"`
 		Name string `json:"name,omitempty"`
 	}{
-		ID:   id,
-		Type: t,
+		ID:   key.ID,
+		Type: btype,
 		Name: name,
 	}
 
-	err = Post(b.conn, "/bridges/"+id, &req, nil)
-	if err != nil {
-		return
-	}
-
-	bh = b.Get(id)
-	return
+	return ari.NewBridgeHandle(b.client.stamp(key), b, func(bh *ari.BridgeHandle) (err error) {
+		return b.client.post("/bridges/"+key.ID, &req, nil)
+	}), nil
 }
 
-func (b *nativeBridge) Get(id string) *ari.BridgeHandle {
-	return ari.NewBridgeHandle(id, b)
+// Get gets the lazy handle for the given bridge id
+func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
+	return ari.NewBridgeHandle(b.client.stamp(key), b, nil)
 }
 
-func (b *nativeBridge) List() (bx []*ari.BridgeHandle, err error) {
+// List lists the current bridges and returns a list of lazy handles
+func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
+	// native client ignores filter
+
 	var bridges = []struct {
 		ID string `json:"id"`
 	}{}
 
-	err = Get(b.conn, "/bridges", &bridges)
+	err = b.client.get("/bridges", &bridges)
 	for _, i := range bridges {
-		bx = append(bx, b.Get(i.ID))
+		k := b.client.stamp(ari.NewKey(ari.BridgeKey, i.ID))
+		if filter.Match(k) {
+			bx = append(bx, k)
+		}
 	}
 	return
 }
 
 // Data returns the details of a bridge
 // Equivalent to Get /bridges/{bridgeId}
-func (b *nativeBridge) Data(id string) (bd ari.BridgeData, err error) {
-	err = Get(b.conn, "/bridges/"+id, &bd)
-	return
+func (b *Bridge) Data(key *ari.Key) (*ari.BridgeData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("bridge key not supplied")
+	}
+
+	var data = new(ari.BridgeData)
+	if err := b.client.get("/bridges/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "bridge", "%v", key.ID)
+	}
+
+	data.Key = b.client.stamp(key)
+
+	return data, nil
 }
 
 // AddChannel adds a channel to a bridge
 // Equivalent to Post /bridges/{id}/addChannel
-func (b *nativeBridge) AddChannel(bridgeID string, channelID string) (err error) {
+func (b *Bridge) AddChannel(key *ari.Key, channelID string) (err error) {
+	id := key.ID
 
 	type request struct {
 		ChannelID string `json:"channel"`
@@ -71,13 +94,15 @@ func (b *nativeBridge) AddChannel(bridgeID string, channelID string) (err error)
 	}
 
 	req := request{channelID, ""}
-	err = Post(b.conn, "/bridges/"+bridgeID+"/addChannel", nil, &req)
+	err = b.client.post("/bridges/"+id+"/addChannel", nil, &req)
 	return
 }
 
 // RemoveChannel removes the specified channel from a bridge
 // Equivalent to Post /bridges/{id}/removeChannel
-func (b *nativeBridge) RemoveChannel(id string, channelID string) (err error) {
+func (b *Bridge) RemoveChannel(key *ari.Key, channelID string) (err error) {
+	id := key.ID
+
 	req := struct {
 		ChannelID string `json:"channel"`
 	}{
@@ -85,38 +110,67 @@ func (b *nativeBridge) RemoveChannel(id string, channelID string) (err error) {
 	}
 
 	//pass request
-	err = Post(b.conn, "/bridges/"+id+"/removeChannel", nil, &req)
+	err = b.client.post("/bridges/"+id+"/removeChannel", nil, &req)
 	return
 }
 
-// BridgeDelete shuts down a bridge. If any channels are in this bridge,
+// Delete shuts down a bridge. If any channels are in this bridge,
 // they will be removed and resume whatever they were doing beforehand.
 // This means that the channels themselves are not deleted.
 // Equivalent to DELETE /bridges/{id}
-func (b *nativeBridge) Delete(id string) (err error) {
-	err = Delete(b.conn, "/bridges/"+id, nil, "")
+func (b *Bridge) Delete(key *ari.Key) (err error) {
+	id := key.ID
+	err = b.client.del("/bridges/"+id, nil, "")
 	return
 }
 
-func (b *nativeBridge) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
-	resp := make(map[string]interface{})
-	type request struct {
-		Media string `json:"media"`
+// Play attempts to play the given mediaURI on the bridge, using the playbackID
+// as the identifier to the created playback handle
+func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	h, err := b.StagePlay(key, playbackID, mediaURI)
+	if err != nil {
+		return nil, err
 	}
-	req := request{mediaURI}
-	err = Post(b.conn, "/bridges/"+id+"/play/"+playbackID, &resp, &req)
-	ph = b.playback.Get(playbackID)
-	return
+	return h, h.Exec()
 }
 
-func (b *nativeBridge) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
+// StagePlay stages a `Play` operation on the bridge
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	if playbackID == "" {
+		playbackID = uuid.NewV1().String()
+	}
 
+	resp := make(map[string]interface{})
+	req := struct {
+		Media string `json:"media"`
+	}{
+		Media: mediaURI,
+	}
+	playbackKey := b.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
+
+	return ari.NewPlaybackHandle(playbackKey, b.client.Playback(), func(h *ari.PlaybackHandle) error {
+		return b.client.post("/bridges/"+key.ID+"/play/"+playbackID, &resp, &req)
+	}), nil
+}
+
+// Record attempts to record audio on the bridge, using name as the identifier for
+// the created live recording handle
+func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+	h, err := b.StageRecord(key, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
+}
+
+// StageRecord stages a `Record` opreation
+func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
 	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Name        string `json:"name"`
 		Format      string `json:"format"`
 		MaxDuration int    `json:"maxDurationSeconds"`
@@ -124,8 +178,7 @@ func (b *nativeBridge) Record(id string, name string, opts *ari.RecordingOptions
 		IfExists    string `json:"ifExists,omitempty"`
 		Beep        bool   `json:"beep"`
 		TerminateOn string `json:"terminateOn,omitempty"`
-	}
-	req := request{
+	}{
 		Name:        name,
 		Format:      opts.Format,
 		MaxDuration: int(opts.MaxDuration / time.Second),
@@ -134,38 +187,16 @@ func (b *nativeBridge) Record(id string, name string, opts *ari.RecordingOptions
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = Post(b.conn, "/bridges/"+id+"/record", &resp, &req)
-	if err != nil {
-		rh = b.liveRecording.Get(name)
-	}
-	return
+
+	recordingKey := b.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
+
+	return ari.NewLiveRecordingHandle(recordingKey, b.client.LiveRecording(), func(h *ari.LiveRecordingHandle) error {
+		return b.client.post("/bridges/"+key.ID+"/record", &resp, &req)
+	}), nil
 }
 
-func (b *nativeBridge) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	bridgeHandle := b.Get(id)
-
-	go func() {
-		sub := b.subscriber.Subscribe(n...)
-		defer sub.Cancel()
-		for {
-
-			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
-				return
-			case evt := <-sub.Events():
-				//TODO: do we want to send in events on the bridge for a specific channel?
-				if bridgeHandle.Match(evt) {
-					ns.events <- evt
-				}
-			}
-		}
-	}()
-
-	return &ns
+// Subscribe creates an event subscription for events related to the given
+// bridge␃entity
+func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
+	return b.client.Bus().Subscribe(key, n...)
 }

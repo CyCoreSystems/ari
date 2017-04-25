@@ -1,24 +1,90 @@
-# ari [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
+# ari - Golang Asterisk Rest Interface (ARI) library
+[![Build Status](https://travis-ci.org/CyCoreSystems/ari.png)](https://travis-ci.org/CyCoreSystems/ari) [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
 
-Golang Asterisk ARI library
+This is a go-based ARI library.  It also includes some common convenience wrappers for various tasks, which can be found in /ext.
 
-Golang ARI library with support for native ARI interface as well as an ARI-NATS bridge.  Also includes common convenience wrappers for various tasks.
+This library maintains semver, and APIs between major releases **do** change.
+Therefore, always use a vendoring tool which supports semver, such as `glide` or
+`dep` or use the `gopkg.in` aliasing, such as `gopkg.in/CyCoreSystems/ari.v3`.
 
-V3 is the current release, which is available using gopkg.in versioning
-semantics.
+The `v3` branch is the most well-tested branch, while `v4` fixes a number of
+shortcomings of `v3`, particularly for interoperating with proxies clients.
 
-```sh
-  # Version 3 release
-  go get gopkg.in/CyCoreSystems/ari.v3
+There is also a NATS-based `ari-proxy` which is designed to work with this
+client library.  It can be found at
+[CyCoreSystems/ari-proxy](https://github.com/CyCoreSystems/ari-proxy).
+
+
+# Resource Keys
+
+In order to facilitate the construction of ARI systems across many Asterisk
+instances, in version 4, we introduce the concept of Resource Keys.  Previous
+versions expected a simple ID (string) field for the identification of a
+resource to ARI.  This reflects how ARI itself operates.  However, for systems
+with multiple Asterisk instances, more metadata is necessary in order to
+properly address a resource.  Specifically, we need to know the Asterisk node.
+There is also the concept of a Dialog, which offers an orthogonal logical
+grouping of events which transcends nodes and applications.  This is not
+meaningful in the native client, but other transports, such as the ARI proxy,
+may make use of this for alternative routing of events.
+
+This Key includes all of these data.
+
+```go
+package ari
+
+// Key identifies a unique resource in the system
+type Key struct {
+   // Kind indicates the type of resource the Key points to.  e.g., "channel",
+   // "bridge", etc.
+   Kind string   `json:"kind"`
+
+   // ID indicates the unique identifier of the resource
+   ID string `json:"id"`
+
+   // Node indicates the unique identifier of the Asterisk node on which the
+   // resource exists or will be created
+   Node string `json:"node,omitempty"`
+
+   // Dialog indicates a named scope of the resource, for receiving events
+   Dialog stringa `json:"dialog,omitempty"`
+}
+```
+At a basic level, when the specific Asterisk ID is not needed, a key can consist
+of a simple ID string:
+
+```go
+  key := ari.NewKey(ari.KeyChannel, "myID")
 ```
 
-This repository also includes semver tags for version 3 releases.
+For more interesting systems, however, we can declare the Node ID:
 
-The latest development version is maintained as the master branch, which you can
-obtain by
-
-```sh
-  # Development version
-  go get github.com/CyCoreSystems/ari
+```go
+  key := ari.NewKey(ari.KeyBridge, "myID", ari.WithNode("00:01:02:30:40:50"))
 ```
+
+We can also bind a dialog:
+
+```go
+  key := ari.NewKey(ari.KeyChannel, "myID",
+   ari.WithNode("00:01:02:30:40:50"),
+   ari.WithDialog("privateConversation"))
+```
+
+All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
+instead.  In many cases, this can be easily back-ported by wrapping IDs with
+`ari.NewKey("channel", id)`.
+
+# Staging resources
+
+A common issue for ARI resources is making sure a subscription exists before
+events for that resource are sent.  Otherwise, important events which occur too
+quickly can become lost.  This results in a chicken-and-egg problem for
+subscriptions.
+
+In order to address this common issue, resource handles creation operations now
+offer a `StageXXXX` variant, which returns the handle for the resource without
+actually creating the resource.  Once all of the subscriptions are bound to this
+handle, the caller may call `resource.Exec()` in order to create the resource in
+Asterisk.
 

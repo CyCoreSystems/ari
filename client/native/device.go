@@ -1,48 +1,72 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
 
-type nativeDeviceState struct {
-	conn *Conn
+	"github.com/CyCoreSystems/ari"
+)
+
+// DeviceState provides the ARI DeviceState accessors for the native client
+type DeviceState struct {
+	client *Client
 }
 
-func (ds *nativeDeviceState) Get(name string) *ari.DeviceStateHandle {
-	return ari.NewDeviceStateHandle(name, ds)
+// Get returns the lazy handle for the given device name
+func (ds *DeviceState) Get(key *ari.Key) *ari.DeviceStateHandle {
+	return ari.NewDeviceStateHandle(ds.client.stamp(key), ds)
 }
 
-func (ds *nativeDeviceState) List() (dx []*ari.DeviceStateHandle, err error) {
+// List lists the current devices and returns a list of handles
+func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
 
 	type device struct {
 		Name string `json:"name"`
 	}
 
+	if filter == nil {
+		filter = ds.client.stamp(ari.NewKey(ari.DeviceStateKey, ""))
+	}
+
 	var devices []device
-	err = Get(ds.conn, "/deviceStates", &devices)
+	err = ds.client.get("/deviceStates", &devices)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, i := range devices {
-		dx = append(dx, ds.Get(i.Name))
+		k := ds.client.stamp(ari.NewKey(ari.DeviceStateKey, i.Name))
+		if filter.Match(k) {
+			dx = append(dx, k)
+		}
 	}
 
 	return
 }
 
-func (ds *nativeDeviceState) Data(name string) (d ari.DeviceStateData, err error) {
-	device := struct {
-		State string `json:"state"`
-	}{}
-	err = Get(ds.conn, "/deviceStates/"+name, &device)
-	d = ari.DeviceStateData(device.State) //TODO: we can make DeviceStateData implement MarshalJSON/UnmarshalJSON
-	return
+// Data retrieves the current state of the device
+func (ds *DeviceState) Data(key *ari.Key) (*ari.DeviceStateData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("device key not supplied")
+	}
+
+	var data = new(ari.DeviceStateData)
+	if err := ds.client.get("/deviceStates/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "deviceState", "%v", key.ID)
+	}
+
+	data.Key = ds.client.stamp(key)
+	return data, nil
 }
 
-func (ds *nativeDeviceState) Update(name string, state string) (err error) {
+// Update updates the state of the device
+func (ds *DeviceState) Update(key *ari.Key, state string) error {
 	req := map[string]string{
 		"deviceState": state,
 	}
-	err = Put(ds.conn, "/deviceStates/"+name, nil, &req)
-	return
+	return ds.client.put("/deviceStates/"+key.ID, nil, &req)
 }
 
-func (ds *nativeDeviceState) Delete(name string) (err error) {
-	err = Delete(ds.conn, "/deviceStates/"+name, nil, "")
-	return
+// Delete deletes the device
+func (ds *DeviceState) Delete(key *ari.Key) error {
+	return ds.client.del("/deviceStates/"+key.ID, nil, "")
 }

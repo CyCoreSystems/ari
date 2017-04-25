@@ -4,29 +4,44 @@ package ari
 // with an Asterisk server for playback resources
 type Playback interface {
 
-	// Get gets the handle to the given playbacl ID
-	Get(id string) *PlaybackHandle
+	// Get gets the handle to the given playback ID
+	Get(key *Key) *PlaybackHandle
 
 	// Data gets the playback data
-	Data(id string) (PlaybackData, error)
+	Data(key *Key) (*PlaybackData, error)
 
-	// Control performs the given operation on the current playback
-	Control(id string, op string) error
+	// Control performs the given operation on the current playback.  Available operations are:
+	//   - restart
+	//   - pause
+	//   - unpause
+	//   - reverse
+	//   - forward
+	Control(key *Key, op string) error
 
 	// Stop stops the playback
-	Stop(id string) error
+	Stop(key *Key) error
 
 	// Subscribe subscribes on the playback events
-	Subscribe(id string, n ...string) Subscription
+	Subscribe(key *Key, n ...string) Subscription
 }
 
-// Playbacker contains a playback transport
-type Playbacker interface {
-	Playback() Playback
+// A Player is an entity which can play an audio URI
+type Player interface {
+	// Play plays the audio using the given playback ID and media URI
+	Play(string, string) (*PlaybackHandle, error)
+
+	// StagePlay stages a `Play` operation
+	StagePlay(string, string) (*PlaybackHandle, error)
+
+	// Subscribe subscribes the player to events
+	Subscribe(n ...string) Subscription
 }
 
 // PlaybackData represents the state of a playback
 type PlaybackData struct {
+	// Key is the cluster-unique identifier for this playback
+	Key *Key `json:"key"`
+
 	ID        string `json:"id"` // Unique ID for this playback session
 	Language  string `json:"language,omitempty"`
 	MediaURI  string `json:"media_uri"`  // URI for the media which is to be played
@@ -34,56 +49,49 @@ type PlaybackData struct {
 	TargetURI string `json:"target_uri"` // URI of the channel or bridge on which the media should be played (follows format of 'type':'name')
 }
 
-// NewPlaybackHandle builds a handle to the playback id
-func NewPlaybackHandle(id string, pb Playback) *PlaybackHandle {
-	return &PlaybackHandle{
-		id: id,
-		p:  pb,
-	}
-}
-
 // PlaybackHandle is the handle for performing playback operations
 type PlaybackHandle struct {
-	id string
-	p  Playback
+	key      *Key
+	p        Playback
+	exec     func(pb *PlaybackHandle) error
+	executed bool
+}
+
+// NewPlaybackHandle builds a handle to the playback id
+func NewPlaybackHandle(key *Key, pb Playback, exec func(pb *PlaybackHandle) error) *PlaybackHandle {
+	return &PlaybackHandle{
+		key:  key,
+		p:    pb,
+		exec: exec,
+	}
 }
 
 // ID returns the identifier for the playback
 func (ph *PlaybackHandle) ID() string {
-	return ph.id
+	return ph.key.ID
+}
+
+// Key returns the Key for the playback
+func (ph *PlaybackHandle) Key() *Key {
+	return ph.key
 }
 
 // Data gets the playback data
-func (ph *PlaybackHandle) Data() (pd PlaybackData, err error) {
-	pd, err = ph.p.Data(ph.id)
+func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
+	pd, err = ph.p.Data(ph.key)
 	return
 }
 
 // Control performs the given operation
 func (ph *PlaybackHandle) Control(op string) (err error) {
-	err = ph.p.Control(ph.id, op)
+	err = ph.p.Control(ph.key, op)
 	return
 }
 
 // Stop stops the playback
 func (ph *PlaybackHandle) Stop() (err error) {
-	err = ph.p.Stop(ph.id)
+	err = ph.p.Stop(ph.key)
 	return
-}
-
-// Match returns true if the event matches the playback
-func (ph *PlaybackHandle) Match(e Event) bool {
-	p, ok := e.(PlaybackEvent)
-	if !ok {
-		return false
-	}
-	ids := p.GetPlaybackIDs()
-	for _, i := range ids {
-		if i == ph.ID() {
-			return true
-		}
-	}
-	return false
 }
 
 // Subscribe subscribes the list of channel events
@@ -91,5 +99,17 @@ func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
 	if ph == nil {
 		return nil
 	}
-	return ph.p.Subscribe(ph.id, n...)
+	return ph.p.Subscribe(ph.key, n...)
+}
+
+// Exec executes any staged operations
+func (ph *PlaybackHandle) Exec() (err error) {
+	if !ph.executed {
+		ph.executed = true
+		if ph.exec != nil {
+			err = ph.exec(ph)
+			ph.exec = nil
+		}
+	}
+	return
 }

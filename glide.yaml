@@ -1,0 +1,15 @@
+package: github.com/CyCoreSystems/ari
+import:
+- package: github.com/golang/mock
+  subpackages:
+  - gomock
+- package: github.com/pkg/errors
+  version: ~0.8.0
+- package: github.com/satori/go.uuid
+  version: ~1.1.0
+- package: golang.org/x/net
+  subpackages:
+  - context
+  - websocket
+- package: gopkg.in/inconshreveable/log15.v2
+  version: ~2.11.0

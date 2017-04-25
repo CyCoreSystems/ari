@@ -4,7 +4,7 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -77,26 +77,32 @@ func (el eventList) Swap(l int, r int) {
 }
 
 func main() {
-
-	// load file
-	input, err := os.Open("./json/events-14.0.0-rc1.json")
-	if err != nil {
-		panic(err)
+	if len(os.Args) < 3 {
+		log.Fatalf("Usage: %s <template> <specFile.json>\n", os.Args[0])
+		return
 	}
-	defer input.Close()
+	templateFile := os.Args[1]
+	specFile := os.Args[2]
 
 	// load template
-	tmpl, err := template.New("eventsTemplate").Parse(templateFile)
+	tmpl, err := template.New("eventsTemplate").ParseFiles(templateFile)
 	if err != nil {
-		panic(err)
+		log.Fatalln("failed to parse template", err)
 	}
+
+	// load file
+	input, err := os.Open(specFile)
+	if err != nil {
+		log.Fatalln("failed to open event definition file", err)
+	}
+	defer input.Close()
 
 	// parse data
 	data := make(map[string]interface{})
 	dec := json.NewDecoder(input)
 
 	if err := dec.Decode(&data); err != nil {
-		panic(err)
+		log.Fatalln("failed to decode event definition file", err)
 	}
 
 	// convert data
@@ -105,7 +111,10 @@ func main() {
 
 	models, ok := data["models"].(map[string]interface{})
 	if !ok {
-		panic(errors.New("Can't get models"))
+		log.Fatalln("failed to get models")
+	}
+	if len(models) < 1 {
+		log.Fatalln("no models found")
 	}
 
 	for mkey, m := range models {
@@ -175,5 +184,5 @@ func main() {
 
 	sort.Sort(events)
 
-	tmpl.Execute(os.Stdout, events)
+	tmpl.ExecuteTemplate(os.Stdout, "template.tmpl", events)
 }

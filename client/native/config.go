@@ -1,29 +1,58 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
+)
 
-type nativeConfig struct {
-	conn *Conn
+// Config provides the ARI Configuration accessors for a native client
+type Config struct {
+	client *Client
 }
 
-func (c *nativeConfig) Get(configClass string, objectType string, id string) *ari.ConfigHandle {
-	return ari.NewConfigHandle(configClass, objectType, id, c)
+// Get gets a lazy handle to a configuration object
+func (c *Config) Get(key *ari.Key) *ari.ConfigHandle {
+	return ari.NewConfigHandle(key, c)
 }
 
-func (c *nativeConfig) Data(configClass string, objectType string, id string) (cd ari.ConfigData, err error) {
-	cd.ID = id
-	cd.Class = configClass
-	cd.Type = objectType
-	err = Get(c.conn, "/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, &cd.Fields)
-	return
+// Data retrieves the state of a configuration object
+func (c *Config) Data(key *ari.Key) (*ari.ConfigData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("config key not supplied")
+	}
+
+	class, kind, name, err := ari.ParseConfigID(key.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse configuration key")
+	}
+
+	data := &ari.ConfigData{
+		Key:   c.client.stamp(key),
+		Class: class,
+		Type:  kind,
+		Name:  name,
+	}
+	err = c.client.get("/asterisk/config/dynamic/"+key.ID, &data.Fields)
+	if err != nil {
+		return nil, dataGetError(err, "config", "%v", key.ID)
+	}
+	return data, nil
 }
 
-func (c *nativeConfig) Update(configClass string, objectType string, id string, tuples []ari.ConfigTuple) (err error) {
-	err = Put(c.conn, "/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, &tuples)
-	return
+// Update updates the given configuration object
+func (c *Config) Update(key *ari.Key, tuples []ari.ConfigTuple) (err error) {
+	class, kind, name, err := ari.ParseConfigID(key.ID)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse key")
+	}
+	return c.client.put("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, &tuples)
 }
 
-func (c *nativeConfig) Delete(configClass string, objectType string, id string) (err error) {
-	err = Delete(c.conn, "/asterisk/config/dynamic/"+configClass+"/"+objectType+"/"+id, nil, "")
-	return
+// Delete deletes the configuration object
+func (c *Config) Delete(key *ari.Key) error {
+	class, kind, name, err := ari.ParseConfigID(key.ID)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse key")
+	}
+	return c.client.del("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, "")
 }

@@ -5,23 +5,26 @@ package ari
 type StoredRecording interface {
 
 	// List lists the recordings
-	List() ([]*StoredRecordingHandle, error)
+	List(filter *Key) ([]*Key, error)
 
 	// Get gets the Recording by type
-	Get(name string) *StoredRecordingHandle
+	Get(key *Key) *StoredRecordingHandle
 
 	// data gets the data for the stored recording
-	Data(name string) (StoredRecordingData, error)
+	Data(key *Key) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
-	Copy(name string, dest string) (*StoredRecordingHandle, error)
+	Copy(key *Key, dest string) (*StoredRecordingHandle, error)
 
 	// Delete deletes the recording
-	Delete(name string) error
+	Delete(key *Key) error
 }
 
 // StoredRecordingData is the data for a stored recording
 type StoredRecordingData struct {
+	// Key is the cluster-unique identifier for this stored recording
+	Key *Key `json:"key"`
+
 	Format string `json:"format"`
 	Name   string `json:"name"`
 }
@@ -31,39 +34,56 @@ func (d StoredRecordingData) ID() string {
 	return d.Name //TODO: does the identifier include the Format and Name?
 }
 
-// NewStoredRecordingHandle creates a new stored recording handle
-func NewStoredRecordingHandle(name string, s StoredRecording) *StoredRecordingHandle {
-	return &StoredRecordingHandle{
-		name: name,
-		s:    s,
-	}
-}
-
 // A StoredRecordingHandle is a reference to a stored recording that can be operated on
 type StoredRecordingHandle struct {
-	name string
-	s    StoredRecording
+	key      *Key
+	s        StoredRecording
+	exec     func(a *StoredRecordingHandle) error
+	executed bool
+}
+
+// NewStoredRecordingHandle creates a new stored recording handle
+func NewStoredRecordingHandle(key *Key, s StoredRecording, exec func(a *StoredRecordingHandle) error) *StoredRecordingHandle {
+	return &StoredRecordingHandle{
+		key:  key,
+		s:    s,
+		exec: exec,
+	}
 }
 
 // ID returns the identifier for the stored recording
 func (s *StoredRecordingHandle) ID() string {
-	return s.name
+	return s.key.ID
+}
+
+// Key returns the Key for the stored recording
+func (s *StoredRecordingHandle) Key() *Key {
+	return s.key
+}
+
+// Exec executes any staged operations
+func (s *StoredRecordingHandle) Exec() (err error) {
+	if !s.executed {
+		s.executed = true
+		if s.exec != nil {
+			err = s.exec(s)
+			s.exec = nil
+		}
+	}
+	return
 }
 
 // Data gets the data for the stored recording
-func (s *StoredRecordingHandle) Data() (d StoredRecordingData, err error) {
-	d, err = s.s.Data(s.name)
-	return
+func (s *StoredRecordingHandle) Data() (*StoredRecordingData, error) {
+	return s.s.Data(s.key)
 }
 
 // Copy copies the stored recording
-func (s *StoredRecordingHandle) Copy(dest string) (h *StoredRecordingHandle, err error) {
-	h, err = s.s.Copy(s.name, dest)
-	return
+func (s *StoredRecordingHandle) Copy(dest string) (*StoredRecordingHandle, error) {
+	return s.s.Copy(s.key, dest)
 }
 
 // Delete deletes the recording
-func (s *StoredRecordingHandle) Delete() (err error) {
-	err = s.s.Delete(s.name)
-	return
+func (s *StoredRecordingHandle) Delete() error {
+	return s.s.Delete(s.key)
 }

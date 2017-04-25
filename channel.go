@@ -10,91 +10,119 @@ import (
 // Channel represents a communication path interacting with an Asterisk server.
 type Channel interface {
 	// Get returns a handle to a channel for further interaction
-	Get(id string) *ChannelHandle
+	Get(key *Key) *ChannelHandle
 
-	// List lists the channels in asterisk
-	List() ([]*ChannelHandle, error)
+	// GetVariable retrieves the value of a channel variable
+	GetVariable(*Key, string) (string, error)
 
-	// Originate creates a new channel, returning a handle to it or an
-	// error, if the creation failed
-	Originate(OriginateRequest) (*ChannelHandle, error)
+	// List lists the channels in asterisk, optionally using the key for filtering
+	List(*Key) ([]*Key, error)
+
+	// Originate creates a new channel, returning a handle to it or an error, if
+	// the creation failed.
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	Originate(*Key, OriginateRequest) (*ChannelHandle, error)
+
+	// StageOriginate creates a new Originate, created when the `Exec` method
+	// on `ChannelHandle` is invoked.
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	StageOriginate(*Key, OriginateRequest) (*ChannelHandle, error)
 
 	// Create creates a new channel, returning a handle to it or an
-	// error, if the creation failed
-	Create(ChannelCreateRequest) (*ChannelHandle, error)
+	// error, if the creation failed. Create is already Staged via `Dial`.
+	// The Key should be that of the linked channel, if one exists, so that the
+	// Node can be matches to it.
+	Create(*Key, ChannelCreateRequest) (*ChannelHandle, error)
 
 	// Data returns the channel data for a given channel
-	Data(id string) (ChannelData, error)
+	Data(key *Key) (*ChannelData, error)
 
 	// Continue tells Asterisk to return a channel to the dialplan
-	Continue(id, context, extension string, priority int) error
+	Continue(key *Key, context, extension string, priority int) error
 
 	// Busy hangs up the channel with the "busy" cause code
-	Busy(id string) error
+	Busy(key *Key) error
 
 	// Congestion hangs up the channel with the "congestion" cause code
-	Congestion(id string) error
+	Congestion(key *Key) error
 
 	// Answer answers the channel
-	Answer(id string) error
+	Answer(key *Key) error
 
 	// Hangup hangs up the given channel
-	Hangup(id string, reason string) error
+	Hangup(key *Key, reason string) error
 
 	// Ring indicates ringing to the channel
-	Ring(id string) error
+	Ring(key *Key) error
 
 	// StopRing stops ringing on the channel
-	StopRing(id string) error
+	StopRing(key *Key) error
 
 	// SendDTMF sends DTMF to the channel
-	SendDTMF(id string, dtmf string, opts *DTMFOptions) error
+	SendDTMF(key *Key, dtmf string, opts *DTMFOptions) error
 
 	// Hold puts the channel on hold
-	Hold(id string) error
+	Hold(key *Key) error
 
 	// StopHold retrieves the channel from hold
-	StopHold(id string) error
+	StopHold(key *Key) error
 
 	// Mute mutes a channel in the given direction (in,out,both)
-	Mute(id string, dir string) error
+	Mute(key *Key, dir Direction) error
 
 	// Unmute unmutes a channel in the given direction (in,out,both)
-	Unmute(id string, dir string) error
+	Unmute(key *Key, dir Direction) error
 
 	// MOH plays music on hold
-	MOH(id string, moh string) error
+	MOH(key *Key, moh string) error
+
+	// SetVariable sets a channel variable
+	SetVariable(key *Key, name, value string) error
 
 	// StopMOH stops music on hold
-	StopMOH(id string) error
+	StopMOH(key *Key) error
 
 	// Silence plays silence to the channel
-	Silence(id string) error
+	Silence(key *Key) error
 
 	// StopSilence stops the silence on the channel
-	StopSilence(id string) error
+	StopSilence(key *Key) error
 
 	// Play plays the media URI to the channel
-	Play(id string, playbackID string, mediaURI string) (*PlaybackHandle, error)
+	Play(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
+
+	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StagePlay(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
 	// Record records the channel
-	Record(id string, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
+	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
+
+	// StageRecord stages a `Record` operation and returns the `PlaybackHandle`
+	// for invoking it.
+	StageRecord(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
 
 	// Dial dials a created channel
-	Dial(id string, caller string, timeout time.Duration) error
+	Dial(key *Key, caller string, timeout time.Duration) error
 
 	// Snoop spies on a specific channel, creating a new snooping channel
-	Snoop(id string, snoopID string, app string, opts *SnoopOptions) (*ChannelHandle, error)
+	Snoop(key *Key, snoopID string, opts *SnoopOptions) (*ChannelHandle, error)
+
+	// StageSnoop creates a new `ChannelHandle`, when `Exec`ed, snoops on the given channel ID and
+	// creates a new snooping channel.
+	StageSnoop(key *Key, snoopID string, opts *SnoopOptions) (*ChannelHandle, error)
 
 	// Subscribe subscribes on the channel events
-	Subscribe(id string, n ...string) Subscription
-
-	// Variables gets the channel Variables
-	Variables(id string) Variables
+	Subscribe(key *Key, n ...string) Subscription
 }
 
 // ChannelData is the data for a specific channel
 type ChannelData struct {
+	// Key is the unique identifier for a channel in the cluster
+	Key *Key `json:"key,omitempty"`
+
 	ID           string      `json:"id"`    // Unique id for this channel (same as for AMI)
 	Name         string      `json:"name"`  // Name of this channel (tech/name-id format)
 	State        string      `json:"state"` // State of the channel
@@ -131,34 +159,72 @@ type ChannelCreateRequest struct {
 	Formats string `json:"formats,omitempty"`
 }
 
-// NewChannelHandle returns a handle to the given ARI channel
-func NewChannelHandle(id string, c Channel) *ChannelHandle {
-	return &ChannelHandle{
-		id: id,
-		c:  c,
-	}
+// SnoopOptions enumerates the non-required arguments for the snoop operation
+type SnoopOptions struct {
+	// App is the ARI application into which the newly-created Snoop channel should be dropped.
+	App string `json:"app"`
+
+	// AppArgs is the set of arguments to pass with the newly-created Snoop channel's entry into ARI.
+	AppArgs string `json:"appArgs,omitempty"`
+
+	// Spy describes the direction of audio on which to spy (none, in, out, both).
+	// The default is 'none'.
+	Spy Direction `json:"spy,omitempty"`
+
+	// Whisper describes the direction of audio on which to send (none, in, out, both).
+	// The default is 'none'.
+	Whisper Direction `json:"whisper,omitempty"`
 }
 
-// ChannelHandle provides a wrapper to a Channel interface for
-// operations on a particular channel ID
+// ChannelHandle provides a wrapper on the Channel interface for operations on a particular channel ID.
 type ChannelHandle struct {
-	id string  // id of the channel on which we are operating
-	c  Channel // the Channel interface with which we are operating
+	key *Key
+	c   Channel
+
+	exec func(ch *ChannelHandle) error
+
+	executed bool
+}
+
+// NewChannelHandle returns a handle to the given ARI channel
+func NewChannelHandle(key *Key, c Channel, exec func(ch *ChannelHandle) error) *ChannelHandle {
+	return &ChannelHandle{
+		key:  key,
+		c:    c,
+		exec: exec,
+	}
 }
 
 // ID returns the identifier for the channel handle
 func (ch *ChannelHandle) ID() string {
-	return ch.id
+	return ch.key.ID
+}
+
+// Key returns the key for the channel handle
+func (ch *ChannelHandle) Key() *Key {
+	return ch.key
+}
+
+// Exec executes any staged channel operations attached to this handle.
+func (ch *ChannelHandle) Exec() (err error) {
+	if !ch.executed {
+		ch.executed = true
+		if ch.exec != nil {
+			err = ch.exec(ch)
+			ch.exec = nil
+		}
+	}
+	return err
 }
 
 // Data returns the channel's data
-func (ch *ChannelHandle) Data() (ChannelData, error) {
-	return ch.c.Data(ch.id)
+func (ch *ChannelHandle) Data() (*ChannelData, error) {
+	return ch.c.Data(ch.key)
 }
 
 // Continue tells Asterisk to return the channel to the dialplan
 func (ch *ChannelHandle) Continue(context, extension string, priority int) error {
-	return ch.c.Continue(ch.id, context, extension, priority)
+	return ch.c.Continue(ch.key, context, extension, priority)
 }
 
 //---
@@ -168,22 +234,22 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 // Play initiates playback of the specified media uri
 // to the channel, returning the Playback handle
 func (ch *ChannelHandle) Play(id string, mediaURI string) (ph *PlaybackHandle, err error) {
-	ph, err = ch.c.Play(ch.id, id, mediaURI)
-	return
+	return ch.c.Play(ch.key, id, mediaURI)
 }
 
 // Record records the channel to the given filename
-func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (rh *LiveRecordingHandle, err error) {
-	rh, err = ch.c.Record(ch.id, name, opts)
-	return
+func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return ch.c.Record(ch.key, name, opts)
 }
 
-// Playback returns the playback transport
-func (ch *ChannelHandle) Playback() Playback {
-	if pb, ok := ch.c.(Playbacker); ok {
-		return pb.Playback()
-	}
-	return nil
+// StagePlay stages a `Play` operation.
+func (ch *ChannelHandle) StagePlay(id string, mediaURI string) (*PlaybackHandle, error) {
+	return ch.c.StagePlay(ch.key, id, mediaURI)
+}
+
+// StageRecord stages a `Record` operation
+func (ch *ChannelHandle) StageRecord(name string, opts *RecordingOptions) (*LiveRecordingHandle, error) {
+	return ch.c.StageRecord(ch.key, name, opts)
 }
 
 //---
@@ -192,17 +258,17 @@ func (ch *ChannelHandle) Playback() Playback {
 
 // Busy hangs up the channel with the "busy" cause code
 func (ch *ChannelHandle) Busy() error {
-	return ch.c.Busy(ch.id)
+	return ch.c.Busy(ch.key)
 }
 
 // Congestion hangs up the channel with the congestion cause code
 func (ch *ChannelHandle) Congestion() error {
-	return ch.c.Congestion(ch.id)
+	return ch.c.Congestion(ch.key)
 }
 
 // Hangup hangs up the channel with the normal cause code
 func (ch *ChannelHandle) Hangup() error {
-	return ch.c.Hangup(ch.id, "normal")
+	return ch.c.Hangup(ch.key, "normal")
 }
 
 //--
@@ -213,7 +279,7 @@ func (ch *ChannelHandle) Hangup() error {
 
 // Answer answers the channel
 func (ch *ChannelHandle) Answer() error {
-	return ch.c.Answer(ch.id)
+	return ch.c.Answer(ch.key)
 }
 
 // IsAnswered checks the current state of the channel to see if it is "Up"
@@ -233,12 +299,12 @@ func (ch *ChannelHandle) IsAnswered() (bool, error) {
 
 // Ring indicates ringing to the channel
 func (ch *ChannelHandle) Ring() error {
-	return ch.c.Ring(ch.id)
+	return ch.c.Ring(ch.key)
 }
 
 // StopRing stops ringing on the channel
 func (ch *ChannelHandle) StopRing() error {
-	return ch.c.StopRing(ch.id)
+	return ch.c.StopRing(ch.key)
 }
 
 // ------
@@ -248,21 +314,21 @@ func (ch *ChannelHandle) StopRing() error {
 // --
 
 // Mute mutes the channel in the given direction (in, out, both)
-func (ch *ChannelHandle) Mute(dir string) (err error) {
-	if err = normalizeDirection(&dir); err != nil {
-		return
+func (ch *ChannelHandle) Mute(dir Direction) (err error) {
+	if dir == "" {
+		dir = DirectionIn
 	}
 
-	return ch.c.Mute(ch.id, dir)
+	return ch.c.Mute(ch.key, dir)
 }
 
 // Unmute unmutes the channel in the given direction (in, out, both)
-func (ch *ChannelHandle) Unmute(dir string) (err error) {
-	if err = normalizeDirection(&dir); err != nil {
-		return
+func (ch *ChannelHandle) Unmute(dir Direction) (err error) {
+	if dir == "" {
+		dir = DirectionIn
 	}
 
-	return ch.c.Unmute(ch.id, dir)
+	return ch.c.Unmute(ch.key, dir)
 }
 
 // ----
@@ -273,12 +339,12 @@ func (ch *ChannelHandle) Unmute(dir string) (err error) {
 
 // Hold puts the channel on hold
 func (ch *ChannelHandle) Hold() error {
-	return ch.c.Hold(ch.id)
+	return ch.c.Hold(ch.key)
 }
 
 // StopHold retrieves the channel from hold
 func (ch *ChannelHandle) StopHold() error {
-	return ch.c.StopHold(ch.id)
+	return ch.c.StopHold(ch.key)
 }
 
 // ----
@@ -290,19 +356,24 @@ func (ch *ChannelHandle) StopHold() error {
 // MOH plays music on hold of the given class
 // to the channel
 func (ch *ChannelHandle) MOH(mohClass string) error {
-	return ch.c.MOH(ch.id, mohClass)
+	return ch.c.MOH(ch.key, mohClass)
 }
 
 // StopMOH stops playing of music on hold to the channel
 func (ch *ChannelHandle) StopMOH() error {
-	return ch.c.StopMOH(ch.id)
+	return ch.c.StopMOH(ch.key)
 }
 
 // ----
 
-// Variables returns the channel variables
-func (ch *ChannelHandle) Variables() Variables {
-	return ch.c.Variables(ch.id)
+// GetVariable returns the value of a channel variable
+func (ch *ChannelHandle) GetVariable(name string) (string, error) {
+	return ch.c.GetVariable(ch.key, name)
+}
+
+// SetVariable sets the value of a channel variable
+func (ch *ChannelHandle) SetVariable(name, value string) error {
+	return ch.c.SetVariable(ch.key, name, value)
 }
 
 // --
@@ -314,7 +385,25 @@ func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error)
 	if req.Originator == "" {
 		req.Originator = ch.ID()
 	}
-	return ch.c.Originate(req)
+	return ch.c.Originate(ch.key, req)
+}
+
+// StageOriginate stages an originate (channel creation and dial) to be Executed later.
+func (ch *ChannelHandle) StageOriginate(req OriginateRequest) (*ChannelHandle, error) {
+	if req.Originator == "" {
+		req.Originator = ch.ID()
+	}
+
+	return ch.c.StageOriginate(ch.key, req)
+}
+
+// Create creates (but does not dial) a new channel, using the present channel as its Originator.
+func (ch *ChannelHandle) Create(req ChannelCreateRequest) (*ChannelHandle, error) {
+	if req.Originator == "" {
+		req.Originator = ch.ID()
+	}
+
+	return ch.c.Create(ch.key, req)
 }
 
 // Dial dials a created channel.  `caller` is the optional
@@ -322,19 +411,17 @@ func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error)
 // is the length of time to wait before the dial is answered
 // before aborting.
 func (ch *ChannelHandle) Dial(caller string, timeout time.Duration) error {
-	return ch.c.Dial(ch.id, caller, timeout)
-}
-
-// SnoopOptions enumerates the non-required arguments for the snoop operation
-type SnoopOptions struct {
-	Direction string // Direction of audio to spy on (in, out, both)
-	Whisper   string // Direction of audio to whisper into (in, out, both)
-	AppArgs   string // The arguments to pass to the new application.
+	return ch.c.Dial(ch.key, caller, timeout)
 }
 
 // Snoop spies on a specific channel, creating a new snooping channel placed into the given app
-func (ch *ChannelHandle) Snoop(snoopID string, app string, opts *SnoopOptions) (*ChannelHandle, error) {
-	return ch.c.Snoop(ch.id, snoopID, app, opts)
+func (ch *ChannelHandle) Snoop(snoopID string, opts *SnoopOptions) (*ChannelHandle, error) {
+	return ch.c.Snoop(ch.key, snoopID, opts)
+}
+
+// StageSnoop stages a `Snoop` operation
+func (ch *ChannelHandle) StageSnoop(snoopID string, opts *SnoopOptions) (*ChannelHandle, error) {
+	return ch.c.StageSnoop(ch.key, snoopID, opts)
 }
 
 // ----
@@ -345,12 +432,12 @@ func (ch *ChannelHandle) Snoop(snoopID string, app string, opts *SnoopOptions) (
 
 // Silence plays silence to the channel
 func (ch *ChannelHandle) Silence() error {
-	return ch.c.Silence(ch.id)
+	return ch.c.Silence(ch.key)
 }
 
 // StopSilence stops silence to the channel
 func (ch *ChannelHandle) StopSilence() error {
-	return ch.c.StopSilence(ch.id)
+	return ch.c.StopSilence(ch.key)
 }
 
 // ----
@@ -364,7 +451,7 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 	if ch == nil {
 		return nil
 	}
-	return ch.c.Subscribe(ch.id, n...)
+	return ch.c.Subscribe(ch.key, n...)
 }
 
 // TODO: rest of ChannelHandle
@@ -375,28 +462,5 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 
 // SendDTMF sends the DTMF information to the server
 func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
-	return ch.c.SendDTMF(ch.id, dtmf, opts)
-}
-
-// Match returns true if the event matches the channel
-func (ch *ChannelHandle) Match(e Event) bool {
-	channelEvent, ok := e.(ChannelEvent)
-	if !ok {
-		return false
-	}
-
-	//channel ID comparisons
-	//	do we compare based on id;N, where id == id and the N's are different
-	//		 -> this happens in Local channels
-
-	// NOTE: this code considers local channels equal
-	//leftChannel := strings.Split(ch.id, ";")[0]
-	channelIDs := channelEvent.GetChannelIDs()
-	for _, i := range channelIDs {
-		//rightChannel := strings.Split(i, ";")[0]
-		if ch.id == i {
-			return true
-		}
-	}
-	return false
+	return ch.c.SendDTMF(ch.key, dtmf, opts)
 }

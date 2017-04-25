@@ -13,17 +13,21 @@ const EndpointIDSeparator = "|" //TODO: confirm separator isn't terrible
 type Endpoint interface {
 
 	// List lists the endpoints
-	// TODO: associated with the application, or on the entire system?
-	List() ([]*EndpointHandle, error)
+	List(filter *Key) ([]*Key, error)
 
 	// List available endpoints for a given endpoint technology
-	ListByTech(tech string) ([]*EndpointHandle, error)
+	ListByTech(tech string, filter *Key) ([]*Key, error)
 
 	// Get returns a handle to the endpoint for further operations
-	Get(tech string, resource string) *EndpointHandle
+	Get(key *Key) *EndpointHandle
 
 	// Data returns the state of the endpoint
-	Data(tech string, resource string) (EndpointData, error)
+	Data(key *Key) (*EndpointData, error)
+}
+
+// NewEndpointKey returns the key for the given endpoint
+func NewEndpointKey(tech, resource string, opts ...KeyOptionFunc) *Key {
+	return NewKey(EndpointKey, tech+"/"+resource, opts...)
 }
 
 // EndpointData describes an external device which may offer or accept calls
@@ -31,6 +35,9 @@ type Endpoint interface {
 //
 // Allowed states:  'unknown', 'offline', 'online'
 type EndpointData struct {
+	// Key is the cluster-unique identifier for this Endpoint
+	Key *Key `json:"key"`
+
 	ChannelIDs []string `json:"channel_ids"`     // List of channel Ids which are associated with this endpoint
 	Resource   string   `json:"resource"`        // The endpoint's resource name
 	State      string   `json:"state,omitempty"` // The state of the endpoint
@@ -39,33 +46,7 @@ type EndpointData struct {
 
 // ID returns the ID for the endpoint
 func (ed *EndpointData) ID() string {
-	return ed.Technology + "/" + ed.Resource
-}
-
-// NewEndpointHandle creates a new EndpointHandle
-func NewEndpointHandle(tech string, resource string, e Endpoint) *EndpointHandle {
-	return &EndpointHandle{
-		tech:     tech,
-		resource: resource,
-	}
-}
-
-// An EndpointHandle is a reference to an endpoint attached to
-// a transport to an asterisk server
-type EndpointHandle struct {
-	tech     string
-	resource string
-	e        Endpoint
-}
-
-// ID returns the identifier for the endpoint
-func (eh *EndpointHandle) ID() string {
-	return eh.tech + "/" + eh.resource
-}
-
-// Data returns the state of the endpoint
-func (eh *EndpointHandle) Data() (EndpointData, error) {
-	return eh.e.Data(eh.tech, eh.resource)
+	return ed.Technology + EndpointIDSeparator + ed.Resource
 }
 
 // FromEndpointID converts the endpoint ID to the tech, resource pair.
@@ -88,17 +69,32 @@ func FromEndpointID(id string) (tech string, resource string, err error) {
 	return
 }
 
-// Match returns true if the event matches the bridge
-func (eh *EndpointHandle) Match(e Event) bool {
-	en, ok := e.(EndpointEvent)
-	if !ok {
-		return false
+// NewEndpointHandle creates a new EndpointHandle
+func NewEndpointHandle(key *Key, e Endpoint) *EndpointHandle {
+	return &EndpointHandle{
+		key: key,
+		e:   e,
 	}
-	ids := en.GetEndpointIDs()
-	for _, i := range ids {
-		if i == eh.ID() {
-			return true
-		}
-	}
-	return false
+}
+
+// An EndpointHandle is a reference to an endpoint attached to
+// a transport to an asterisk server
+type EndpointHandle struct {
+	key *Key
+	e   Endpoint
+}
+
+// ID returns the identifier for the endpoint
+func (eh *EndpointHandle) ID() string {
+	return eh.key.ID
+}
+
+// Key returns the key for the endpoint
+func (eh *EndpointHandle) Key() *Key {
+	return eh.key
+}
+
+// Data returns the state of the endpoint
+func (eh *EndpointHandle) Data() (*EndpointData, error) {
+	return eh.e.Data(eh.key)
 }

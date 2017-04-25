@@ -1,56 +1,87 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
 
-type nativeStoredRecording struct {
-	conn *Conn
+	"github.com/CyCoreSystems/ari"
+)
+
+// StoredRecording provides the ARI StoredRecording accessors for the native client
+type StoredRecording struct {
+	client *Client
 }
 
-func (sr *nativeStoredRecording) List() (sx []*ari.StoredRecordingHandle, err error) {
+// List lists the current stored recordings and returns a list of handles
+func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 	var recs []struct {
 		Name string `json:"name"`
 	}
 
-	err = Get(sr.conn, "/recordings/stored", &recs)
+	if filter == nil {
+		filter = sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, ""))
+	}
+
+	err = sr.client.get("/recordings/stored", &recs)
 	for _, rec := range recs {
-		sx = append(sx, sr.Get(rec.Name))
+		k := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, rec.Name))
+		if filter.Match(k) {
+			sx = append(sx, k)
+		}
 	}
 
 	return
 }
 
-func (sr *nativeStoredRecording) Get(name string) (s *ari.StoredRecordingHandle) {
-	s = ari.NewStoredRecordingHandle(name, sr)
-	return
+// Get gets a lazy handle for the given stored recording name
+func (sr *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
+	return ari.NewStoredRecordingHandle(key, sr, nil)
 }
 
-func (sr *nativeStoredRecording) Data(name string) (d ari.StoredRecordingData, err error) {
-	err = Get(sr.conn, "/recordings/stored/"+name, &d)
-	return
+// Data retrieves the state of the stored recording
+func (sr *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("storedRecording key not supplied")
+	}
+
+	var data = new(ari.StoredRecordingData)
+	if err := sr.client.get("/recordings/stored/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "storedRecording", "%v", key.ID)
+	}
+
+	data.Key = sr.client.stamp(key)
+	return data, nil
 }
 
-func (sr *nativeStoredRecording) Copy(name string, dest string) (h *ari.StoredRecordingHandle, err error) {
+// Copy copies a stored recording and returns the new handle
+func (sr *StoredRecording) Copy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
+	h, err := sr.StageCopy(key, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	return h, h.Exec()
+}
+
+// StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
+func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
 
 	var resp struct {
 		Name string `json:"name"`
 	}
 
-	var request struct {
+	req := struct {
 		Dest string `json:"destinationRecordingName"`
+	}{
+		Dest: dest,
 	}
 
-	request.Dest = dest
-
-	err = Post(sr.conn, "/recordings/stored/"+name+"/copy", &resp, &request)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return sr.Get(resp.Name), nil
+	destKey := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, dest))
+	return ari.NewStoredRecordingHandle(destKey, sr, func(h *ari.StoredRecordingHandle) error {
+		return sr.client.post("/recordings/stored/"+key.ID+"/copy", &resp, &req)
+	}), nil
 }
 
-func (sr *nativeStoredRecording) Delete(name string) (err error) {
-	err = Delete(sr.conn, "/recordings/stored/"+name+"", nil, "")
-	return
+// Delete deletes the stored recording
+func (sr *StoredRecording) Delete(key *ari.Key) error {
+	return sr.client.del("/recordings/stored/"+key.ID+"", nil, "")
 }

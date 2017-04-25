@@ -1,74 +1,94 @@
 package ari
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // Config represents a transport to the asterisk
 // config ARI resource.
 type Config interface {
 
 	// Get gets the reference to a config object
-	Get(configClass, objectType, id string) *ConfigHandle
+	Get(key *Key) *ConfigHandle
 
 	// Data gets the data for the config object
-	Data(configClass, objectType, id string) (ConfigData, error)
+	Data(key *Key) (*ConfigData, error)
 
 	// Update creates or updates the given tuples
-	Update(configClass, objectType, id string, tuples []ConfigTuple) error
+	Update(key *Key, tuples []ConfigTuple) error
 
 	// Delete deletes the dynamic configuration object.
-	Delete(configClass, objectType, id string) error
-}
-
-// NewConfigHandle builds a new config handle
-func NewConfigHandle(configClass, objectType, id string, c Config) *ConfigHandle {
-	return &ConfigHandle{
-		configClass: configClass,
-		objectType:  objectType,
-		id:          id,
-		c:           c,
-	}
-}
-
-// A ConfigHandle is a reference to a Config object
-// on the asterisk service
-type ConfigHandle struct {
-	configClass string
-	objectType  string
-	id          string
-
-	c Config
-}
-
-// ID returns the unique identifier for the config object
-func (ch *ConfigHandle) ID() string {
-	return fmt.Sprintf("%v/%v/%v", ch.configClass, ch.objectType, ch.id)
-}
-
-// Data gets the current data for the config handle
-func (ch *ConfigHandle) Data() (ConfigData, error) {
-	return ch.c.Data(ch.configClass, ch.objectType, ch.id)
-}
-
-// Update creates or updates the given config tuples
-func (ch *ConfigHandle) Update(tuples []ConfigTuple) error {
-	return ch.c.Update(ch.configClass, ch.objectType, ch.id, tuples)
-}
-
-// Delete deletes the dynamic configuration object
-func (ch *ConfigHandle) Delete() error {
-	return ch.c.Delete(ch.configClass, ch.objectType, ch.id)
+	Delete(key *Key) error
 }
 
 // ConfigData contains the data for a given configuration object
 type ConfigData struct {
-	ID     string
-	Class  string
-	Type   string
+	// Key is the cluster-unique identifier for this configuration
+	Key *Key `json:"key"`
+
+	Class string
+	Type  string
+	Name  string
+
 	Fields []ConfigTuple
+}
+
+// ID returns the ID of the ConfigData structure
+func (cd *ConfigData) ID() string {
+	return fmt.Sprintf("%s/%s/%s", cd.Class, cd.Type, cd.Name)
 }
 
 // ConfigTuple is the key-value pair that defines a configuration entry
 type ConfigTuple struct {
 	Attribute string `json:"attribute"`
 	Value     string `json:"value"`
+}
+
+// A ConfigHandle is a reference to a Config object
+// on the asterisk service
+type ConfigHandle struct {
+	key *Key
+
+	c Config
+}
+
+// NewConfigHandle builds a new config handle
+func NewConfigHandle(key *Key, c Config) *ConfigHandle {
+	return &ConfigHandle{
+		key: key,
+		c:   c,
+	}
+}
+
+// ID returns the unique identifier for the config object
+func (h *ConfigHandle) ID() string {
+	return h.key.ID
+}
+
+// Data gets the current data for the config handle
+func (h *ConfigHandle) Data() (*ConfigData, error) {
+	return h.c.Data(h.key)
+}
+
+// Update creates or updates the given config tuples
+func (h *ConfigHandle) Update(tuples []ConfigTuple) error {
+	return h.c.Update(h.key, tuples)
+}
+
+// Delete deletes the dynamic configuration object
+func (h *ConfigHandle) Delete() error {
+	return h.c.Delete(h.key)
+}
+
+// ParseConfigID parses the provided Config ID into its Class, Type, and ID components
+func ParseConfigID(input string) (class, kind, id string, err error) {
+	pieces := strings.Split(input, "/")
+	if len(pieces) < 3 {
+		err = errors.New("invalid input ID")
+		return
+	}
+
+	return pieces[0], pieces[1], pieces[2], nil
 }

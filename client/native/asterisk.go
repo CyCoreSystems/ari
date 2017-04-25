@@ -1,100 +1,86 @@
 package native
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/pkg/errors"
 )
 
-var errOnlyUnsupported = errors.New("Only-restricted AsteriskInfo requests are not yet implemented")
+// Asterisk provides the ARI Asterisk accessors for a native client
+type Asterisk struct {
+	client *Client
+}
 
-type nativeAsterisk struct {
+// Logging provides the ARI Asterisk Logging accessors for a native client
+func (a *Asterisk) Logging() ari.Logging {
+	return &Logging{a.client}
+}
+
+// Modules provides the ARI Asterisk Modules accessors for a native client
+func (a *Asterisk) Modules() ari.Modules {
+	return &Modules{a.client}
+}
+
+// Config provides the ARI Asterisk Config accessors for a native client
+func (a *Asterisk) Config() ari.Config {
+	return &Config{a.client}
+}
+
+/*
 	conn    *Conn
 	logging ari.Logging
 	modules ari.Modules
 	config  ari.Config
 }
-
-// Config returns the config resource
-func (a *nativeAsterisk) Config() ari.Config {
-	return a.config
-}
-
-// Modules returns the modules resource
-func (a *nativeAsterisk) Modules() ari.Modules {
-	return a.modules
-}
-
-// Logging returns the logging resource
-func (a *nativeAsterisk) Logging() ari.Logging {
-	return a.logging
-}
+*/
 
 // Info returns various data about the Asterisk system
 // Equivalent to GET /asterisk/info
-func (a *nativeAsterisk) Info(only string) (*ari.AsteriskInfo, error) {
+func (a *Asterisk) Info(key *ari.Key) (*ari.AsteriskInfo, error) {
 	var m ari.AsteriskInfo
-	path := "/asterisk/info"
-
-	// If we are passed an 'only' parameter
-	// pass it on as the 'only' querystring parameter
-	if only != "" {
-		path += "?only=" + only
-		return &m, errOnlyUnsupported
-	}
-	// TODO: handle "only" parameter
-	// the problem is that responses with "only" do not
-	// conform to the AsteriskInfo model; they just return
-	// the subobjects requested
-	// That means we should probably break this
-	// method into multiple submethods
-
-	err := Get(a.conn, path, &m)
-	return &m, err
+	return &m, errors.Wrap(
+		a.client.get("/asterisk/info", &m),
+		"failed to get asterisk info",
+	)
 }
 
-// ReloadModule tells asterisk to load the given module
-func (a *nativeAsterisk) ReloadModule(name string) error {
-	return a.Modules().Reload(name)
-}
-
-type nativeAsteriskVariables struct {
-	conn *Conn
+// AsteriskVariables provides the ARI Variables accessors for server-level variables
+type AsteriskVariables struct {
+	client *Client
 }
 
 // Variables returns the variables interface for the Asterisk server
-func (a *nativeAsterisk) Variables() ari.Variables {
-	return &nativeAsteriskVariables{a.conn}
+func (a *Asterisk) Variables() ari.AsteriskVariables {
+	return &AsteriskVariables{a.client}
 }
 
 // Get returns the value of the given global variable
 // Equivalent to GET /asterisk/variable
-func (a *nativeAsteriskVariables) Get(key string) (string, error) {
-	type variable struct {
+func (a *AsteriskVariables) Get(key *ari.Key) (string, error) {
+	var m struct {
 		Value string `json:"value"`
 	}
-
-	var m variable
-
-	path := "/asterisk/variable?variable=" + key
-	err := Get(a.conn, path, &m)
+	err := a.client.get(fmt.Sprintf("/asterisk/variable?variable=%s", key.ID), &m)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "Error getting asterisk variable '%v'", key.ID)
 	}
 	return m.Value, nil
 }
 
 // Set sets a global channel variable
 // (Equivalent to POST /asterisk/variable)
-func (a *nativeAsteriskVariables) Set(key string, value string) error {
-	path := "/asterisk/variable"
-
-	type request struct {
+func (a *AsteriskVariables) Set(key *ari.Key, value string) (err error) {
+	req := struct {
 		Variable string `json:"variable"`
 		Value    string `json:"value,omitempty"`
+	}{
+		Variable: key.ID,
+		Value:    value,
 	}
-	req := request{key, value}
 
-	err := Post(a.conn, path, nil, &req)
-	return err
+	return errors.Wrapf(
+		a.client.post("/asterisk/variable", nil, &req),
+		"Error setting asterisk variable '%s' to '%s'", key.ID, value,
+	)
 }

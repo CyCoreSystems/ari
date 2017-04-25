@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,226 +10,291 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type nativeChannel struct {
-	conn          *Conn
-	subscriber    ari.Subscriber
-	playback      ari.Playback
-	liveRecording ari.LiveRecording
+// Channel provides the ARI Channel accessors for the native client
+type Channel struct {
+	client *Client
 }
 
-func (c *nativeChannel) Playback() ari.Playback {
-	return c.playback
-}
-
-func (c *nativeChannel) List() (cx []*ari.ChannelHandle, err error) {
+// List lists the current channels and returns the list of channel handles
+func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	var channels = []struct {
 		ID string `json:"id"`
 	}{}
 
-	err = Get(c.conn, "/channels", &channels)
+	if filter == nil {
+		filter = ari.NewKey(ari.ChannelKey, "")
+	}
+
+	err = c.client.get("/channels", &channels)
 	for _, i := range channels {
-		cx = append(cx, c.Get(i.ID))
+		k := c.client.stamp(ari.NewKey(ari.ChannelKey, i.ID))
+		if filter.Match(k) {
+			cx = append(cx, k)
+		}
 	}
 
 	return
 }
 
-func (c *nativeChannel) Hangup(id, reason string) error {
+// Hangup hangs up the given channel using the (optional) reason
+func (c *Channel) Hangup(key *ari.Key, reason string) error {
+	id := key.ID
 	var req string
 	if reason != "" {
 		req = fmt.Sprintf("reason=%s", reason)
 	}
-	return Delete(c.conn, "/channels/"+id, nil, req)
+	return c.client.del("/channels/"+id, nil, req)
 }
 
-func (c *nativeChannel) Data(id string) (cd ari.ChannelData, err error) {
-	err = Get(c.conn, "/channels/"+id, &cd)
-	return
-}
-
-func (c *nativeChannel) Get(id string) *ari.ChannelHandle {
-	//TODO: does Get need to do anything else??
-	return ari.NewChannelHandle(id, c)
-}
-
-func (c *nativeChannel) Originate(req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-
-	type response struct {
-		ID string `json:"id"`
+// Data retrieves the current state of the channel
+func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("channel key not supplied")
 	}
 
-	var resp response
+	var data = new(ari.ChannelData)
+	if err := c.client.get("/channels/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "channel", "%v", key.ID)
+	}
+	data.Key = c.client.stamp(key)
 
-	var err error
-	err = Post(c.conn, "/channels", &resp, &req)
+	return data, nil
+}
+
+// Get gets the lazy handle for the given channel
+func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
+	return ari.NewChannelHandle(c.client.stamp(key), c, nil)
+}
+
+// Originate originates a channel and returns the handle
+func (c *Channel) Originate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	h, err := c.StageOriginate(key, req)
 	if err != nil {
 		return nil, err
 	}
-
-	h := ari.NewChannelHandle(resp.ID, c)
-	return h, err
+	return h, h.Exec()
 }
 
-func (c *nativeChannel) Create(req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+// StageOriginate creates a new channel handle with a channel originate request
+// staged.
+func (c *Channel) StageOriginate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	if key != nil && req.Originator == "" && key.Kind == ari.ChannelKey {
+		req.Originator = key.ID
+	}
+
 	if req.ChannelID == "" {
 		req.ChannelID = uuid.NewV1().String()
 	}
 
-	var err error
-	err = Post(c.conn, "/channels/create", nil, &req)
+	return ari.NewChannelHandle(c.client.stamp(ari.NewKey(ari.ChannelKey, req.ChannelID)), c,
+		func(ch *ari.ChannelHandle) error {
+			type response struct {
+				ID string `json:"id"`
+			}
+
+			var resp response
+
+			err := c.client.post("/channels", &resp, &req)
+			if err != nil {
+				return nil
+			}
+
+			return err
+		},
+	), nil
+}
+
+// Create creates a channel and returns the handle. TODO: expand
+// differences between originate and create.
+func (c *Channel) Create(key *ari.Key, req ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
+	if key != nil && req.Originator == "" && key.Kind == ari.ChannelKey {
+		req.Originator = key.ID
+	}
+
+	if req.ChannelID == "" {
+		req.ChannelID = uuid.NewV1().String()
+	}
+
+	err := c.client.post("/channels/create", nil, &req)
 	if err != nil {
 		return nil, err
 	}
 
-	h := ari.NewChannelHandle(req.ChannelID, c)
-	return h, err
+	return ari.NewChannelHandle(c.client.stamp(ari.NewKey(ari.ChannelKey, req.ChannelID)), c, nil), nil
 }
 
-func (c *nativeChannel) Continue(id string, context, extension string, priority int) (err error) {
-	type request struct {
+// Continue tells a channel to process to the given ARI context and extension
+func (c *Channel) Continue(key *ari.Key, context, extension string, priority int) (err error) {
+	req := struct {
 		Context   string `json:"context"`
 		Extension string `json:"extension"`
 		Priority  int    `json:"priority"`
+	}{
+		Context:   context,
+		Extension: extension,
+		Priority:  priority,
 	}
-	req := request{Context: context, Extension: extension, Priority: priority}
-	err = Post(c.conn, "/channels/"+id+"/continue", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/continue", nil, &req)
 }
 
-func (c *nativeChannel) Busy(id string) (err error) {
-	err = c.Hangup(id, "busy")
-	return
+// Busy sends the busy status code to the channel (TODO: does this play a busy signal too)
+func (c *Channel) Busy(key *ari.Key) error {
+	return c.Hangup(key, "busy")
 }
 
-func (c *nativeChannel) Congestion(id string) (err error) {
-	err = c.Hangup(id, "congestion")
-	return
+// Congestion sends the congestion status code to the channel (TODO: does this play a tone?)
+func (c *Channel) Congestion(key *ari.Key) error {
+	return c.Hangup(key, "congestion")
 }
 
-func (c *nativeChannel) Answer(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/answer", nil, nil)
-	return
+// Answer answers a channel, if ringing (TODO: does this return an error if already answered?)
+func (c *Channel) Answer(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/answer", nil, nil)
 }
 
-func (c *nativeChannel) Ring(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/ring", nil, nil)
-	return
+// Ring causes a channel to start ringing (TODO: does this return an error if already ringing?)
+func (c *Channel) Ring(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/ring", nil, nil)
 }
 
-func (c *nativeChannel) StopRing(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/ring", nil, "")
-	return
+// StopRing causes a channel to stop ringing (TODO: does this return an error if not ringing?)
+func (c *Channel) StopRing(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/ring", nil, "")
 }
 
-func (c *nativeChannel) Hold(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/hold", nil, nil)
-	return
+// Hold puts a channel on hold (TODO: does this return an error if already on hold?)
+func (c *Channel) Hold(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/hold", nil, nil)
 }
 
-func (c *nativeChannel) StopHold(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/hold", nil, "")
-	return
+// StopHold removes a channel from hold (TODO: does this return an error if not on hold)
+func (c *Channel) StopHold(key *ari.Key) (err error) {
+	return c.client.del("/channels/"+key.ID+"/hold", nil, "")
 }
 
-func (c *nativeChannel) Mute(id string, dir string) (err error) {
-	type request struct {
-		Direction string `json:"direction,omitempty"`
-	}
-
-	req := request{dir}
-	err = Post(c.conn, "/channels/"+id+"/mute", nil, &req)
-	return
-}
-
-func (c *nativeChannel) Unmute(id string, dir string) (err error) {
-	var req string
-	if dir != "" {
-		req = fmt.Sprintf("direction=%s", dir)
+// Mute mutes a channel in the given direction (TODO: does this return an error if already muted)
+func (c *Channel) Mute(key *ari.Key, dir ari.Direction) error {
+	if dir == "" {
+		dir = ari.DirectionBoth
 	}
 
-	err = Delete(c.conn, "/channels/"+id+"/mute", nil, req)
-	return
+	req := struct {
+		Direction ari.Direction `json:"direction,omitempty"`
+	}{
+		Direction: dir,
+	}
+	return c.client.post("/channels/"+key.ID+"/mute", nil, &req)
 }
 
-func (c *nativeChannel) SendDTMF(id string, dtmf string, opts *ari.DTMFOptions) (err error) {
+// Unmute unmutes a channel in the given direction (TODO: does this return an error if unmuted)
+func (c *Channel) Unmute(key *ari.Key, dir ari.Direction) (err error) {
+	if dir == "" {
+		dir = ari.DirectionBoth
+	}
+	req := fmt.Sprintf("direction=%s", dir)
+	return c.client.del("/channels/"+key.ID+"/mute", nil, req)
+}
 
-	type request struct {
+// SendDTMF sends a string of digits and symbols to the channel
+func (c *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) error {
+
+	if opts == nil {
+		opts = &ari.DTMFOptions{}
+	}
+
+	if opts.Duration < 1 {
+		opts.Duration = 100 // ARI default, for documenation
+	}
+	if opts.Between < 1 {
+		opts.Between = 100 // ARI default, for documentation
+	}
+
+	req := struct {
 		Dtmf     string `json:"dtmf,omitempty"`
-		Before   *int   `json:"before,omitempty"`
-		Between  *int   `json:"between,omitempty"`
-		Duration *int   `json:"duration,omitempty"`
-		After    *int   `json:"after,omitempty"`
-	}
-	req := request{}
-
-	if opts != nil {
-		if opts.Before != 0 {
-			req.Before = new(int)
-			*req.Before = int(opts.Before / time.Millisecond)
-		}
-		if opts.After != 0 {
-			req.After = new(int)
-			*req.After = int(opts.After / time.Millisecond)
-		}
-		if opts.Duration != 0 {
-			req.Duration = new(int)
-			*req.Duration = int(opts.Duration / time.Millisecond)
-		}
-		if opts.Between != 0 {
-			req.Between = new(int)
-			*req.Between = int(opts.Between / time.Millisecond)
-		}
+		Before   int    `json:"before,omitempty"`
+		Between  int    `json:"between,omitempty"`
+		Duration int    `json:"duration,omitempty"`
+		After    int    `json:"after,omitempty"`
+	}{
+		Dtmf:     dtmf,
+		Before:   int(opts.Before / time.Millisecond),
+		After:    int(opts.After / time.Millisecond),
+		Duration: int(opts.Duration / time.Millisecond),
+		Between:  int(opts.Between / time.Millisecond),
 	}
 
-	req.Dtmf = dtmf
-
-	err = Post(c.conn, "/channels/"+id+"/dtmf", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/dtmf", nil, &req)
 }
 
-func (c *nativeChannel) MOH(id string, mohClass string) (err error) {
-	type request struct {
-		MohClass string `json:"mohClass,omitempty"`
+// MOH plays the given music on hold class to the channel TODO: does this error when already playing MOH?
+func (c *Channel) MOH(key *ari.Key, class string) error {
+	req := struct {
+		Class string `json:"mohClass,omitempty"`
+	}{
+		Class: class,
 	}
-	req := request{mohClass}
-	err = Post(c.conn, "/channels/"+id+"/moh", nil, &req)
-	return
+	return c.client.post("/channels/"+key.ID+"/moh", nil, &req)
 }
 
-func (c *nativeChannel) StopMOH(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/moh", nil, "")
-	return
+// StopMOH stops any music on hold playing on the channel (TODO: does this error when no MOH is playing?)
+func (c *Channel) StopMOH(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/moh", nil, "")
 }
 
-func (c *nativeChannel) Silence(id string) (err error) {
-	err = Post(c.conn, "/channels/"+id+"/silence", nil, nil)
-	return
+// Silence silences a channel (TODO: does this error when already silences)
+func (c *Channel) Silence(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/silence", nil, nil)
 }
 
-func (c *nativeChannel) StopSilence(id string) (err error) {
-	err = Delete(c.conn, "/channels/"+id+"/silence", nil, "")
-	return
+// StopSilence stops the silence on a channel (TODO: does this error when not silenced)
+func (c *Channel) StopSilence(key *ari.Key) error {
+	return c.client.del("/channels/"+key.ID+"/silence", nil, "")
 }
 
-func (c *nativeChannel) Play(id string, playbackID string, mediaURI string) (ph *ari.PlaybackHandle, err error) {
+// Play plays the given media URI on the channel, using the playbackID as
+// the identifier of the created ARI Playback entity
+func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	h, err := c.StagePlay(key, playbackID, mediaURI)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
+}
+
+// StagePlay stages a `Play` operation on the bridge
+func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Media string `json:"media"`
+	}{
+		Media: mediaURI,
 	}
-	req := request{mediaURI}
-	err = Post(c.conn, "/channels/"+id+"/play/"+playbackID, &resp, &req)
-	ph = c.playback.Get(playbackID)
-	return
+
+	playbackKey := c.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
+	return ari.NewPlaybackHandle(playbackKey, c.client.Playback(), func(pb *ari.PlaybackHandle) error {
+		return c.client.post("/channels/"+key.ID+"/play/"+playbackID, &resp, &req)
+	}), nil
 }
 
-func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOptions) (rh *ari.LiveRecordingHandle, err error) {
+// Record records audio on the channel, using the name parameter as the name of the
+// created LiveRecording entity.
+func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
+	h, err := c.StageRecord(key, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h, h.Exec()
+}
+
+// StageRecord stages a `Record` opreation
+func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
 
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
 	}
 
 	resp := make(map[string]interface{})
-	type request struct {
+	req := struct {
 		Name        string `json:"name"`
 		Format      string `json:"format"`
 		MaxDuration int    `json:"maxDurationSeconds"`
@@ -236,8 +302,7 @@ func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOption
 		IfExists    string `json:"ifExists,omitempty"`
 		Beep        bool   `json:"beep"`
 		TerminateOn string `json:"terminateOn,omitempty"`
-	}
-	req := request{
+	}{
 		Name:        name,
 		Format:      opts.Format,
 		MaxDuration: int(opts.MaxDuration / time.Second),
@@ -246,126 +311,80 @@ func (c *nativeChannel) Record(id string, name string, opts *ari.RecordingOption
 		Beep:        opts.Beep,
 		TerminateOn: opts.Terminate,
 	}
-	err = Post(c.conn, "/channels/"+id+"/record", &resp, &req)
+
+	recordingKey := c.client.stamp(ari.NewKey(ari.LiveRecordingKey, name))
+
+	return ari.NewLiveRecordingHandle(recordingKey, c.client.LiveRecording(), func(h *ari.LiveRecordingHandle) error {
+		return c.client.post("/channels/"+key.ID+"/record", &resp, &req)
+	}), nil
+}
+
+// Snoop snoops on a channel, using the the given snoopID as the new channel handle ID (TODO: confirm and expand description)
+func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
+	h, err := c.StageSnoop(key, snoopID, opts)
 	if err != nil {
-		rh = c.liveRecording.Get(name)
+		return nil, err
 	}
-	return
+	return h, h.Exec()
 }
 
-func (c *nativeChannel) Snoop(id string, snoopID string, app string, opts *ari.SnoopOptions) (ch *ari.ChannelHandle, err error) {
+// StageSnoop creates a new `ChannelHandle` with a `Snoop` operation staged.
+func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*ari.ChannelHandle, error) {
 	if opts == nil {
-		opts = &ari.SnoopOptions{}
+		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
+	}
+	if snoopID == "" {
+		snoopID = uuid.NewV1().String()
 	}
 
-	resp := make(map[string]interface{})
-	req := struct {
-		Direction string `json:"spy,omitempty"`
-		Whisper   string `json:"whisper,omitempty"`
-		App       string `json:"app"`
-		AppArgs   string `json:"appArgs"`
-	}{
-		Direction: opts.Direction,
-		Whisper:   opts.Whisper,
-		App:       app,
-		AppArgs:   opts.AppArgs,
-	}
-	err = Post(c.conn, "/channels/"+id+"/snoop/"+snoopID, &resp, &req)
-	if err == nil {
-		ch = c.Get(snoopID)
-	}
-	return
+	// Create the snooping channel's key
+	k := c.client.stamp(ari.NewKey(ari.ChannelKey, snoopID))
+
+	return ari.NewChannelHandle(k, c, func(ch *ari.ChannelHandle) error {
+		return c.client.post("/channels/"+key.ID+"/snoop/"+snoopID, nil, &opts)
+	}), nil
 }
 
-func (c *nativeChannel) Dial(id string, callingChannelID string, timeout time.Duration) (err error) {
+// Dial dials the given calling channel identifier
+func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Duration) error {
 	req := struct {
-		Caller  string `json:"caller,omitempty"` // the CHANNEL ID (not CallerID) of the channel for whom this dial is being generated
-		Timeout int    `json:"timeout"`
+		// Caller is the (optional) channel ID of another channel to which media negotiations for the newly-dialed channel will be associated.
+		Caller string `json:"caller,omitempty"`
+
+		// Timeout is the maximum amount of time to allow for the dial to complete.
+		Timeout int `json:"timeout"`
 	}{
 		Caller:  callingChannelID,
 		Timeout: int(timeout.Seconds()),
 	}
-	err = Post(c.conn, "/channels/"+id+"/dial", nil, &req)
-	return
+
+	return c.client.post("/channels/"+key.ID+"/dial", nil, &req)
 }
 
-func (c *nativeChannel) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	channelHandle := c.Get(id)
-
-	go func() {
-		sub := c.subscriber.Subscribe(n...)
-		defer sub.Cancel()
-		for {
-
-			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
-				return
-			case evt := <-sub.Events():
-				if channelHandle.Match(evt) {
-					ns.events <- evt
-				}
-			}
-		}
-	}()
-
-	return &ns
+// Subscribe creates a new subscription for ARI events related to this channel
+func (c *Channel) Subscribe(key *ari.Key, n ...string) ari.Subscription {
+	return c.client.Bus().Subscribe(key, n...)
 }
 
-type nativeChannelVariables struct {
-	conn      *Conn
-	channelID string
-}
-
-// Variables returns the variables interface for channel
-func (c *nativeChannel) Variables(id string) ari.Variables {
-	return &nativeChannelVariables{c.conn, id}
-}
-
-func (v *nativeChannelVariables) Get(key string) (string, error) {
-	type variable struct {
+// GetVariable gets the value of the given variable
+func (c *Channel) GetVariable(key *ari.Key, name string) (string, error) {
+	var m struct {
 		Value string `json:"value"`
 	}
 
-	var m variable
+	err := c.client.get(fmt.Sprintf("/channels/%s/variable?variable=%s", key.ID, name), &m)
+	return m.Value, err
+}
 
-	path := "/channels/" + v.channelID + "/variable?variable=" + key
-	err := Get(v.conn, path, &m)
-	if err != nil {
-		return "", err
+// SetVariable sets the value of the given channel variable
+func (c *Channel) SetVariable(key *ari.Key, name, value string) error {
+	req := struct {
+		Name  string `json:"variable"`
+		Value string `json:"value,omitempty"`
+	}{
+		Name:  name,
+		Value: value,
 	}
-	return m.Value, nil
-}
 
-func (v *nativeChannelVariables) Set(key string, value string) error {
-	path := "/channels/" + v.channelID + "/variable"
-
-	type request struct {
-		Variable string `json:"variable"`
-		Value    string `json:"value,omitempty"`
-	}
-	req := request{key, value}
-
-	err := Post(v.conn, path, nil, &req)
-	return err
-}
-
-type nativeSubscription struct {
-	closeChan chan struct{}
-	events    chan ari.Event
-}
-
-func (ns *nativeSubscription) Events() chan ari.Event {
-	return ns.events
-}
-
-func (ns *nativeSubscription) Cancel() {
-	if ns.closeChan != nil {
-		close(ns.closeChan)
-	}
+	return c.client.post(fmt.Sprintf("/channels/%s/variable", key.ID), nil, &req)
 }

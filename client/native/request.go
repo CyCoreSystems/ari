@@ -3,10 +3,11 @@ package native
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // MaxIdleConnections is the maximum number of idle web client
@@ -66,146 +67,82 @@ type MissingParams struct {
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
-// Get calls the ARI server with a GET request
-func Get(conn *Conn, url string, ret interface{}) error {
+// get calls the ARI server with a GET request
+func (c *Client) get(url string, resp interface{}) error {
 
-	finalURL := conn.Options.URL + url
+	url = c.Options.URL + url
 
-	httpReq, err := buildRequest(conn, "GET", finalURL, "", nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := conn.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("Error making request: %s", err)
-	}
-	defer resp.Body.Close()
-
-	if ret != nil {
-		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
-			return err
-		}
-	}
-
-	return maybeRequestError(resp)
+	return c.makeRequest("GET", url, resp, nil)
 }
 
-// Post calls the ARI server with a POST request.
-func Post(conn *Conn, requestURL string, ret interface{}, req interface{}) error {
-
-	finalURL := conn.Options.URL + requestURL
-
-	requestBody, contentType, err := structToRequestBody(req)
-	if err != nil {
-		return err
-	}
-
-	httpReq, err := buildRequest(conn, "POST", finalURL, contentType, requestBody)
-	if err != nil {
-		return err
-	}
-
-	resp, err := conn.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("Error making request: %s", err)
-	}
-	defer resp.Body.Close()
-
-	if ret != nil {
-		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
-			return err
-		}
-	}
-
-	return maybeRequestError(resp)
+// post calls the ARI server with a POST request.
+func (c *Client) post(requestURL string, resp interface{}, req interface{}) error {
+	url := c.Options.URL + requestURL
+	return c.makeRequest("POST", url, resp, req)
 }
 
-// Put calls the ARI server with a PUT request.
-func Put(conn *Conn, url string, ret interface{}, req interface{}) error {
+// put calls the ARI server with a PUT request.
+func (c *Client) put(url string, resp interface{}, req interface{}) error {
 
-	finalURL := conn.Options.URL + url
+	url = c.Options.URL + url
 
-	requestBody, contentType, err := structToRequestBody(req)
-	if err != nil {
-		return err
-	}
-
-	httpReq, err := buildRequest(conn, "PUT", finalURL, contentType, requestBody)
-	if err != nil {
-		return err
-	}
-
-	resp, err := conn.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("Error making request: %s", err)
-	}
-	defer resp.Body.Close()
-
-	if ret != nil {
-		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
-			return err
-		}
-	}
-
-	return maybeRequestError(resp)
+	return c.makeRequest("PUT", url, resp, req)
 }
 
-// Delete calls the ARI server with a DELETE request
-func Delete(conn *Conn, url string, ret interface{}, req string) error {
+// del calls the ARI server with a DELETE request
+func (c *Client) del(url string, resp interface{}, req string) error {
 
-	finalURL := conn.Options.URL + url
+	url = c.Options.URL + url
 	if req != "" {
-		finalURL = finalURL + "?" + req
+		url = url + "?" + req
 	}
 
-	httpReq, err := buildRequest(conn, "DELETE", finalURL, "", nil)
-	if err != nil {
-		return err
-	}
+	return c.makeRequest("DELETE", url, resp, req)
+}
 
-	resp, err := conn.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("Error making request: %s", err)
-	}
-	defer resp.Body.Close()
-
-	if ret != nil {
-		if err := json.NewDecoder(resp.Body).Decode(ret); err != nil {
-			return err
+func (c *Client) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
+	var reqBody io.Reader
+	if req != nil {
+		reqBody, err = structToRequestBody(req)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal request")
 		}
 	}
 
-	return maybeRequestError(resp)
-}
-
-func buildRequest(conn *Conn, method string, finalURL string, contentType string, body io.Reader) (*http.Request, error) {
-
-	if contentType == "" {
-		contentType = "application/json"
-	}
-
-	ret, err := http.NewRequest(method, finalURL, body)
+	var r *http.Request
+	r, err = http.NewRequest(method, url, reqBody)
 	if err != nil {
-		return nil, err
+		return
+	}
+	r.Header.Set("Content-Type", "application/json")
+
+	if c.Options.Username != "" {
+		r.SetBasicAuth(c.Options.Username, c.Options.Password)
 	}
 
-	if conn.Options.Username != "" {
-		ret.SetBasicAuth(conn.Options.Username, conn.Options.Password)
+	ret, err := c.httpClient.Do(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to make request")
+	}
+	defer ret.Body.Close() //nolint:errcheck
+
+	if resp != nil {
+		err = json.NewDecoder(ret.Body).Decode(resp)
+		if err != nil {
+			return errors.Wrap(err, "failed to decode response")
+		}
 	}
 
-	ret.Header.Set("Content-Type", contentType)
-
-	return ret, nil
+	return maybeRequestError(ret)
 }
 
-func structToRequestBody(req interface{}) (io.Reader, string, error) {
-	buf := bytes.NewBuffer([]byte(""))
+func structToRequestBody(req interface{}) (io.Reader, error) {
+	buf := new(bytes.Buffer)
 	if req != nil {
 		if err := json.NewEncoder(buf).Encode(req); err != nil {
-			return nil, "", err
+			return nil, err
 		}
 	}
 
-	return buf, "application/json", nil
+	return buf, nil
 }

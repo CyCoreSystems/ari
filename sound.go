@@ -6,29 +6,17 @@ type Sound interface {
 
 	// List returns available sounds limited by the provided filters.
 	// Valid filters are "lang", "format", and nil (no filter)
-	List(filters map[string]string) ([]*SoundHandle, error)
-
-	// Get returns a handle pointer to the sound for further interaction
-	Get(name string) *SoundHandle
+	List(filters map[string]string, keyFilter *Key) ([]*Key, error)
 
 	// Data returns the Sound's data
-	Data(name string) (SoundData, error)
-}
-
-// SoundHandle provides a wrapper to a Sound interface for
-// operations on a specific Sound
-type SoundHandle struct {
-	name string
-	s    Sound
-}
-
-// ID returns the identifier for the sound
-func (sh *SoundHandle) ID() string {
-	return sh.name
+	Data(key *Key) (*SoundData, error)
 }
 
 // SoundData describes a media file which may be played back
 type SoundData struct {
+	// Key is the cluster-unique identifier for this sound
+	Key *Key `json:"key"`
+
 	Formats []FormatLangPair `json:"formats"`
 	ID      string           `json:"id"`
 	Text    string           `json:"text,omitempty"`
@@ -38,18 +26,4 @@ type SoundData struct {
 type FormatLangPair struct {
 	Format   string `json:"format"`
 	Language string `json:"language"`
-}
-
-// NewSoundHandle creates a new handle to the sound name
-func NewSoundHandle(name string, snd Sound) *SoundHandle {
-	return &SoundHandle{
-		name: name,
-		s:    snd,
-	}
-}
-
-// Data retrieves the data for the Sound
-func (sh *SoundHandle) Data() (sd SoundData, err error) {
-	sd, err = sh.s.Data(sh.name)
-	return sd, err
 }

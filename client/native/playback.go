@@ -1,70 +1,59 @@
 package native
 
-import "github.com/CyCoreSystems/ari"
+import (
+	"errors"
 
-type nativePlayback struct {
-	conn       *Conn
-	subscriber ari.Subscriber
+	"github.com/CyCoreSystems/ari"
+)
+
+// Playback provides the ARI Playback accessors for the native client
+type Playback struct {
+	client *Client
 }
 
-func (a *nativePlayback) Get(id string) (ph *ari.PlaybackHandle) {
-	ph = ari.NewPlaybackHandle(id, a)
-	return
+// Get gets a lazy handle for the given playback identifier
+func (a *Playback) Get(key *ari.Key) *ari.PlaybackHandle {
+	return ari.NewPlaybackHandle(a.client.stamp(key), a, nil)
 }
 
 // Data returns a playback's details.
 // (Equivalent to GET /playbacks/{playbackID})
-func (a *nativePlayback) Data(id string) (p ari.PlaybackData, err error) {
-	err = Get(a.conn, "/playbacks/"+id, &p)
-	return
-}
-
-// Control allows the user to manipulate an in-process playback.
-// TODO: list available operations.
-// (Equivalent to POST /playbacks/{playbackID}/control)
-func (a *nativePlayback) Control(id string, op string) (err error) {
-
-	//Request structure for controlling playback. Operation is required.
-	type request struct {
-		Operation string `json:"operation"`
+func (a *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("playback key not supplied")
 	}
 
-	req := request{op}
-	err = Post(a.conn, "/playbacks/"+id+"/control", nil, &req)
-	return
+	var data = new(ari.PlaybackData)
+	if err := a.client.get("/playbacks/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "playback", "%v", key.ID)
+	}
+
+	data.Key = a.client.stamp(key)
+	return data, nil
+}
+
+// Control performs the given operation on the current playback.  Available operations are:
+//   - restart
+//   - pause
+//   - unpause
+//   - reverse
+//   - forward
+func (a *Playback) Control(key *ari.Key, op string) error {
+	req := struct {
+		Operation string `json:"operation"`
+	}{
+		Operation: op,
+	}
+	return a.client.post("/playbacks/"+key.ID+"/control", nil, &req)
 }
 
 // Stop stops a playback session.
 // (Equivalent to DELETE /playbacks/{playbackID})
-func (a *nativePlayback) Stop(id string) (err error) {
-	err = Delete(a.conn, "/playbacks/"+id, nil, "")
-	return
+func (a *Playback) Stop(key *ari.Key) error {
+	return a.client.del("/playbacks/"+key.ID, nil, "")
 }
 
-func (a *nativePlayback) Subscribe(id string, n ...string) ari.Subscription {
-	var ns nativeSubscription
-
-	ns.events = make(chan ari.Event, 10)
-	ns.closeChan = make(chan struct{})
-
-	playbackHandle := a.Get(id)
-
-	go func() {
-		sub := a.subscriber.Subscribe(n...)
-		defer sub.Cancel()
-		for {
-
-			select {
-			case <-ns.closeChan:
-				ns.closeChan = nil
-				return
-			case evt := <-sub.Events():
-				if playbackHandle.Match(evt) {
-					ns.events <- evt
-				}
-			}
-		}
-	}()
-
-	return &ns
+// Subscribe listens for ARI events for the given playback entity
+func (a *Playback) Subscribe(key *ari.Key, n ...string) ari.Subscription {
+	return a.client.Bus().Subscribe(key, n...)
 }

@@ -1,30 +1,37 @@
 package native
 
 import (
-	"github.com/CyCoreSystems/ari"
+	"errors"
 	"net/url"
+
+	"github.com/CyCoreSystems/ari"
 )
 
-type nativeSound struct {
-	conn *Conn
-}
-
-// Get returns a managed handle to a SoundData
-func (s *nativeSound) Get(name string) *ari.SoundHandle {
-	return ari.NewSoundHandle(name, s)
+// Sound provides the ARI Sound accessors for the native client
+type Sound struct {
+	client *Client
 }
 
 // Data returns the details of a given ARI Sound
 // Equivalent to GET /sounds/{name}
-func (s *nativeSound) Data(name string) (sd ari.SoundData, err error) {
-	err = Get(s.conn, "/sounds/"+name, &sd)
-	return sd, err
+func (s *Sound) Data(key *ari.Key) (*ari.SoundData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("sound key not supplied")
+	}
+
+	var data = new(ari.SoundData)
+	if err := s.client.get("/sounds/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "sound", "%v", key.ID)
+	}
+
+	data.Key = s.client.stamp(key)
+	return data, nil
 }
 
 // List returns available sounds limited by the provided filters.
 // valid filters are "lang", "format", and nil (no filter)
 // An empty filter returns all available sounds
-func (s *nativeSound) List(filters map[string]string) (sh []*ari.SoundHandle, err error) {
+func (s *Sound) List(filters map[string]string, keyFilter *ari.Key) (sh []*ari.Key, err error) {
 
 	var sounds = []struct {
 		Name string `json:"name"`
@@ -39,11 +46,21 @@ func (s *nativeSound) List(filters map[string]string) (sh []*ari.SoundHandle, er
 		uri += "?" + v.Encode()
 	}
 
-	err = Get(s.conn, uri, &sounds)
+	if keyFilter == nil {
+		keyFilter = s.client.stamp(ari.NewKey(ari.SoundKey, ""))
+	}
+
+	err = s.client.get(uri, &sounds)
+	if err != nil {
+		return nil, err
+	}
 
 	// Store whatever we received, even if incomplete or error
 	for _, i := range sounds {
-		sh = append(sh, s.Get(i.Name))
+		k := s.client.stamp(ari.NewKey(ari.SoundKey, i.Name))
+		if keyFilter.Match(k) {
+			sh = append(sh, k)
+		}
 	}
 
 	return sh, err

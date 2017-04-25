@@ -12,6 +12,9 @@ type TextMessage interface {
 
 // TextMessageData describes text message
 type TextMessageData struct {
+	// Key is the cluster-unique identifier for this text message
+	Key *Key `json:"key"`
+
 	Body      string                `json:"body"` // The body (text) of the message
 	From      string                `json:"from"` // Technology-specific source URI
 	To        string                `json:"to"`   // Technology-specific destination URI

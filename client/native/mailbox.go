@@ -1,49 +1,69 @@
 package native
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/CyCoreSystems/ari"
 )
 
-type nativeMailbox struct {
-	conn *Conn
+// Mailbox provides the ARI Mailbox accessors for the native client
+type Mailbox struct {
+	client *Client
 }
 
-func (m *nativeMailbox) Get(name string) *ari.MailboxHandle {
-	return ari.NewMailboxHandle(name, m)
+// Get gets a lazy handle for the mailbox name
+func (m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
+	return ari.NewMailboxHandle(m.client.stamp(key), m)
 }
 
-func (m *nativeMailbox) List() (mx []*ari.MailboxHandle, err error) {
+// List lists the mailboxes and returns a list of handles
+func (m *Mailbox) List(filter *ari.Key) (mx []*ari.Key, err error) {
 
 	mailboxes := []struct {
 		Name string `json:"name"`
 	}{}
 
-	err = Get(m.conn, "/mailboxes", &mailboxes)
+	if filter == nil {
+		filter = ari.NodeKey(m.client.node, m.client.ApplicationName())
+	}
+
+	err = m.client.get("/mailboxes", &mailboxes)
 	for _, i := range mailboxes {
-		mx = append(mx, m.Get(i.Name))
+		k := m.client.stamp(ari.NewKey(ari.MailboxKey, i.Name))
+		if filter.Match(k) {
+			mx = append(mx, k)
+		}
 	}
 
 	return
 }
 
-func (m *nativeMailbox) Data(name string) (md ari.MailboxData, err error) {
-	err = Get(m.conn, "/mailboxes/"+name, &md)
-	return
+// Data retrieves the state of the given mailbox
+func (m *Mailbox) Data(key *ari.Key) (*ari.MailboxData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("mailbox key not supplied")
+	}
+
+	var data = new(ari.MailboxData)
+	if err := m.client.get("/mailboxes/"+key.ID, data); err != nil {
+		return nil, dataGetError(err, "mailbox", "%v", key.ID)
+	}
+
+	data.Key = m.client.stamp(key)
+	return data, nil
 }
 
-func (m *nativeMailbox) Update(name string, oldMessages int, newMessages int) (err error) {
+// Update updates the new and old message counts of the mailbox
+func (m *Mailbox) Update(key *ari.Key, oldMessages int, newMessages int) error {
 	req := map[string]string{
 		"oldMessages": strconv.Itoa(oldMessages),
 		"newMessages": strconv.Itoa(newMessages),
 	}
-
-	err = Put(m.conn, "/mailboxes/"+name, nil, &req)
-	return err
+	return m.client.put("/mailboxes/"+key.ID, nil, &req)
 }
 
-func (m *nativeMailbox) Delete(name string) (err error) {
-	err = Delete(m.conn, "/mailboxes/"+name, nil, "")
-	return
+// Delete deletes the mailbox
+func (m *Mailbox) Delete(key *ari.Key) error {
+	return m.client.del("/mailboxes/"+key.ID, nil, "")
 }

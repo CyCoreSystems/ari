@@ -4,14 +4,14 @@ package ari
 // server for application-level resources
 type Application interface {
 
-	// List returns the list of applications in Asterisk
-	List() ([]*ApplicationHandle, error)
+	// List returns the list of applications in Asterisk, optionally using the key for filtering
+	List(*Key) ([]*Key, error)
 
 	// Get returns a handle to the application for further interaction
-	Get(name string) *ApplicationHandle
+	Get(key *Key) *ApplicationHandle
 
 	// Data returns the applications data
-	Data(name string) (ApplicationData, error)
+	Data(key *Key) (*ApplicationData, error)
 
 	// Subscribe subscribes the given application to an event source
 	// event source may be one of:
@@ -19,16 +19,19 @@ type Application interface {
 	//  - bridge:<bridgeId>
 	//  - endpoint:<tech>/<resource> (e.g. SIP/102)
 	//  - deviceState:<deviceName>
-	Subscribe(name string, eventSource string) error
+	Subscribe(key *Key, eventSource string) error
 
 	// Unsubscribe unsubscribes (removes a subscription to) a given
 	// ARI application from the provided event source
 	// Equivalent to DELETE /applications/{applicationName}/subscription
-	Unsubscribe(name string, eventSource string) error
+	Unsubscribe(key *Key, eventSource string) error
 }
 
 // ApplicationData describes the data for a Stasis (Ari) application
 type ApplicationData struct {
+	// Key is the unique identifier for this application instance in the cluster
+	Key *Key `json:"key"`
+
 	BridgeIDs   []string `json:"bridge_ids"`   // Subscribed BridgeIds
 	ChannelIDs  []string `json:"channel_ids"`  // Subscribed ChannelIds
 	DeviceNames []string `json:"device_names"` // Subscribed Device names
@@ -36,29 +39,34 @@ type ApplicationData struct {
 	Name        string   `json:"name"`         // Name of the application
 }
 
-// NewApplicationHandle creates a new handle to the application name
-func NewApplicationHandle(name string, app Application) *ApplicationHandle {
-	return &ApplicationHandle{
-		name: name,
-		a:    app,
-	}
-}
-
 // ApplicationHandle provides a wrapper to an Application interface for
 // operations on a specific application
 type ApplicationHandle struct {
-	name string
-	a    Application
+	key *Key
+	a   Application
+}
+
+// NewApplicationHandle creates a new handle to the application name
+func NewApplicationHandle(key *Key, app Application) *ApplicationHandle {
+	return &ApplicationHandle{
+		key: key,
+		a:   app,
+	}
 }
 
 // ID returns the identifier for the application
 func (ah *ApplicationHandle) ID() string {
-	return ah.name
+	return ah.key.ID
+}
+
+// Key returns the key of the application
+func (ah *ApplicationHandle) Key() *Key {
+	return ah.key
 }
 
 // Data retrives the data for the application
-func (ah *ApplicationHandle) Data() (ad ApplicationData, err error) {
-	ad, err = ah.a.Data(ah.name)
+func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
+	ad, err = ah.a.Data(ah.key)
 	return
 }
 
@@ -69,7 +77,7 @@ func (ah *ApplicationHandle) Data() (ad ApplicationData, err error) {
 //  - endpoint:<tech>/<resource> (e.g. SIP/102)
 //  - deviceState:<deviceName>
 func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
-	err = ah.a.Subscribe(ah.name, eventSource)
+	err = ah.a.Subscribe(ah.key, eventSource)
 	return
 }
 
@@ -77,18 +85,11 @@ func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
 // ARI application from the provided event source
 // Equivalent to DELETE /applications/{applicationName}/subscription
 func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
-	err = ah.a.Unsubscribe(ah.name, eventSource)
+	err = ah.a.Unsubscribe(ah.key, eventSource)
 	return
 }
 
 // Match returns true fo the event matches the application
-func (ah *ApplicationHandle) Match(evt Event) bool {
-	applicationEvent, ok := evt.(ApplicationEvent)
-	if !ok {
-		return false
-	}
-	if applicationEvent.GetApplication() == ah.name {
-		return true
-	}
-	return false
+func (ah *ApplicationHandle) Match(e Event) bool {
+	return e.GetApplication() == ah.key.ID
 }
