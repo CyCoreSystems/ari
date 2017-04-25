@@ -56,9 +56,31 @@ func NewPlay(ctx context.Context, p ari.Player, opts ...OptionFunc) (*Options, e
 	return o, err
 }
 
-// Play plays the given media URI
+// NewPrompt creates a new audio Options suitable for prompt-style playback-and-get-response situations
+func NewPrompt(ctx context.Context, p ari.Player, opts ...OptionFunc) (*Options, error) {
+	o := NewPromptOptions()
+	err := o.ApplyOptions(opts...)
+
+	return o, err
+}
+
+// Play plays a set of media URIs.  Pass these URIs in with the `URI` OptionFunc.
 func Play(ctx context.Context, p ari.Player, opts ...OptionFunc) *Result {
 	o, err := NewPlay(ctx, p, opts...)
+	if err != nil && o.result.Error != nil {
+		o.result.Error = err
+		return o.result
+	}
+
+	o.result.Error = o.Play(ctx, p)
+	return o.result
+}
+
+// Prompt plays the given media URIs and waits for a DTMF response.  The
+// received DTMF is available as `DTMF` in the Result object.  Further
+// customize the behaviour with Match type OptionFuncs.
+func Prompt(ctx context.Context, p ari.Player, opts ...OptionFunc) *Result {
+	o, err := NewPrompt(ctx, p, opts...)
 	if err != nil && o.result.Error != nil {
 		o.result.Error = err
 		return o.result
