@@ -1,12 +1,10 @@
 package audio
 
 import (
-	"sync"
 	"time"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -14,188 +12,224 @@ import (
 // DTMF digits.
 const AllDTMF = "0123456789ABCD*#"
 
-// PlaybackStartTimeout is the time to allow for Asterisk to
-// send the PlaybackStarted before giving up.
-var PlaybackStartTimeout = 1 * time.Second
+// playStages executes a staged playback, waiting for its completion
+func playStaged(ctx context.Context, h *ari.PlaybackHandle, opts *Options) (Status, error) {
+	if opts == nil {
+		opts = NewDefaultOptions()
+	}
 
-// MaxPlaybackTime is the maximum amount of time to allow for
-// a playback to complete.
-var MaxPlaybackTime = 10 * time.Minute
+	started := h.Subscribe(ari.Events.PlaybackStarted)
+	defer started.Cancel()
+	finished := h.Subscribe(ari.Events.PlaybackFinished)
+	defer finished.Cancel()
 
-// Play plays the given media URI
-func Play(ctx context.Context, p ari.Player, mediaURI string) (Status, error) {
-	c := PlayAsync(ctx, p, mediaURI)
+	err := h.Exec()
+	if err != nil {
+		return Failed, errors.Wrap(err, "failed to start playback")
+	}
+	defer h.Stop() // nolint: errcheck
 
-	<-c.Stopped()
+	select {
+	case <-ctx.Done():
+		return Cancelled, nil
+	case <-time.After(opts.playbackStartTimeout):
+		return Timeout, errors.New("timeout waiting for playback to start")
+	case <-finished.Events():
+		return Finished, nil
+	case <-started.Events():
+	}
 
-	return c.Status(), c.Err()
+	// Wait for playback to complete
+	select {
+	case <-ctx.Done():
+		return Cancelled, nil
+	case <-finished.Events():
+		return Finished, nil
+	}
 }
 
-// PlayAsync plays the audio asynchronously and returns a playback object
-func PlayAsync(ctx context.Context, p ari.Player, mediaURI string) *Control {
-	var err error
+// NewPlay creates a new audio Options suitable for general audio playback
+func NewPlay(ctx context.Context, p ari.Player, opts ...func(*Options) error) (*Options, error) {
+	o := NewDefaultOptions()
+	err := o.ApplyOptions(opts...)
 
+	return o, err
+}
+
+// Play plays the given media URI
+func Play(ctx context.Context, p ari.Player, opts ...func(*Options) error) *Result {
+	o, err := NewPlay(ctx, p, opts...)
+	if err != nil && o.result.Error != nil {
+		o.result.Error = err
+		return o.result
+	}
+
+	o.result.Error = o.Play(ctx, p)
+	return o.result
+}
+
+// PlayAsync executes a playback, returning a channel which will be closed when the playback is ended
+func (o *Options) PlayAsync(ctx context.Context, p ari.Player) <-chan error {
+	ch := make(chan error)
+
+	go func() {
+		ch <- o.Play(ctx, p)
+		close(ch)
+	}()
+
+	return ch
+}
+
+// Play executes a playback with the existing options.
+func (o *Options) Play(ctx context.Context, p ari.Player) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	c := Control{
-		id:      uuid.NewV1().String(),
-		startCh: make(chan struct{}),
-		stopCh:  make(chan struct{}),
-		status:  InProgress,
-		cancel:  cancel,
+	if o.result == nil {
+		o.result = new(Result)
 	}
 
-	c.pb, err = p.StagePlay(c.id, mediaURI)
-	if err != nil {
-		c.err = errors.Wrap(err, "failed to create playback")
-		c.status = Failed
+	if o.uriList == nil {
+		return errors.New("empty playback URI list")
 	}
 
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	go c.watchEvents(ctx, wg)
-	wg.Wait()
+	// cancel if we go over the maximum time
+	go o.watchMaxTime(ctx)
 
-	err = c.pb.Exec()
-	if err != nil {
-		c.err = errors.Wrap(err, "failed to start playback")
-		c.status = Failed
+	// Listen for DTMF
+	go o.listenDTMF(ctx, p)
+
+	for i := 0; i < o.maxReplays+1; i++ {
+		if ctx.Err() != nil {
+			break
+		}
+
+		// Reset the digit cache
+		o.result.mu.Lock()
+		o.result.DTMF = ""
+		o.result.mu.Unlock()
+
+		// Play the sequence of audio URIs
+		err := o.playSequence(ctx, p)
+		if err != nil {
+			return err
+		}
+
+		// Wait for digits in the silence after the playback sequence completes
+		o.waitDigits(ctx)
 	}
 
-	return &c
-}
-
-// Control provides a mechanism for interacting with an audio playback
-type Control struct {
-	id string // playback ID
-
-	started bool
-	startCh chan struct{}
-
-	stopped bool
-	stopCh  chan struct{}
-
-	p  ari.Player
-	pb *ari.PlaybackHandle
-
-	status Status
-	err    error
-
-	startedSub  ari.Subscription
-	finishedSub ari.Subscription
-	hangupSub   ari.Subscription
-
-	cancel context.CancelFunc
-}
-
-// Handle returns the ARI reference to the playback object
-func (c *Control) Handle() *ari.PlaybackHandle {
-	return c.pb
-}
-
-func (c *Control) onStarted() {
-	if !c.started {
-		c.started = true
-		close(c.startCh)
-	}
-}
-
-// Started returns the channel that is closed when the playback has started
-func (c *Control) Started() <-chan struct{} {
-	return c.startCh
-}
-
-func (c *Control) onStopped() {
-	if !c.stopped {
-		c.stopped = true
-		close(c.stopCh)
-	}
-}
-
-// Stopped returns the channel that is closed when the playback has stopped
-func (c *Control) Stopped() <-chan struct{} {
-	return c.stopCh
-}
-
-// Status returns the current status of the playback
-func (c *Control) Status() Status {
-	return c.status
-}
-
-// Err returns any accumulated errors during playback
-func (c *Control) Err() error {
-	return c.err
-}
-
-// Cancel stops the playback
-func (c *Control) Cancel() {
-	if !c.stopped && c.pb != nil {
-		c.pb.Stop()
-	}
-
-	c.onStopped()
-
-	c.cancel()
-}
-
-type stateFn func(context.Context) stateFn
-
-func (c *Control) watchEvents(ctx context.Context, wg *sync.WaitGroup) {
-	defer c.Cancel()
-
-	c.startedSub = c.pb.Subscribe(ari.Events.PlaybackStarted)
-	defer c.startedSub.Cancel()
-	c.finishedSub = c.pb.Subscribe(ari.Events.PlaybackFinished)
-	defer c.finishedSub.Cancel()
-
-	//TODO: confirm whether we need to listen on bridge events if p Player is a bridge
-	c.hangupSub = c.pb.Subscribe(ari.Events.ChannelHangupRequest, ari.Events.ChannelDestroyed)
-	defer c.hangupSub.Cancel()
-
-	wg.Done()
-
-	for f := c.waitStart; f != nil; {
-		f = f(ctx)
-	}
-}
-
-func (c *Control) waitStart(ctx context.Context) stateFn {
-	select {
-	case <-ctx.Done():
-		c.status = Canceled
-		c.err = ctx.Err()
-		return nil
-	case <-time.After(PlaybackStartTimeout):
-		c.status = Timeout
-		c.err = errors.New("Timeout waiting for start of playback")
-		return nil
-	case <-c.hangupSub.Events():
-		c.status = Hangup
-		return nil
-	case <-c.finishedSub.Events():
-		Logger.Warn("Got playback finished before start")
-		c.status = Finished
-		c.onStopped()
-		return nil
-	case <-c.startedSub.Events():
-		c.onStarted()
-		return c.waitStop
-	}
-}
-
-func (c *Control) waitStop(ctx context.Context) stateFn {
-	select {
-	case <-ctx.Done():
-		c.status = Canceled
-		c.err = ctx.Err()
-	case <-time.After(MaxPlaybackTime):
-		c.status = Timeout
-		c.err = errors.New("Timeout waiting for stop of playback")
-	case <-c.hangupSub.Events():
-		c.status = Hangup
-	case <-c.finishedSub.Events():
-		c.status = Finished
-	}
 	return nil
+
+}
+
+// playSequence plays the complete audio sequence
+func (o *Options) playSequence(ctx context.Context, p ari.Player) (err error) {
+	s := newSequence(o)
+	defer s.Stop()
+
+	go s.Play(ctx, p)
+
+	select {
+	case <-ctx.Done():
+	case <-o.digitChan:
+	case err = <-s.Done():
+	}
+
+	return err
+}
+
+func (o *Options) waitDigits(ctx context.Context) {
+	overallTimer := time.NewTimer(o.overallDigitTimeout)
+	defer overallTimer.Stop()
+
+	digitTimeout := o.firstDigitTimeout
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(digitTimeout):
+			return
+		case <-overallTimer.C:
+			return
+		case <-o.digitChan:
+			digitTimeout = o.interDigitTimeout
+
+			// Determine if a match was found
+			if o.matchFunc != nil {
+				o.result.mu.Lock()
+				o.result.DTMF, o.result.MatchResult = o.matchFunc(o.result.DTMF)
+				o.result.mu.Unlock()
+
+				switch o.result.MatchResult {
+				case Complete:
+					// If we have a complete response, close the entire playback
+					// and return
+					o.Stop()
+					return
+				case Invalid:
+					// If invalid, return without waiting
+					// for any more digits
+					return
+				default:
+					// Incomplete means we should wait for more
+				}
+			}
+		}
+	}
+
+}
+
+// Stop terminates the execution of a playback
+func (o *Options) Stop() {
+	if o.result == nil {
+		o.result = new(Result)
+	}
+
+	if o.result.Status == InProgress {
+		o.result.Status = Cancelled
+	}
+
+	if o.cancel != nil {
+		o.cancel()
+	}
+}
+
+func (o *Options) watchMaxTime(ctx context.Context) {
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(o.maxPlaybackTime):
+		o.Stop()
+	}
+}
+func (o *Options) listenDTMF(ctx context.Context, p ari.Player) {
+	sub := p.Subscribe(ari.Events.ChannelDtmfReceived)
+	defer sub.Cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case e := <-sub.Events():
+			if e == nil {
+				return
+			}
+			v, ok := e.(*ari.ChannelDtmfReceived)
+			if !ok {
+				continue
+			}
+			o.result.mu.Lock()
+			o.result.DTMF += v.Digit
+			o.result.mu.Unlock()
+
+			// Signal receipt of digit, but never block in doing so
+			select {
+			case o.digitChan <- v.Digit:
+			default:
+			}
+
+		}
+	}
 }
