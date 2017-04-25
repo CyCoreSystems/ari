@@ -159,11 +159,9 @@ func (k *Key) Match(o *Key) bool {
 	if k.Node != "" && o.Node != "" && k.Node != o.Node {
 		return false
 	}
-
-	if k.Kind != "" && o.Kind != "" && k.ID != o.ID {
+	if k.Kind != "" && o.Kind != "" && k.Kind != o.Kind {
 		return false
 	}
-
 	if k.ID != "" && o.ID != "" && k.ID != o.ID {
 		return false
 	}
