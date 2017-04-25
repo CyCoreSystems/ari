@@ -13,10 +13,10 @@ type sequence struct {
 	cancel context.CancelFunc
 	opts   *Options
 
-	done chan error
+	done chan struct{}
 }
 
-func (s *sequence) Done() <-chan error {
+func (s *sequence) Done() <-chan struct{} {
 	return s.done
 }
 
@@ -29,7 +29,7 @@ func (s *sequence) Stop() {
 func newSequence(o *Options) *sequence {
 	return &sequence{
 		opts: o,
-		done: make(chan error),
+		done: make(chan struct{}),
 	}
 }
 
@@ -37,6 +37,7 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 	defer cancel()
+	defer close(s.done)
 
 	for u := s.opts.uriList.First(); u != ""; u = s.opts.uriList.Next() {
 		pb, err := p.StagePlay(uuid.NewV1().String(), u)
