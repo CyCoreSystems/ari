@@ -1,5 +1,210 @@
 package play
 
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"time"
+
+	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/arimocks"
+)
+
+type playStagedTest struct {
+	playbackStartedChan chan ari.Event
+	playbackStarted     *arimocks.Subscription
+
+	playbackEndChan chan ari.Event
+	playbackEnd     *arimocks.Subscription
+
+	handleExeced bool
+	handleExec   func(_ *ari.PlaybackHandle) error
+
+	playback *arimocks.Playback
+
+	key *ari.Key
+
+	handle *ari.PlaybackHandle
+}
+
+func (p *playStagedTest) Setup() {
+
+	p.playbackStarted = &arimocks.Subscription{}
+	p.playbackEnd = &arimocks.Subscription{}
+	p.playback = &arimocks.Playback{}
+
+	p.key = ari.NewKey(ari.PlaybackKey, "ph1")
+
+	p.playbackStartedChan = make(chan ari.Event)
+	p.playbackStarted.On("Events").Return((<-chan ari.Event)(p.playbackStartedChan))
+
+	p.playbackStarted.On("Cancel").Times(1).Return(nil)
+	p.playback.On("Subscribe", p.key, ari.Events.PlaybackStarted).Return(p.playbackStarted)
+	p.playback.On("Stop", p.key).Times(1).Return(nil)
+
+	p.playbackEndChan = make(chan ari.Event)
+	p.playbackEnd.On("Events").Return((<-chan ari.Event)(p.playbackEndChan))
+	p.playbackEnd.On("Cancel").Times(1).Return(nil)
+	p.playback.On("Subscribe", p.key, ari.Events.PlaybackFinished).Return(p.playbackEnd)
+
+	p.handle = ari.NewPlaybackHandle(p.key, p.playback, p.handleExec)
+}
+
+type timeoutTest struct {
+	playStagedTest
+}
+
+func TestPlayStaged(t *testing.T) {
+	t.Run("noEventTimeout", testPlayStagedNoEventTimeout)
+	t.Run("startFinishedEvent", testPlayStagedStartFinishedEvent)
+	t.Run("finishedBeforeStart", testPlayStagedFinishedEvent)
+	t.Run("failExec", testPlayStagedFailExec)
+	t.Run("cancel", testPlayStagedCancel)
+	t.Run("cancelAfterStart", testPlayStagedCancelAfterStart)
+}
+
+func testPlayStagedNoEventTimeout(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err == nil || err.Error() != "timeout waiting for playback to start" {
+		t.Errorf("Expected error '%v', got '%v'", "timeout waiting for playback to start", err)
+	}
+	if st != Timeout {
+		t.Errorf("Expected status '%v', got '%v'", st, Timeout)
+	}
+}
+
+func testPlayStagedStartFinishedEvent(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	go func() {
+		p.playbackStartedChan <- &ari.PlaybackStarted{}
+		time.After(200 * time.Millisecond)
+		p.playbackEndChan <- &ari.PlaybackFinished{}
+	}()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
+	}
+	if st != Finished {
+		t.Errorf("Expected status '%v', got '%v'", st, Finished)
+	}
+}
+
+func testPlayStagedFinishedEvent(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	go func() {
+		p.playbackEndChan <- &ari.PlaybackFinished{}
+	}()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
+	}
+	if st != Finished {
+		t.Errorf("Expected status '%v', got '%v'", st, Finished)
+	}
+}
+
+func testPlayStagedFailExec(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.handleExec = func(_ *ari.PlaybackHandle) error {
+		return errors.New("err2")
+	}
+	p.Setup()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err == nil || err.Error() != "failed to start playback: err2" {
+		t.Errorf("Expected error '%v', got '%v'", "failed to start playback: err2", err)
+	}
+	if st != Failed {
+		t.Errorf("Expected status '%v', got '%v'", st, Failed)
+	}
+}
+
+func testPlayStagedFinishBeforeStart(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	go func() {
+		time.After(100 * time.Millisecond)
+		p.playbackEndChan <- &ari.PlaybackFinished{}
+	}()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
+	}
+	if st != Finished {
+		t.Errorf("Expected status '%v', got '%v'", st, Finished)
+	}
+}
+
+func testPlayStagedCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	go func() {
+		<-time.After(10 * time.Millisecond)
+		cancel()
+	}()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
+	}
+	if st != Cancelled {
+		t.Errorf("Expected status '%v', got '%v'", st, Cancelled)
+	}
+}
+
+func testPlayStagedCancelAfterStart(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var p playStagedTest
+	p.Setup()
+
+	go func() {
+		p.playbackStartedChan <- &ari.PlaybackStarted{}
+		<-time.After(200 * time.Millisecond)
+		cancel()
+	}()
+
+	st, err := playStaged(ctx, p.handle, nil)
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
+	}
+	if st != Cancelled {
+		t.Errorf("Expected status '%v', got '%v'", st, Cancelled)
+	}
+}
+
 /*
 func init() {
 	PlaybackStartTimeout = 5 * time.Millisecond
