@@ -8,6 +8,9 @@ api:
 	go build ./
 	go build ./stdbus
 
+test:
+	go test `go list ./... | grep -v /vendor/`
+
 check: all
 	# disabling golint due to stringer output failing this check; TODO: fix this somehow
 	gometalinter --disable=gotype --disable=golint client/native ext/...
