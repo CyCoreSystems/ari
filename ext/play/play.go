@@ -111,7 +111,7 @@ func (o *Options) Play(ctx context.Context, p ari.Player) error {
 		o.result = new(Result)
 	}
 
-	if o.uriList == nil {
+	if o.uriList == nil || o.uriList.Empty() {
 		return errors.New("empty playback URI list")
 	}
 

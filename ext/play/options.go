@@ -121,6 +121,13 @@ type uriList struct {
 	mu      sync.Mutex
 }
 
+func (u *uriList) Empty() bool {
+	if u == nil || u.list == nil || u.list.Len() == 0 {
+		return true
+	}
+	return false
+}
+
 func (u *uriList) Add(uri string) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
