@@ -148,16 +148,24 @@ func (o *Options) Play(ctx context.Context, p ari.Player) error {
 // playSequence plays the complete audio sequence
 func (o *Options) playSequence(ctx context.Context, p ari.Player) (err error) {
 	s := newSequence(o)
-	defer s.Stop()
 
 	go s.Play(ctx, p)
 
 	select {
 	case <-ctx.Done():
-	case <-o.digitChan:
-	case err = <-s.Done():
+	case <-o.digitChan: //NOTE: this interrupts all playback, no matter what
+	case <-s.Done():
 	}
 
+	s.Stop()
+
+	// wait for cleanup of sequence so we can get the proper error result
+	select {
+	case <-s.Done():
+	case <-ctx.Done():
+	}
+
+	err = s.opts.result.Err()
 	return err
 }
 
