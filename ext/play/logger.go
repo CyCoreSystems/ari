@@ -1,4 +1,4 @@
-package audio
+package play
 
 import "gopkg.in/inconshreveable/log15.v2"
 

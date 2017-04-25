@@ -17,8 +17,7 @@ clients:
 	go build ./client/arimocks
 
 extensions:
-	go build ./ext/audio
-	go build ./ext/prompt
+	go build ./ext/play
 	go build ./ext/record
 
 events:
