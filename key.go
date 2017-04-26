@@ -169,6 +169,13 @@ func (k *Key) Match(o *Key) bool {
 	return true
 }
 
+// Location returns a new, empty key with the location information from the source key.  This includes the App, the Node, and the Dialog.  No type or ID information is copied.
+func (k *Key) Location() *Key {
+	n := NodeKey(k.App, k.Node)
+	n.Dialog = k.Dialog
+	return n
+}
+
 func (k *Key) String() string {
 	if k.ID != "" {
 		return k.ID
