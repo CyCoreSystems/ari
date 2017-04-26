@@ -267,7 +267,9 @@ func NewPromptOptions() *Options {
 // OptionFunc defines an interface for functions which can modify a play session's Options
 type OptionFunc func(*Options) error
 
-// NoExitOnDTMF disables exiting the playback when DTMF is received
+// NoExitOnDTMF disables exiting the playback when DTMF is received.  Note that
+// this is just a wrapper for MatchFunc(nil), so it is mutually exclusive with
+// MatchFunc; whichever comes later will win.
 func NoExitOnDTMF() OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = nil
