@@ -181,6 +181,7 @@ func (s *playSession) playSequence(ctx context.Context, p ari.Player) {
 	return
 }
 
+// nolint: gocyclo
 func (s *playSession) waitDigits(ctx context.Context) {
 	overallTimer := time.NewTimer(s.o.overallDigitTimeout)
 	defer overallTimer.Stop()
