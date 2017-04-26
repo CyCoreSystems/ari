@@ -231,11 +231,15 @@ type Options struct {
 
 // NewDefaultOptions returns a set of options which represent reasonable defaults for most simple playbacks.
 func NewDefaultOptions() *Options {
-	return &Options{
+	opts := &Options{
 		playbackStartTimeout: DefaultPlaybackStartTimeout,
 		maxPlaybackTime:      DefaultMaxPlaybackTime,
 		uriList:              new(uriList),
 	}
+
+	MatchAny()(opts) // nolint  No error is possible with MatchAny
+
+	return opts
 }
 
 // ApplyOptions applies a set of OptionFuncs to the Playback
@@ -257,13 +261,19 @@ func NewPromptOptions() *Options {
 	opts.interDigitTimeout = DefaultInterDigitTimeout
 	opts.overallDigitTimeout = DefaultOverallDigitTimeout
 
-	MatchAny()(opts) // nolint  No error is possible with MatchAny
-
 	return opts
 }
 
 // OptionFunc defines an interface for functions which can modify a play session's Options
 type OptionFunc func(*Options) error
+
+// NoExitOnDTMF disables exiting the playback when DTMF is received
+func NoExitOnDTMF() OptionFunc {
+	return func(o *Options) error {
+		o.matchFunc = nil
+		return nil
+	}
+}
 
 // URI adds a set of audio URIs to a playback
 func URI(uri ...string) OptionFunc {
