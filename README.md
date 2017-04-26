@@ -88,3 +88,22 @@ actually creating the resource.  Once all of the subscriptions are bound to this
 handle, the caller may call `resource.Exec()` in order to create the resource in
 Asterisk.
 
+# Play
+
+Playback of media and waiting for (DTMF) responses therefrom is an incredibly
+common task in telephony.  ARI provides many tools to perform these types of
+actions, but the asynchronous nature of the interface makes it fairly tedious to
+build these kinds of things.
+
+In `ext/play`, there resides a tool for executing many common tasks surrounding
+media playback and response sequences.  The core function, `play.Play()`
+plays, in sequence, a series of audio media URIs.  It can be extended to expect
+and (optionally) wait for a DTMF response by supplying it with a Match function.
+There is a small convenience wrapper `play.Prompt()` which sets some common
+defaults for playbacks which expect a response.
+
+The execution of a `Play` is configured by any number of option functions, which
+supply structured modifiers for the behaviour of the playback.  You can even
+supply your own Match function for highly-customized matching.
+
+
