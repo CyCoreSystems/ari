@@ -62,7 +62,7 @@ func testSequenceNoItems(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	seq := newSequence(NewDefaultOptions())
+	seq := newSequence(newPlaySession(NewDefaultOptions()))
 
 	seq.Play(ctx, player)
 
@@ -89,18 +89,19 @@ func testSequenceSomeItemsTimeoutStart(t *testing.T) {
 	opts := NewDefaultOptions()
 	opts.uriList.Add("sound:1")
 	opts.uriList.Add("sound:2")
-	seq := newSequence(opts)
+	opts.playbackStartTimeout = 10 * time.Millisecond
+	seq := newSequence(newPlaySession(opts))
 
 	seq.Play(ctx, player)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertNotCalled(t, "StagePlay", mock.Anything, "sound:2")
 
-	if err := seq.opts.result.Err(); err == nil || err.Error() != "failure in playback: timeout waiting for playback to start" {
+	if err := seq.s.result.Error; err == nil || err.Error() != "failure in playback: timeout waiting for playback to start" {
 		t.Errorf("Expected error: %s, got %v", "failure in playback: timeout waiting for playback to start", err)
 	}
-	if seq.opts.result.Status != Timeout {
-		t.Errorf("Expected status '%v', got '%v'", Timeout, seq.opts.result.Status)
+	if seq.s.result.Status != Timeout {
+		t.Errorf("Expected status '%v', got '%v'", Timeout, seq.s.result.Status)
 	}
 }
 
@@ -124,7 +125,7 @@ func testSequenceSomeItems(t *testing.T) {
 	opts := NewDefaultOptions()
 	opts.uriList.Add("sound:1")
 	opts.uriList.Add("sound:2")
-	seq := newSequence(opts)
+	seq := newSequence(newPlaySession(opts))
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
@@ -143,11 +144,11 @@ func testSequenceSomeItems(t *testing.T) {
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
 
-	if seq.opts.result.Err() != nil {
-		t.Errorf("Unexpected error: %v", seq.opts.result.Err())
+	if seq.s.result.Error != nil {
+		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
-	if seq.opts.result.Status != Finished {
-		t.Errorf("Expected status '%v', got '%v'", Finished, seq.opts.result.Status)
+	if seq.s.result.Status != Finished {
+		t.Errorf("Expected status '%v', got '%v'", Finished, seq.s.result.Status)
 	}
 }
 
@@ -171,7 +172,7 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 	opts := NewDefaultOptions()
 	opts.uriList.Add("sound:1")
 	opts.uriList.Add("sound:2")
-	seq := newSequence(opts)
+	seq := newSequence(newPlaySession(opts))
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
@@ -192,11 +193,11 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
 
-	if seq.opts.result.Err() != nil {
-		t.Errorf("Unexpected error: %v", seq.opts.result.Err())
+	if seq.s.result.Error != nil {
+		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
-	if seq.opts.result.Status != Cancelled {
-		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.opts.result.Status)
+	if seq.s.result.Status != Cancelled {
+		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.s.result.Status)
 	}
 }
 
@@ -220,7 +221,7 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 	opts := NewDefaultOptions()
 	opts.uriList.Add("sound:1")
 	opts.uriList.Add("sound:2")
-	seq := newSequence(opts)
+	seq := newSequence(newPlaySession(opts))
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
@@ -241,11 +242,11 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
 
-	if seq.opts.result.Err() != nil {
-		t.Errorf("Unexpected error: %v", seq.opts.result.Err())
+	if seq.s.result.Error != nil {
+		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
-	if seq.opts.result.Status != Cancelled {
-		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.opts.result.Status)
+	if seq.s.result.Status != Cancelled {
+		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.s.result.Status)
 	}
 }
 
@@ -268,7 +269,7 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 	opts := NewDefaultOptions()
 	opts.uriList.Add("sound:1")
 	opts.uriList.Add("sound:2")
-	seq := newSequence(opts)
+	seq := newSequence(newPlaySession(opts))
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
@@ -283,10 +284,10 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
 
-	if err := seq.opts.result.Err(); err == nil || err.Error() != "failed to stage playback: unknown error" {
+	if err := seq.s.result.Error; err == nil || err.Error() != "failed to stage playback: unknown error" {
 		t.Errorf("Expected error: %v, got %v", "failed to stage playback: unknown error", err)
 	}
-	if seq.opts.result.Status != Failed {
-		t.Errorf("Expected status '%v', got '%v'", Failed, seq.opts.result.Status)
+	if seq.s.result.Status != Failed {
+		t.Errorf("Expected status '%v', got '%v'", Failed, seq.s.result.Status)
 	}
 }

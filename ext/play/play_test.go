@@ -68,7 +68,7 @@ func testPlayStagedNoEventTimeout(t *testing.T) {
 	var p playStagedTest
 	p.Setup()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 0)
 	if err == nil || err.Error() != "timeout waiting for playback to start" {
 		t.Errorf("Expected error '%v', got '%v'", "timeout waiting for playback to start", err)
 	}
@@ -86,11 +86,11 @@ func testPlayStagedStartFinishedEvent(t *testing.T) {
 
 	go func() {
 		p.playbackStartedChan <- &ari.PlaybackStarted{}
-		time.After(200 * time.Millisecond)
+		time.After(10 * time.Millisecond)
 		p.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 20*time.Millisecond)
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -110,7 +110,7 @@ func testPlayStagedFinishedEvent(t *testing.T) {
 		p.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 0)
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -129,7 +129,7 @@ func testPlayStagedFailExec(t *testing.T) {
 	}
 	p.Setup()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 0)
 	if err == nil || err.Error() != "failed to start playback: err2" {
 		t.Errorf("Expected error '%v', got '%v'", "failed to start playback: err2", err)
 	}
@@ -150,7 +150,7 @@ func testPlayStagedFinishBeforeStart(t *testing.T) {
 		p.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 0)
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -171,7 +171,7 @@ func testPlayStagedCancel(t *testing.T) {
 		cancel()
 	}()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 20*time.Millisecond)
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -193,7 +193,7 @@ func testPlayStagedCancelAfterStart(t *testing.T) {
 		cancel()
 	}()
 
-	st, err := playStaged(ctx, p.handle, nil)
+	st, err := playStaged(ctx, p.handle, 0)
 	if err != nil {
 		t.Errorf("Unexpected error '%v'", err)
 	}
@@ -236,9 +236,9 @@ func testPlayNoURI(t *testing.T) {
 	var p playTest
 	p.Setup()
 
-	res := Play(ctx, p.player)
-	if res.Err() == nil || res.Err().Error() != "empty playback URI list" {
-		t.Errorf("Expected error '%v', got '%v'", "empty playback URI list", res.Err())
+	res, err := Play(ctx, p.player).Result()
+	if err == nil || err.Error() != "empty playback URI list" {
+		t.Errorf("Expected error '%v', got '%v'", "empty playback URI list", err)
 	}
 	if res.DTMF != "" {
 		t.Errorf("Unexpected DTMF: %s", res.DTMF)
@@ -258,9 +258,9 @@ func testPlay(t *testing.T) {
 		p.ps.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	res := Play(ctx, p.player, URI("sound:1"))
-	if res.Err() != nil {
-		t.Errorf("Unexpected error '%v'", res.Err())
+	res, err := Play(ctx, p.player, URI("sound:1")).Result()
+	if err != nil {
+		t.Errorf("Unexpected error '%v'", err)
 	}
 	if res.Status != Finished {
 		t.Errorf("Expected status '%v', got '%v'", Finished, res.Status)
@@ -289,18 +289,13 @@ func testPlayDtmf(t *testing.T) {
 		p.ps.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	res := Play(ctx, p.player, URI("sound:1"))
-	if res.Err() != nil {
-		t.Errorf("Unexpected error '%v'", res.Err())
+	res, err := Prompt(ctx, p.player, URI("sound:1")).Result()
+	if err != nil {
+		t.Error("Unexpected error", err)
 	}
 
-	//FIXME: when a DTMF digit comes into a play, what should the
-	// result of the operation be? `Finished` or Cancelled?
-	//		If duration between DTMF event and playback finished event are minimal, you get 'Finished'. Otherwise
-	//		you get 'Canceled'
-
-	if res.Status != Cancelled {
-		t.Errorf("Expected status '%v', got '%v'", Cancelled, res.Status)
+	if res.MatchResult != Complete {
+		t.Errorf("Expected MatchResult '%v', got '%v'", Complete, res.MatchResult)
 	}
 	if res.DTMF != "1" {
 		t.Errorf("Expected DTMF %s, got DTMF %s", "1", res.DTMF)

@@ -2,7 +2,6 @@ package play
 
 import (
 	"container/list"
-	"context"
 	"strings"
 	"sync"
 	"time"
@@ -54,22 +53,6 @@ type Result struct {
 
 	// Status indicates the resulting status of the playback, why it was stopped
 	Status Status
-}
-
-// Err returns any error found in the result
-func (r *Result) Err() error {
-	if r == nil {
-		return nil
-	}
-	return r.Error
-}
-
-// Result returns the Result and the Error in a more standard form for consistency with other tools.
-func (r *Result) Result() (*Result, error) {
-	if r == nil {
-		return nil, errors.New("no result")
-	}
-	return r, r.Error
 }
 
 // Status indicates the final status of a playback, be it individual of an entire sequence.  This Status indicates the reason the playback stopped.
@@ -185,18 +168,6 @@ func (u *uriList) val() string {
 
 // Options represent the various playback options which can modify the operation of a Playback.
 type Options struct {
-	// cancel is the playback context's cancel function
-	cancel context.CancelFunc
-
-	// digitChan is the channel on which any received DTMF digits will be sent.  The received DTMF will also be stored separately, so this channel is primarily for signaling purposes.
-	digitChan chan string
-
-	// done is a channel which is closed when the playback completes execution
-	done chan struct{}
-
-	// mu provides locking for concurrency-related datastructures within the options
-	mu sync.Mutex
-
 	// uriList is the list of audio URIs to play
 	uriList *uriList
 
@@ -256,9 +227,6 @@ type Options struct {
 	// replayed if there is no response.  By default, the audio sequence is
 	// played only once.
 	maxReplays int
-
-	// result is the final result of the playback
-	result *Result
 }
 
 // NewDefaultOptions returns a set of options which represent reasonable defaults for most simple playbacks.
@@ -267,9 +235,6 @@ func NewDefaultOptions() *Options {
 		playbackStartTimeout: DefaultPlaybackStartTimeout,
 		maxPlaybackTime:      DefaultMaxPlaybackTime,
 		uriList:              new(uriList),
-		result:               new(Result),
-		digitChan:            make(chan string, DigitBufferSize),
-		done:                 make(chan struct{}),
 	}
 }
 
@@ -284,12 +249,7 @@ func (o *Options) ApplyOptions(opts ...OptionFunc) (err error) {
 	return nil
 }
 
-// Done returns a channel which is closed when the playback exits
-func (o *Options) Done() <-chan struct{} {
-	return o.done
-}
-
-// NewPromptOptions returns a set of options which represent reasonable defaults for most prompt playbacks.
+// NewPromptOptions returns a set of options which represent reasonable defaults for most prompt playbacks.  It will terminate when any single DTMF digit is received.
 func NewPromptOptions() *Options {
 	opts := NewDefaultOptions()
 
@@ -308,9 +268,6 @@ type OptionFunc func(*Options) error
 // URI adds a set of audio URIs to a playback
 func URI(uri ...string) OptionFunc {
 	return func(o *Options) error {
-		o.mu.Lock()
-		defer o.mu.Unlock()
-
 		if o.uriList == nil {
 			o.uriList = new(uriList)
 		}
@@ -328,6 +285,29 @@ func URI(uri ...string) OptionFunc {
 func PlaybackStartTimeout(timeout time.Duration) OptionFunc {
 	return func(o *Options) error {
 		o.playbackStartTimeout = timeout
+		return nil
+	}
+}
+
+// DigitTimeouts sets the digit timeouts.  Passing a negative value to any of these indicates that the default value (shown in parentheses below) should be used.
+//
+//  - First digit timeout (4 sec):  The time (after the stop of the audio) to wait for the first digit to be received
+//
+//  - Inter digit timeout (3 sec):  The time (after receiving a digit) to wait for the _next_ digit to be received
+//
+//  - Overall digit timeout (3 min):  The maximum amount of time to wait (after the stop of the audio) for digits to be received, regardless of the digit frequency
+//
+func DigitTimeouts(first, inter, overall time.Duration) OptionFunc {
+	return func(o *Options) error {
+		if first >= 0 {
+			o.firstDigitTimeout = first
+		}
+		if inter >= 0 {
+			o.interDigitTimeout = inter
+		}
+		if overall >= 0 {
+			o.overallDigitTimeout = overall
+		}
 		return nil
 	}
 }

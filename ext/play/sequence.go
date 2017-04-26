@@ -2,6 +2,7 @@ package play
 
 import (
 	"context"
+	"time"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/pkg/errors"
@@ -11,7 +12,7 @@ import (
 // sequence represents an audio sequence playback session
 type sequence struct {
 	cancel context.CancelFunc
-	opts   *Options
+	s      *playSession
 
 	done chan struct{}
 }
@@ -26,9 +27,9 @@ func (s *sequence) Stop() {
 	}
 }
 
-func newSequence(o *Options) *sequence {
+func newSequence(s *playSession) *sequence {
 	return &sequence{
-		opts: o,
+		s:    s,
 		done: make(chan struct{}),
 	}
 }
@@ -39,18 +40,50 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 	defer cancel()
 	defer close(s.done)
 
-	for u := s.opts.uriList.First(); u != ""; u = s.opts.uriList.Next() {
+	for u := s.s.o.uriList.First(); u != ""; u = s.s.o.uriList.Next() {
 		pb, err := p.StagePlay(uuid.NewV1().String(), u)
 		if err != nil {
-			s.opts.result.Status = Failed
-			s.opts.result.Error = errors.Wrap(err, "failed to stage playback")
+			s.s.result.Status = Failed
+			s.s.result.Error = errors.Wrap(err, "failed to stage playback")
 			return
 		}
 
-		s.opts.result.Status, err = playStaged(ctx, pb, s.opts)
+		s.s.result.Status, err = playStaged(ctx, pb, s.s.o.playbackStartTimeout)
 		if err != nil {
-			s.opts.result.Error = errors.Wrap(err, "failure in playback")
+			s.s.result.Error = errors.Wrap(err, "failure in playback")
 			return
 		}
+	}
+}
+
+// playStaged executes a staged playback, waiting for its completion
+func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duration) (Status, error) {
+	started := h.Subscribe(ari.Events.PlaybackStarted)
+	defer started.Cancel()
+	finished := h.Subscribe(ari.Events.PlaybackFinished)
+	defer finished.Cancel()
+
+	err := h.Exec()
+	if err != nil {
+		return Failed, errors.Wrap(err, "failed to start playback")
+	}
+	defer h.Stop() // nolint: errcheck
+
+	select {
+	case <-ctx.Done():
+		return Cancelled, nil
+	case <-started.Events():
+	case <-finished.Events():
+		return Finished, nil
+	case <-time.After(timeout):
+		return Timeout, errors.New("timeout waiting for playback to start")
+	}
+
+	// Wait for playback to complete
+	select {
+	case <-ctx.Done():
+		return Cancelled, nil
+	case <-finished.Events():
+		return Finished, nil
 	}
 }
