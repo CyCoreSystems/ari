@@ -61,6 +61,17 @@ func (e *EventData) GetType() string {
 	return e.Type
 }
 
+// Key returns a new, fully qualified key from the EventData
+func (e *EventData) Key(kind, id string) *Key {
+	return &Key{
+		App:    e.Application,
+		Dialog: e.Dialog,
+		ID:     id,
+		Kind:   kind,
+		Node:   e.Node,
+	}
+}
+
 // SetDialog tags the event with the given dialog ID.  If a dialog is already set, it will be overwritten.
 func (e *EventData) SetDialog(id string) {
 	e.Dialog = id
