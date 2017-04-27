@@ -27,7 +27,11 @@ type Endpoint interface {
 
 // NewEndpointKey returns the key for the given endpoint
 func NewEndpointKey(tech, resource string, opts ...KeyOptionFunc) *Key {
-	return NewKey(EndpointKey, tech+"/"+resource, opts...)
+	return NewKey(EndpointKey, endpointKeyID(tech, resource), opts...)
+}
+
+func endpointKeyID(tech, resource string) string {
+	return tech + "/" + resource
 }
 
 // EndpointData describes an external device which may offer or accept calls
