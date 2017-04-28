@@ -88,6 +88,32 @@ actually creating the resource.  Once all of the subscriptions are bound to this
 handle, the caller may call `resource.Exec()` in order to create the resource in
 Asterisk.
 
+```go
+   h := NewChannelHandle(key, c, nil)
+
+   // Stage a playback
+   pb, err := h.StagePlay("myPlaybackID", "sound:tt-monkeys")
+   if err != nil {
+      return err
+   }
+   
+   // Add a subscription to the staged playback
+   startSub := pb.Subscribe(EventTypes.PlaybackStarted)
+   defer startSub.Cancel()
+
+   // Execute the staged playback
+   pb.Exec()
+
+   // Wait for something to happen
+   select {
+      case <-time.After(time.Second):
+        fmt.Println("timeout waiting for playback to start")
+        return errors.New("timeout")
+      case <-startSub.Events():
+        fmt.Println("playback started")
+   }
+```
+
 # Play
 
 Playback of media and waiting for (DTMF) responses therefrom is an incredibly
