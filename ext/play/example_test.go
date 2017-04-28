@@ -69,7 +69,7 @@ func ExamplePrompt() {
 	return
 }
 
-func ExamplePrompt_customMatchFunc() {
+func ExamplePrompt_custom() {
 	h := ari.NewChannelHandle(key, "exampleChannel")
 
 	res, err := Prompt(context.TODO(), h,
