@@ -47,28 +47,38 @@ type Key struct {
    Node string `json:"node,omitempty"`
 
    // Dialog indicates a named scope of the resource, for receiving events
-   Dialog stringa `json:"dialog,omitempty"`
+   Dialog string `json:"dialog,omitempty"`
 }
 ```
 At a basic level, when the specific Asterisk ID is not needed, a key can consist
 of a simple ID string:
 
 ```go
-  key := ari.NewKey(ari.KeyChannel, "myID")
+  key := ari.NewKey(ari.ChannelKey, "myID")
 ```
 
 For more interesting systems, however, we can declare the Node ID:
 
 ```go
-  key := ari.NewKey(ari.KeyBridge, "myID", ari.WithNode("00:01:02:30:40:50"))
+  key := ari.NewKey(ari.BridgeKey, "myID", ari.WithNode("00:01:02:30:40:50"))
 ```
 
 We can also bind a dialog:
 
 ```go
-  key := ari.NewKey(ari.KeyChannel, "myID",
+  key := ari.NewKey(ari.ChannelKey, "myID",
    ari.WithNode("00:01:02:30:40:50"),
    ari.WithDialog("privateConversation"))
+```
+
+We can also create a new key from an existing key.  This allows us to easily
+copy the location information from the original key to a new key of a different
+resource.  The location information is everything (including the Dialog) except
+for the key Kind and ID.
+
+```go
+  brKey := key.New(ari.BridgeKey, "myBridgeID")
+
 ```
 
 All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
