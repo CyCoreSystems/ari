@@ -109,7 +109,11 @@ func New(opts *Options) *Client {
 		}
 	}
 	if opts.WebsocketOrigin == "" {
-		opts.WebsocketOrigin = "http://localhost/"
+		if os.Getenv("ARI_WSORIGIN") != "" {
+			opts.WebsocketOrigin = os.Getenv("ARI_WSORIGIN")
+		} else {
+			opts.WebsocketOrigin = "http://localhost/"
+		}
 	}
 
 	if opts.Username == "" {

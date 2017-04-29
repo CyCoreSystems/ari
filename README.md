@@ -14,6 +14,23 @@ There is also a NATS-based `ari-proxy` which is designed to work with this
 client library.  It can be found at
 [CyCoreSystems/ari-proxy](https://github.com/CyCoreSystems/ari-proxy).
 
+# Cloud-ready
+
+All configuration options for the client are able to be sourced by environment
+variable, making it easy to build applications without configuration files.
+Moreover, the default connection to Asterisk is set to `localhost` on port 8088,
+which should run on Kubernetes deployments without configuration.
+
+The available environment variables (and defaults) are:
+
+  - `ARI_APPLICATION` (*randomly-generated UUID*)
+  - `ARI_URL` (`http://localhost:8088/ari`)
+  - `ARI_WSURL` (`ws://localhost:8088/ari/events`)
+  - `ARI_WSORIGIN` (`http://localhost/`)
+  - `ARI_USERNAME` (*none*)
+  - `ARI_PASSWORD` (*none*)
+
+When using the `ari-proxy`, the process is even easier.
 
 # Resource Keys
 
