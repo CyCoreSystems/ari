@@ -6,10 +6,13 @@ import (
 	"strings"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/client/arimocks"
 )
 
 func ExamplePlay() {
-	h := ari.NewChannelHandle(key, "exampleChannel")
+	c := &arimocks.Client{}
+	key := ari.NewKey(ari.ChannelKey, "exampleChannel")
+	h := ari.NewChannelHandle(key, c.Channel(), nil)
 
 	res, err := Play(context.TODO(), h,
 		URI("sound:tt-monkeys", "sound:vm-goodbye"),
@@ -26,9 +29,11 @@ func ExamplePlay() {
 }
 
 func ExamplePlay_async() {
-	h := ari.NewChannelHandle(key, "exampleChannel")
+	c := &arimocks.Client{}
+	key := ari.NewKey(ari.ChannelKey, "exampleChannel")
+	h := ari.NewChannelHandle(key, c.Channel(), nil)
 
-	bridgeSub := h.Subscribe(ari.EventTypes.ChannelEnteredBridge)
+	bridgeSub := h.Subscribe(ari.Events.ChannelEnteredBridge)
 	defer bridgeSub.Cancel()
 
 	sess := Play(context.TODO(), h,
@@ -41,15 +46,18 @@ func ExamplePlay_async() {
 		fmt.Println("Channel entered bridge during playback")
 	case <-sess.Done():
 		if sess.Err() != nil {
-			fmt.Println("Prompt failed", err)
+			fmt.Println("Prompt failed", sess.Err())
 		} else {
 			fmt.Println("Prompt complete")
 		}
 	}
 	return
 }
+
 func ExamplePrompt() {
-	h := ari.NewChannelHandle(key, "exampleChannel")
+	c := &arimocks.Client{}
+	key := ari.NewKey(ari.ChannelKey, "exampleChannel")
+	h := ari.NewChannelHandle(key, c.Channel(), nil)
 
 	res, err := Prompt(context.TODO(), h,
 		URI("tone:1004/250", "sound:vm-enter-num-to-call",
@@ -70,7 +78,10 @@ func ExamplePrompt() {
 }
 
 func ExamplePrompt_custom() {
-	h := ari.NewChannelHandle(key, "exampleChannel")
+	db := mockDB{}
+	c := &arimocks.Client{}
+	key := ari.NewKey(ari.ChannelKey, "exampleChannel")
+	h := ari.NewChannelHandle(key, c.Channel(), nil)
 
 	res, err := Prompt(context.TODO(), h,
 		URI("sound:agent-user"),
@@ -80,7 +91,7 @@ func ExamplePrompt_custom() {
 			pat := strings.TrimSuffix(in, "#")
 
 			user := db.Lookup(pat)
-			if user == nil {
+			if user == "" {
 				if pat != in {
 					// pattern was hash-terminated but no match
 					// was found, so there is no match possible
@@ -100,4 +111,10 @@ func ExamplePrompt_custom() {
 		fmt.Println("Got valid user", res.DTMF)
 	}
 	return
+}
+
+type mockDB struct{}
+
+func (m *mockDB) Lookup(user string) string {
+	return ""
 }

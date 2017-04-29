@@ -60,7 +60,7 @@ type Options struct {
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
-func Connect(ctx context.Context, opts Options) (ari.Client, error) {
+func Connect(ctx context.Context, opts *Options) (ari.Client, error) {
 	c := New(opts)
 
 	err := c.Connect(ctx)
@@ -78,7 +78,11 @@ func Connect(ctx context.Context, opts Options) (ari.Client, error) {
 }
 
 // New creates a new ari.Client.  This function should not be used directly unless you need finer control.
-func New(opts Options) *Client {
+// nolint: gocyclo
+func New(opts *Options) *Client {
+	if opts == nil {
+		opts = &Options{}
+	}
 
 	// Make sure we have an Application defined
 	if opts.Application == "" {
@@ -117,7 +121,7 @@ func New(opts Options) *Client {
 
 	return &Client{
 		appName: opts.Application,
-		Options: &opts,
+		Options: opts,
 	}
 }
 
