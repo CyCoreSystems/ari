@@ -106,6 +106,12 @@ func (kx Keys) Channels() Keys {
 	return kx.Filter(NewKey(ChannelKey, ""))
 }
 
+// ID returns the key from a set of keys with ID matching the given ID.  If the
+// key does not exist in the set, nil is returned.
+func (kx Keys) ID(id string) *Key {
+	return kx.Filter(NewKey("", id)).First()
+}
+
 // A Matcher provides the functionality for matching against a key.
 type Matcher interface {
 	Match(o *Key) bool
