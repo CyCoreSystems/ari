@@ -64,16 +64,32 @@ func (_m *Event) GetType() string {
 	return r0
 }
 
+// Key provides a mock function with given fields: kind, id
+func (_m *Event) Key(kind string, id string) *ari.Key {
+	ret := _m.Called(kind, id)
+
+	var r0 *ari.Key
+	if rf, ok := ret.Get(0).(func(string, string) *ari.Key); ok {
+		r0 = rf(kind, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ari.Key)
+		}
+	}
+
+	return r0
+}
+
 // Keys provides a mock function with given fields:
-func (_m *Event) Keys() []*ari.Key {
+func (_m *Event) Keys() ari.Keys {
 	ret := _m.Called()
 
-	var r0 []*ari.Key
-	if rf, ok := ret.Get(0).(func() []*ari.Key); ok {
+	var r0 ari.Keys
+	if rf, ok := ret.Get(0).(func() ari.Keys); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ari.Key)
+			r0 = ret.Get(0).(ari.Keys)
 		}
 	}
 
