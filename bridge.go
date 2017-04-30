@@ -61,6 +61,14 @@ type BridgeData struct {
 	Technology string   `json:"technology"`   // Name of the bridging technology
 }
 
+// Channels returns the list of channels found in the bridge
+func (b *BridgeData) Channels() (list []*Key) {
+	for _, id := range b.ChannelIDs {
+		list = append(list, b.Key.New(ChannelKey, id))
+	}
+	return
+}
+
 // NewBridgeHandle creates a new bridge handle
 func NewBridgeHandle(key *Key, b Bridge, exec func(bh *BridgeHandle) error) *BridgeHandle {
 	return &BridgeHandle{
