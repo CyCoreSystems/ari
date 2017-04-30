@@ -346,6 +346,29 @@ func MatchAny() OptionFunc {
 	}
 }
 
+// MatchDiscrete indicates that the playback should be considered Matched and terminated if
+// the received DTMF digits match any of the discrete list of strings.
+func MatchDiscrete(list []string) OptionFunc {
+	return func(o *Options) error {
+		o.matchFunc = func(pat string) (string, MatchResult) {
+			var maxLen int
+			for _, t := range list {
+				if t == pat {
+					return pat, Complete
+				}
+				if len(t) > maxLen {
+					maxLen = len(t)
+				}
+			}
+			if len(pat) > maxLen {
+				return pat, Invalid
+			}
+			return pat, Incomplete
+		}
+		return nil
+	}
+}
+
 // MatchHash indicates that the playback should be considered Matched and terminated if it contains a hash (#).  The hash (and any subsequent digits) is removed from the final result.
 func MatchHash() OptionFunc {
 	return func(o *Options) error {
