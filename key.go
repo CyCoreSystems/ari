@@ -63,6 +63,44 @@ type Key struct {
 	App string `json:"app,omitempty"`
 }
 
+// Keys is a list of keys
+type Keys []*Key
+
+// Filter filters the key list using the given key type match
+func (kx Keys) Filter(mx ...Matcher) (ret Keys) {
+	for _, m := range mx {
+		for _, k := range kx {
+			if m.Match(k) {
+				ret = append(ret, k)
+			}
+		}
+	}
+	return
+}
+
+// Without removes keys that match the given matcher
+func (kx Keys) Without(m Matcher) (ret Keys) {
+	for _, k := range kx {
+		if !m.Match(k) {
+			ret = append(ret, k)
+		}
+	}
+	return
+}
+
+// A Matcher provides the functionality for matching against a key.
+type Matcher interface {
+	Match(o *Key) bool
+}
+
+// MatchFunc is the functional type alias for providing functional `Matcher` implementations
+type MatchFunc func(*Key) bool
+
+// Match invokes the match function given the key
+func (mf MatchFunc) Match(o *Key) bool {
+	return mf(o)
+}
+
 // KeyOptionFunc is a functional argument alias for providing options for ARI keys
 type KeyOptionFunc func(Key) Key
 
@@ -138,6 +176,11 @@ func DialogKey(dialog string) *Key {
 // NodeKey returns a key that is bound to the given application and node
 func NodeKey(app, node string) *Key {
 	return NewKey("", "", WithApp(app), WithNode(node))
+}
+
+// KindKey returns a key that is bound by a type only
+func KindKey(kind string, opts ...KeyOptionFunc) *Key {
+	return NewKey(kind, "", opts...)
 }
 
 // Match returns true if the given key matches the subject. Empty partial key fields are wildcards.

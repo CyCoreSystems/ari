@@ -35,3 +35,60 @@ func TestKeyMatch(t *testing.T) {
 		t.Errorf("Application/* should match application/id")
 	}
 }
+
+func TestKeysFilter(t *testing.T) {
+
+	keys := Keys{
+		NewKey(ApplicationKey, "app1"),
+		NewKey(ChannelKey, "ch1"),
+		NewKey(BridgeKey, "br1"),
+	}
+
+	newKeys := keys.Filter(KindKey(ApplicationKey))
+
+	if len(newKeys) != 1 {
+		t.Errorf("Expected filters keys by app to be of length 1, got %d", len(newKeys))
+	} else {
+		if newKeys[0].Kind != ApplicationKey && newKeys[0].ID != "app1" {
+			t.Errorf("Unexpected first index %v", newKeys[0])
+		}
+	}
+
+	newKeys = keys.Without(KindKey(ApplicationKey))
+
+	if len(newKeys) != 2 {
+		t.Errorf("Expected without keys by app to be of length 2, got %d", len(newKeys))
+	} else {
+		if newKeys[0].Kind != ChannelKey && newKeys[0].ID != "ch1" {
+			t.Errorf("Unexpected first index %v", newKeys[0])
+		}
+		if newKeys[1].Kind != BridgeKey && newKeys[1].ID != "br1" {
+			t.Errorf("Unexpected second index %v", newKeys[1])
+		}
+	}
+
+	newKeys = keys.Filter(KindKey(ChannelKey), KindKey(BridgeKey))
+
+	if len(newKeys) != 2 {
+		t.Errorf("Expected without keys by app to be of length 2, got %d", len(newKeys))
+	} else {
+		if newKeys[0].Kind != ChannelKey && newKeys[0].ID != "ch1" {
+			t.Errorf("Unexpected first index %v", newKeys[0])
+		}
+		if newKeys[1].Kind != BridgeKey && newKeys[1].ID != "br1" {
+			t.Errorf("Unexpected second index %v", newKeys[1])
+		}
+	}
+
+	newKeys = keys.Filter(KindKey(ChannelKey), KindKey(BridgeKey)).Without(MatchFunc(func(k *Key) bool {
+		return k.ID == "br1"
+	}))
+
+	if len(newKeys) != 1 {
+		t.Errorf("Expected without keys by app to be of length 2, got %d", len(newKeys))
+	} else {
+		if newKeys[0].Kind != ChannelKey && newKeys[0].ID != "ch1" {
+			t.Errorf("Unexpected first index %v", newKeys[0])
+		}
+	}
+}

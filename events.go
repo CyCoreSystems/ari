@@ -20,7 +20,7 @@ type Event interface {
 	Key(kind, id string) *Key
 
 	// Keys returns the related entity keys for the event
-	Keys() []*Key
+	Keys() Keys
 
 	// SetDialog tags the event with a Dialog
 	SetDialog(string)
@@ -83,12 +83,12 @@ func (e *EventData) SetDialog(id string) {
 // implementations of events
 
 // Keys returns the list of keys associated with this event
-func (evt *ApplicationReplaced) Keys() (sx []*Key) {
+func (evt *ApplicationReplaced) Keys() (sx Keys) {
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeAttendedTransfer) Keys() (sx []*Key) {
+func (evt *BridgeAttendedTransfer) Keys() (sx Keys) {
 	if id := evt.DestinationThreewayBridge.ID; id != "" {
 		sx = append(sx, evt.Key(BridgeKey, id))
 	}
@@ -127,7 +127,7 @@ func (evt *BridgeAttendedTransfer) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeBlindTransfer) Keys() (sx []*Key) {
+func (evt *BridgeBlindTransfer) Keys() (sx Keys) {
 
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -146,7 +146,7 @@ func (evt *BridgeBlindTransfer) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeCreated) Keys() (sx []*Key) {
+func (evt *BridgeCreated) Keys() (sx Keys) {
 
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -160,7 +160,7 @@ func (evt *BridgeCreated) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeDestroyed) Keys() (sx []*Key) {
+func (evt *BridgeDestroyed) Keys() (sx Keys) {
 
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -171,7 +171,7 @@ func (evt *BridgeDestroyed) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeMerged) Keys() (sx []*Key) {
+func (evt *BridgeMerged) Keys() (sx Keys) {
 
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -187,7 +187,7 @@ func (evt *BridgeMerged) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *BridgeVideoSourceChanged) Keys() (sx []*Key) {
+func (evt *BridgeVideoSourceChanged) Keys() (sx Keys) {
 
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -198,66 +198,43 @@ func (evt *BridgeVideoSourceChanged) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelCallerID) Keys() (sx []*Key) {
+func (evt *ChannelCallerID) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelConnectedLine) Keys() (sx []*Key) {
+func (evt *ChannelConnectedLine) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelCreated) Keys() (sx []*Key) {
+func (evt *ChannelCreated) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelDestroyed) Keys() (sx []*Key) {
+func (evt *ChannelDestroyed) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelDialplan) Keys() (sx []*Key) {
+func (evt *ChannelDialplan) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelDtmfReceived) Keys() (sx []*Key) {
+func (evt *ChannelDtmfReceived) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelEnteredBridge) Keys() (sx []*Key) {
-	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
-	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
-	for _, id := range evt.Bridge.ChannelIDs {
-		sx = append(sx, evt.Key(ChannelKey, id))
-
-	}
-	return
-}
-
-// Keys returns the list of keys associated with this event
-func (evt *ChannelHangupRequest) Keys() (sx []*Key) {
-	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
-	return
-}
-
-// Keys returns the list of keys associated with this event
-func (evt *ChannelHold) Keys() (sx []*Key) {
-	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
-	return
-}
-
-// Keys returns the list of keys associated with this event
-func (evt *ChannelLeftBridge) Keys() (sx []*Key) {
+func (evt *ChannelEnteredBridge) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
@@ -268,31 +245,54 @@ func (evt *ChannelLeftBridge) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelStateChange) Keys() (sx []*Key) {
+func (evt *ChannelHangupRequest) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelTalkingFinished) Keys() (sx []*Key) {
+func (evt *ChannelHold) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelTalkingStarted) Keys() (sx []*Key) {
+func (evt *ChannelLeftBridge) Keys() (sx Keys) {
+	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
+	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
+	for _, id := range evt.Bridge.ChannelIDs {
+		sx = append(sx, evt.Key(ChannelKey, id))
+
+	}
+	return
+}
+
+// Keys returns the list of keys associated with this event
+func (evt *ChannelStateChange) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelUnhold) Keys() (sx []*Key) {
+func (evt *ChannelTalkingFinished) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelUserevent) Keys() (sx []*Key) {
+func (evt *ChannelTalkingStarted) Keys() (sx Keys) {
+	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
+	return
+}
+
+// Keys returns the list of keys associated with this event
+func (evt *ChannelUnhold) Keys() (sx Keys) {
+	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
+	return
+}
+
+// Keys returns the list of keys associated with this event
+func (evt *ChannelUserevent) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, i := range evt.Bridge.ChannelIDs {
@@ -307,30 +307,30 @@ func (evt *ChannelUserevent) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ChannelVarset) Keys() (sx []*Key) {
+func (evt *ChannelVarset) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ContactInfo) Keys() (sx []*Key) {
+func (evt *ContactInfo) Keys() (sx Keys) {
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *ContactStatusChange) Keys() (sx []*Key) {
+func (evt *ContactStatusChange) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(EndpointKey, endpointKeyID(evt.Endpoint.Technology, evt.Endpoint.Resource)))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *DeviceStateChanged) Keys() (sx []*Key) {
+func (evt *DeviceStateChanged) Keys() (sx Keys) {
 	sx = append(sx, evt.DeviceState.Key)
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *Dial) Keys() (sx []*Key) {
+func (evt *Dial) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Caller.ID))
 	sx = append(sx, evt.Key(ChannelKey, evt.Peer.ID))
 	sx = append(sx, evt.Key(ChannelKey, evt.Forwarded.ID))
@@ -339,71 +339,71 @@ func (evt *Dial) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *EndpointStateChange) Keys() (sx []*Key) {
+func (evt *EndpointStateChange) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(EndpointKey, endpointKeyID(evt.Endpoint.Technology, evt.Endpoint.Resource)))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *MissingParams) Keys() (sx []*Key) {
+func (evt *MissingParams) Keys() (sx Keys) {
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *Peer) Keys() (sx []*Key) {
+func (evt *Peer) Keys() (sx Keys) {
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *PeerStatusChange) Keys() (sx []*Key) {
+func (evt *PeerStatusChange) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(EndpointKey, endpointKeyID(evt.Endpoint.Technology, evt.Endpoint.Resource)))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *PlaybackContinuing) Keys() (sx []*Key) {
+func (evt *PlaybackContinuing) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(PlaybackKey, evt.Playback.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *PlaybackFinished) Keys() (sx []*Key) {
+func (evt *PlaybackFinished) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(PlaybackKey, evt.Playback.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *PlaybackStarted) Keys() (sx []*Key) {
+func (evt *PlaybackStarted) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(PlaybackKey, evt.Playback.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *RecordingFailed) Keys() (sx []*Key) {
+func (evt *RecordingFailed) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(LiveRecordingKey, evt.Recording.Name))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *RecordingFinished) Keys() (sx []*Key) {
+func (evt *RecordingFinished) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(LiveRecordingKey, evt.Recording.Name))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *RecordingStarted) Keys() (sx []*Key) {
+func (evt *RecordingStarted) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(LiveRecordingKey, evt.Recording.Name))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *StasisEnd) Keys() (sx []*Key) {
+func (evt *StasisEnd) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	return
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *StasisStart) Keys() (sx []*Key) {
+func (evt *StasisStart) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	if evt.ReplaceChannel.ID != "" {
 		sx = append(sx, evt.Key(ChannelKey, evt.ReplaceChannel.ID))
@@ -412,7 +412,7 @@ func (evt *StasisStart) Keys() (sx []*Key) {
 }
 
 // Keys returns the list of keys associated with this event
-func (evt *TextMessageReceived) Keys() (sx []*Key) {
+func (evt *TextMessageReceived) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(EndpointKey, endpointKeyID(evt.Endpoint.Technology, evt.Endpoint.Resource)))
 	return
 }
