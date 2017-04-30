@@ -89,7 +89,7 @@ func (kx Keys) Without(m Matcher) (ret Keys) {
 }
 
 // First returns the first key from a list of keys.  It is safe to use on empty lists, in which case, it will return nil.
-func (kx *Keys) First() *Key {
+func (kx Keys) First() *Key {
 	if len(kx) < 1 {
 		return nil
 	}
