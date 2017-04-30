@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	log15 "gopkg.in/inconshreveable/log15.v2"
 
+	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/native"
 )
 
@@ -30,16 +32,17 @@ func run() int {
 
 	log.Info("Connecting")
 
-	cl, err := native.New(opts)
+	cl, err := native.Connect(context.TODO(), &opts)
 	if err != nil {
 		log.Error("Failed to build native ARI client", "error", err)
 		return -1
 	}
+
 	defer cl.Close()
 
 	log.Info("Connected")
 
-	info, err := cl.Asterisk.Info("")
+	info, err := cl.Asterisk().Info(&ari.Key{Kind: "build"})
 	if err != nil {
 		log.Error("Failed to get Asterisk Info", "error", err)
 		return -1
