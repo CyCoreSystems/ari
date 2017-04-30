@@ -96,6 +96,16 @@ func (kx Keys) First() *Key {
 	return kx[0]
 }
 
+// Bridges returns just the bridge keys from a set of Keys
+func (kx Keys) Bridges() Keys {
+	return kx.Filter(NewKey(BridgeKey, ""))
+}
+
+// Channels returns just the channel keys from a set of Keys
+func (kx Keys) Channels() Keys {
+	return kx.Filter(NewKey(ChannelKey, ""))
+}
+
 // A Matcher provides the functionality for matching against a key.
 type Matcher interface {
 	Match(o *Key) bool
