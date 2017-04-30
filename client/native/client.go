@@ -60,10 +60,10 @@ type Options struct {
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
-func Connect(ctx context.Context, opts *Options) (ari.Client, error) {
+func Connect(opts *Options) (ari.Client, error) {
 	c := New(opts)
 
-	err := c.Connect(ctx)
+	err := c.Connect()
 	if err != nil {
 		return c, err
 	}
@@ -252,21 +252,28 @@ func (c *Client) createWSConfig() (err error) {
 }
 
 // Connect sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
-func (c *Client) Connect(ctx context.Context) error {
+func (c *Client) Connect() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	c.cancel = cancel
+
 	if c.Connected {
+		cancel()
 		return errors.New("already connected")
 	}
 
 	if c.Options.Username == "" {
+		cancel()
 		return errors.New("no username found")
 	}
 	if c.Options.Password == "" {
+		cancel()
 		return errors.New("no password found")
 	}
 
 	// Construct the websocket config, if we don't already have one
 	if c.WSConfig == nil {
 		if err := c.createWSConfig(); err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to create websocket configuration")
 		}
 	}
