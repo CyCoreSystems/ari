@@ -214,7 +214,7 @@ func (k *Key) Match(o *Key) bool {
 	}
 
 	if k == nil || o == nil {
-		return false
+		return true
 	}
 
 	if k.App != "" && o.App != "" && k.App != o.App {
