@@ -2,12 +2,9 @@ package native
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"sync"
 	"time"
 
@@ -338,24 +335,18 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 
 	go func() {
 		for {
-			var raw ari.RawEvent
-			err := AsteriskCodec.Receive(ws, &raw)
+			var data []byte
+			err := websocket.Message.Receive(ws, &data)
 			if err != nil {
-				errChan <- errors.Wrap(err, "failed to decode websocket message")
+				errChan <- errors.Wrap(err, "failed to receive websocket message")
 				return
 			}
-
-			// Tag the event with our metadata
-			raw.Application = c.appName
-			raw.Node = c.node
-
-			e, err := raw.ToEvent()
+			e, err := ari.DecodeEvent(data)
 			if err != nil {
-				Logger.Error("failed to convert message to event", "error", err)
-				continue
+				errChan <- errors.Wrap(err, "failed to devoce websocket message to event")
 			}
-
 			c.bus.Send(e)
+
 		}
 	}()
 
@@ -378,36 +369,4 @@ func (c *Client) stamp(key *ari.Key) *ari.Key {
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
-
-// Marshal is a no-op to implement websocket.Codec.  Asterisk
-// websocket connections should never have the client send any data
-func marshal(v interface{}) (data []byte, payloadType byte, err error) {
-	return
-}
-
-// Unmarshal implements websocket.Codec
-func unmarshal(data []byte, payloadType byte, v interface{}) error {
-	data = append(data, '\n')
-
-	e, ok := v.(*ari.Message)
-	if !ok {
-		return fmt.Errorf("Cannot cast receiver to a Message when it is of type %v", reflect.TypeOf(v))
-	}
-
-	err := json.Unmarshal(data, &e)
-	if err != nil {
-		return err
-	}
-
-	// Store the raw data
-	e.SetRaw(data)
-
-	return nil
-}
-
-// AsteriskCodec is a websocket Codec for Asterisk messages
-var AsteriskCodec = websocket.Codec{
-	Marshal:   marshal,
-	Unmarshal: unmarshal,
 }

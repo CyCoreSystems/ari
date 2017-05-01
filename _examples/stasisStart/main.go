@@ -19,16 +19,18 @@ func main() {
 	defer cancel()
 
 	// connect
+	native.Logger = log
 
+	log.Info("Connecting to ARI")
 	cl, err := native.Connect(&native.Options{
-		Application:  "example",
+		Application:  "test",
 		Username:     "admin",
 		Password:     "admin",
-		URL:          "http://asterisk:8088/ari",
-		WebsocketURL: "ws://asterisk:8088/ari/events",
+		URL:          "http://localhost:8088/ari",
+		WebsocketURL: "ws://localhost:8088/ari/events",
 	})
 	if err != nil {
-		log.Error("Failed to build nc ARI client", "error", err)
+		log.Error("Failed to build ARI client", "error", err)
 		return
 	}
 
@@ -70,8 +72,8 @@ func listenApp(ctx context.Context, cl ari.Client, handler func(cl ari.Client, h
 	for {
 		select {
 		case e := <-sub.Events():
-			log.Info("Got stasis start")
 			v := e.(*ari.StasisStart)
+			log.Info("Got stasis start", "channel", v.Channel.ID)
 			go handler(cl, cl.Channel().Get(v.Key(ari.ChannelKey, v.Channel.ID)))
 		case <-end.Events():
 			log.Info("Got stasis end")

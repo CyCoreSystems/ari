@@ -4,7 +4,8 @@ package ari
 
 import (
 	"encoding/json"
-	"errors"
+
+	"github.com/pkg/errors"
 )
 
 // EventTypes enumerates the list of event types
@@ -100,453 +101,182 @@ func init() {
 
 }
 
-// DecodeEvent returns an Event from a byte slice of JSON data of a RawEvent
+// DecodeEvent converts a JSON-encoded event to an ARI event.
 func DecodeEvent(data []byte) (Event, error) {
-	var raw RawEvent
-	err := json.Unmarshal(data, &raw)
+	// Decode the event type
+	var typer Message
+	err := json.Unmarshal(data, &typer)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to decode type")
+	}
+	if typer.Type == "" {
+		return nil, errors.New("no type found")
 	}
 
-	evt, err := raw.ToEvent()
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(data, evt)
-	if err != nil {
-		return nil, err
-	}
-	return evt, nil
-}
-
-// RawEvent is a raw ARI event, structured as a JSON-unmarshallable Go structure to facilitate decoding.
-type RawEvent struct {
-	EventData `json:",inline"`
-	Header    Header `json:"header"`
-
-	// ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."
-	ApplicationReplaced *ApplicationReplaced `json:",inline,omitempty"`
-
-	// BridgeAttendedTransfer - "Notification that an attended transfer has occurred."
-	BridgeAttendedTransfer *BridgeAttendedTransfer `json:",inline,omitempty"`
-
-	// BridgeBlindTransfer - "Notification that a blind transfer has occurred."
-	BridgeBlindTransfer *BridgeBlindTransfer `json:",inline,omitempty"`
-
-	// BridgeCreated - "Notification that a bridge has been created."
-	BridgeCreated *BridgeCreated `json:",inline,omitempty"`
-
-	// BridgeDestroyed - "Notification that a bridge has been destroyed."
-	BridgeDestroyed *BridgeDestroyed `json:",inline,omitempty"`
-
-	// BridgeMerged - "Notification that one bridge has merged into another."
-	BridgeMerged *BridgeMerged `json:",inline,omitempty"`
-
-	// BridgeVideoSourceChanged - "Notification that the source of video in a bridge has changed."
-	BridgeVideoSourceChanged *BridgeVideoSourceChanged `json:",inline,omitempty"`
-
-	// ChannelCallerID - "Channel changed Caller ID."
-	ChannelCallerID *ChannelCallerID `json:",inline,omitempty"`
-
-	// ChannelConnectedLine - "Channel changed Connected Line."
-	ChannelConnectedLine *ChannelConnectedLine `json:",inline,omitempty"`
-
-	// ChannelCreated - "Notification that a channel has been created."
-	ChannelCreated *ChannelCreated `json:",inline,omitempty"`
-
-	// ChannelDestroyed - "Notification that a channel has been destroyed."
-	ChannelDestroyed *ChannelDestroyed `json:",inline,omitempty"`
-
-	// ChannelDialplan - "Channel changed location in the dialplan."
-	ChannelDialplan *ChannelDialplan `json:",inline,omitempty"`
-
-	// ChannelDtmfReceived - "DTMF received on a channel.This event is sent when the DTMF ends. There is no notification about the start of DTMF"
-	ChannelDtmfReceived *ChannelDtmfReceived `json:",inline,omitempty"`
-
-	// ChannelEnteredBridge - "Notification that a channel has entered a bridge."
-	ChannelEnteredBridge *ChannelEnteredBridge `json:",inline,omitempty"`
-
-	// ChannelHangupRequest - "A hangup was requested on the channel."
-	ChannelHangupRequest *ChannelHangupRequest `json:",inline,omitempty"`
-
-	// ChannelHold - "A channel initiated a media hold."
-	ChannelHold *ChannelHold `json:",inline,omitempty"`
-
-	// ChannelLeftBridge - "Notification that a channel has left a bridge."
-	ChannelLeftBridge *ChannelLeftBridge `json:",inline,omitempty"`
-
-	// ChannelStateChange - "Notification of a channel's state change."
-	ChannelStateChange *ChannelStateChange `json:",inline,omitempty"`
-
-	// ChannelTalkingFinished - "Talking is no longer detected on the channel."
-	ChannelTalkingFinished *ChannelTalkingFinished `json:",inline,omitempty"`
-
-	// ChannelTalkingStarted - "Talking was detected on the channel."
-	ChannelTalkingStarted *ChannelTalkingStarted `json:",inline,omitempty"`
-
-	// ChannelUnhold - "A channel initiated a media unhold."
-	ChannelUnhold *ChannelUnhold `json:",inline,omitempty"`
-
-	// ChannelUserevent - "User-generated event with additional user-defined fields in the object."
-	ChannelUserevent *ChannelUserevent `json:",inline,omitempty"`
-
-	// ChannelVarset - "Channel variable changed."
-	ChannelVarset *ChannelVarset `json:",inline,omitempty"`
-
-	// ContactInfo - "Detailed information about a contact on an endpoint."
-	ContactInfo *ContactInfo `json:",inline,omitempty"`
-
-	// ContactStatusChange - "The state of a contact on an endpoint has changed."
-	ContactStatusChange *ContactStatusChange `json:",inline,omitempty"`
-
-	// DeviceStateChanged - "Notification that a device state has changed."
-	DeviceStateChanged *DeviceStateChanged `json:",inline,omitempty"`
-
-	// Dial - "Dialing state has changed."
-	Dial *Dial `json:",inline,omitempty"`
-
-	// EndpointStateChange - "Endpoint state changed."
-	EndpointStateChange *EndpointStateChange `json:",inline,omitempty"`
-
-	// MissingParams - "Error event sent when required params are missing."
-	MissingParams *MissingParams `json:",inline,omitempty"`
-
-	// Peer - "Detailed information about a remote peer that communicates with Asterisk."
-	Peer *Peer `json:",inline,omitempty"`
-
-	// PeerStatusChange - "The state of a peer associated with an endpoint has changed."
-	PeerStatusChange *PeerStatusChange `json:",inline,omitempty"`
-
-	// PlaybackContinuing - "Event showing the continuation of a media playback operation from one media URI to the next in the list."
-	PlaybackContinuing *PlaybackContinuing `json:",inline,omitempty"`
-
-	// PlaybackFinished - "Event showing the completion of a media playback operation."
-	PlaybackFinished *PlaybackFinished `json:",inline,omitempty"`
-
-	// PlaybackStarted - "Event showing the start of a media playback operation."
-	PlaybackStarted *PlaybackStarted `json:",inline,omitempty"`
-
-	// RecordingFailed - "Event showing failure of a recording operation."
-	RecordingFailed *RecordingFailed `json:",inline,omitempty"`
-
-	// RecordingFinished - "Event showing the completion of a recording operation."
-	RecordingFinished *RecordingFinished `json:",inline,omitempty"`
-
-	// RecordingStarted - "Event showing the start of a recording operation."
-	RecordingStarted *RecordingStarted `json:",inline,omitempty"`
-
-	// StasisEnd - "Notification that a channel has left a Stasis application."
-	StasisEnd *StasisEnd `json:",inline,omitempty"`
-
-	// StasisStart - "Notification that a channel has entered a Stasis application."
-	StasisStart *StasisStart `json:",inline,omitempty"`
-
-	// TextMessageReceived - "A text message was received from an endpoint."
-	TextMessageReceived *TextMessageReceived `json:",inline,omitempty"`
-}
-
-// EventToRaw converts an Event to a RawEvent
-func EventToRaw(e Event) *RawEvent {
-	raw := new(RawEvent)
-	switch e.GetType() {
+	switch typer.Type {
 	case Events.ApplicationReplaced:
-		raw.ApplicationReplaced = e.(*ApplicationReplaced)
+		var e ApplicationReplaced
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeAttendedTransfer:
-		raw.BridgeAttendedTransfer = e.(*BridgeAttendedTransfer)
+		var e BridgeAttendedTransfer
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeBlindTransfer:
-		raw.BridgeBlindTransfer = e.(*BridgeBlindTransfer)
+		var e BridgeBlindTransfer
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeCreated:
-		raw.BridgeCreated = e.(*BridgeCreated)
+		var e BridgeCreated
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeDestroyed:
-		raw.BridgeDestroyed = e.(*BridgeDestroyed)
+		var e BridgeDestroyed
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeMerged:
-		raw.BridgeMerged = e.(*BridgeMerged)
+		var e BridgeMerged
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.BridgeVideoSourceChanged:
-		raw.BridgeVideoSourceChanged = e.(*BridgeVideoSourceChanged)
+		var e BridgeVideoSourceChanged
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelCallerID:
-		raw.ChannelCallerID = e.(*ChannelCallerID)
+		var e ChannelCallerID
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelConnectedLine:
-		raw.ChannelConnectedLine = e.(*ChannelConnectedLine)
+		var e ChannelConnectedLine
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelCreated:
-		raw.ChannelCreated = e.(*ChannelCreated)
+		var e ChannelCreated
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelDestroyed:
-		raw.ChannelDestroyed = e.(*ChannelDestroyed)
+		var e ChannelDestroyed
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelDialplan:
-		raw.ChannelDialplan = e.(*ChannelDialplan)
+		var e ChannelDialplan
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelDtmfReceived:
-		raw.ChannelDtmfReceived = e.(*ChannelDtmfReceived)
+		var e ChannelDtmfReceived
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelEnteredBridge:
-		raw.ChannelEnteredBridge = e.(*ChannelEnteredBridge)
+		var e ChannelEnteredBridge
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelHangupRequest:
-		raw.ChannelHangupRequest = e.(*ChannelHangupRequest)
+		var e ChannelHangupRequest
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelHold:
-		raw.ChannelHold = e.(*ChannelHold)
+		var e ChannelHold
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelLeftBridge:
-		raw.ChannelLeftBridge = e.(*ChannelLeftBridge)
+		var e ChannelLeftBridge
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelStateChange:
-		raw.ChannelStateChange = e.(*ChannelStateChange)
+		var e ChannelStateChange
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelTalkingFinished:
-		raw.ChannelTalkingFinished = e.(*ChannelTalkingFinished)
+		var e ChannelTalkingFinished
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelTalkingStarted:
-		raw.ChannelTalkingStarted = e.(*ChannelTalkingStarted)
+		var e ChannelTalkingStarted
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelUnhold:
-		raw.ChannelUnhold = e.(*ChannelUnhold)
+		var e ChannelUnhold
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelUserevent:
-		raw.ChannelUserevent = e.(*ChannelUserevent)
+		var e ChannelUserevent
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ChannelVarset:
-		raw.ChannelVarset = e.(*ChannelVarset)
+		var e ChannelVarset
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ContactInfo:
-		raw.ContactInfo = e.(*ContactInfo)
+		var e ContactInfo
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ContactStatusChange:
-		raw.ContactStatusChange = e.(*ContactStatusChange)
+		var e ContactStatusChange
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.DeviceStateChanged:
-		raw.DeviceStateChanged = e.(*DeviceStateChanged)
+		var e DeviceStateChanged
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.Dial:
-		raw.Dial = e.(*Dial)
+		var e Dial
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.EndpointStateChange:
-		raw.EndpointStateChange = e.(*EndpointStateChange)
+		var e EndpointStateChange
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.MissingParams:
-		raw.MissingParams = e.(*MissingParams)
+		var e MissingParams
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.Peer:
-		raw.Peer = e.(*Peer)
+		var e Peer
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.PeerStatusChange:
-		raw.PeerStatusChange = e.(*PeerStatusChange)
+		var e PeerStatusChange
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.PlaybackContinuing:
-		raw.PlaybackContinuing = e.(*PlaybackContinuing)
+		var e PlaybackContinuing
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.PlaybackFinished:
-		raw.PlaybackFinished = e.(*PlaybackFinished)
+		var e PlaybackFinished
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.PlaybackStarted:
-		raw.PlaybackStarted = e.(*PlaybackStarted)
+		var e PlaybackStarted
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.RecordingFailed:
-		raw.RecordingFailed = e.(*RecordingFailed)
+		var e RecordingFailed
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.RecordingFinished:
-		raw.RecordingFinished = e.(*RecordingFinished)
+		var e RecordingFinished
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.RecordingStarted:
-		raw.RecordingStarted = e.(*RecordingStarted)
+		var e RecordingStarted
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.StasisEnd:
-		raw.StasisEnd = e.(*StasisEnd)
+		var e StasisEnd
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.StasisStart:
-		raw.StasisStart = e.(*StasisStart)
+		var e StasisStart
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.TextMessageReceived:
-		raw.TextMessageReceived = e.(*TextMessageReceived)
+		var e TextMessageReceived
+		err = json.Unmarshal(data, &e)
+		return &e, err
 
-	default:
-		return nil
 	}
-	return raw
-}
-
-// ToEvent converts a RawEvent to an Event, preseving any transport Headers associated with the RawEvent.
-func (r *RawEvent) ToEvent() (Event, error) {
-	if r.Header == nil {
-		r.Header = make(Header)
-	}
-
-	switch r.Type {
-	case Events.ApplicationReplaced:
-		r.ApplicationReplaced = &ApplicationReplaced{}
-		r.ApplicationReplaced.Header = r.Header
-		r.ApplicationReplaced.EventData = r.EventData
-		return r.ApplicationReplaced, nil
-	case Events.BridgeAttendedTransfer:
-		r.BridgeAttendedTransfer = &BridgeAttendedTransfer{}
-		r.BridgeAttendedTransfer.Header = r.Header
-		r.BridgeAttendedTransfer.EventData = r.EventData
-		return r.BridgeAttendedTransfer, nil
-	case Events.BridgeBlindTransfer:
-		r.BridgeBlindTransfer = &BridgeBlindTransfer{}
-		r.BridgeBlindTransfer.Header = r.Header
-		r.BridgeBlindTransfer.EventData = r.EventData
-		return r.BridgeBlindTransfer, nil
-	case Events.BridgeCreated:
-		r.BridgeCreated = &BridgeCreated{}
-		r.BridgeCreated.Header = r.Header
-		r.BridgeCreated.EventData = r.EventData
-		return r.BridgeCreated, nil
-	case Events.BridgeDestroyed:
-		r.BridgeDestroyed = &BridgeDestroyed{}
-		r.BridgeDestroyed.Header = r.Header
-		r.BridgeDestroyed.EventData = r.EventData
-		return r.BridgeDestroyed, nil
-	case Events.BridgeMerged:
-		r.BridgeMerged = &BridgeMerged{}
-		r.BridgeMerged.Header = r.Header
-		r.BridgeMerged.EventData = r.EventData
-		return r.BridgeMerged, nil
-	case Events.BridgeVideoSourceChanged:
-		r.BridgeVideoSourceChanged = &BridgeVideoSourceChanged{}
-		r.BridgeVideoSourceChanged.Header = r.Header
-		r.BridgeVideoSourceChanged.EventData = r.EventData
-		return r.BridgeVideoSourceChanged, nil
-	case Events.ChannelCallerID:
-		r.ChannelCallerID = &ChannelCallerID{}
-		r.ChannelCallerID.Header = r.Header
-		r.ChannelCallerID.EventData = r.EventData
-		return r.ChannelCallerID, nil
-	case Events.ChannelConnectedLine:
-		r.ChannelConnectedLine = &ChannelConnectedLine{}
-		r.ChannelConnectedLine.Header = r.Header
-		r.ChannelConnectedLine.EventData = r.EventData
-		return r.ChannelConnectedLine, nil
-	case Events.ChannelCreated:
-		r.ChannelCreated = &ChannelCreated{}
-		r.ChannelCreated.Header = r.Header
-		r.ChannelCreated.EventData = r.EventData
-		return r.ChannelCreated, nil
-	case Events.ChannelDestroyed:
-		r.ChannelDestroyed = &ChannelDestroyed{}
-		r.ChannelDestroyed.Header = r.Header
-		r.ChannelDestroyed.EventData = r.EventData
-		return r.ChannelDestroyed, nil
-	case Events.ChannelDialplan:
-		r.ChannelDialplan = &ChannelDialplan{}
-		r.ChannelDialplan.Header = r.Header
-		r.ChannelDialplan.EventData = r.EventData
-		return r.ChannelDialplan, nil
-	case Events.ChannelDtmfReceived:
-		r.ChannelDtmfReceived = &ChannelDtmfReceived{}
-		r.ChannelDtmfReceived.Header = r.Header
-		r.ChannelDtmfReceived.EventData = r.EventData
-		return r.ChannelDtmfReceived, nil
-	case Events.ChannelEnteredBridge:
-		r.ChannelEnteredBridge = &ChannelEnteredBridge{}
-		r.ChannelEnteredBridge.Header = r.Header
-		r.ChannelEnteredBridge.EventData = r.EventData
-		return r.ChannelEnteredBridge, nil
-	case Events.ChannelHangupRequest:
-		r.ChannelHangupRequest = &ChannelHangupRequest{}
-		r.ChannelHangupRequest.Header = r.Header
-		r.ChannelHangupRequest.EventData = r.EventData
-		return r.ChannelHangupRequest, nil
-	case Events.ChannelHold:
-		r.ChannelHold = &ChannelHold{}
-		r.ChannelHold.Header = r.Header
-		r.ChannelHold.EventData = r.EventData
-		return r.ChannelHold, nil
-	case Events.ChannelLeftBridge:
-		r.ChannelLeftBridge = &ChannelLeftBridge{}
-		r.ChannelLeftBridge.Header = r.Header
-		r.ChannelLeftBridge.EventData = r.EventData
-		return r.ChannelLeftBridge, nil
-	case Events.ChannelStateChange:
-		r.ChannelStateChange = &ChannelStateChange{}
-		r.ChannelStateChange.Header = r.Header
-		r.ChannelStateChange.EventData = r.EventData
-		return r.ChannelStateChange, nil
-	case Events.ChannelTalkingFinished:
-		r.ChannelTalkingFinished = &ChannelTalkingFinished{}
-		r.ChannelTalkingFinished.Header = r.Header
-		r.ChannelTalkingFinished.EventData = r.EventData
-		return r.ChannelTalkingFinished, nil
-	case Events.ChannelTalkingStarted:
-		r.ChannelTalkingStarted = &ChannelTalkingStarted{}
-		r.ChannelTalkingStarted.Header = r.Header
-		r.ChannelTalkingStarted.EventData = r.EventData
-		return r.ChannelTalkingStarted, nil
-	case Events.ChannelUnhold:
-		r.ChannelUnhold = &ChannelUnhold{}
-		r.ChannelUnhold.Header = r.Header
-		r.ChannelUnhold.EventData = r.EventData
-		return r.ChannelUnhold, nil
-	case Events.ChannelUserevent:
-		r.ChannelUserevent = &ChannelUserevent{}
-		r.ChannelUserevent.Header = r.Header
-		r.ChannelUserevent.EventData = r.EventData
-		return r.ChannelUserevent, nil
-	case Events.ChannelVarset:
-		r.ChannelVarset = &ChannelVarset{}
-		r.ChannelVarset.Header = r.Header
-		r.ChannelVarset.EventData = r.EventData
-		return r.ChannelVarset, nil
-	case Events.ContactInfo:
-		r.ContactInfo = &ContactInfo{}
-		r.ContactInfo.Header = r.Header
-		r.ContactInfo.EventData = r.EventData
-		return r.ContactInfo, nil
-	case Events.ContactStatusChange:
-		r.ContactStatusChange = &ContactStatusChange{}
-		r.ContactStatusChange.Header = r.Header
-		r.ContactStatusChange.EventData = r.EventData
-		return r.ContactStatusChange, nil
-	case Events.DeviceStateChanged:
-		r.DeviceStateChanged = &DeviceStateChanged{}
-		r.DeviceStateChanged.Header = r.Header
-		r.DeviceStateChanged.EventData = r.EventData
-		return r.DeviceStateChanged, nil
-	case Events.Dial:
-		r.Dial = &Dial{}
-		r.Dial.Header = r.Header
-		r.Dial.EventData = r.EventData
-		return r.Dial, nil
-	case Events.EndpointStateChange:
-		r.EndpointStateChange = &EndpointStateChange{}
-		r.EndpointStateChange.Header = r.Header
-		r.EndpointStateChange.EventData = r.EventData
-		return r.EndpointStateChange, nil
-	case Events.MissingParams:
-		r.MissingParams = &MissingParams{}
-		r.MissingParams.Header = r.Header
-		r.MissingParams.EventData = r.EventData
-		return r.MissingParams, nil
-	case Events.Peer:
-		r.Peer = &Peer{}
-		r.Peer.Header = r.Header
-		r.Peer.EventData = r.EventData
-		return r.Peer, nil
-	case Events.PeerStatusChange:
-		r.PeerStatusChange = &PeerStatusChange{}
-		r.PeerStatusChange.Header = r.Header
-		r.PeerStatusChange.EventData = r.EventData
-		return r.PeerStatusChange, nil
-	case Events.PlaybackContinuing:
-		r.PlaybackContinuing = &PlaybackContinuing{}
-		r.PlaybackContinuing.Header = r.Header
-		r.PlaybackContinuing.EventData = r.EventData
-		return r.PlaybackContinuing, nil
-	case Events.PlaybackFinished:
-		r.PlaybackFinished = &PlaybackFinished{}
-		r.PlaybackFinished.Header = r.Header
-		r.PlaybackFinished.EventData = r.EventData
-		return r.PlaybackFinished, nil
-	case Events.PlaybackStarted:
-		r.PlaybackStarted = &PlaybackStarted{}
-		r.PlaybackStarted.Header = r.Header
-		r.PlaybackStarted.EventData = r.EventData
-		return r.PlaybackStarted, nil
-	case Events.RecordingFailed:
-		r.RecordingFailed = &RecordingFailed{}
-		r.RecordingFailed.Header = r.Header
-		r.RecordingFailed.EventData = r.EventData
-		return r.RecordingFailed, nil
-	case Events.RecordingFinished:
-		r.RecordingFinished = &RecordingFinished{}
-		r.RecordingFinished.Header = r.Header
-		r.RecordingFinished.EventData = r.EventData
-		return r.RecordingFinished, nil
-	case Events.RecordingStarted:
-		r.RecordingStarted = &RecordingStarted{}
-		r.RecordingStarted.Header = r.Header
-		r.RecordingStarted.EventData = r.EventData
-		return r.RecordingStarted, nil
-	case Events.StasisEnd:
-		r.StasisEnd = &StasisEnd{}
-		r.StasisEnd.Header = r.Header
-		r.StasisEnd.EventData = r.EventData
-		return r.StasisEnd, nil
-	case Events.StasisStart:
-		r.StasisStart = &StasisStart{}
-		r.StasisStart.Header = r.Header
-		r.StasisStart.EventData = r.EventData
-		return r.StasisStart, nil
-	case Events.TextMessageReceived:
-		r.TextMessageReceived = &TextMessageReceived{}
-		r.TextMessageReceived.Header = r.Header
-		r.TextMessageReceived.EventData = r.EventData
-		return r.TextMessageReceived, nil
-
-	default:
-		return nil, errors.New("Unhandled event type: " + r.Type)
-	}
+	return nil, errors.New("unhandled type: " + typer.Type)
 }
 
 // ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."

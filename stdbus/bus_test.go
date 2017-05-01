@@ -56,7 +56,7 @@ func TestSubscribe(t *testing.T) {
 
 	defer b.Close()
 
-	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(nil, ari.Events.ChannelDtmfReceived)
 	if len(b.subs) != 1 {
 		t.Error("failed to add subscription to bus")
 	}
@@ -71,11 +71,11 @@ func TestClose(t *testing.T) {
 	}()
 
 	b := New()
-	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(nil, ari.Events.ChannelDtmfReceived)
 	sub.Cancel()
 	sub.Cancel()
 
-	sub2 := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDestroyed).(*subscription)
+	sub2 := b.Subscribe(nil, ari.Events.ChannelDestroyed).(*subscription)
 
 	b.Close()
 	b.Close()
@@ -100,7 +100,7 @@ func TestEvents(t *testing.T) {
 	b := New()
 	defer b.Close()
 
-	sub := b.Subscribe(ari.NewKey("", ""), ari.Events.ChannelDtmfReceived)
+	sub := b.Subscribe(nil, ari.Events.All)
 	defer sub.Cancel()
 
 	b.Send(dtmfTestEvent)
@@ -110,6 +110,7 @@ func TestEvents(t *testing.T) {
 		t.Error("failed to receive event")
 		return
 	case e, ok := <-sub.Events():
+		t.Log("event received")
 		if !ok {
 			t.Error("events channel was closed")
 			return
