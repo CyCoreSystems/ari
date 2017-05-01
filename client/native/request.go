@@ -97,7 +97,7 @@ func (c *Client) del(url string, resp interface{}, req string) error {
 		url = url + "?" + req
 	}
 
-	return c.makeRequest("DELETE", url, resp, req)
+	return c.makeRequest("DELETE", url, resp, nil)
 }
 
 func (c *Client) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {

@@ -38,12 +38,18 @@ func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 
 // Hangup hangs up the given channel using the (optional) reason
 func (c *Channel) Hangup(key *ari.Key, reason string) error {
-	id := key.ID
+	if key == nil || key.ID == "" {
+		return errors.New("channel key not supplied")
+	}
+	if reason == "" {
+		reason = "normal"
+	}
+
 	var req string
 	if reason != "" {
 		req = fmt.Sprintf("reason=%s", reason)
 	}
-	return c.client.del("/channels/"+id, nil, req)
+	return c.client.del("/channels/"+key.ID, nil, req)
 }
 
 // Data retrieves the current state of the channel
