@@ -77,21 +77,18 @@ func (ph *PlaybackHandle) Key() *Key {
 }
 
 // Data gets the playback data
-func (ph *PlaybackHandle) Data() (pd *PlaybackData, err error) {
-	pd, err = ph.p.Data(ph.key)
-	return
+func (ph *PlaybackHandle) Data() (*PlaybackData, error) {
+	return ph.p.Data(ph.key)
 }
 
 // Control performs the given operation
-func (ph *PlaybackHandle) Control(op string) (err error) {
-	err = ph.p.Control(ph.key, op)
-	return
+func (ph *PlaybackHandle) Control(op string) error {
+	return ph.p.Control(ph.key, op)
 }
 
 // Stop stops the playback
-func (ph *PlaybackHandle) Stop() (err error) {
-	err = ph.p.Stop(ph.key)
-	return
+func (ph *PlaybackHandle) Stop() error {
+	return ph.p.Stop(ph.key)
 }
 
 // Subscribe subscribes the list of channel events
