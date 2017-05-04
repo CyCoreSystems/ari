@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/ext/record"
-	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -21,14 +19,10 @@ type Options struct {
 }
 
 // Apply applies a set of options for the recording Session
-func (o *Options) Apply(opts ...OptionFunc) (err error) {
+func (o *Options) Apply(opts ...OptionFunc) {
 	for _, f := range opts {
-		err = f(o)
-		if err != nil {
-			return errors.Wrap(err, "failed to apply option")
-		}
+		f(o)
 	}
-	return nil
 }
 
 // OptionFunc is a function which applies changes to an Options set
@@ -80,20 +74,19 @@ func (r *Result) Save(name string) (*ari.StoredRecordingHandle, error) {
 }
 
 // Record starts a new recording Session
-func Record(ctx context.Context, r Recorder, opts ...OptionFunc) Session {
-	s, err := New(opts...)
-	if err != nil {
-		return errorSession(err)
-	}
+func Record(ctx context.Context, r ari.Recorder, opts ...OptionFunc) Session {
+	s := newRecordingSession(opts...)
 
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 
-	return s.Record(ctx, p)
+	go s.record(ctx, r)
+
+	return s
 }
 
 // New creates a new recording Session
-func New(opts ...OptionFunc) Session {
+func newRecordingSession(opts ...OptionFunc) *recordingSession {
 	o := &Options{
 		name: uuid.NewV1().String(),
 	}
@@ -101,7 +94,6 @@ func New(opts ...OptionFunc) Session {
 	o.Apply(opts...)
 
 	return &recordingSession{
-		cancel:  cancel,
 		options: o,
 		doneCh:  make(chan struct{}),
 		status:  InProgress,
@@ -112,26 +104,26 @@ type nilSession struct {
 	status Status
 }
 
-func (n *nilSession) Done() <-chan struct{} {
+func (s *nilSession) Done() <-chan struct{} {
 	ch := make(chan struct{})
 	close(ch)
 
 	return ch
 }
 
-func (n *nilSession) Err() error {
+func (s *nilSession) Err() error {
 	panic("not implemented")
 }
 
-func (n *nilSession) Result() (*record.Result, error) {
+func (s *nilSession) Result() (*Result, error) {
 	panic("not implemented")
 }
 
-func (n *nilSession) Scrap() {
+func (s *nilSession) Scrap() {
 	panic("not implemented")
 }
 
-func (n *nilSession) Stop() *record.Result {
+func (s *nilSession) Stop() *Result {
 	panic("not implemented")
 }
 
@@ -147,23 +139,27 @@ type recordingSession struct {
 	// TODO
 }
 
-func (r *recordingSession) Done() <-chan struct{} {
+func (s *recordingSession) Done() <-chan struct{} {
 	panic("not implemented")
 }
 
-func (r *recordingSession) Err() error {
+func (s *recordingSession) Err() error {
 	panic("not implemented")
 }
 
-func (r *recordingSession) Result() (*record.Result, error) {
+func (s *recordingSession) Result() (*Result, error) {
 	panic("not implemented")
 }
 
-func (r *recordingSession) Scrap() {
+func (s *recordingSession) Scrap() {
 	panic("not implemented")
 }
 
-func (r *recordingSession) Stop() *record.Result {
+func (s *recordingSession) Stop() *Result {
+	panic("not implemented")
+}
+
+func (s *recordingSession) record(ctx context.Context, r ari.Recorder) {
 	panic("not implemented")
 }
 
