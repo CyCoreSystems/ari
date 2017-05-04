@@ -1,20 +1,18 @@
 package record
 
-import (
-	"github.com/CyCoreSystems/ari"
-	"golang.org/x/net/context"
-)
-
+/*
 // A Recording is a lifecycle managed audio recording
 type Recording struct {
+	cancel context.CancelFunc
 	doneCh chan struct{}
 
-	data   *ari.LiveRecordingData
-	handle *ari.LiveRecordingHandle
+	data *ari.LiveRecordingData
+
+	h *ari.LiveRecordingHandle
+	r ari.Recorder
+
 	status Status
 	err    error
-
-	cancel context.CancelFunc
 }
 
 // Done returns a channel that is closed when the recording is done
@@ -46,3 +44,5 @@ func (r *Recording) Handle() *ari.LiveRecordingHandle {
 func (r *Recording) Data() *ari.LiveRecordingData {
 	return r.data
 }
+
+*/
