@@ -2,7 +2,10 @@ package record
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"sync"
 
 	"github.com/CyCoreSystems/ari"
 	uuid "github.com/satori/go.uuid"
@@ -65,12 +68,22 @@ type Result struct {
 
 // Delete discards the recording
 func (r *Result) Delete() {
-	panic("not implemented")
+	r.h.Scrap()
 }
 
 // Save stores the recording to a Stored Recording, returning a handle to that stored recording.
-func (r *Result) Save(name string) (*ari.StoredRecordingHandle, error) {
-	panic("not implemented")
+func (r *Result) Save(name string, rec ari.Recording) (*ari.StoredRecordingHandle, error) {
+	if r.Error != nil {
+		return nil, r.Error
+	}
+
+	// our live recording, once stopped, should be a stored recording.
+	k := *r.h.Key() //copy
+	k.Kind = ari.StoredRecordingKey
+
+	handle, err := rec.Stored.Copy(&k, name)
+
+	return handle, err
 }
 
 // Record starts a new recording Session
@@ -80,7 +93,10 @@ func Record(ctx context.Context, r ari.Recorder, opts ...OptionFunc) Session {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 
-	go s.record(ctx, r)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go s.record(ctx, r, &wg)
+	wg.Wait()
 
 	return s
 }
@@ -100,33 +116,6 @@ func newRecordingSession(opts ...OptionFunc) *recordingSession {
 	}
 }
 
-type nilSession struct {
-	status Status
-}
-
-func (s *nilSession) Done() <-chan struct{} {
-	ch := make(chan struct{})
-	close(ch)
-
-	return ch
-}
-
-func (s *nilSession) Err() error {
-	panic("not implemented")
-}
-
-func (s *nilSession) Result() (*Result, error) {
-	panic("not implemented")
-}
-
-func (s *nilSession) Scrap() {
-	panic("not implemented")
-}
-
-func (s *nilSession) Stop() *Result {
-	panic("not implemented")
-}
-
 type recordingSession struct {
 	cancel context.CancelFunc
 
@@ -136,31 +125,137 @@ type recordingSession struct {
 
 	status Status
 
-	// TODO
+	res *Result
 }
 
 func (s *recordingSession) Done() <-chan struct{} {
-	panic("not implemented")
+	return s.doneCh
 }
 
 func (s *recordingSession) Err() error {
-	panic("not implemented")
+	select {
+	case <-s.doneCh:
+	}
+
+	return s.res.Error
 }
 
 func (s *recordingSession) Result() (*Result, error) {
-	panic("not implemented")
+	select {
+	case <-s.doneCh:
+	}
+
+	return s.res, s.res.Error
 }
 
 func (s *recordingSession) Scrap() {
-	panic("not implemented")
+	s.res.h.Scrap()
 }
 
 func (s *recordingSession) Stop() *Result {
-	panic("not implemented")
+	s.res.h.Stop()
+
+	select {
+	case <-s.doneCh:
+	}
+
+	return s.res
 }
 
-func (s *recordingSession) record(ctx context.Context, r ari.Recorder) {
-	panic("not implemented")
+func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.WaitGroup) {
+
+	s.res = &Result{}
+
+	lhr, err := r.StageRecord(s.options.name, &ari.RecordingOptions{})
+	if err != nil {
+		s.status = Failed
+		s.res.Error = err
+		wg.Done()
+		return
+	}
+
+	name := s.options.name
+
+	dtmfSub := r.Subscribe(ari.Events.ChannelDtmfReceived)
+	hangupSub := r.Subscribe(ari.Events.ChannelDestroyed, ari.Events.ChannelHangupRequest)
+	startSub := lhr.Subscribe(ari.Events.RecordingStarted)
+	failedSub := lhr.Subscribe(ari.Events.RecordingFailed)
+	finishedSub := lhr.Subscribe(ari.Events.RecordingFinished)
+
+	defer func() {
+		hangupSub.Cancel()
+		failedSub.Cancel()
+		startSub.Cancel()
+		finishedSub.Cancel()
+		dtmfSub.Cancel()
+	}()
+
+	if err := lhr.Exec(); err != nil {
+		s.status = Failed
+		s.res.Error = err
+		wg.Done()
+		return
+	}
+
+	wg.Add(1)
+	go s.waitDtmf(ctx, dtmfSub, wg)
+
+	startTimer := time.NewTimer(RecordingStartTimeout)
+
+	wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			s.status = Canceled
+			return
+		case <-startTimer.C:
+			s.status = Failed
+			s.res.Error = timeoutErr{"Timeout waiting for recording to start"}
+			return
+		case e := <-startSub.Events():
+			r := e.(*ari.RecordingStarted).Recording
+			if r.Name == name {
+				Logger.Debug("Recording started.")
+				startTimer.Stop()
+			}
+		case e := <-failedSub.Events():
+			r := e.(*ari.RecordingFailed).Recording
+			if r.Name == name {
+				s.status = Failed
+				s.res.Error = fmt.Errorf("Recording failed: %s", r.Cause)
+				return
+			}
+		case e := <-finishedSub.Events():
+			r := e.(*ari.RecordingFinished).Recording
+			if r.Name == name {
+				Logger.Debug("Recording stopped")
+				s.status = Finished
+				s.res.Duration = time.Duration(r.Duration) * time.Second
+				return
+			}
+		case <-hangupSub.Events():
+			s.status = Hangup
+			return
+		}
+	}
+}
+
+func (s *recordingSession) waitDtmf(ctx context.Context, dtmfSub ari.Subscription, wg *sync.WaitGroup) {
+	wg.Done()
+	for {
+		select {
+		case e, more := <-dtmfSub.Events():
+			if !more {
+				return
+			}
+			evt := e.(*ari.ChannelDtmfReceived)
+			s.res.DTMF += evt.Digit
+		case <-ctx.Done():
+			return
+		case <-s.doneCh:
+			return
+		}
+	}
 }
 
 /*
@@ -241,6 +336,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder) {
 
 	return
 }
+*/
 
 type timeoutErr struct {
 	msg string
@@ -253,5 +349,3 @@ func (err timeoutErr) Error() string {
 func (err timeoutErr) Timeout() bool {
 	return true
 }
-
-*/
