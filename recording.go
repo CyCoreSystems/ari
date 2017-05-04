@@ -8,9 +8,17 @@ type Recording struct {
 	Live   LiveRecording
 }
 
-//NOTE: since record.Recorder needs RecordingOptions, we moved RecordingOptions into the ari package
-// instead of placing it into record package. Since ari Handles will be implementing record.Recorder,
-// this avoids a cyclical import as record already imports ari.
+// Recorder describes an interface of something which can Record
+type Recorder interface {
+	// Record starts a recording, using the provided options, and returning a handle for the live recording
+	Record(string, *RecordingOptions) (*LiveRecordingHandle, error)
+
+	// StageRecord stages a recording, using the provided options, and returning a handle for the live recording.  The recording will actually be started only when Exec() is called.
+	StageRecord(string, *RecordingOptions) (*LiveRecordingHandle, error)
+
+	// Subscribe subscribes to events from the Recorder
+	Subscribe(n ...string) Subscription
+}
 
 // RecordingOptions describes the set of options available when making a recording.
 type RecordingOptions struct {
