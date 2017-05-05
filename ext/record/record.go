@@ -145,6 +145,7 @@ func (s *recordingSession) Stop() *Result {
 	return s.res
 }
 
+// nolint: gocyclo
 func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
