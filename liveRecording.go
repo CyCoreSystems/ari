@@ -1,5 +1,7 @@
 package ari
 
+import "sync"
+
 // LiveRecording represents a communication path interacting with an Asterisk
 // server for live recording resources
 type LiveRecording interface {
@@ -11,7 +13,7 @@ type LiveRecording interface {
 	Data(key *Key) (*LiveRecordingData, error)
 
 	// Stop stops the live recording
-	Stop(key *Key) error
+	Stop(key *Key) (*StoredRecordingHandle, error)
 
 	// Pause pauses the live recording
 	Pause(key *Key) error
@@ -67,6 +69,8 @@ type LiveRecordingHandle struct {
 	r        LiveRecording
 	exec     func(*LiveRecordingHandle) (err error)
 	executed bool
+
+	mu sync.Mutex
 }
 
 // ID returns the identifier of the live recording
@@ -80,49 +84,44 @@ func (h *LiveRecordingHandle) Key() *Key {
 }
 
 // Data gets the data for the live recording
-func (h *LiveRecordingHandle) Data() (d *LiveRecordingData, err error) {
-	d, err = h.r.Data(h.key)
-	return
+func (h *LiveRecordingHandle) Data() (*LiveRecordingData, error) {
+	return h.r.Data(h.key)
 }
 
 // Stop stops and saves the recording
-func (h *LiveRecordingHandle) Stop() (err error) {
-	err = h.r.Stop(h.key)
-	return
+func (h *LiveRecordingHandle) Stop() (*StoredRecordingHandle, error) {
+	return h.r.Stop(h.key)
 }
 
 // Scrap stops and deletes the recording
-func (h *LiveRecordingHandle) Scrap() (err error) {
-	err = h.r.Scrap(h.key)
-	return
+func (h *LiveRecordingHandle) Scrap() error {
+	return h.r.Scrap(h.key)
 }
 
 // Resume resumes the recording
-func (h *LiveRecordingHandle) Resume() (err error) {
-	err = h.r.Resume(h.key)
-	return
+func (h *LiveRecordingHandle) Resume() error {
+	return h.r.Resume(h.key)
 }
 
 // Pause pauses the recording
-func (h *LiveRecordingHandle) Pause() (err error) {
-	err = h.r.Pause(h.key)
-	return
+func (h *LiveRecordingHandle) Pause() error {
+	return h.r.Pause(h.key)
 }
 
 // Mute mutes the recording
-func (h *LiveRecordingHandle) Mute() (err error) {
-	err = h.r.Mute(h.key)
-	return
+func (h *LiveRecordingHandle) Mute() error {
+	return h.r.Mute(h.key)
 }
 
 // Unmute mutes the recording
-func (h *LiveRecordingHandle) Unmute() (err error) {
-	err = h.r.Unmute(h.key)
-	return
+func (h *LiveRecordingHandle) Unmute() error {
+	return h.r.Unmute(h.key)
 }
 
 // Exec executes any staged operations attached to the `LiveRecordingHandle`
 func (h *LiveRecordingHandle) Exec() (err error) {
+	h.mu.Lock()
+
 	if !h.executed {
 		h.executed = true
 		if h.exec != nil {
@@ -130,6 +129,8 @@ func (h *LiveRecordingHandle) Exec() (err error) {
 			h.exec = nil
 		}
 	}
+
+	h.mu.Unlock()
 	return
 }
 

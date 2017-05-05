@@ -33,8 +33,16 @@ func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error
 }
 
 // Stop stops the live recording (TODO: does it error if the live recording is already stopped)
-func (lr *LiveRecording) Stop(key *ari.Key) error {
-	return lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
+func (lr *LiveRecording) Stop(key *ari.Key) (*ari.StoredRecordingHandle, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("liveRecording key not supplied")
+	}
+
+	err := lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return ari.NewStoredRecordingHandle(lr.client.stamp(key.New(ari.StoredRecordingKey, key.ID))), nil
 }
 
 // Pause pauses the live recording (TODO: does it error if the live recording is already paused)
