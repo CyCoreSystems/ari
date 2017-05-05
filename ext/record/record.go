@@ -34,6 +34,22 @@ func (o *Options) Apply(opts ...OptionFunc) {
 // OptionFunc is a function which applies changes to an Options set
 type OptionFunc func(*Options)
 
+// WithOptions executes the recording with the provided standardized ari.RecordingOptions.
+func WithOptions(recOpts *ari.RecordingOptions) OptionFunc {
+	return func(o *Options) {
+		if recOpts != nil {
+			o.options = recOpts
+		}
+	}
+}
+
+// WithName configures the recording to use the provided name
+func WithName(name string) OptionFunc {
+	return func(o *Options) {
+		o.name = name
+	}
+}
+
 // Session desribes the interface to a generic recording session
 type Session interface {
 	// Done returns a channel which is closed when the session is complete
