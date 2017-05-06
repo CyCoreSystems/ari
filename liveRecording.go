@@ -13,7 +13,7 @@ type LiveRecording interface {
 	Data(key *Key) (*LiveRecordingData, error)
 
 	// Stop stops the live recording
-	Stop(key *Key) (*StoredRecordingHandle, error)
+	Stop(key *Key) error
 
 	// Pause pauses the live recording
 	Pause(key *Key) error
@@ -29,6 +29,9 @@ type LiveRecording interface {
 
 	// Scrap Stops and deletes the current LiveRecording
 	Scrap(key *Key) error
+
+	// Stored returns the StoredRecording handle for this LiveRecording
+	Stored(key *Key) *StoredRecordingHandle
 
 	// Subscribe subscribes to events
 	Subscribe(key *Key, n ...string) Subscription
@@ -89,7 +92,7 @@ func (h *LiveRecordingHandle) Data() (*LiveRecordingData, error) {
 }
 
 // Stop stops and saves the recording
-func (h *LiveRecordingHandle) Stop() (*StoredRecordingHandle, error) {
+func (h *LiveRecordingHandle) Stop() error {
 	return h.r.Stop(h.key)
 }
 
@@ -116,6 +119,11 @@ func (h *LiveRecordingHandle) Mute() error {
 // Unmute mutes the recording
 func (h *LiveRecordingHandle) Unmute() error {
 	return h.r.Unmute(h.key)
+}
+
+// Stored returns the StoredRecordingHandle for this LiveRecordingHandle
+func (h *LiveRecordingHandle) Stored() *StoredRecordingHandle {
+	return h.r.Stored(h.key)
 }
 
 // Exec executes any staged operations attached to the `LiveRecordingHandle`

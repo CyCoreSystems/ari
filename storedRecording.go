@@ -14,6 +14,10 @@ type StoredRecording interface {
 	Data(key *Key) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
+	//
+	// NOTE: because ARI offers no forced-copy, Copy should always return the
+	// StoredRecordingHandle of the destination, even if the Copy fails.  Doing so
+	// allows the user to Delete the existing StoredRecording before retrying.
 	Copy(key *Key, dest string) (*StoredRecordingHandle, error)
 
 	// Delete deletes the recording
@@ -78,7 +82,11 @@ func (s *StoredRecordingHandle) Data() (*StoredRecordingData, error) {
 	return s.s.Data(s.key)
 }
 
-// Copy copies the stored recording
+// Copy copies the stored recording.
+//
+// NOTE: because ARI offers no forced-copy, this should always return the
+// StoredRecordingHandle of the destination, even if the Copy fails.  Doing so
+// allows the user to Delete the existing StoredRecording before retrying.
 func (s *StoredRecordingHandle) Copy(dest string) (*StoredRecordingHandle, error) {
 	return s.s.Copy(s.key, dest)
 }

@@ -32,17 +32,15 @@ func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error
 	return data, nil
 }
 
-// Stop stops the live recording (TODO: does it error if the live recording is already stopped)
-func (lr *LiveRecording) Stop(key *ari.Key) (*ari.StoredRecordingHandle, error) {
+// Stop stops the live recording.
+//
+// NOTE: if the recording is already stopped, this will return an error.
+func (lr *LiveRecording) Stop(key *ari.Key) error {
 	if key == nil || key.ID == "" {
-		return nil, errors.New("liveRecording key not supplied")
+		return errors.New("liveRecording key not supplied")
 	}
 
-	err := lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	return ari.NewStoredRecordingHandle(lr.client.stamp(key.New(ari.StoredRecordingKey, key.ID))), nil
+	return lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
 }
 
 // Pause pauses the live recording (TODO: does it error if the live recording is already paused)
@@ -68,6 +66,15 @@ func (lr *LiveRecording) Unmute(key *ari.Key) error {
 // Scrap removes a live recording (TODO: describe difference between scrap and delete)
 func (lr *LiveRecording) Scrap(key *ari.Key) error {
 	return lr.client.del("/recordings/live/"+key.ID, nil, "")
+}
+
+// Stored returns the StoredRecording handle for the given LiveRecording
+func (lr *LiveRecording) Stored(key *ari.Key) *ari.StoredRecordingHandle {
+	return ari.NewStoredRecordingHandle(
+		lr.client.stamp(key.New(ari.StoredRecordingKey, key.ID)),
+		lr.client.StoredRecording(),
+		nil,
+	)
 }
 
 // Subscribe is a shim to enable recording handles to subscribe to their

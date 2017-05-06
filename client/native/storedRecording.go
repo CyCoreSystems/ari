@@ -56,7 +56,10 @@ func (sr *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) 
 func (sr *StoredRecording) Copy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
 	h, err := sr.StageCopy(key, dest)
 	if err != nil {
-		return nil, err
+		// NOTE: return the handle even on failure so that it can be used to
+		//   delete the existing stored recording, should the Copy fail.
+		//   ARI provides no facility to force-copy a recording.
+		return h, err
 	}
 
 	return h, h.Exec()
@@ -83,5 +86,5 @@ func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredReco
 
 // Delete deletes the stored recording
 func (sr *StoredRecording) Delete(key *ari.Key) error {
-	return sr.client.del("/recordings/stored/"+key.ID+"", nil, "")
+	return sr.client.del("/recordings/stored/"+key.ID, nil, "")
 }
