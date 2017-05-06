@@ -153,8 +153,14 @@ type Session interface {
 	// during its execution
 	Err() error
 
+	// Pause temporarily stops the recording session without ending the session
+	Pause() error
+
 	// Result waits for the session to complete, then returns the Result
 	Result() (*Result, error)
+
+	// Resume restarts a paused recording session
+	Resume() error
 
 	// Scrap terminates the recording session and throws away the recording.
 	Scrap()
@@ -299,6 +305,14 @@ func (s *recordingSession) Err() error {
 func (s *recordingSession) Result() (*Result, error) {
 	<-s.Done()
 	return s.res, s.res.Error
+}
+
+func (s *recordingSession) Pause() error {
+	return s.h.Pause()
+}
+
+func (s *recordingSession) Resume() error {
+	return s.h.Resume()
 }
 
 func (s *recordingSession) Scrap() {
