@@ -54,11 +54,11 @@ func (_m *Recorder) StageRecord(_a0 string, _a1 *ari.RecordingOptions) (*ari.Liv
 	return r0, r1
 }
 
-// Subscribe provides a mock function with given fields: _a0
-func (_m *Recorder) Subscribe(_a0 ...string) ari.Subscription {
-	_va := make([]interface{}, len(_a0))
-	for _i := range _a0 {
-		_va[_i] = _a0[_i]
+// Subscribe provides a mock function with given fields: n
+func (_m *Recorder) Subscribe(n ...string) ari.Subscription {
+	_va := make([]interface{}, len(n))
+	for _i := range n {
+		_va[_i] = n[_i]
 	}
 	var _ca []interface{}
 	_ca = append(_ca, _va...)
@@ -66,7 +66,7 @@ func (_m *Recorder) Subscribe(_a0 ...string) ari.Subscription {
 
 	var r0 ari.Subscription
 	if rf, ok := ret.Get(0).(func(...string) ari.Subscription); ok {
-		r0 = rf(_a0...)
+		r0 = rf(n...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.Subscription)

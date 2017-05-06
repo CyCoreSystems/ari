@@ -117,6 +117,22 @@ func (_m *LiveRecording) Stop(key *ari.Key) error {
 	return r0
 }
 
+// Stored provides a mock function with given fields: key
+func (_m *LiveRecording) Stored(key *ari.Key) *ari.StoredRecordingHandle {
+	ret := _m.Called(key)
+
+	var r0 *ari.StoredRecordingHandle
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.StoredRecordingHandle); ok {
+		r0 = rf(key)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ari.StoredRecordingHandle)
+		}
+	}
+
+	return r0
+}
+
 // Subscribe provides a mock function with given fields: key, n
 func (_m *LiveRecording) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	_va := make([]interface{}, len(n))
