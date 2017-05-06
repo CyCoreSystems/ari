@@ -210,7 +210,7 @@ func (r *Result) Save(name string) error {
 	destH, err := r.h.Copy(name)
 	if err != nil {
 		if !strings.Contains(err.Error(), "409 Conflict") || !r.overwrite {
-			return errors.Wrap(err, "failed to copy recording")
+			return errors.Wrapf(err, "failed to copy recording (%s)", r.h.ID())
 		}
 
 		// we are set to overwrite, so delete the previous recording
