@@ -234,6 +234,11 @@ func (r *Result) Save(name string) error {
 	return nil
 }
 
+// URI returns the AudioURI to play the recording
+func (r *Result) URI() string {
+	return "recording:" + r.h.ID()
+}
+
 // Record starts a new recording Session
 func Record(ctx context.Context, r ari.Recorder, opts ...OptionFunc) Session {
 	s := newRecordingSession(opts...)
