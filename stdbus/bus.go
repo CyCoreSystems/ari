@@ -44,10 +44,17 @@ func (b *bus) Close() {
 
 // Send sends the message to the bus
 func (b *bus) Send(e ari.Event) {
+	var matched bool
+
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
+		matched = false
 		for _, k := range e.Keys() {
+			if matched {
+				break
+			}
 			if s.key.Match(k) {
+				matched = true
 				for _, topic := range s.events {
 					if topic == e.GetType() || topic == ari.Events.All {
 						select {
