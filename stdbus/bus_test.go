@@ -131,3 +131,40 @@ func TestEvents(t *testing.T) {
 		}
 	}
 }
+
+func TestEventsMultipleKeys(t *testing.T) {
+	b := New()
+	defer b.Close()
+
+	sub := b.Subscribe(nil, ari.Events.All)
+	defer sub.Cancel()
+
+	multiKeyEvent := ari.BridgeCreated{
+		Bridge: ari.BridgeData{
+			ID:         "A",
+			ChannelIDs: []string{"x", "y"},
+		},
+	}
+
+	keys := multiKeyEvent.Keys()
+	if len(keys) != 5 {
+		t.Errorf("Expected BridgeCreated.Keys() to be 2, got '%v'", len(keys))
+	}
+
+	b.Send(&multiKeyEvent)
+
+	var eventCount = 0
+L:
+	for {
+		select {
+		case <-time.After(time.Millisecond):
+			break L
+		case <-sub.Events():
+			eventCount++
+		}
+	}
+
+	if eventCount != 1 {
+		t.Errorf("Expected 1 event to be sent, got %v", eventCount)
+	}
+}
