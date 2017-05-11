@@ -34,6 +34,11 @@ func TestKeyMatch(t *testing.T) {
 	if !ok {
 		t.Errorf("Application/* should match application/id")
 	}
+
+	ok = NewKey("channel", "id1").Match(NewKey("channel", "id2"))
+	if ok {
+		t.Errorf("Differing IDs should not match")
+	}
 }
 
 func TestKeysFilter(t *testing.T) {

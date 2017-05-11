@@ -37,6 +37,8 @@ func NumberURI(number int) string {
 // DigitsURI returns the set of media URIs to
 // play the given digits.
 func DigitsURI(digits string, hash string) []string {
+	// TODO: Strip anything which is not a digit or #
+
 	if strings.Contains(digits, "#") && hash != "" {
 		hash = "sound:char/" + hash
 
