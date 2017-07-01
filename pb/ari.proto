@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package asterisk.ari;
+
+option go_package = "pb";
+
+// Key identifies a unique resource in the system
+message Key {
+	// Kind indicates the type of resource the Key points to.  e.g., "channel",
+	// "bridge", etc.
+	string kind = 1;
+
+	// ID indicates the unique identifier of the resource
+   string id = 2;
+
+	// Node indicates the unique identifier of the Asterisk node on which the
+	// resource exists or will be created
+   string node = 3;
+
+	// Dialog indicates a named scope of the resource, for receiving events
+   string dialog = 4;
+
+	// App indiciates the ARI application that this key is bound to.
+   string app = 5;
+}

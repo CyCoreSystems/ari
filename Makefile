@@ -4,6 +4,9 @@ EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 
 all: api clients extensions
 
+protobuf: pb/ari.proto
+	protoc -I. --go_out=plugins=grpc:. pb/ari.proto
+
 api:
 	go build ./
 	go build ./stdbus
