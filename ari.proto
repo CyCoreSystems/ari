@@ -2,16 +2,21 @@ syntax = "proto3";
 
 package asterisk.ari;
 
-option go_package = "pb";
+option go_package = "ari";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 // Key identifies a unique resource in the system
 message Key {
+   // NOTE: we build our own stringer
+   option (gogoproto.goproto_stringer) = false;
+   
 	// Kind indicates the type of resource the Key points to.  e.g., "channel",
 	// "bridge", etc.
 	string kind = 1;
 
 	// ID indicates the unique identifier of the resource
-   string id = 2;
+   string id = 2 [(gogoproto.customname) = "ID"];
 
 	// Node indicates the unique identifier of the Asterisk node on which the
 	// resource exists or will be created

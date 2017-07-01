@@ -43,26 +43,6 @@ const (
 	VariableKey = "variable"
 )
 
-// Key identifies a unique resource in the system
-type Key struct {
-	// Kind indicates the type of resource the Key points to.  e.g., "channel",
-	// "bridge", etc.
-	Kind string `json:"kind"`
-
-	// ID indicates the unique identifier of the resource
-	ID string `json:"id"`
-
-	// Node indicates the unique identifier of the Asterisk node on which the
-	// resource exists or will be created
-	Node string `json:"node,omitempty"`
-
-	// Dialog indicates a named scope of the resource, for receiving events
-	Dialog string `json:"dialog,omitempty"`
-
-	// App indiciates the ARI application that this key is bound to.
-	App string `json:"app,omitempty"`
-}
-
 // Keys is a list of keys
 type Keys []*Key
 

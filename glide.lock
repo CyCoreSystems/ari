@@ -1,16 +1,21 @@
-hash: ccb3ad2e6d5542ea14d7f64e2989ad158b5658b5bf1752c4bcc15aa5fac29bb5
-updated: 2017-04-23T14:17:03.959471496-04:00
+hash: 9ac85490318327913145b59339b130119a26f7f725e435891e179ea5e1c5ef4f
+updated: 2017-07-01T14:50:12.447803158-04:00
 imports:
 - name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
   - spew
+- name: github.com/gogo/protobuf
+  version: 100ba4e885062801d56799d78530b73b178a78f3
+  subpackages:
+  - gogoproto
+  - proto
 - name: github.com/golang/mock
-  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
+  version: 93f6609a15b7de76bd49259f1f9a6b58df358936
   subpackages:
   - gomock
 - name: github.com/mattn/go-colorable
-  version: ded68f7a9561c023e790de24279db7ebf473ea80
+  version: 941b50ebc6efddf4c41c8e4537a5f68a4e686b24
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/pkg/errors
@@ -24,17 +29,17 @@ imports:
 - name: github.com/stretchr/objx
   version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 - name: github.com/stretchr/testify
-  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
   - assert
   - mock
 - name: golang.org/x/net
-  version: d212a1ef2de2f5d441c327b8f26cf3ea3ea9f265
+  version: 1f9224279e98554b6a6432d4dd998a739f8b2b7c
   subpackages:
   - context
   - websocket
 - name: golang.org/x/sys
-  version: ea9bcade75cb975a0b9738936568ab388b845617
+  version: 4ed4d404df456f81e878683a0363ed3013a59003
   subpackages:
   - unix
 - name: gopkg.in/inconshreveable/log15.v2
