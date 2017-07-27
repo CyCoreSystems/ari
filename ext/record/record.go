@@ -163,7 +163,7 @@ type Session interface {
 	Resume() error
 
 	// Scrap terminates the recording session and throws away the recording.
-	Scrap()
+	Scrap() error
 
 	// Stop stops the recording session
 	Stop() *Result
@@ -286,8 +286,6 @@ type recordingSession struct {
 
 	doneCh chan struct{}
 
-	mu sync.Mutex
-
 	options *Options
 
 	res *Result
@@ -315,8 +313,8 @@ func (s *recordingSession) Resume() error {
 	return s.h.Resume()
 }
 
-func (s *recordingSession) Scrap() {
-	s.h.Scrap()
+func (s *recordingSession) Scrap() error {
+	return s.h.Scrap()
 }
 
 func (s *recordingSession) Stop() *Result {

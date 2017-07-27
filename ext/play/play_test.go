@@ -19,8 +19,7 @@ type playStagedTest struct {
 	playbackEndChan chan ari.Event
 	playbackEnd     *arimocks.Subscription
 
-	handleExeced bool
-	handleExec   func(_ *ari.PlaybackHandle) error
+	handleExec func(_ *ari.PlaybackHandle) error
 
 	playback *arimocks.Playback
 
@@ -138,6 +137,7 @@ func testPlayStagedFailExec(t *testing.T) {
 	}
 }
 
+// nolint: megacheck
 func testPlayStagedFinishBeforeStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

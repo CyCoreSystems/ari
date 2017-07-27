@@ -25,7 +25,6 @@ func ExamplePlay() {
 	if len(res.DTMF) > 0 {
 		fmt.Println("Got a DTMF during playback:", res.DTMF)
 	}
-	return
 }
 
 func ExamplePlay_async() {
@@ -51,7 +50,6 @@ func ExamplePlay_async() {
 			fmt.Println("Prompt complete")
 		}
 	}
-	return
 }
 
 func ExamplePrompt() {
@@ -74,7 +72,6 @@ func ExamplePrompt() {
 		fmt.Println("Got valid, terminated DTMF entry", res.DTMF)
 		// hash is automatically trimmed from res.DTMF
 	}
-	return
 }
 
 func ExamplePrompt_custom() {
@@ -110,7 +107,6 @@ func ExamplePrompt_custom() {
 	if res.MatchResult == Complete {
 		fmt.Println("Got valid user", res.DTMF)
 	}
-	return
 }
 
 type mockDB struct{}

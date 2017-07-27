@@ -64,7 +64,6 @@ type nilSession struct {
 }
 
 func (n *nilSession) Add(list ...string) {
-	return
 }
 
 func (n *nilSession) Done() <-chan struct{} {
@@ -79,7 +78,6 @@ func (n *nilSession) Err() error {
 }
 
 func (n *nilSession) StopAudio() {
-	return
 }
 
 func (n *nilSession) Result() (*Result, error) {
@@ -87,7 +85,6 @@ func (n *nilSession) Result() (*Result, error) {
 }
 
 func (n *nilSession) Stop() {
-	return
 }
 
 func errorSession(err error) *nilSession {
@@ -149,8 +146,6 @@ func (s *playSession) play(ctx context.Context, p ari.Player) {
 		// Wait for digits in the silence after the playback sequence completes
 		s.waitDigits(ctx)
 	}
-
-	return
 }
 
 // playSequence plays the complete audio sequence
@@ -177,8 +172,6 @@ func (s *playSession) playSequence(ctx context.Context, p ari.Player) {
 
 	// wait for cleanup of sequence so we can get the proper error result
 	<-seq.Done()
-
-	return
 }
 
 // nolint: gocyclo
@@ -223,7 +216,6 @@ func (s *playSession) waitDigits(ctx context.Context) {
 			}
 		}
 	}
-
 }
 
 // Stop terminates the execution of a playback

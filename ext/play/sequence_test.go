@@ -19,9 +19,6 @@ type sequenceTest struct {
 	playbackEndChan chan ari.Event
 	playbackEnd     *arimocks.Subscription
 
-	handleExeced bool
-	handleExec   func(_ *ari.PlaybackHandle) error
-
 	playback *arimocks.Playback
 
 	key *ari.Key
