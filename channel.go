@@ -1,9 +1,11 @@
 package ari
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
+	ptypes "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 )
 
@@ -118,19 +120,64 @@ type Channel interface {
 	Subscribe(key *Key, n ...string) Subscription
 }
 
-// ChannelData is the data for a specific channel
-type ChannelData struct {
+// channelDataJSON is the data for a specific channel
+type channelDataJSON struct {
 	// Key is the unique identifier for a channel in the cluster
 	Key *Key `json:"key,omitempty"`
 
-	ID           string      `json:"id"`    // Unique id for this channel (same as for AMI)
-	Name         string      `json:"name"`  // Name of this channel (tech/name-id format)
-	State        string      `json:"state"` // State of the channel
-	Accountcode  string      `json:"accountcode"`
-	Caller       CallerID    `json:"caller"`    // CallerId of the calling endpoint
-	Connected    CallerID    `json:"connected"` // CallerId of the connected line
-	Creationtime DateTime    `json:"creationtime"`
-	Dialplan     DialplanCEP `json:"dialplan"` // Current location in the dialplan
+	ID           string       `json:"id"`    // Unique id for this channel (same as for AMI)
+	Name         string       `json:"name"`  // Name of this channel (tech/name-id format)
+	State        string       `json:"state"` // State of the channel
+	Accountcode  string       `json:"accountcode"`
+	Caller       *CallerID    `json:"caller"`    // CallerId of the calling endpoint
+	Connected    *CallerID    `json:"connected"` // CallerId of the connected line
+	Creationtime DateTime     `json:"creationtime"`
+	Dialplan     *DialplanCEP `json:"dialplan"` // Current location in the dialplan
+}
+
+func (d *ChannelData) MarshalJSON() ([]byte, error) {
+	t, err := ptypes.TimestampFromProto(d.Creationtime)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse creationtime")
+	}
+
+	return json.Marshal(&channelDataJSON{
+		Key:          d.Key,
+		ID:           d.ID,
+		Name:         d.Name,
+		State:        d.State,
+		Accountcode:  d.Accountcode,
+		Caller:       d.Caller,
+		Connected:    d.Connected,
+		Creationtime: DateTime(t),
+		Dialplan:     d.Dialplan,
+	})
+}
+
+func (d *ChannelData) UnmarshalJSON(data []byte) error {
+	in := new(channelDataJSON)
+	err := json.Unmarshal(data, in)
+	if err != nil {
+		return err
+	}
+
+	t, err := ptypes.TimestampProto(time.Time(in.Creationtime))
+	if err != nil {
+		return errors.Wrap(err, "failed to parse creationtime")
+	}
+
+	*d = ChannelData{
+		Key:          in.Key,
+		ID:           in.ID,
+		Name:         in.Name,
+		State:        in.State,
+		Accountcode:  in.Accountcode,
+		Caller:       in.Caller,
+		Connected:    in.Connected,
+		Creationtime: t,
+		Dialplan:     in.Dialplan,
+	}
+	return nil
 }
 
 // ChannelCreateRequest describes how a channel should be created, when

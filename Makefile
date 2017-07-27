@@ -5,7 +5,7 @@ EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 all: api clients extensions
 
 protobuf: ari.proto
-	protoc -I. -I./vendor --gogofast_out=plugins=grpc:. ari.proto
+	protoc -I. -I./vendor --gogofast_out=Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,plugins=grpc:. ari.proto
 
 api:
 	go build ./

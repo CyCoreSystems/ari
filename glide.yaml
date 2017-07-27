@@ -17,3 +17,6 @@ import:
   version: ^0.4.0
   subpackages:
   - gogoproto
+- package: github.com/golang/protobuf
+  subpackages:
+  - ptypes
