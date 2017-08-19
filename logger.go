@@ -1,6 +1,6 @@
 package ari
 
-import "gopkg.in/inconshreveable/log15.v2"
+import "github.com/inconshreveable/log15"
 
 // Logger defaults to a discard handler (null output).
 // If you wish to enable logging, you can set your own

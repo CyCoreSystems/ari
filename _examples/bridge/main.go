@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	log15 "gopkg.in/inconshreveable/log15.v2"
+	"github.com/inconshreveable/log15"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/native"
