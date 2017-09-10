@@ -1,5 +1,5 @@
 # ari - Golang Asterisk Rest Interface (ARI) library
-[![Build Status](https://travis-ci.org/CyCoreSystems/ari.png)](https://travis-ci.org/CyCoreSystems/ari) [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
+[![Build Status](https://travis-ci.org/CyCoreSystems/ari.png)](https://travis-ci.org/CyCoreSystems/ari) [![](https://godoc.org/github.com/AVOXI/ari?status.svg)](http://godoc.org/github.com/AVOXI/ari)
 
 This is a go-based ARI library.  It also includes some common convenience wrappers for various tasks, which can be found in /ext.
 
@@ -12,7 +12,7 @@ shortcomings of `v3`, particularly for interoperating with proxies clients.
 
 There is also a NATS-based `ari-proxy` which is designed to work with this
 client library.  It can be found at
-[CyCoreSystems/ari-proxy](https://github.com/CyCoreSystems/ari-proxy).
+[CyCoreSystems/ari-proxy](https://github.com/AVOXI/ari-proxy).
 
 # Cloud-ready
 

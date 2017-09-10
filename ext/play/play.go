@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/CyCoreSystems/ari"
+	"github.com/AVOXI/ari"
 	"golang.org/x/net/context"
 )
 
