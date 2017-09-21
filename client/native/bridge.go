@@ -39,7 +39,7 @@ func (b *Bridge) StageCreate(key *ari.Key, btype, name string) (*ari.BridgeHandl
 	}
 
 	return ari.NewBridgeHandle(b.client.stamp(key), b, func(bh *ari.BridgeHandle) (err error) {
-		return b.client.post("/bridges/"+key.ID, &req, nil)
+		return b.client.post("/bridges/"+key.ID, nil, &req)
 	}), nil
 }
 
