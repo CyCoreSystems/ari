@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/AVOXI/ari"
 	uuid "github.com/satori/go.uuid"
 )
 

@@ -3,7 +3,7 @@ package native
 import (
 	"errors"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/AVOXI/ari"
 )
 
 // Endpoint provides the ARI Endpoint accessors for the native client

@@ -10,8 +10,8 @@ import (
 
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/stdbus"
+	"github.com/AVOXI/ari"
+	"github.com/AVOXI/ari/stdbus"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"

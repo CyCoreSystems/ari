@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/AVOXI/ari"
 
 	"github.com/satori/go.uuid"
 )

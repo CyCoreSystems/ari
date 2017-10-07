@@ -5,9 +5,9 @@ import (
 
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/native"
-	"github.com/CyCoreSystems/ari/ext/play"
+	"github.com/AVOXI/ari"
+	"github.com/AVOXI/ari/client/native"
+	"github.com/AVOXI/ari/ext/play"
 )
 
 var log = log15.New()

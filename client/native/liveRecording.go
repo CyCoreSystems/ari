@@ -3,7 +3,7 @@ package native
 import (
 	"errors"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/AVOXI/ari"
 )
 
 // LiveRecording provides the ARI LiveRecording accessors for the native client
