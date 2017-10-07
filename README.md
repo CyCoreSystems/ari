@@ -1,13 +1,15 @@
 # ari - Golang Asterisk Rest Interface (ARI) library
 [![Build Status](https://travis-ci.org/CyCoreSystems/ari.png)](https://travis-ci.org/CyCoreSystems/ari) [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
 
-This is a go-based ARI library.  It also includes some common convenience wrappers for various tasks, which can be found in /ext.
+This library allows you to easily access ARI in go applications.  The Asterisk Rest Interface (https://wiki.asterisk.org/wiki/pages/viewpage.action?pageId=29395573) is an asynchronous API which allows you to access basic Asterisk objects for custom communications applications.  
+
+This project also includes some convenience wrappers for various tasks, found in /ext.  These include go-idiomatic utilities for playing audio, IVRs, recordings, and other tasks which are tricky to coordinate nicely in ARI alone.  
 
 # Getting started
 
 This library maintains semver, and APIs between major releases **do** change.
 Therefore, always use a vendoring tool which supports semver, such as [glide](http://glide.sh/) or
-[dep](https://github.com/golang/dep).
+[dep](https://github.com/golang/dep). 
 
 Version `4.x.x` is the current version.  It offers a number of
 new features focused on facilitating ARI across large clusters and simplifies
@@ -17,11 +19,16 @@ There is also a NATS-based `ari-proxy` which is designed to work with this
 client library.  It can be found at
 [CyCoreSystems/ari-proxy](https://github.com/CyCoreSystems/ari-proxy).
 
-# Cloud-ready
+Install with: 
+```sh 
+go get github.com/CycoreSystems/ari
+```
+# Features
+  # Cloud-ready
 
-All configuration options for the client are able to be sourced by environment
+All configuration options for the client can be sourced by environment
 variable, making it easy to build applications without configuration files.
-Moreover, the default connection to Asterisk is set to `localhost` on port 8088,
+The default connection to Asterisk is set to `localhost` on port 8088,
 which should run on Kubernetes deployments without configuration.
 
 The available environment variables (and defaults) are:
@@ -33,9 +40,9 @@ The available environment variables (and defaults) are:
   - `ARI_USERNAME` (*none*)
   - `ARI_PASSWORD` (*none*)
 
-When using the `ari-proxy`, the process is even easier.
+If using `ari-proxy`, the process is even easier.
 
-# Resource Keys
+  # Resource Keys
 
 In order to facilitate the construction of ARI systems across many Asterisk
 instances, in version 4, we introduce the concept of Resource Keys.  Previous
@@ -46,9 +53,7 @@ properly address a resource.  Specifically, we need to know the Asterisk node.
 There is also the concept of a Dialog, which offers an orthogonal logical
 grouping of events which transcends nodes and applications.  This is not
 meaningful in the native client, but other transports, such as the ARI proxy,
-may make use of this for alternative routing of events.
-
-This Key includes all of these data.
+may make use of this for alternative routing of events. This Key includes all of these data.
 
 ```go
 package ari
@@ -105,7 +110,7 @@ All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
 instead.  In many cases, this can be easily back-ported by wrapping IDs with
 `ari.NewKey("channel", id)`.
 
-# Staging resources
+  # Staging resources
 
 A common issue for ARI resources is making sure a subscription exists before
 events for that resource are sent.  Otherwise, important events which occur too
@@ -144,7 +149,7 @@ Asterisk.
    }
 ```
 
-# Play
+  # Play
 
 Playback of media and waiting for (DTMF) responses therefrom is an incredibly
 common task in telephony.  ARI provides many tools to perform these types of
@@ -162,4 +167,25 @@ The execution of a `Play` is configured by any number of option functions, which
 supply structured modifiers for the behaviour of the playback.  You can even
 supply your own Match function for highly-customized matching.
 
+# Documentation and Examples
 
+Go documentation is available at https://godoc.org/github.com/CyCoreSystems/ari
+
+Examples for helloworld, play, script, bridge, and record are available.  Set your environment variables as described above (at minimum, `ARI_USERNAME` and `ARI_PASSWORD`) and run:
+
+```sh
+cd /_examples/helloworld
+go run ./main.go
+```
+
+# Tests
+
+Run `go test` to verify 
+
+# Contributing
+
+Contributions welcomed. Changes with tests and descriptive commit messages will get priority handling.  
+
+# License
+
+Licensed under the Apache License, Version 2.0 
