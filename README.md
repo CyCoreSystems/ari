@@ -24,7 +24,7 @@ Install with:
 go get github.com/CycoreSystems/ari
 ```
 # Features
-  # Cloud-ready
+## Cloud-ready
 
 All configuration options for the client can be sourced by environment
 variable, making it easy to build applications without configuration files.
@@ -42,7 +42,7 @@ The available environment variables (and defaults) are:
 
 If using `ari-proxy`, the process is even easier.
 
-  # Resource Keys
+## Resource Keys
 
 In order to facilitate the construction of ARI systems across many Asterisk
 instances, in version 4, we introduce the concept of Resource Keys.  Previous
@@ -110,7 +110,7 @@ All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
 instead.  In many cases, this can be easily back-ported by wrapping IDs with
 `ari.NewKey("channel", id)`.
 
-  # Staging resources
+## Staging resources
 
 A common issue for ARI resources is making sure a subscription exists before
 events for that resource are sent.  Otherwise, important events which occur too
@@ -149,7 +149,7 @@ Asterisk.
    }
 ```
 
-  # Play
+## Play
 
 Playback of media and waiting for (DTMF) responses therefrom is an incredibly
 common task in telephony.  ARI provides many tools to perform these types of
