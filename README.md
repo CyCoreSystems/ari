@@ -6,11 +6,12 @@ This is a go-based ARI library.  It also includes some common convenience wrappe
 # Getting started
 
 This library maintains semver, and APIs between major releases **do** change.
-Therefore, always use a vendoring tool which supports semver, such as `glide` or
-`dep` or use the `gopkg.in` aliasing, such as `gopkg.in/CyCoreSystems/ari.v3`.
+Therefore, always use a vendoring tool which supports semver, such as [glide](http://glide.sh/) or
+[dep](https://github.com/golang/dep).
 
-`v4` is the current and best-tested branch. It fixes a number of
-shortcomings of `v3`, particularly for interoperating with proxies clients.
+Version `4.x.x` is the current version.  It offers a number of
+new features focused on facilitating ARI across large clusters and simplifies
+the API.
 
 There is also a NATS-based `ari-proxy` which is designed to work with this
 client library.  It can be found at
