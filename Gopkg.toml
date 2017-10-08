@@ -1,0 +1,17 @@
+[[constraint]]
+  name = "github.com/gogo/protobuf"
+
+[[constraint]]
+  name = "github.com/inconshreveable/log15"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+
+[[constraint]]
+  name = "golang.org/x/net"
