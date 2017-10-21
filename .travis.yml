@@ -1,9 +1,9 @@
 language: go
 go:
-   - 1.8
+   - 1.9
 install:
-   - go get -v github.com/Masterminds/glide
-   - glide install
+   - go get -v github.com/golang/dep
+   - dep ensure -v
    - go get -u github.com/alecthomas/gometalinter/...
    - gometalinter --install
 script: make ci
