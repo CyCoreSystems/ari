@@ -4,6 +4,10 @@ EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 
 all: api clients extensions
 
+deps:
+	dep status -v
+	dep ensure -v
+
 protobuf: ari.proto
 	protoc -I. -I./vendor --gogofast_out=Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,plugins=grpc:. ari.proto
 
@@ -33,6 +37,6 @@ mock:
 	go get -u github.com/vektra/mockery/.../
 	rm -Rf vendor/ client/arimocks
 	mockery -all -outpkg arimocks -output client/arimocks
-	glide i
+	dep ensure -v
 
 ci: check
