@@ -1,6 +1,9 @@
 package ari
 
-import "context"
+import (
+	"context"
+	"sync"
+)
 
 // Bus is an event bus for ARI events.  It receives and
 // redistributes events based on a subscription model.
@@ -46,4 +49,42 @@ func Once(ctx context.Context, bus Bus, key *Key, eTypes ...string) <-chan Event
 		s.Cancel()
 	}()
 	return ret
+}
+
+// NewNullSubscription returns a subscription which never returns any events
+func NewNullSubscription() *NullSubscription {
+	return &NullSubscription{
+		ch: make(chan Event),
+	}
+}
+
+// NullSubscription is a subscription which never returns any events.
+type NullSubscription struct {
+	ch     chan Event
+	closed bool
+	mu     sync.RWMutex
+}
+
+func (n *NullSubscription) Events() <-chan Event {
+	if n.ch == nil {
+		n.mu.Lock()
+		n.closed = false
+		n.ch = make(chan Event)
+		n.mu.Unlock()
+	}
+	return n.ch
+}
+
+func (n *NullSubscription) Cancel() {
+	if n.closed {
+		return
+	}
+
+	n.mu.Lock()
+	n.closed = true
+	if n.ch != nil {
+		close(n.ch)
+	}
+	n.mu.Unlock()
+
 }
