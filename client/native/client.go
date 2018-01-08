@@ -58,9 +58,12 @@ type Options struct {
 
 // Connect creates and connects a new Client to Asterisk ARI.
 func Connect(opts *Options) (ari.Client, error) {
-	c := New(opts)
+	c, err := New(opts)
+	if err != nil {
+		return nil, err
+	}
 
-	err := c.Connect()
+	err = c.Connect()
 	if err != nil {
 		return c, err
 	}
@@ -76,7 +79,7 @@ func Connect(opts *Options) (ari.Client, error) {
 
 // New creates a new ari.Client.  This function should not be used directly unless you need finer control.
 // nolint: gocyclo
-func New(opts *Options) *Client {
+func New(opts *Options) (*Client, error) {
 	if opts == nil {
 		opts = &Options{}
 	}
@@ -86,7 +89,11 @@ func New(opts *Options) *Client {
 		if os.Getenv("ARI_APPLICATION") != "" {
 			opts.Application = os.Getenv("ARI_APPLICATION")
 		} else {
-			opts.Application = uuid.NewV1().String()
+			u, err := uuid.NewV1()
+			if err != nil {
+				return nil, err
+			}
+			opts.Application = u.String()
 		}
 	}
 
@@ -123,7 +130,7 @@ func New(opts *Options) *Client {
 	return &Client{
 		appName: opts.Application,
 		Options: opts,
-	}
+	}, nil
 }
 
 // Client describes a native ARI client, which connects directly to an Asterisk HTTP-based ARI service.
