@@ -98,6 +98,14 @@ func (m *Monitor) Data() *ari.BridgeData {
 	return m.br
 }
 
+// Key returns the key of the monitored bridge
+func (m *Monitor) Key() *ari.Key {
+	if m == nil || m.h == nil {
+		return nil
+	}
+	return m.h.Key()
+}
+
 // Watch returns a channel on which bridge data will be returned when events
 // occur.  This channel will be closed when the bridge or the monitor is
 // destoyed.
