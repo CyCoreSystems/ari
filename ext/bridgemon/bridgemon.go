@@ -139,7 +139,6 @@ func (m *Monitor) Close() {
 	m.watcherMu.Lock()
 	for _, w := range m.watchers {
 		close(w)
-		w = nil
 	}
 	m.watchers = nil
 	m.watcherMu.Unlock()
