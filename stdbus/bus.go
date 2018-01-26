@@ -106,6 +106,7 @@ type subscription struct {
 	b      *bus     // reference to the event bus
 	events []string // list of events to listen for
 
+	mu     sync.Mutex
 	closed bool           // channel closure protection flag
 	C      chan ari.Event // channel for sending events to the subscriber
 }
@@ -132,18 +133,21 @@ func (s *subscription) Cancel() {
 		return
 	}
 
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return
+	}
+	s.closed = true
+	s.mu.Unlock()
+
 	// Remove the subscription from the bus
 	if s.b != nil {
 		s.b.remove(s)
 	}
 
-	if s.closed {
-		return
-	}
-
 	// Close the subscription's deliver channel
 	if s.C != nil {
-		s.closed = true
 		close(s.C)
 	}
 }
