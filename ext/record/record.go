@@ -153,6 +153,9 @@ type Session interface {
 	// during its execution
 	Err() error
 
+	// Key returns the ari.Key for the LiveRecording of this session, if one exists.
+	Key() *ari.Key
+
 	// Pause temporarily stops the recording session without ending the session
 	Pause() error
 
@@ -199,6 +202,13 @@ func (r *Result) Delete() error {
 		return errors.New("no stored recording handle available")
 	}
 	return r.h.Delete()
+}
+
+func (r *Result) Key() *ari.Key {
+	if r == nil || r.h == nil {
+		return nil
+	}
+	return r.h.Key()
 }
 
 // Save stores the recording to the given name
@@ -298,6 +308,13 @@ func (s *recordingSession) Done() <-chan struct{} {
 func (s *recordingSession) Err() error {
 	<-s.Done()
 	return s.res.Error
+}
+
+func (s *recordingSession) Key() *ari.Key {
+	if s == nil || s.h == nil {
+		return nil
+	}
+	return s.h.Key()
 }
 
 func (s *recordingSession) Result() (*Result, error) {
