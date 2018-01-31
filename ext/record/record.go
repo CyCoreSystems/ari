@@ -204,6 +204,7 @@ func (r *Result) Delete() error {
 	return r.h.Delete()
 }
 
+// Key returns the ari.Key of the StoredRecording, if one exists.
 func (r *Result) Key() *ari.Key {
 	if r == nil || r.h == nil {
 		return nil
