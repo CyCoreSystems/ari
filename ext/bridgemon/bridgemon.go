@@ -72,6 +72,11 @@ func (m *Monitor) monitor() {
 
 func (m *Monitor) updateData(data *ari.BridgeData) {
 
+	// Populate the bridge key in the bridge data, since Asterisk does not populate this field.
+	if data.Key == nil {
+		data.Key = m.h.Key()
+	}
+
 	// Update the stored data
 	m.mu.Lock()
 	m.br = data
