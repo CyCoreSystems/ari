@@ -22,6 +22,9 @@ clients:
 	go build ./client/arimocks
 
 extensions:
+	go build ./ext/audiouri
+	go build ./ext/bridgemon
+	go build ./ext/keyfilter
 	go build ./ext/play
 	go build ./ext/record
 
