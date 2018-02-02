@@ -31,7 +31,13 @@ func New(h *ari.BridgeHandle) *Monitor {
 		sub: sub,
 	}
 
+	// Monitor bridge events to keep data in sync
 	go m.monitor()
+
+	// Attempt to load initial bridge data; this may fail if the bridge has only
+	// been staged, so ignore errors here
+	data, _ := h.Data()
+	m.updateData(data)
 
 	return m
 }
