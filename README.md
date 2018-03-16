@@ -23,7 +23,9 @@ Install with:
 ```sh 
 go get github.com/CycoreSystems/ari
 ```
+
 # Features
+
 ## Cloud-ready
 
 All configuration options for the client can be sourced by environment
@@ -109,6 +111,43 @@ for the key Kind and ID.
 All ARI operations which accepted an ID for an operator now expect an `*ari.Key`
 instead.  In many cases, this can be easily back-ported by wrapping IDs with
 `ari.NewKey("channel", id)`.
+
+## Handles
+
+Handles for all of the major entity types are available, which bundle in the
+tracking of resources with their manipulations.  Every handle, at a minimum,
+internally tracks the resource's cluster-unique Key and the ARI client
+connection through which the entity is being interacted.  Using a handle
+generally results in less and more readable code.
+
+For instance, instead of calling:
+
+```go
+ariClient.Channel().Hangup(channelKey, "normal")
+```
+
+you could just call `Hangup()` on the handle:
+
+```go
+h.Hangup()
+```
+
+While the lower level direct calls have maintained fairly strict semantics to
+match the formal ARI APIs, the handles frequently provide higher-level, simpler
+operations.  Moreover, most of the extensions (see below) make use of handles.
+
+In general, when operating on longer lifetime entities (such as channels and
+bridges), it is easier to use handles wherever you can rather than tracking Keys
+and clients discretely.
+
+Obtaining a Handle from a Key is very simple; just call the `Get()` operation on
+the resource interface appropriate to the key.  The `Get()` operation is a
+local-only operation which does not interact with the Asterisk or ARI proxy at
+all, and it is thus quite efficient.
+
+```go
+h := ariClient.Channel().Get(channelKey)
+```
 
 ## Staging resources
 
@@ -217,6 +256,19 @@ Examples for helloworld, play, script, bridge, and record are available.  Set yo
 cd /_examples/helloworld
 go run ./main.go
 ```
+
+Other examples:
+
+ - `stasisStart` demonstrates a simple click-to-call announcer system
+ - `stasisStart-nats` demonstrates the same click-to-call using the NATS-based
+   ARI proxy
+ - `bridge` demonstrates a simple conference bridge
+ - `play` demonstrates the use of the `ext/play` extension
+ - `record` demonstrates the use of the `ext/record` extension
+
+The files in `_ext/infra` demonstrates the minimum necessary changes to the
+Asterisk configuration to enable the operation of ARI.
+
 
 # Tests
 
