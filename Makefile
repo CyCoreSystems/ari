@@ -14,7 +14,7 @@ api:
 test:
 	go test `go list ./... | grep -v /vendor/`
 
-check: all
+lint:
 	gometalinter --disable=gotype client/native ext/...
 
 clients:
@@ -38,4 +38,9 @@ mock:
 	mockery -all -outpkg arimocks -output client/arimocks
 	glide i
 
-ci: check
+check: all lint test
+
+deps:
+	dep ensure
+
+ci: deps check
