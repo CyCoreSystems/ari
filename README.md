@@ -149,7 +149,34 @@ Asterisk.
    }
 ```
 
-## Play
+## Extensions
+
+There are a number of extensions which wrap the lower-level operations in
+higher-level ones, making it easier to perform many common tasks.
+
+
+### AudioURI [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari/_ext/audiouri)
+
+Constructing Asterisk audio playback URIs can be a bit tedious, particularly for handling
+certain edge cases in digits and for constructing dates.
+
+The `audiouri` package provides a number of routines to make the construction of
+these URIs simpler.
+
+### Bridgemon [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari/_ext/bridgemon)
+
+Monitoring a bridge for events and data updates is not difficult, but it
+involves a lot of code and often makes several wasteful calls to obtain bridge
+data, particularly when accessing it on large bridges.
+
+Bridgemon provides a cache and proxy for the bridge data and bridge events so
+that a user can simply `Watch()` for changes in the bridge state and efficiently
+retrieve the updated data without multiple requests.
+
+It also shuts itself down automatically when the bridge it is monitoring is
+destroyed.
+
+### Play [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari/_ext/play)
 
 Playback of media and waiting for (DTMF) responses therefrom is an incredibly
 common task in telephony.  ARI provides many tools to perform these types of
@@ -166,6 +193,19 @@ defaults for playbacks which expect a response.
 The execution of a `Play` is configured by any number of option functions, which
 supply structured modifiers for the behaviour of the playback.  You can even
 supply your own Match function for highly-customized matching.
+
+### Record [![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari/_ext/record)
+
+Making recordings is another complicated but common task for ARI applications.
+The `ext/record`, we provide a simple wrapper which facilitates many common
+recording-related operations inside a single recording Session wrapper.
+
+Features include:
+
+  - record with or without a beep at the start
+  - listen for various termination types: hangup, dtmf, silence, timeout
+  - review, scrap, and save recordings upon completion
+  - retrieve the playback URI for the recording
 
 # Documentation and Examples
 
