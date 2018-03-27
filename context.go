@@ -13,7 +13,7 @@ type ChannelContextOptions struct {
 }
 
 // ChannelContextOptionFunc describes a function which modifies channel context options.
-type ChannelContextOptionFunc = func(o *ChannelContextOptions)
+type ChannelContextOptionFunc func(o *ChannelContextOptions)
 
 // ChannelContext returns a context which is closed when the provided channel leaves the ARI application or the parent context is closed.  The parent context is optional, and if it is `nil`, a new background context will be created.
 func ChannelContext(h *ChannelHandle, opts ...ChannelContextOptionFunc) (context.Context, context.CancelFunc) {
