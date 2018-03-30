@@ -349,9 +349,7 @@ func MatchAny() OptionFunc {
 // MatchNone indicates that the playback should never be terminated due to DTMF
 func MatchNone() OptionFunc {
 	return func(o *Options) error {
-		o.matchFunc = func(pat string) (string, MatchResult) {
-			return pat, Incomplete
-		}
+		o.matchFunc = nil
 		return nil
 	}
 }
