@@ -36,7 +36,7 @@ func New(h *ari.BridgeHandle) *Monitor {
 
 	// Attempt to load initial bridge data; this may fail if the bridge has only
 	// been staged, so ignore errors here
-	data, _ := h.Data()
+	data, _ := h.Data() // nolint
 	m.updateData(data)
 
 	return m

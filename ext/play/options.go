@@ -346,6 +346,16 @@ func MatchAny() OptionFunc {
 	}
 }
 
+// MatchNone indicates that the playback should never be terminated due to DTMF
+func MatchNone() OptionFunc {
+	return func(o *Options) error {
+		o.matchFunc = func(pat string) (string, MatchResult) {
+			return pat, Incomplete
+		}
+		return nil
+	}
+}
+
 // MatchDiscrete indicates that the playback should be considered Matched and terminated if
 // the received DTMF digits match any of the discrete list of strings.
 func MatchDiscrete(list []string) OptionFunc {
