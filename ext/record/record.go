@@ -234,7 +234,7 @@ func (r *Result) Save(name string) error {
 		Logger.Debug("overwriting previous recording")
 		err = destH.Delete()
 		if err != nil {
-			return errors.Wrap(err, "failed to remove previous destination recording")
+			Logger.Warn("failed to remove previous destination recording; it may not have existed", "error", err)
 		}
 		_, err = r.h.Copy(name)
 		if err != nil {
