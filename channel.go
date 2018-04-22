@@ -125,16 +125,18 @@ type channelDataJSON struct {
 	// Key is the unique identifier for a channel in the cluster
 	Key *Key `json:"key,omitempty"`
 
-	ID           string       `json:"id"`    // Unique id for this channel (same as for AMI)
-	Name         string       `json:"name"`  // Name of this channel (tech/name-id format)
-	State        string       `json:"state"` // State of the channel
-	Accountcode  string       `json:"accountcode"`
-	Caller       *CallerID    `json:"caller"`    // CallerId of the calling endpoint
-	Connected    *CallerID    `json:"connected"` // CallerId of the connected line
-	Creationtime DateTime     `json:"creationtime"`
-	Dialplan     *DialplanCEP `json:"dialplan"` // Current location in the dialplan
+	ID           string            `json:"id"`    // Unique id for this channel (same as for AMI)
+	Name         string            `json:"name"`  // Name of this channel (tech/name-id format)
+	State        string            `json:"state"` // State of the channel
+	Accountcode  string            `json:"accountcode"`
+	Caller       *CallerID         `json:"caller"`    // CallerId of the calling endpoint
+	Connected    *CallerID         `json:"connected"` // CallerId of the connected line
+	Creationtime DateTime          `json:"creationtime"`
+	Dialplan     *DialplanCEP      `json:"dialplan"` // Current location in the dialplan
+	ChannelVars  map[string]string `json:"channelvars"`
 }
 
+// MarshalJSON encodes ChannelData to JSON
 func (d *ChannelData) MarshalJSON() ([]byte, error) {
 	t, err := ptypes.TimestampFromProto(d.Creationtime)
 	if err != nil {
@@ -151,9 +153,11 @@ func (d *ChannelData) MarshalJSON() ([]byte, error) {
 		Connected:    d.Connected,
 		Creationtime: DateTime(t),
 		Dialplan:     d.Dialplan,
+		ChannelVars:  d.ChannelVars,
 	})
 }
 
+// UnmarshalJSON decodes ChannelData from JSON
 func (d *ChannelData) UnmarshalJSON(data []byte) error {
 	in := new(channelDataJSON)
 	err := json.Unmarshal(data, in)
@@ -176,6 +180,7 @@ func (d *ChannelData) UnmarshalJSON(data []byte) error {
 		Connected:    in.Connected,
 		Creationtime: t,
 		Dialplan:     in.Dialplan,
+		ChannelVars:  in.ChannelVars,
 	}
 	return nil
 }
