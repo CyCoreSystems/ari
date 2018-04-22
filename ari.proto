@@ -70,6 +70,13 @@ message ChannelData {
 
    // Dialplan is the current location of the channel in the dialplan
    DialplanCEP dialplan = 9;
+
+   // Language is the default spoken language for this channel
+   string language = 10;
+
+   // ChannelVars is the list of channel variables set on this channel
+   map<string, string> channelvars = 11 [(gogoproto.customname) = "ChannelVars"];
+
 }
 
 // Dialplan describes a location in the Asterisk dialplan
