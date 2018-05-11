@@ -57,9 +57,14 @@ func defaultOptions() *Options {
 		ifExists:    "fail",
 		maxDuration: DefaultMaximumDuration,
 		maxSilence:  DefaultMaximumSilence,
-		name:        uuid.NewV1().String(),
+		name:        getUUID(),
 		terminateOn: "none",
 	}
+}
+
+func getUUID() string {
+	u, _ := uuid.NewV1()
+	return u.String()
 }
 
 func (o *Options) toRecordingOptions() *ari.RecordingOptions {

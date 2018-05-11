@@ -89,7 +89,11 @@ func (c *Channel) StageOriginate(key *ari.Key, req ari.OriginateRequest) (*ari.C
 	}
 
 	if req.ChannelID == "" {
-		req.ChannelID = uuid.NewV1().String()
+		u, err := uuid.NewV1()
+		if err != nil {
+			return nil, err
+		}
+		req.ChannelID = u.String()
 	}
 
 	return ari.NewChannelHandle(c.client.stamp(ari.NewKey(ari.ChannelKey, req.ChannelID)), c,
@@ -118,7 +122,11 @@ func (c *Channel) Create(key *ari.Key, req ari.ChannelCreateRequest) (*ari.Chann
 	}
 
 	if req.ChannelID == "" {
-		req.ChannelID = uuid.NewV1().String()
+		u, err := uuid.NewV1()
+		if err != nil {
+			return nil, err
+		}
+		req.ChannelID = u.String()
 	}
 
 	err := c.client.post("/channels/create", nil, &req)
@@ -340,7 +348,11 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
 	if snoopID == "" {
-		snoopID = uuid.NewV1().String()
+		u, err := uuid.NewV1()
+		if err != nil {
+			return nil, err
+		}
+		snoopID = u.String()
 	}
 
 	// Create the snooping channel's key

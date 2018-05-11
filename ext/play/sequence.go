@@ -41,7 +41,14 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 	defer close(s.done)
 
 	for u := s.s.o.uriList.First(); u != ""; u = s.s.o.uriList.Next() {
-		pb, err := p.StagePlay(uuid.NewV1().String(), u)
+		uid, err := uuid.NewV1()
+		if err != nil {
+			s.s.result.Status = Failed
+			s.s.result.Error = errors.Wrap(err, "failed to create UUID")
+			return
+		}
+
+		pb, err := p.StagePlay(uid.String(), u)
 		if err != nil {
 			s.s.result.Status = Failed
 			s.s.result.Error = errors.Wrap(err, "failed to stage playback")

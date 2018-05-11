@@ -89,7 +89,12 @@ func ensureBridge(ctx context.Context, cl ari.Client, src *ari.Key) (err error) 
 		return nil
 	}
 
-	key := src.New(ari.BridgeKey, uuid.NewV1().String())
+	u, err := uuid.NewV1()
+	if err != nil {
+		return err
+	}
+	key := src.New(ari.BridgeKey, u.String())
+
 	bridge, err = cl.Bridge().Create(key, "mixing", key.ID)
 	if err != nil {
 		bridge = nil
