@@ -45,7 +45,9 @@ func (c *Config) Update(key *ari.Key, tuples []ari.ConfigTuple) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to parse key")
 	}
-	return c.client.put("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, &tuples)
+	cfgList := ari.ConfigList{}
+	cfgList.Fields = append(cfgList.Fields, tuples...)
+	return c.client.put("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, &cfgList)
 }
 
 // Delete deletes the configuration object
