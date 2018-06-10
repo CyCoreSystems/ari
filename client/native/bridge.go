@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
-	uuid "github.com/satori/go.uuid"
+	"github.com/CyCoreSystems/ari/rid"
 )
 
 // Bridge provides the ARI Bridge accessors for the native client
@@ -25,7 +25,7 @@ func (b *Bridge) Create(key *ari.Key, t string, name string) (bh *ari.BridgeHand
 // StageCreate creates a new bridge handle, staged with a bridge `Create` operation.
 func (b *Bridge) StageCreate(key *ari.Key, btype, name string) (*ari.BridgeHandle, error) {
 	if key.ID == "" {
-		key.ID = uuid.NewV1().String()
+		key.ID = rid.New(rid.Bridge)
 	}
 
 	req := struct {
@@ -137,7 +137,7 @@ func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.Pl
 // StagePlay stages a `Play` operation on the bridge
 func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
-		playbackID = uuid.NewV1().String()
+		playbackID = rid.New(rid.Playback)
 	}
 
 	resp := make(map[string]interface{})

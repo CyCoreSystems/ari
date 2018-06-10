@@ -38,6 +38,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/oklog/ulid"
+  packages = ["."]
+  revision = "d311cb43c92434ec4072dfbbda3400741d0a6337"
+  version = "v0.3.0"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -48,12 +54,6 @@
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
-  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/stretchr/objx"
@@ -70,7 +70,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","websocket"]
+  packages = ["websocket"]
   revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
@@ -82,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b30ba972432c0ecac21d90641f373c190cd27e0dc1c827e1aa1f7c73fd5a5f17"
+  inputs-digest = "21d86ae724402357ddb4cecdc44e12d43c8c72bff8fa96eb7aabda49ac83c8bb"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,10 +1,9 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/inconshreveable/log15"
 

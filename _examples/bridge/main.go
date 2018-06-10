@@ -1,17 +1,16 @@
 package main
 
 import (
+	"context"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/inconshreveable/log15"
 
 	"github.com/CyCoreSystems/ari"
 	"github.com/CyCoreSystems/ari/client/native"
 	"github.com/CyCoreSystems/ari/ext/play"
+	"github.com/CyCoreSystems/ari/rid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 )
 
 var ariApp = "test"
@@ -89,7 +88,7 @@ func ensureBridge(ctx context.Context, cl ari.Client, src *ari.Key) (err error) 
 		return nil
 	}
 
-	key := src.New(ari.BridgeKey, uuid.NewV1().String())
+	key := src.New(ari.BridgeKey, rid.New(rid.Bridge))
 	bridge, err = cl.Bridge().Create(key, "mixing", key.ID)
 	if err != nil {
 		bridge = nil

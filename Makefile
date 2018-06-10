@@ -13,6 +13,7 @@ protobuf: ari.proto
 api:
 	go build ./
 	go build ./stdbus
+	go build ./rid
 
 test:
 	go test `go list ./... | grep -v /vendor/`

@@ -1,6 +1,7 @@
 package native
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 	"net/url"
@@ -11,10 +12,9 @@ import (
 	"github.com/inconshreveable/log15"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/rid"
 	"github.com/CyCoreSystems/ari/stdbus"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
-	"golang.org/x/net/context"
 	"golang.org/x/net/websocket"
 )
 
@@ -86,7 +86,7 @@ func New(opts *Options) *Client {
 		if os.Getenv("ARI_APPLICATION") != "" {
 			opts.Application = os.Getenv("ARI_APPLICATION")
 		} else {
-			opts.Application = uuid.NewV1().String()
+			opts.Application = rid.New("")
 		}
 	}
 
