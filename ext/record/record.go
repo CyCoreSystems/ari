@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/rid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 )
 
 var (
@@ -57,7 +57,7 @@ func defaultOptions() *Options {
 		ifExists:    "fail",
 		maxDuration: DefaultMaximumDuration,
 		maxSilence:  DefaultMaximumSilence,
-		name:        uuid.NewV1().String(),
+		name:        rid.New(rid.Recording),
 		terminateOn: "none",
 	}
 }

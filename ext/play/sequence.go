@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/rid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 )
 
 // sequence represents an audio sequence playback session
@@ -41,7 +41,7 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 	defer close(s.done)
 
 	for u := s.s.o.uriList.First(); u != ""; u = s.s.o.uriList.Next() {
-		pb, err := p.StagePlay(uuid.NewV1().String(), u)
+		pb, err := p.StagePlay(rid.New(rid.Playback), u)
 		if err != nil {
 			s.s.result.Status = Failed
 			s.s.result.Error = errors.Wrap(err, "failed to stage playback")

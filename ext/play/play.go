@@ -1,8 +1,9 @@
 package play
 
 import (
+	"context"
+
 	"github.com/CyCoreSystems/ari"
-	"golang.org/x/net/context"
 )
 
 // AllDTMF is a string which contains all possible
