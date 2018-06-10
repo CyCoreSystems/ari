@@ -8,8 +8,7 @@ This project also includes some convenience wrappers for various tasks, found in
 # Getting started
 
 This library maintains semver, and APIs between major releases **do** change.
-Therefore, always use a vendoring tool which supports semver, such as [glide](http://glide.sh/) or
-[dep](https://github.com/golang/dep). 
+Therefore, always use a vendoring tool which supports semver, such as [dep](https://github.com/golang/dep). 
 
 Version `4.x.x` is the current version.  It offers a number of
 new features focused on facilitating ARI across large clusters and simplifies
@@ -35,7 +34,7 @@ which should run on Kubernetes deployments without configuration.
 
 The available environment variables (and defaults) are:
 
-  - `ARI_APPLICATION` (*randomly-generated UUID*)
+  - `ARI_APPLICATION` (*randomly-generated ID*)
   - `ARI_URL` (`http://localhost:8088/ari`)
   - `ARI_WSURL` (`ws://localhost:8088/ari/events`)
   - `ARI_WSORIGIN` (`http://localhost/`)
