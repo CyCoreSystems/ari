@@ -2,13 +2,16 @@ SHELL = /usr/bin/env bash
 
 EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 
-all: api clients contributors extensions
+all: dep api clients contributors extensions
 
 contributors:
 	write_mailmap > CONTRIBUTORS
 
 protobuf: ari.proto
 	protoc -I. -I./vendor --gogofast_out=Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,plugins=grpc:. ari.proto
+
+dep:
+	dep ensure
 
 api:
 	go build ./
