@@ -40,6 +40,11 @@ func (cd *ConfigData) ID() string {
 	return fmt.Sprintf("%s/%s/%s", cd.Class, cd.Type, cd.Name)
 }
 
+//ConfigTupleList wrap a list for asterisk ari require.
+type ConfigTupleList struct {
+	Fields []ConfigTuple `json:"fields"`
+}
+
 // ConfigTuple is the key-value pair that defines a configuration entry
 type ConfigTuple struct {
 	Attribute string `json:"attribute"`
