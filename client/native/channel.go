@@ -99,12 +99,7 @@ func (c *Channel) StageOriginate(key *ari.Key, req ari.OriginateRequest) (*ari.C
 
 			var resp response
 
-			err := c.client.post("/channels", &resp, &req)
-			if err != nil {
-				return nil
-			}
-
-			return err
+			return c.client.post("/channels", &resp, &req)
 		},
 	), nil
 }
