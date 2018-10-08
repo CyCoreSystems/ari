@@ -109,6 +109,14 @@ func (m *Monitor) Data() *ari.BridgeData {
 	return m.br
 }
 
+// Handle returns the BridgeHandle which was used to create the bridge Monitor.
+func (m *Monitor) Handle() *ari.BridgeHandle {
+	if m == nil {
+		return nil
+	}
+	return m.h
+}
+
 // Key returns the key of the monitored bridge
 func (m *Monitor) Key() *ari.Key {
 	if m == nil || m.h == nil {
