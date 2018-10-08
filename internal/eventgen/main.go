@@ -184,5 +184,7 @@ func main() {
 
 	sort.Sort(events)
 
-	tmpl.ExecuteTemplate(os.Stdout, "template.tmpl", events)
+	if err := tmpl.ExecuteTemplate(os.Stdout, "template.tmpl", events); err != nil {
+		log.Fatalln("failed to execute template:", err)
+	}
 }

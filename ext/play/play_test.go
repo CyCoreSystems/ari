@@ -137,8 +137,8 @@ func testPlayStagedFailExec(t *testing.T) {
 	}
 }
 
-// nolint: megacheck
-func testPlayStagedFinishBeforeStart(t *testing.T) {
+// nolint
+func XXXtestPlayStagedFinishBeforeStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

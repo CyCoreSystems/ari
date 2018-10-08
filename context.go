@@ -40,7 +40,7 @@ func ChannelContext(h *ChannelHandle, opts ...ChannelContextOptionFunc) (context
 		}
 
 		if o.hangupOnEnd {
-			h.Hangup()
+			h.Hangup() // nolint
 		}
 	}()
 

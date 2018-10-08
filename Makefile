@@ -22,7 +22,8 @@ test:
 	go test `go list ./... | grep -v /vendor/`
 
 check: all
-	gometalinter --disable=gotype client/native ext/...
+	golangci-lint run
+	#gometalinter --disable=gotype client/native ext/...
 
 clients:
 	go build ./client/native
