@@ -28,6 +28,12 @@ type Bridge interface {
 	// Delete deletes the bridge
 	Delete(key *Key) error
 
+	// MOH plays music on hold
+	MOH(key *Key, moh string) error
+
+	// StopMOH stops music on hold
+	StopMOH(key *Key) error
+
 	// Play plays the media URI to the bridge
 	Play(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
 
@@ -128,6 +134,16 @@ func (bh *BridgeHandle) Delete() (err error) {
 // Data gets the bridge data
 func (bh *BridgeHandle) Data() (*BridgeData, error) {
 	return bh.b.Data(bh.key)
+}
+
+// MOH requests that the given MusicOnHold class being played to the bridge
+func (bh *BridgeHandle) MOH(class string) error {
+	return bh.b.MOH(bh.key, class)
+}
+
+// StopMOH requests that any MusicOnHold which is being played to the bridge is stopped.
+func (bh *BridgeHandle) StopMOH() error {
+	return bh.b.StopMOH(bh.key)
 }
 
 // Play initiates playback of the specified media uri
