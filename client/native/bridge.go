@@ -119,9 +119,22 @@ func (b *Bridge) RemoveChannel(key *ari.Key, channelID string) (err error) {
 // This means that the channels themselves are not deleted.
 // Equivalent to DELETE /bridges/{id}
 func (b *Bridge) Delete(key *ari.Key) (err error) {
-	id := key.ID
-	err = b.client.del("/bridges/"+id, nil, "")
-	return
+	return b.client.del("/bridges/"+key.ID, nil, "")
+}
+
+// MOH requests that the given musiconhold class be played to the bridge
+func (b *Bridge) MOH(key *ari.Key, class string) error {
+	req := struct {
+		Class string `json:"mohClass"`
+	}{
+		Class: class,
+	}
+	return b.client.post("/bridges/"+key.ID+"/moh", nil, &req)
+}
+
+// StopMOH requests that any MusicOnHold which is playing to the bridge be stopped.
+func (b *Bridge) StopMOH(key *ari.Key) error {
+	return b.client.del("/bridges/"+key.ID+"/moh", nil, "")
 }
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
