@@ -43,7 +43,7 @@ events:
 mock:
 	go get -u github.com/vektra/mockery/.../
 	rm -Rf vendor/ client/arimocks
-	mockery -all -outpkg arimocks -output client/arimocks
+	mockery -name . -outpkg arimocks -output client/arimocks
 	dep ensure
 
 ci: check
