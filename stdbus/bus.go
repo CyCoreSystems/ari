@@ -16,7 +16,7 @@ var subscriptionEventBufferSize = 100
 type bus struct {
 	subs []*subscription // The list of subscriptions
 
-	mu sync.Mutex
+	rwMux sync.RWMutex
 
 	closed bool
 }
@@ -45,7 +45,7 @@ func (b *bus) Close() {
 // Send sends the message to the bus
 func (b *bus) Send(e ari.Event) {
 	var matched bool
-	b.mu.Lock()
+	b.rwMux.RLock()
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
@@ -68,7 +68,7 @@ func (b *bus) Send(e ari.Event) {
 		}
 	}
 
-	b.mu.Unlock()
+	b.rwMux.RUnlock()
 }
 
 // Subscribe returns a subscription to the given list
@@ -81,15 +81,15 @@ func (b *bus) Subscribe(key *ari.Key, eTypes ...string) ari.Subscription {
 
 // add appends a new subscription to the bus
 func (b *bus) add(s *subscription) {
-	b.mu.Lock()
+	b.rwMux.Lock()
 	b.subs = append(b.subs, s)
-	b.mu.Unlock()
+	b.rwMux.Unlock()
 }
 
 // remove deletes the given subscription from the bus
 func (b *bus) remove(s *subscription) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	b.rwMux.Lock()
+	defer b.rwMux.Unlock()
 	for i, si := range b.subs {
 		if s == si {
 			// Subs are pointers, so we have to explicitly remove them
