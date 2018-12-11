@@ -112,7 +112,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	var r *http.Request
 	r, err = http.NewRequest(method, url, reqBody)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to create request")
 	}
 	r.Header.Set("Content-Type", "application/json")
 
