@@ -45,6 +45,7 @@ func (b *bus) Close() {
 // Send sends the message to the bus
 func (b *bus) Send(e ari.Event) {
 	var matched bool
+	b.mu.Lock()
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
@@ -66,6 +67,8 @@ func (b *bus) Send(e ari.Event) {
 			}
 		}
 	}
+
+	b.mu.Unlock()
 }
 
 // Subscribe returns a subscription to the given list
