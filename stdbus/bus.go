@@ -89,7 +89,6 @@ func (b *bus) add(s *subscription) {
 // remove deletes the given subscription from the bus
 func (b *bus) remove(s *subscription) {
 	b.rwMux.Lock()
-	defer b.rwMux.Unlock()
 	for i, si := range b.subs {
 		if s == si {
 			// Subs are pointers, so we have to explicitly remove them
@@ -97,9 +96,10 @@ func (b *bus) remove(s *subscription) {
 			b.subs[i] = b.subs[len(b.subs)-1] // replace the current with the end
 			b.subs[len(b.subs)-1] = nil       // remove the end
 			b.subs = b.subs[:len(b.subs)-1]   // lop off the end
-			return
+			break
 		}
 	}
+	b.rwMux.Unlock()
 }
 
 // A Subscription is a wrapped channel for receiving
