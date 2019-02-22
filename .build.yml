@@ -1,5 +1,16 @@
-image: alpine/latest
+image: alpine/edge
 packages:
+   - binutils
+   - gmp
+   - isl
+   - libgomp
+   - libatomic
+   - pkgconf
+   - libgcc
+   - mpfr3
+   - mpc1
+   - libstdc++
+   - gcc
    - go
 tasks:
    - setup: |
