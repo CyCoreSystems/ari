@@ -20,7 +20,7 @@ client library.  It can be found at
 
 Install with: 
 ```sh 
-go get github.com/CycoreSystems/ari
+go get github.com/CyCoreSystems/ari
 ```
 
 # Features
