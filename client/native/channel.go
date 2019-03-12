@@ -35,7 +35,7 @@ func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	return
 }
 
-// Hangup hangs up the given channel using the (optional) reason
+// Hangup hangs up the given channel using the (optional) reason.
 func (c *Channel) Hangup(key *ari.Key, reason string) error {
 	if key == nil || key.ID == "" {
 		return errors.New("channel key not supplied")
@@ -71,9 +71,13 @@ func (c *Channel) Get(key *ari.Key) *ari.ChannelHandle {
 	return ari.NewChannelHandle(c.client.stamp(key), c, nil)
 }
 
-// Originate originates a channel and returns the handle
-func (c *Channel) Originate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	h, err := c.StageOriginate(key, req)
+// Originate originates a channel and returns the handle.
+//
+// **Note** that referenceKey is completely optional.  It is used for placing
+// the new channel onto the correct Asterisk node and for assigning default
+// values for communications parameters such as codecs.
+func (c *Channel) Originate(referenceKey *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	h, err := c.StageOriginate(referenceKey, req)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +86,13 @@ func (c *Channel) Originate(key *ari.Key, req ari.OriginateRequest) (*ari.Channe
 
 // StageOriginate creates a new channel handle with a channel originate request
 // staged.
-func (c *Channel) StageOriginate(key *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
-	if key != nil && req.Originator == "" && key.Kind == ari.ChannelKey {
-		req.Originator = key.ID
+//
+// **Note** that referenceKey is completely optional.  It is used for placing
+// the new channel onto the correct Asterisk node and for assigning default
+// values for communications parameters such as codecs.
+func (c *Channel) StageOriginate(referenceKey *ari.Key, req ari.OriginateRequest) (*ari.ChannelHandle, error) {
+	if referenceKey != nil && req.Originator == "" && referenceKey.Kind == ari.ChannelKey {
+		req.Originator = referenceKey.ID
 	}
 
 	if req.ChannelID == "" {
