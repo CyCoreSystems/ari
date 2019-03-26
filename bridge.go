@@ -22,6 +22,9 @@ type Bridge interface {
 	// AddChannel adds a channel to the bridge
 	AddChannel(key *Key, channelID string) error
 
+	// AddChannelWithOptions adds a channel to a bridge, specifying additional options to be applied to that channel
+	AddChannelWithOptions(key *Key, channelID string, options *BridgeAddChannelOptions) error
+
 	// RemoveChannel removes a channel from the bridge
 	RemoveChannel(key *Key, channelID string) error
 
@@ -65,6 +68,19 @@ type BridgeData struct {
 	Creator    string   `json:"creator"`      // Creating entity of the bridge
 	Name       string   `json:"name"`         // The name of the bridge
 	Technology string   `json:"technology"`   // Name of the bridging technology
+}
+
+// BridgeAddChannelOptions describes additional options to be applied to a channel when it is joined to a bridge
+type BridgeAddChannelOptions struct {
+
+	// AbsorbDTMF indicates that DTMF coming from this channel will not be passed through to the bridge
+	AbsorbDTMF bool
+
+	// Mute indicates that the channel should be muted, preventing audio from it passing through to the bridge
+	Mute bool
+
+	// Role indicates the channel's role in the bridge
+	Role string
 }
 
 // Channels returns the list of channels found in the bridge
@@ -118,6 +134,11 @@ func (bh *BridgeHandle) Exec() error {
 // AddChannel adds a channel to the bridge
 func (bh *BridgeHandle) AddChannel(channelID string) error {
 	return bh.b.AddChannel(bh.key, channelID)
+}
+
+// AddChannelWithOptions adds a channel to the bridge, specifying additional options
+func (bh *BridgeHandle) AddChannelWithOptions(channelID string, options *BridgeAddChannelOptions) error {
+	return bh.b.AddChannelWithOptions(bh.key, channelID, options)
 }
 
 // RemoveChannel removes a channel from the bridge
