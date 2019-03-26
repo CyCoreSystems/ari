@@ -83,6 +83,14 @@ func (e *EventData) SetDialog(id string) {
 // implementations of events
 
 // Keys returns the list of keys associated with this event
+func (evt *ApplicationMoveFailed) Keys() (sx Keys) {
+	if id := evt.Channel.ID; id != "" {
+		sx = append(sx, evt.Key(ChannelKey, id))
+	}
+	return
+}
+
+// Keys returns the list of keys associated with this event
 func (evt *ApplicationReplaced) Keys() (sx Keys) {
 	return
 }
