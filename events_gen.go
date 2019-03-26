@@ -11,6 +11,7 @@ import (
 // EventTypes enumerates the list of event types
 type EventTypes struct {
 	All                      string
+	ApplicationMoveFailed    string
 	ApplicationReplaced      string
 	BridgeAttendedTransfer   string
 	BridgeBlindTransfer      string
@@ -58,6 +59,7 @@ var Events EventTypes
 
 func init() {
 	Events.All = "all"
+	Events.ApplicationMoveFailed = "ApplicationMoveFailed"
 	Events.ApplicationReplaced = "ApplicationReplaced"
 	Events.BridgeAttendedTransfer = "BridgeAttendedTransfer"
 	Events.BridgeBlindTransfer = "BridgeBlindTransfer"
@@ -114,6 +116,10 @@ func DecodeEvent(data []byte) (Event, error) {
 	}
 
 	switch typer.Type {
+	case Events.ApplicationMoveFailed:
+		var e ApplicationMoveFailed
+		err = json.Unmarshal(data, &e)
+		return &e, err
 	case Events.ApplicationReplaced:
 		var e ApplicationReplaced
 		err = json.Unmarshal(data, &e)
@@ -277,6 +283,18 @@ func DecodeEvent(data []byte) (Event, error) {
 
 	}
 	return nil, errors.New("unhandled type: " + typer.Type)
+}
+
+// ApplicationMoveFailed - "Notification that trying to move a channel to another Stasis application failed."
+type ApplicationMoveFailed struct {
+	EventData `json:",inline"`
+
+	// Header describes any transport-related metadata
+	Header Header `json:"-"`
+
+	Args        []string    `json:"args"` // Arguments to the application
+	Channel     ChannelData `json:"channel"`
+	Destination string      `json:"destination"`
 }
 
 // ApplicationReplaced - "Notification that another WebSocket has taken over for an application.An application may only be subscribed to by a single WebSocket at a time. If multiple WebSockets attempt to subscribe to the same application, the newer WebSocket wins, and the older one receives this event."
