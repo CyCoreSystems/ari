@@ -54,6 +54,9 @@ type Options struct {
 
 	// Password for ARI authentication
 	Password string
+
+	// Allow subscribe to all events in Asterisk Server
+	SubscribeAll bool
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
@@ -234,7 +237,12 @@ func (c *Client) TextMessage() ari.TextMessage {
 func (c *Client) createWSConfig() (err error) {
 	// Construct the websocket connection url
 	v := url.Values{}
+
 	v.Set("app", c.Options.Application)
+	if c.Options.SubscribeAll {
+		v.Set("subscribeAll", "true")
+	}
+
 	wsurl := c.Options.WebsocketURL + "?" + v.Encode()
 
 	// Construct a websocket config
