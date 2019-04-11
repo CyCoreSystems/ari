@@ -24,6 +24,20 @@ func (_m *Bridge) AddChannel(key *ari.Key, channelID string) error {
 	return r0
 }
 
+// AddChannelWithOptions provides a mock function with given fields: key, channelID, options
+func (_m *Bridge) AddChannelWithOptions(key *ari.Key, channelID string, options *ari.BridgeAddChannelOptions) error {
+	ret := _m.Called(key, channelID, options)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, *ari.BridgeAddChannelOptions) error); ok {
+		r0 = rf(key, channelID, options)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: key, btype, name
 func (_m *Bridge) Create(key *ari.Key, btype string, name string) (*ari.BridgeHandle, error) {
 	ret := _m.Called(key, btype, name)
