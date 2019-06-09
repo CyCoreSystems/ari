@@ -4,9 +4,9 @@ SHELL = /usr/bin/env bash
 
 EVENT_SPEC_FILE = internal/eventgen/json/events-2.0.0.json
 
-all: dep check api clients contributors extensions
+all: dep check api clients contributors extensions test
 
-ci: check api clients extensions
+ci: check api clients extensions test
 
 contributors:
 	write_mailmap > CONTRIBUTORS
@@ -46,7 +46,7 @@ events:
 	@./bin/eventgen internal/eventgen/template.tmpl ${EVENT_SPEC_FILE} |goimports > events_gen.go
 	
 mock:
-	go get -u github.com/vektra/mockery/.../
+	go get -u github.com/vektra/mockery github.com/vektra/mockery/cmd/mockery
 	rm -Rf vendor/ client/arimocks
 	mockery -name . -outpkg arimocks -output client/arimocks
 
