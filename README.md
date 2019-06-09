@@ -8,11 +8,9 @@ This project also includes some convenience wrappers for various tasks, found in
 # Getting started
 
 This library maintains semver, and APIs between major releases **do** change.
-Therefore, always use a vendoring tool which supports semver, such as [dep](https://github.com/golang/dep). 
+We use `GO111MODULE`, so Go version 1.11 or later is required.
 
-Version `4.x.x` is the current version.  It offers a number of
-new features focused on facilitating ARI across large clusters and simplifies
-the API.
+Version `5.x.x` is the current version.
 
 There is also a NATS-based `ari-proxy` which is designed to work with this
 client library.  It can be found at

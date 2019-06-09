@@ -141,8 +141,8 @@ type Client struct {
 	// WSConfig describes the configuration for the websocket connection to Asterisk, from which events will be received.
 	WSConfig *websocket.Config
 
-	// Connected is a flag indicating whether the Client is connected to Asterisk
-	Connected bool
+	// connected is a flag indicating whether the Client is connected to Asterisk
+	connected bool
 
 	// Bus the event bus for the Client
 	bus ari.Bus
@@ -158,6 +158,11 @@ func (c *Client) ApplicationName() string {
 	return c.appName
 }
 
+// Connected indicates whether the websocket is connected
+func (c *Client) Connected() bool {
+	return c.connected
+}
+
 // Close shuts down the ARI client
 func (c *Client) Close() {
 	c.Bus().Close()
@@ -166,7 +171,7 @@ func (c *Client) Close() {
 		c.cancel()
 	}
 
-	c.Connected = false
+	c.connected = false
 }
 
 // Application returns the ARI Application accessors for this client
@@ -261,7 +266,7 @@ func (c *Client) Connect() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 
-	if c.Connected {
+	if c.connected {
 		cancel()
 		return errors.New("already connected")
 	}
@@ -291,7 +296,7 @@ func (c *Client) Connect() error {
 	wg.Add(1)
 	go c.listen(ctx, wg)
 	wg.Wait()
-	c.Connected = true
+	c.connected = true
 
 	return nil
 }
@@ -323,10 +328,12 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 		case err = <-c.wsRead(ws):
 			Logger.Error("read failure on websocket", "error", err)
+			c.connected = false
 			time.Sleep(10 * time.Millisecond)
 		}
 
 		// Make sure our websocket connection is closed before looping
+		c.connected = false
 		err = ws.Close()
 		if err != nil {
 			Logger.Debug("failed to close websocket", "error", err)
