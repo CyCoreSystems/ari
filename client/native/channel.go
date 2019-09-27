@@ -16,7 +16,7 @@ type Channel struct {
 
 // List lists the current channels and returns the list of channel handles
 func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
-	var channels = []struct {
+	channels := []struct {
 		ID string `json:"id"`
 	}{}
 
@@ -57,7 +57,7 @@ func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
 		return nil, errors.New("channel key not supplied")
 	}
 
-	var data = new(ari.ChannelData)
+	data := new(ari.ChannelData)
 	if err := c.client.get("/channels/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "channel", "%v", key.ID)
 	}
@@ -205,7 +205,6 @@ func (c *Channel) Unmute(key *ari.Key, dir ari.Direction) (err error) {
 
 // SendDTMF sends a string of digits and symbols to the channel
 func (c *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) error {
-
 	if opts == nil {
 		opts = &ari.DTMFOptions{}
 	}
@@ -262,6 +261,9 @@ func (c *Channel) StopSilence(key *ari.Key) error {
 // Play plays the given media URI on the channel, using the playbackID as
 // the identifier of the created ARI Playback entity
 func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	if playbackID == "" {
+		playbackID = rid.New(rid.Playback)
+	}
 	h, err := c.StagePlay(key, playbackID, mediaURI)
 	if err != nil {
 		return nil, err
@@ -271,6 +273,9 @@ func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.P
 
 // StagePlay stages a `Play` operation on the bridge
 func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	if playbackID == "" {
+		playbackID = rid.New(rid.Playback)
+	}
 	resp := make(map[string]interface{})
 	req := struct {
 		Media string `json:"media"`
@@ -296,7 +301,6 @@ func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) 
 
 // StageRecord stages a `Record` opreation
 func (c *Channel) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptions) (*ari.LiveRecordingHandle, error) {
-
 	if opts == nil {
 		opts = &ari.RecordingOptions{}
 	}

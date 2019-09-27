@@ -52,7 +52,7 @@ func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
 func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 	// native client ignores filter
 
-	var bridges = []struct {
+	bridges := []struct {
 		ID string `json:"id"`
 	}{}
 
@@ -73,7 +73,7 @@ func (b *Bridge) Data(key *ari.Key) (*ari.BridgeData, error) {
 		return nil, errors.New("bridge key not supplied")
 	}
 
-	var data = new(ari.BridgeData)
+	data := new(ari.BridgeData)
 	if err := b.client.get("/bridges/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "bridge", "%v", key.ID)
 	}
@@ -120,7 +120,7 @@ func (b *Bridge) RemoveChannel(key *ari.Key, channelID string) (err error) {
 		ChannelID: channelID,
 	}
 
-	//pass request
+	// pass request
 	err = b.client.post("/bridges/"+id+"/removeChannel", nil, &req)
 	return
 }
@@ -151,6 +151,9 @@ func (b *Bridge) StopMOH(key *ari.Key) error {
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
 func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+	if playbackID == "" {
+		playbackID = rid.New(rid.Playback)
+	}
 	h, err := b.StagePlay(key, playbackID, mediaURI)
 	if err != nil {
 		return nil, err
