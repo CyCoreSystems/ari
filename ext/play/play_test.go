@@ -29,7 +29,6 @@ type playStagedTest struct {
 }
 
 func (p *playStagedTest) Setup() {
-
 	p.playbackStarted = &arimocks.Subscription{}
 	p.playbackEnd = &arimocks.Subscription{}
 	p.playback = &arimocks.Playback{}
@@ -189,7 +188,7 @@ func testPlayStagedCancelAfterStart(t *testing.T) {
 
 	go func() {
 		p.playbackStartedChan <- &ari.PlaybackStarted{}
-		<-time.After(200 * time.Millisecond)
+		<-time.After(100 * time.Millisecond)
 		cancel()
 	}()
 
