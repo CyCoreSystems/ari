@@ -154,7 +154,7 @@ func XXXtestPlayStagedFinishBeforeStart(t *testing.T) {
 		t.Errorf("Unexpected error '%v'", err)
 	}
 	if st != Finished {
-		t.Errorf("Expected status '%v', got '%v'", st, Finished)
+		t.Errorf("Expected status '%v', got '%v'", Finished, st)
 	}
 }
 
@@ -175,7 +175,7 @@ func testPlayStagedCancel(t *testing.T) {
 		t.Errorf("Unexpected error '%v'", err)
 	}
 	if st != Cancelled {
-		t.Errorf("Expected status '%v', got '%v'", st, Cancelled)
+		t.Errorf("Expected status '%v', got '%v'", Cancelled, st)
 	}
 }
 
@@ -197,7 +197,7 @@ func testPlayStagedCancelAfterStart(t *testing.T) {
 		t.Errorf("Unexpected error '%v'", err)
 	}
 	if st != Cancelled {
-		t.Errorf("Expected status '%v', got '%v'", st, Cancelled)
+		t.Errorf("Expected status '%v', got '%v'", Cancelled, st)
 	}
 }
 

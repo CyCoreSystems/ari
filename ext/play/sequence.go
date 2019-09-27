@@ -63,6 +63,10 @@ func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duratio
 	finished := h.Subscribe(ari.Events.PlaybackFinished)
 	defer finished.Cancel()
 
+	if timeout == 0 {
+		timeout = DefaultPlaybackStartTimeout
+	}
+
 	err := h.Exec()
 	if err != nil {
 		return Failed, errors.Wrap(err, "failed to start playback")
