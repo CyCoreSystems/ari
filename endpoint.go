@@ -6,7 +6,7 @@ import (
 )
 
 // EndpointIDSeparator seperates the ID components of the endpoint ID
-const EndpointIDSeparator = "|" //TODO: confirm separator isn't terrible
+const EndpointIDSeparator = "|" // TODO: confirm separator isn't terrible
 
 // Endpoint represents a communication path to an Asterisk server
 // for endpoint resources
@@ -70,6 +70,7 @@ func FromEndpointID(id string) (tech string, resource string, err error) {
 
 	tech = items[0]
 	resource = items[1]
+
 	return
 }
 

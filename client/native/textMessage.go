@@ -19,8 +19,7 @@ func (t *TextMessage) Send(from, tech, resource, body string, vars map[string]st
 		vars = map[string]string{}
 	}
 
-	err := t.client.post("/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
-	return err
+	return t.client.post("/endpoints/"+tech+"/"+resource+"/sendMessage?"+v.Encode(), nil, &vars)
 }
 
 // SendByURI sends a text message to an endpoint by free-form URI (rather than tech/resource)
@@ -36,6 +35,5 @@ func (t *TextMessage) SendByURI(from, to, body string, vars map[string]string) e
 		vars = map[string]string{}
 	}
 
-	err := t.client.post("/endpoints/sendMessage?"+v.Encode(), nil, &vars)
-	return err
+	return t.client.post("/endpoints/sendMessage?"+v.Encode(), nil, &vars)
 }

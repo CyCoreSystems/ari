@@ -48,6 +48,7 @@ func Once(ctx context.Context, bus Bus, key *Key, eTypes ...string) <-chan Event
 		close(ret)
 		s.Cancel()
 	}()
+
 	return ret
 }
 
@@ -65,6 +66,7 @@ type NullSubscription struct {
 	mu     sync.RWMutex
 }
 
+// Events implements the Subscription interface
 func (n *NullSubscription) Events() <-chan Event {
 	if n.ch == nil {
 		n.mu.Lock()
@@ -72,19 +74,22 @@ func (n *NullSubscription) Events() <-chan Event {
 		n.ch = make(chan Event)
 		n.mu.Unlock()
 	}
+
 	return n.ch
 }
 
+// Cancel implements the Subscription interface
 func (n *NullSubscription) Cancel() {
 	if n.closed {
 		return
 	}
 
 	n.mu.Lock()
+
 	n.closed = true
 	if n.ch != nil {
 		close(n.ch)
 	}
-	n.mu.Unlock()
 
+	n.mu.Unlock()
 }

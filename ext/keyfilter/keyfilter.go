@@ -9,6 +9,7 @@ func Kind(kind string, in []*ari.Key) (out []*ari.Key) {
 			out = append(out, k)
 		}
 	}
+
 	return
 }
 

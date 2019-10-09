@@ -45,6 +45,7 @@ func CodeFromError(err error) int {
 	if reqerr, ok := err.(RequestError); ok {
 		return reqerr.Code()
 	}
+
 	return 0
 }
 
@@ -53,6 +54,7 @@ func maybeRequestError(resp *http.Response) RequestError {
 		// 2xx response: All good.
 		return nil
 	}
+
 	return &requestError{
 		text:       "Non-2XX response: " + resp.Status,
 		statusCode: resp.StatusCode,
@@ -62,14 +64,13 @@ func maybeRequestError(resp *http.Response) RequestError {
 // MissingParams is an error message response emitted when a request
 // does not contain required parameters
 type MissingParams struct {
-	//Message
+	// Message
 	Type   string   `json:"type"`
 	Params []string `json:"params"` // List of missing parameters which are required
 }
 
 // get calls the ARI server with a GET request
 func (c *Client) get(url string, resp interface{}) error {
-
 	url = c.Options.URL + url
 
 	return c.makeRequest("GET", url, resp, nil)
@@ -83,7 +84,6 @@ func (c *Client) post(requestURL string, resp interface{}, req interface{}) erro
 
 // put calls the ARI server with a PUT request.
 func (c *Client) put(url string, resp interface{}, req interface{}) error {
-
 	url = c.Options.URL + url
 
 	return c.makeRequest("PUT", url, resp, req)
@@ -91,7 +91,6 @@ func (c *Client) put(url string, resp interface{}, req interface{}) error {
 
 // del calls the ARI server with a DELETE request
 func (c *Client) del(url string, resp interface{}, req string) error {
-
 	url = c.Options.URL + url
 	if req != "" {
 		url = url + "?" + req
@@ -110,10 +109,11 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	}
 
 	var r *http.Request
-	r, err = http.NewRequest(method, url, reqBody)
-	if err != nil {
+
+	if r, err = http.NewRequest(method, url, reqBody); err != nil {
 		return errors.Wrap(err, "failed to create request")
 	}
+
 	r.Header.Set("Content-Type", "application/json")
 
 	if c.Options.Username != "" {
@@ -124,6 +124,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	if err != nil {
 		return errors.Wrap(err, "failed to make request")
 	}
+
 	defer ret.Body.Close() //nolint:errcheck
 
 	if resp != nil {
@@ -138,6 +139,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 
 func structToRequestBody(req interface{}) (io.Reader, error) {
 	buf := new(bytes.Buffer)
+
 	if req != nil {
 		if err := json.NewEncoder(buf).Encode(req); err != nil {
 			return nil, err

@@ -39,6 +39,7 @@ func (a *Asterisk) Config() ari.Config {
 // Equivalent to GET /asterisk/info
 func (a *Asterisk) Info(key *ari.Key) (*ari.AsteriskInfo, error) {
 	var m ari.AsteriskInfo
+
 	return &m, errors.Wrap(
 		a.client.get("/asterisk/info", &m),
 		"failed to get asterisk info",
@@ -61,10 +62,12 @@ func (a *AsteriskVariables) Get(key *ari.Key) (string, error) {
 	var m struct {
 		Value string `json:"value"`
 	}
+
 	err := a.client.get(fmt.Sprintf("/asterisk/variable?variable=%s", key.ID), &m)
 	if err != nil {
 		return "", errors.Wrapf(err, "Error getting asterisk variable '%v'", key.ID)
 	}
+
 	return m.Value, nil
 }
 

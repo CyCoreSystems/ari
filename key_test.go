@@ -3,7 +3,6 @@ package ari
 import "testing"
 
 func TestKeyMatch(t *testing.T) {
-
 	// two empty keys should match
 	ok := NewKey("", "").Match(NewKey("", ""))
 	if !ok {
@@ -42,7 +41,6 @@ func TestKeyMatch(t *testing.T) {
 }
 
 func TestKeysFilter(t *testing.T) {
-
 	keys := Keys{
 		NewKey(ApplicationKey, "app1"),
 		NewKey(ChannelKey, "ch1"),

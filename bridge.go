@@ -88,6 +88,7 @@ func (b *BridgeData) Channels() (list []*Key) {
 	for _, id := range b.ChannelIDs {
 		list = append(list, b.Key.New(ChannelKey, id))
 	}
+
 	return
 }
 
@@ -125,9 +126,11 @@ func (bh *BridgeHandle) Exec() error {
 		if bh.exec != nil {
 			err := bh.exec(bh)
 			bh.exec = nil
+
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -193,5 +196,6 @@ func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	if bh == nil {
 		return nil
 	}
+
 	return bh.b.Subscribe(bh.key, n...)
 }

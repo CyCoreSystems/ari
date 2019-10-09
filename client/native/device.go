@@ -18,7 +18,6 @@ func (ds *DeviceState) Get(key *ari.Key) *ari.DeviceStateHandle {
 
 // List lists the current devices and returns a list of handles
 func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
-
 	type device struct {
 		Name string `json:"name"`
 	}
@@ -28,8 +27,8 @@ func (ds *DeviceState) List(filter *ari.Key) (dx []*ari.Key, err error) {
 	}
 
 	var devices []device
-	err = ds.client.get("/deviceStates", &devices)
-	if err != nil {
+
+	if err = ds.client.get("/deviceStates", &devices); err != nil {
 		return nil, err
 	}
 
@@ -49,12 +48,13 @@ func (ds *DeviceState) Data(key *ari.Key) (*ari.DeviceStateData, error) {
 		return nil, errors.New("device key not supplied")
 	}
 
-	var data = new(ari.DeviceStateData)
+	data := new(ari.DeviceStateData)
 	if err := ds.client.get("/deviceStates/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "deviceState", "%v", key.ID)
 	}
 
 	data.Key = ds.client.stamp(key)
+
 	return data, nil
 }
 
@@ -63,6 +63,7 @@ func (ds *DeviceState) Update(key *ari.Key, state string) error {
 	req := map[string]string{
 		"deviceState": state,
 	}
+
 	return ds.client.put("/deviceStates/"+key.ID, nil, &req)
 }
 

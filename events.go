@@ -87,6 +87,7 @@ func (evt *ApplicationMoveFailed) Keys() (sx Keys) {
 	if id := evt.Channel.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	return
 }
 
@@ -100,9 +101,11 @@ func (evt *BridgeAttendedTransfer) Keys() (sx Keys) {
 	if id := evt.DestinationThreewayBridge.ID; id != "" {
 		sx = append(sx, evt.Key(BridgeKey, id))
 	}
+
 	if id := evt.TransfererFirstLegBridge.ID; id != "" {
 		sx = append(sx, evt.Key(BridgeKey, id))
 	}
+
 	if id := evt.TransfererSecondLegBridge.ID; id != "" {
 		sx = append(sx, evt.Key(BridgeKey, id))
 	}
@@ -110,33 +113,40 @@ func (evt *BridgeAttendedTransfer) Keys() (sx Keys) {
 	if id := evt.DestinationLinkFirstLeg.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.DestinationLinkSecondLeg.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.DestinationThreewayChannel.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.ReplaceChannel.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.Transferee.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.TransfererFirstLeg.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.TransfererSecondLeg.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.TransferTarget.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	return
 }
 
 // Keys returns the list of keys associated with this event
 func (evt *BridgeBlindTransfer) Keys() (sx Keys) {
-
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
@@ -147,15 +157,16 @@ func (evt *BridgeBlindTransfer) Keys() (sx Keys) {
 	if id := evt.ReplaceChannel.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	if id := evt.Transferee.ID; id != "" {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	return
 }
 
 // Keys returns the list of keys associated with this event
 func (evt *BridgeCreated) Keys() (sx Keys) {
-
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
@@ -164,12 +175,12 @@ func (evt *BridgeCreated) Keys() (sx Keys) {
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
 	}
+
 	return
 }
 
 // Keys returns the list of keys associated with this event
 func (evt *BridgeDestroyed) Keys() (sx Keys) {
-
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
@@ -180,7 +191,6 @@ func (evt *BridgeDestroyed) Keys() (sx Keys) {
 
 // Keys returns the list of keys associated with this event
 func (evt *BridgeMerged) Keys() (sx Keys) {
-
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
@@ -196,7 +206,6 @@ func (evt *BridgeMerged) Keys() (sx Keys) {
 
 // Keys returns the list of keys associated with this event
 func (evt *BridgeVideoSourceChanged) Keys() (sx Keys) {
-
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
@@ -245,10 +254,11 @@ func (evt *ChannelDtmfReceived) Keys() (sx Keys) {
 func (evt *ChannelEnteredBridge) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
+
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
-
 	}
+
 	return
 }
 
@@ -268,10 +278,11 @@ func (evt *ChannelHold) Keys() (sx Keys) {
 func (evt *ChannelLeftBridge) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
+
 	for _, id := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, id))
-
 	}
+
 	return
 }
 
@@ -303,6 +314,7 @@ func (evt *ChannelUnhold) Keys() (sx Keys) {
 func (evt *ChannelUserevent) Keys() (sx Keys) {
 	sx = append(sx, evt.Key(ChannelKey, evt.Channel.ID))
 	sx = append(sx, evt.Key(BridgeKey, evt.Bridge.ID))
+
 	for _, i := range evt.Bridge.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, i))
 	}
@@ -311,6 +323,7 @@ func (evt *ChannelUserevent) Keys() (sx Keys) {
 	for _, i := range evt.Endpoint.ChannelIDs {
 		sx = append(sx, evt.Key(ChannelKey, i))
 	}
+
 	return
 }
 
@@ -416,6 +429,7 @@ func (evt *StasisStart) Keys() (sx Keys) {
 	if evt.ReplaceChannel.ID != "" {
 		sx = append(sx, evt.Key(ChannelKey, evt.ReplaceChannel.ID))
 	}
+
 	return
 }
 
@@ -430,11 +444,13 @@ func (evt *TextMessageReceived) Keys() (sx Keys) {
 // Created marks the BridgeCreated event that it created an event
 func (evt *BridgeCreated) Created() (bridgeID string, related string) {
 	bridgeID = evt.Bridge.ID
+
 	if len(evt.Bridge.ChannelIDs) != 0 {
 		related = evt.Bridge.ChannelIDs[0]
 	} else {
 		related = evt.Bridge.Creator
 	}
+
 	return
 }
 
@@ -466,6 +482,7 @@ func (evt *BridgeDestroyed) GetBridgeIDs() (sx []string) {
 func (evt *BridgeMerged) GetBridgeIDs() (sx []string) {
 	sx = append(sx, evt.Bridge.ID)
 	sx = append(sx, evt.BridgeFrom.ID)
+
 	return
 }
 
@@ -497,6 +514,7 @@ func (evt *ChannelDtmfReceived) GetChannelIDs() (sx []string) {
 func (evt *ChannelEnteredBridge) Created() (o string, related string) {
 	o = evt.Bridge.ID
 	related = evt.Channel.ID
+
 	return
 }
 
@@ -587,9 +605,11 @@ func (evt *ContactStatusChange) GetEndpointIDs() (sx []string) {
 // GetChannelIDs gets the bridge IDs for the event
 func (evt *Dial) GetChannelIDs() (sx []string) {
 	sx = append(sx, evt.Caller.ID)
+
 	if id := evt.Forwarded.ID; id != "" {
 		sx = append(sx, id)
 	}
+
 	if id := evt.Peer.ID; id != "" {
 		sx = append(sx, id)
 	}
@@ -629,6 +649,7 @@ func (evt *PlaybackContinuing) GetChannelIDs() (sx []string) {
 	}
 
 	sx = append(sx, s)
+
 	return
 }
 
@@ -638,7 +659,9 @@ func (evt *PlaybackContinuing) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -654,7 +677,9 @@ func (evt *PlaybackFinished) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -664,7 +689,9 @@ func (evt *PlaybackFinished) GetChannelIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -687,7 +714,9 @@ func (evt *PlaybackStarted) GetChannelIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -697,7 +726,9 @@ func (evt *PlaybackStarted) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -707,6 +738,7 @@ func (evt *PlaybackStarted) GetBridgeIDs() (sx []string) {
 func (evt *PlaybackStarted) Created() (playbackID, otherID string) {
 	playbackID = evt.Playback.ID
 	items := strings.Split(evt.Playback.TargetURI, ":")
+
 	if len(items) == 1 {
 		otherID = items[0]
 	} else {
@@ -733,7 +765,9 @@ func (evt *RecordingFailed) GetChannelIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -743,7 +777,9 @@ func (evt *RecordingStarted) GetChannelIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -753,7 +789,9 @@ func (evt *RecordingFinished) GetChannelIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -763,7 +801,9 @@ func (evt *RecordingFailed) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -773,7 +813,9 @@ func (evt *RecordingStarted) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
@@ -783,13 +825,16 @@ func (evt *RecordingFinished) GetBridgeIDs() (sx []string) {
 	if s == "" {
 		return
 	}
+
 	sx = append(sx, s)
+
 	return
 }
 
 // GetRecordingIDs gets the recording IDs for the event
 func (evt *RecordingFinished) GetRecordingIDs() (sx []string) {
 	sx = append(sx, evt.Recording.ID())
+
 	return
 }
 
@@ -801,12 +846,14 @@ func (evt *RecordingFinished) Destroyed() string {
 // GetRecordingIDs gets the recording IDs for the event
 func (evt *RecordingStarted) GetRecordingIDs() (sx []string) {
 	sx = append(sx, evt.Recording.ID())
+
 	return
 }
 
 // GetChannelIDs gets the channel IDs for the event
 func (evt *StasisEnd) GetChannelIDs() (sx []string) {
 	sx = append(sx, evt.Channel.ID)
+
 	return
 }
 
@@ -816,12 +863,14 @@ func (evt *StasisStart) GetChannelIDs() (sx []string) {
 	if id := evt.ReplaceChannel.ID; id != "" {
 		sx = append(sx, id)
 	}
+
 	return
 }
 
 // GetEndpointIDs gets the bridge IDs for the event
 func (evt *TextMessageReceived) GetEndpointIDs() (sx []string) {
 	sx = append(sx, evt.Endpoint.ID())
+
 	return
 }
 
@@ -830,13 +879,14 @@ func resolveTarget(typ string, targetURI string) (s string) {
 	if items[0] != typ {
 		return
 	}
+
 	if len(items) < 2 {
 		return
 	}
 
 	s = strings.Join(items[1:], ":")
-	return
 
+	return
 }
 
 // Header represents a set of key-value pairs to store transport-related metadata on Events
@@ -862,6 +912,7 @@ func (h Header) Get(key string) string {
 	if len(v) == 0 {
 		return ""
 	}
+
 	return v[0]
 }
 

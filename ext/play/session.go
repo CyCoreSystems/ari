@@ -94,6 +94,7 @@ func errorSession(err error) *nilSession {
 
 	s.res.Error = err
 	s.res.Status = Failed
+
 	return s
 }
 
@@ -139,6 +140,7 @@ func (s *playSession) play(ctx context.Context, p ari.Player) {
 
 		// Play the sequence of audio URIs
 		s.playSequence(ctx, p)
+
 		if s.result.Error != nil {
 			return
 		}
@@ -210,8 +212,7 @@ func (s *playSession) waitDigits(ctx context.Context) {
 					// If invalid, return without waiting
 					// for any more digits
 					return
-				default:
-					// Incomplete means we should wait for more
+				default: // Incomplete means we should wait for more
 				}
 			}
 		}
@@ -254,6 +255,7 @@ func (s *playSession) watchMaxTime(ctx context.Context) {
 		s.Stop()
 	}
 }
+
 func (s *playSession) listenDTMF(ctx context.Context, p ari.Player) {
 	sub := p.Subscribe(ari.Events.ChannelDtmfReceived)
 	defer sub.Cancel()
@@ -266,10 +268,12 @@ func (s *playSession) listenDTMF(ctx context.Context, p ari.Player) {
 			if e == nil {
 				return
 			}
+
 			v, ok := e.(*ari.ChannelDtmfReceived)
 			if !ok {
 				continue
 			}
+
 			s.result.mu.Lock()
 			s.result.DTMF += v.Digit
 			s.result.mu.Unlock()
@@ -287,6 +291,7 @@ func (s *playSession) listenDTMF(ctx context.Context, p ari.Player) {
 		}
 	}
 }
+
 func (s *playSession) Add(list ...string) {
 	for _, i := range list {
 		s.o.uriList.Add(i)

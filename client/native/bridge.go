@@ -19,6 +19,7 @@ func (b *Bridge) Create(key *ari.Key, t string, name string) (bh *ari.BridgeHand
 	if err != nil {
 		return nil, err
 	}
+
 	return bh, bh.Exec()
 }
 
@@ -51,18 +52,19 @@ func (b *Bridge) Get(key *ari.Key) *ari.BridgeHandle {
 // List lists the current bridges and returns a list of lazy handles
 func (b *Bridge) List(filter *ari.Key) (bx []*ari.Key, err error) {
 	// native client ignores filter
-
 	bridges := []struct {
 		ID string `json:"id"`
 	}{}
 
 	err = b.client.get("/bridges", &bridges)
+
 	for _, i := range bridges {
 		k := b.client.stamp(ari.NewKey(ari.BridgeKey, i.ID))
 		if filter.Match(k) {
 			bx = append(bx, k)
 		}
 	}
+
 	return
 }
 
@@ -106,6 +108,7 @@ func (b *Bridge) AddChannelWithOptions(key *ari.Key, channelID string, options *
 		Mute:       options.Mute,
 		Role:       options.Role,
 	}
+
 	return b.client.post("/bridges/"+key.ID+"/addChannel", nil, &req)
 }
 
@@ -122,6 +125,7 @@ func (b *Bridge) RemoveChannel(key *ari.Key, channelID string) (err error) {
 
 	// pass request
 	err = b.client.post("/bridges/"+id+"/removeChannel", nil, &req)
+
 	return
 }
 
@@ -140,6 +144,7 @@ func (b *Bridge) MOH(key *ari.Key, class string) error {
 	}{
 		Class: class,
 	}
+
 	return b.client.post("/bridges/"+key.ID+"/moh", nil, &req)
 }
 
@@ -154,10 +159,12 @@ func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.Pl
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
+
 	h, err := b.StagePlay(key, playbackID, mediaURI)
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 
@@ -187,6 +194,7 @@ func (b *Bridge) Record(key *ari.Key, name string, opts *ari.RecordingOptions) (
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 

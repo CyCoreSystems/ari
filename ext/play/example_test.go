@@ -70,8 +70,7 @@ func ExamplePrompt() {
 
 	if res.MatchResult == Complete {
 		fmt.Println("Got valid, terminated DTMF entry", res.DTMF)
-		// hash is automatically trimmed from res.DTMF
-	}
+	} // hash is automatically trimmed from res.DTMF
 }
 
 func ExamplePrompt_custom() {

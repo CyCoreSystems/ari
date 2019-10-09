@@ -25,7 +25,6 @@ type sequenceTest struct {
 }
 
 func (p *sequenceTest) Setup(handle string) {
-
 	p.playbackStarted = &arimocks.Subscription{}
 	p.playbackEnd = &arimocks.Subscription{}
 	p.playback = &arimocks.Playback{}
@@ -56,6 +55,7 @@ func TestSequence(t *testing.T) {
 
 func testSequenceNoItems(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -68,13 +68,14 @@ func testSequenceNoItems(t *testing.T) {
 
 func testSequenceSomeItemsTimeoutStart(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var s sequenceTest
+	var s, s2 sequenceTest
+
 	s.Setup("ph1")
 
-	var s2 sequenceTest
 	s2.Setup("ph2")
 
 	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
@@ -97,6 +98,7 @@ func testSequenceSomeItemsTimeoutStart(t *testing.T) {
 	if err := seq.s.result.Error; err == nil || err.Error() != "failure in playback: timeout waiting for playback to start" {
 		t.Errorf("Expected error: %s, got %v", "failure in playback: timeout waiting for playback to start", err)
 	}
+
 	if seq.s.result.Status != Timeout {
 		t.Errorf("Expected status '%v', got '%v'", Timeout, seq.s.result.Status)
 	}
@@ -104,13 +106,14 @@ func testSequenceSomeItemsTimeoutStart(t *testing.T) {
 
 func testSequenceSomeItems(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var s sequenceTest
+	var s, s2 sequenceTest
+
 	s.Setup("ph1")
 
-	var s2 sequenceTest
 	s2.Setup("ph2")
 
 	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
@@ -144,6 +147,7 @@ func testSequenceSomeItems(t *testing.T) {
 	if seq.s.result.Error != nil {
 		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
+
 	if seq.s.result.Status != Finished {
 		t.Errorf("Expected status '%v', got '%v'", Finished, seq.s.result.Status)
 	}
@@ -151,13 +155,14 @@ func testSequenceSomeItems(t *testing.T) {
 
 func testSequenceSomeItemsCancelEarly(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var s sequenceTest
+	var s, s2 sequenceTest
+
 	s.Setup("ph1")
 
-	var s2 sequenceTest
 	s2.Setup("ph2")
 
 	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
@@ -182,7 +187,6 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 		<-time.After(20 * time.Millisecond)
 
 		cancel()
-
 	}()
 
 	seq.Play(ctx, player)
@@ -193,6 +197,7 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 	if seq.s.result.Error != nil {
 		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
+
 	if seq.s.result.Status != Cancelled {
 		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.s.result.Status)
 	}
@@ -200,13 +205,14 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 
 func testSequenceSomeItemsStopEarly(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var s sequenceTest
+	var s, s2 sequenceTest
+
 	s.Setup("ph1")
 
-	var s2 sequenceTest
 	s2.Setup("ph2")
 
 	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
@@ -231,7 +237,6 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 		<-time.After(20 * time.Millisecond)
 
 		seq.Stop()
-
 	}()
 
 	seq.Play(ctx, player)
@@ -242,6 +247,7 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 	if seq.s.result.Error != nil {
 		t.Errorf("Unexpected error: %v", seq.s.result.Error)
 	}
+
 	if seq.s.result.Status != Cancelled {
 		t.Errorf("Expected status '%v', got '%v'", Cancelled, seq.s.result.Status)
 	}
@@ -249,13 +255,14 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 
 func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 	player := &arimocks.Player{}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var s sequenceTest
+	var s, s2 sequenceTest
+
 	s.Setup("ph1")
 
-	var s2 sequenceTest
 	s2.Setup("ph2")
 
 	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
@@ -284,6 +291,7 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 	if err := seq.s.result.Error; err == nil || err.Error() != "failed to stage playback: unknown error" {
 		t.Errorf("Expected error: %v, got %v", "failed to stage playback: unknown error", err)
 	}
+
 	if seq.s.result.Status != Failed {
 		t.Errorf("Expected status '%v', got '%v'", Failed, seq.s.result.Status)
 	}

@@ -23,12 +23,13 @@ func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error
 		return nil, errors.New("liveRecording key not supplied")
 	}
 
-	var data = new(ari.LiveRecordingData)
+	data := new(ari.LiveRecordingData)
 	if err := lr.client.get("/recordings/live/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "liveRecording", "%v", key.ID)
 	}
 
 	data.Key = lr.client.stamp(key)
+
 	return data, nil
 }
 

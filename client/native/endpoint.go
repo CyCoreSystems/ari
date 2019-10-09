@@ -26,8 +26,8 @@ func (e *Endpoint) List(filter *ari.Key) (ex []*ari.Key, err error) {
 	if filter == nil {
 		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
-	err = e.client.get("/endpoints", &endpoints)
-	if err != nil {
+
+	if err = e.client.get("/endpoints", &endpoints); err != nil {
 		return nil, err
 	}
 
@@ -52,8 +52,8 @@ func (e *Endpoint) ListByTech(tech string, filter *ari.Key) (ex []*ari.Key, err 
 	if filter == nil {
 		filter = ari.NodeKey(e.client.ApplicationName(), e.client.node)
 	}
-	err = e.client.get("/endpoints/"+tech, &endpoints)
-	if err != nil {
+
+	if err = e.client.get("/endpoints/"+tech, &endpoints); err != nil {
 		return nil, err
 	}
 
@@ -72,15 +72,17 @@ func (e *Endpoint) Data(key *ari.Key) (*ari.EndpointData, error) {
 	if key == nil || key.ID == "" {
 		return nil, errors.New("endpoint key not supplied")
 	}
+
 	if key.Kind != ari.EndpointKey {
 		return nil, errors.New("wrong key type")
 	}
 
-	var data = new(ari.EndpointData)
+	data := new(ari.EndpointData)
 	if err := e.client.get("/endpoints/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "endpoint", "%s", key.ID)
 	}
 
 	data.Key = e.client.stamp(key)
+
 	return data, nil
 }

@@ -25,6 +25,7 @@ func (c *Channel) List(filter *ari.Key) (cx []*ari.Key, err error) {
 	}
 
 	err = c.client.get("/channels", &channels)
+
 	for _, i := range channels {
 		k := c.client.stamp(ari.NewKey(ari.ChannelKey, i.ID))
 		if filter.Match(k) {
@@ -40,6 +41,7 @@ func (c *Channel) Hangup(key *ari.Key, reason string) error {
 	if key == nil || key.ID == "" {
 		return errors.New("channel key not supplied")
 	}
+
 	if reason == "" {
 		reason = "normal"
 	}
@@ -48,6 +50,7 @@ func (c *Channel) Hangup(key *ari.Key, reason string) error {
 	if reason != "" {
 		req = fmt.Sprintf("reason=%s", reason)
 	}
+
 	return c.client.del("/channels/"+key.ID, nil, req)
 }
 
@@ -61,6 +64,7 @@ func (c *Channel) Data(key *ari.Key) (*ari.ChannelData, error) {
 	if err := c.client.get("/channels/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "channel", "%v", key.ID)
 	}
+
 	data.Key = c.client.stamp(key)
 
 	return data, nil
@@ -81,6 +85,7 @@ func (c *Channel) Originate(referenceKey *ari.Key, req ari.OriginateRequest) (*a
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 
@@ -142,6 +147,7 @@ func (c *Channel) Continue(key *ari.Key, context, extension string, priority int
 		Extension: extension,
 		Priority:  priority,
 	}
+
 	return c.client.post("/channels/"+key.ID+"/continue", nil, &req)
 }
 
@@ -191,6 +197,7 @@ func (c *Channel) Mute(key *ari.Key, dir ari.Direction) error {
 	}{
 		Direction: dir,
 	}
+
 	return c.client.post("/channels/"+key.ID+"/mute", nil, &req)
 }
 
@@ -199,7 +206,9 @@ func (c *Channel) Unmute(key *ari.Key, dir ari.Direction) (err error) {
 	if dir == "" {
 		dir = ari.DirectionBoth
 	}
+
 	req := fmt.Sprintf("direction=%s", dir)
+
 	return c.client.del("/channels/"+key.ID+"/mute", nil, req)
 }
 
@@ -212,6 +221,7 @@ func (c *Channel) SendDTMF(key *ari.Key, dtmf string, opts *ari.DTMFOptions) err
 	if opts.Duration < 1 {
 		opts.Duration = 100 // ARI default, for documenation
 	}
+
 	if opts.Between < 1 {
 		opts.Between = 100 // ARI default, for documentation
 	}
@@ -240,6 +250,7 @@ func (c *Channel) MOH(key *ari.Key, class string) error {
 	}{
 		Class: class,
 	}
+
 	return c.client.post("/channels/"+key.ID+"/moh", nil, &req)
 }
 
@@ -264,10 +275,12 @@ func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.P
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
+
 	h, err := c.StagePlay(key, playbackID, mediaURI)
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 
@@ -276,7 +289,9 @@ func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
+
 	resp := make(map[string]interface{})
+
 	req := struct {
 		Media string `json:"media"`
 	}{
@@ -284,6 +299,7 @@ func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*
 	}
 
 	playbackKey := c.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
+
 	return ari.NewPlaybackHandle(playbackKey, c.client.Playback(), func(pb *ari.PlaybackHandle) error {
 		return c.client.post("/channels/"+key.ID+"/play/"+playbackID, &resp, &req)
 	}), nil
@@ -296,6 +312,7 @@ func (c *Channel) Record(key *ari.Key, name string, opts *ari.RecordingOptions) 
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 
@@ -337,6 +354,7 @@ func (c *Channel) Snoop(key *ari.Key, snoopID string, opts *ari.SnoopOptions) (*
 	if err != nil {
 		return nil, err
 	}
+
 	return h, h.Exec()
 }
 
@@ -345,6 +363,7 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 	if opts == nil {
 		opts = &ari.SnoopOptions{App: c.client.ApplicationName()}
 	}
+
 	if snoopID == "" {
 		snoopID = rid.New(rid.Snoop)
 	}
@@ -385,6 +404,7 @@ func (c *Channel) GetVariable(key *ari.Key, name string) (string, error) {
 	}
 
 	err := c.client.get(fmt.Sprintf("/channels/%s/variable?variable=%s", key.ID, name), &m)
+
 	return m.Value, err
 }
 

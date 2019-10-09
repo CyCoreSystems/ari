@@ -22,9 +22,11 @@ func init() {
 // given period of silence.
 func WaitURI(t time.Duration) []string {
 	q := []string{}
+
 	for i := time.Duration(0); i <= t; i += time.Second {
 		q = append(q, "sound:silence/1")
 	}
+
 	return q
 }
 
@@ -38,7 +40,6 @@ func NumberURI(number int) string {
 // play the given digits.
 func DigitsURI(digits string, hash string) []string {
 	// TODO: Strip anything which is not a digit or #
-
 	if strings.Contains(digits, "#") && hash != "" {
 		hash = "sound:char/" + hash
 
@@ -54,6 +55,7 @@ func DigitsURI(digits string, hash string) []string {
 				newDigits = append(newDigits, hash)
 			}
 		}
+
 		return newDigits
 	}
 
@@ -73,6 +75,7 @@ func DigitsURI(digits string, hash string) []string {
 				newDigits = append(newDigits, star)
 			}
 		}
+
 		return newDigits
 	}
 
@@ -80,6 +83,7 @@ func DigitsURI(digits string, hash string) []string {
 	if len(digits) < 1 {
 		return []string{}
 	}
+
 	return []string{"digits:" + digits}
 }
 
@@ -97,6 +101,7 @@ func DateTimeURI(t time.Time) (ret []string) {
 	// Convert to 12-hour time
 	pm := false
 	hour := t.Hour()
+
 	switch {
 	case hour == 0:
 		hour = 12
@@ -107,10 +112,12 @@ func DateTimeURI(t time.Time) (ret []string) {
 		pm = true
 	default:
 	}
+
 	ret = append(ret, NumberURI(hour))
 
 	// Humanize the minutes
 	minute := t.Minute()
+
 	switch {
 	case minute == 0:
 		ret = append(ret, "sound:digits/oclock")

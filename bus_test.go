@@ -3,7 +3,6 @@ package ari
 import "testing"
 
 func TestNullSubscription(t *testing.T) {
-
 	sub := NewNullSubscription()
 
 	select {
@@ -28,5 +27,4 @@ func TestNullSubscription(t *testing.T) {
 	default:
 		t.Error("NullSubscription failed to close")
 	}
-
 }

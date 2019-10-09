@@ -59,9 +59,11 @@ func TestDateTimeMarshal(t *testing.T) {
 		}
 	}
 }
+
 func TestDateTimeUnmarshal(t *testing.T) {
 	for _, tx := range dtUnmarshalTests {
 		var out dtTest
+
 		ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError)
 		if ret != "" {
 			t.Errorf(ret)
@@ -77,11 +79,11 @@ func TestDurationSecsMarshal(t *testing.T) {
 		}
 	}
 }
+
 func TestDurationSecsUnmarshal(t *testing.T) {
 	for _, tx := range dsUnmarshalTests {
 		var out dsTest
-		ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError)
-		if ret != "" {
+		if ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError); ret != "" {
 			t.Errorf(ret)
 		}
 	}

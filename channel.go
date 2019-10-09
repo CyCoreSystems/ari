@@ -160,8 +160,8 @@ func (d *ChannelData) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON decodes ChannelData from JSON
 func (d *ChannelData) UnmarshalJSON(data []byte) error {
 	in := new(channelDataJSON)
-	err := json.Unmarshal(data, in)
-	if err != nil {
+
+	if err := json.Unmarshal(data, in); err != nil {
 		return err
 	}
 
@@ -182,6 +182,7 @@ func (d *ChannelData) UnmarshalJSON(data []byte) error {
 		Dialplan:     in.Dialplan,
 		ChannelVars:  in.ChannelVars,
 	}
+
 	return nil
 }
 
@@ -266,6 +267,7 @@ func (ch *ChannelHandle) Exec() (err error) {
 			ch.exec = nil
 		}
 	}
+
 	return err
 }
 
@@ -340,6 +342,7 @@ func (ch *ChannelHandle) IsAnswered() (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to get updated channel")
 	}
+
 	return strings.ToLower(updated.State) == "up", nil
 }
 
@@ -437,6 +440,7 @@ func (ch *ChannelHandle) Originate(req OriginateRequest) (*ChannelHandle, error)
 	if req.Originator == "" {
 		req.Originator = ch.ID()
 	}
+
 	return ch.c.Originate(ch.key, req)
 }
 
@@ -503,6 +507,7 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 	if ch == nil {
 		return nil
 	}
+
 	return ch.c.Subscribe(ch.key, n...)
 }
 

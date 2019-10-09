@@ -7,7 +7,6 @@ import (
 )
 
 func TestGeneric(t *testing.T) {
-
 	a := New("")
 	t.Logf("Generated ID: (%s)", a)
 
@@ -18,7 +17,6 @@ func TestGeneric(t *testing.T) {
 		t.Errorf("consecutive IDs do not differ (%s) (%s)", a, b)
 		return
 	}
-
 }
 
 func TestKind(t *testing.T) {
@@ -27,7 +25,6 @@ func TestKind(t *testing.T) {
 
 	if !strings.HasSuffix(a, "-ch") {
 		t.Errorf("failed to apply proper resource suffix (%s); should have be -ch", a)
-
 	}
 }
 
@@ -37,7 +34,6 @@ func TestKindClipping(t *testing.T) {
 
 	if !strings.HasSuffix(a, "-he") {
 		t.Errorf("failed to apply proper resource suffix (%s); should have been -he", a)
-
 	}
 }
 
@@ -49,11 +45,13 @@ func TestTimestamp(t *testing.T) {
 		t.Error("failed to parse channel resource ID", err)
 		return
 	}
+
 	t.Log("parsed timestamp", ts.String())
 
 	if time.Since(ts) > time.Second {
 		t.Error("timestamp is older than a second")
 	}
+
 	if time.Until(ts) > time.Second {
 		t.Error("timestamp is in the future")
 	}
@@ -67,11 +65,13 @@ func TestTimestampGeneric(t *testing.T) {
 		t.Error("failed to parse channel resource ID", err)
 		return
 	}
+
 	t.Log("parsed timestamp", ts.String())
 
 	if time.Since(ts) > time.Second {
 		t.Error("timestamp is older than a second")
 	}
+
 	if time.Until(ts) > time.Second {
 		t.Error("timestamp is in the future")
 	}

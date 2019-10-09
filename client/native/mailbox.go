@@ -19,7 +19,6 @@ func (m *Mailbox) Get(key *ari.Key) *ari.MailboxHandle {
 
 // List lists the mailboxes and returns a list of handles
 func (m *Mailbox) List(filter *ari.Key) (mx []*ari.Key, err error) {
-
 	mailboxes := []struct {
 		Name string `json:"name"`
 	}{}
@@ -29,6 +28,7 @@ func (m *Mailbox) List(filter *ari.Key) (mx []*ari.Key, err error) {
 	}
 
 	err = m.client.get("/mailboxes", &mailboxes)
+
 	for _, i := range mailboxes {
 		k := m.client.stamp(ari.NewKey(ari.MailboxKey, i.Name))
 		if filter.Match(k) {
@@ -45,12 +45,13 @@ func (m *Mailbox) Data(key *ari.Key) (*ari.MailboxData, error) {
 		return nil, errors.New("mailbox key not supplied")
 	}
 
-	var data = new(ari.MailboxData)
+	data := new(ari.MailboxData)
 	if err := m.client.get("/mailboxes/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "mailbox", "%v", key.ID)
 	}
 
 	data.Key = m.client.stamp(key)
+
 	return data, nil
 }
 
@@ -60,6 +61,7 @@ func (m *Mailbox) Update(key *ari.Key, oldMessages int, newMessages int) error {
 		"oldMessages": strconv.Itoa(oldMessages),
 		"newMessages": strconv.Itoa(newMessages),
 	}
+
 	return m.client.put("/mailboxes/"+key.ID, nil, &req)
 }
 

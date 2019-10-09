@@ -28,13 +28,13 @@ const (
 
 // New returns a new generic resource ID
 func New(kind string) string {
-
 	id := strings.ToLower(ulid.MustNew(ulid.Now(), rand.Reader).String())
 
 	if kind != "" {
 		if len(kind) > 2 {
 			kind = kind[:2]
 		}
+
 		id += "-" + kind
 	}
 

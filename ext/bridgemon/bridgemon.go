@@ -23,7 +23,6 @@ type Monitor struct {
 
 // New returns a new bridge monitor
 func New(h *ari.BridgeHandle) *Monitor {
-
 	sub := h.Subscribe(ari.Events.BridgeDestroyed, ari.Events.ChannelEnteredBridge, ari.Events.ChannelLeftBridge)
 
 	m := &Monitor{
@@ -43,7 +42,6 @@ func New(h *ari.BridgeHandle) *Monitor {
 }
 
 func (m *Monitor) monitor() {
-
 	defer m.Close()
 
 	for v := range m.sub.Events() {
@@ -57,23 +55,26 @@ func (m *Monitor) monitor() {
 			if !ok {
 				continue
 			}
+
 			m.updateData(&e.Bridge)
+
 			return // bridge is destroyed; there will be no more events
 		case ari.Events.ChannelEnteredBridge:
 			e, ok := v.(*ari.ChannelEnteredBridge)
 			if !ok {
 				continue
 			}
+
 			m.updateData(&e.Bridge)
 		case ari.Events.ChannelLeftBridge:
 			e, ok := v.(*ari.ChannelLeftBridge)
 			if !ok {
 				continue
 			}
+
 			m.updateData(&e.Bridge)
 		}
 	}
-
 }
 
 func (m *Monitor) updateData(data *ari.BridgeData) {
@@ -100,7 +101,6 @@ func (m *Monitor) updateData(data *ari.BridgeData) {
 		}
 	}
 	m.watcherMu.Unlock()
-
 }
 
 // Data returns the current bridge data
@@ -117,6 +117,7 @@ func (m *Monitor) Handle() *ari.BridgeHandle {
 	if m == nil {
 		return nil
 	}
+
 	return m.h
 }
 
@@ -125,6 +126,7 @@ func (m *Monitor) Key() *ari.Key {
 	if m == nil || m.h == nil {
 		return nil
 	}
+
 	return m.h.Key()
 }
 
@@ -139,6 +141,7 @@ func (m *Monitor) Watch() <-chan *ari.BridgeData {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	if m.closed {
 		close(ch)
 		return ch
@@ -167,9 +170,11 @@ func (m *Monitor) Close() {
 	m.mu.Unlock()
 
 	m.watcherMu.Lock()
+
 	for _, w := range m.watchers {
 		close(w)
 	}
+
 	m.watchers = nil
 	m.watcherMu.Unlock()
 }

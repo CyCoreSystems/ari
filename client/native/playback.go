@@ -23,12 +23,13 @@ func (a *Playback) Data(key *ari.Key) (*ari.PlaybackData, error) {
 		return nil, errors.New("playback key not supplied")
 	}
 
-	var data = new(ari.PlaybackData)
+	data := new(ari.PlaybackData)
 	if err := a.client.get("/playbacks/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "playback", "%v", key.ID)
 	}
 
 	data.Key = a.client.stamp(key)
+
 	return data, nil
 }
 
@@ -44,6 +45,7 @@ func (a *Playback) Control(key *ari.Key, op string) error {
 	}{
 		Operation: op,
 	}
+
 	return a.client.post("/playbacks/"+key.ID+"/control", nil, &req)
 }
 

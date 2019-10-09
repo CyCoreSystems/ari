@@ -17,16 +17,14 @@ type DateTime time.Time
 
 // MarshalJSON converts the given date object to ARIs date format
 func (dt DateTime) MarshalJSON() ([]byte, error) {
-	t := time.Time(dt)
-	a := []byte("\"" + t.Format(DateFormat) + "\"")
+	a := []byte("\"" + time.Time(dt).Format(DateFormat) + "\"")
 	return a, nil
 }
 
 // UnmarshalJSON parses the given date per ARIs date format
 func (dt *DateTime) UnmarshalJSON(data []byte) error {
 	var stringDate string
-	err := json.Unmarshal(data, &stringDate)
-	if err != nil {
+	if err := json.Unmarshal(data, &stringDate); err != nil {
 		return err
 	}
 
@@ -34,7 +32,9 @@ func (dt *DateTime) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	*dt = (DateTime)(t)
+
 	return nil
 }
 
@@ -61,5 +61,6 @@ func (ds *DurationSec) UnmarshalJSON(data []byte) error {
 	}
 
 	*ds = DurationSec(time.Duration(s) * time.Second)
+
 	return nil
 }

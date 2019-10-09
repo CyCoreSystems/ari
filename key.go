@@ -55,6 +55,7 @@ func (kx Keys) Filter(mx ...Matcher) (ret Keys) {
 			}
 		}
 	}
+
 	return
 }
 
@@ -65,6 +66,7 @@ func (kx Keys) Without(m Matcher) (ret Keys) {
 			ret = append(ret, k)
 		}
 	}
+
 	return
 }
 
@@ -73,6 +75,7 @@ func (kx Keys) First() *Key {
 	if len(kx) < 1 {
 		return nil
 	}
+
 	return kx[0]
 }
 
@@ -140,6 +143,7 @@ func WithLocationOf(ref *Key) KeyOptionFunc {
 			key.Dialog = ref.Dialog
 			key.App = ref.App
 		}
+
 		return key
 	}
 }
@@ -200,15 +204,19 @@ func (k *Key) Match(o *Key) bool {
 	if k.App != "" && o.App != "" && k.App != o.App {
 		return false
 	}
+
 	if k.Dialog != "" && o.Dialog != "" && k.Dialog != o.Dialog {
 		return false
 	}
+
 	if k.Node != "" && o.Node != "" && k.Node != o.Node {
 		return false
 	}
+
 	if k.Kind != "" && o.Kind != "" && k.Kind != o.Kind {
 		return false
 	}
+
 	if k.ID != "" && o.ID != "" && k.ID != o.ID {
 		return false
 	}

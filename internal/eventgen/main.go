@@ -81,6 +81,7 @@ func main() {
 		log.Fatalf("Usage: %s <template> <specFile.json>\n", os.Args[0])
 		return
 	}
+
 	templateFile := os.Args[1]
 	specFile := os.Args[2]
 
@@ -95,6 +96,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("failed to open event definition file", err)
 	}
+
 	defer input.Close()
 
 	// parse data
@@ -113,6 +115,7 @@ func main() {
 	if !ok {
 		log.Fatalln("failed to get models")
 	}
+
 	if len(models) < 1 {
 		log.Fatalln("no models found")
 	}
@@ -126,6 +129,7 @@ func main() {
 		}
 
 		var pl propList
+
 		props := model["properties"].(map[string]interface{})
 		for pkey, p := range props {
 			propm := p.(map[string]interface{})
@@ -143,8 +147,9 @@ func main() {
 				t = propm["type"].(string)
 			}
 
-			items := strings.Split(pkey, "_")
 			var name string
+
+			items := strings.Split(pkey, "_")
 			for _, x := range items {
 				name += strings.Title(x)
 			}

@@ -72,6 +72,7 @@ func Connect(opts *Options) (ari.Client, error) {
 	if err != nil {
 		return c, err
 	}
+
 	c.node = info.SystemInfo.EntityID
 
 	return c, err
@@ -108,6 +109,7 @@ func New(opts *Options) *Client {
 			opts.WebsocketURL = "ws://localhost:8088/ari/events"
 		}
 	}
+
 	if opts.WebsocketOrigin == "" {
 		if os.Getenv("ARI_WSORIGIN") != "" {
 			opts.WebsocketOrigin = os.Getenv("ARI_WSORIGIN")
@@ -119,6 +121,7 @@ func New(opts *Options) *Client {
 	if opts.Username == "" {
 		opts.Username = os.Getenv("ARI_USERNAME")
 	}
+
 	if opts.Password == "" {
 		opts.Password = os.Getenv("ARI_PASSWORD")
 	}
@@ -244,6 +247,7 @@ func (c *Client) createWSConfig() (err error) {
 	v := url.Values{}
 
 	v.Set("app", c.Options.Application)
+
 	if c.Options.SubscribeAll {
 		v.Set("subscribeAll", "true")
 	}
@@ -258,6 +262,7 @@ func (c *Client) createWSConfig() (err error) {
 
 	// Add the authorization header
 	c.WSConfig.Header.Set("Authorization", "Basic "+basicAuth(c.Options.Username, c.Options.Password))
+
 	return nil
 }
 
@@ -275,6 +280,7 @@ func (c *Client) Connect() error {
 		cancel()
 		return errors.New("no username found")
 	}
+
 	if c.Options.Password == "" {
 		cancel()
 		return errors.New("no password found")
@@ -293,9 +299,13 @@ func (c *Client) Connect() error {
 
 	// Setup and listen on the websocket
 	wg := new(sync.WaitGroup)
+
 	wg.Add(1)
+
 	go c.listen(ctx, wg)
+
 	wg.Wait()
+
 	c.connected = true
 
 	return nil
@@ -315,6 +325,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		if err != nil {
 			Logger.Error("failed to connect to Asterisk", "error", err)
 			time.Sleep(time.Second)
+
 			continue
 		}
 
@@ -328,17 +339,19 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 		case err = <-c.wsRead(ws):
 			Logger.Error("read failure on websocket", "error", err)
+
 			c.connected = false
+
 			time.Sleep(10 * time.Millisecond)
 		}
 
 		// Make sure our websocket connection is closed before looping
 		c.connected = false
+
 		err = ws.Close()
 		if err != nil {
 			Logger.Debug("failed to close websocket", "error", err)
 		}
-
 	}
 }
 
@@ -377,6 +390,7 @@ func (c *Client) stamp(key *ari.Key) *ari.Key {
 	ret := *key
 	ret.App = c.appName
 	ret.Node = c.node
+
 	return &ret
 }
 

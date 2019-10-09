@@ -139,6 +139,7 @@ func (h *LiveRecordingHandle) Exec() (err error) {
 	}
 
 	h.mu.Unlock()
+
 	return
 }
 

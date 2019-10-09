@@ -32,10 +32,12 @@ func (c *Config) Data(key *ari.Key) (*ari.ConfigData, error) {
 		Type:  kind,
 		Name:  name,
 	}
+
 	err = c.client.get("/asterisk/config/dynamic/"+key.ID, &data.Fields)
 	if err != nil {
 		return nil, dataGetError(err, "config", "%v", key.ID)
 	}
+
 	return data, nil
 }
 
@@ -45,8 +47,10 @@ func (c *Config) Update(key *ari.Key, tuples []ari.ConfigTuple) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to parse key")
 	}
+
 	cfgList := ari.ConfigTupleList{}
 	cfgList.Fields = append(cfgList.Fields, tuples...)
+
 	return c.client.put("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, &cfgList)
 }
 
@@ -56,5 +60,6 @@ func (c *Config) Delete(key *ari.Key) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to parse key")
 	}
+
 	return c.client.del("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, "")
 }

@@ -35,6 +35,7 @@ func (b *bus) Close() {
 	if b.closed {
 		return
 	}
+
 	b.closed = true
 
 	for _, s := range b.subs {
@@ -45,6 +46,7 @@ func (b *bus) Close() {
 // Send sends the message to the bus
 func (b *bus) Send(e ari.Event) {
 	var matched bool
+
 	b.rwMux.RLock()
 
 	// Disseminate the message to the subscribers
@@ -54,8 +56,10 @@ func (b *bus) Send(e ari.Event) {
 			if matched {
 				break
 			}
+
 			if s.key.Match(k) {
 				matched = true
+
 				for _, topic := range s.events {
 					if topic == e.GetType() || topic == ari.Events.All {
 						select {
@@ -76,6 +80,7 @@ func (b *bus) Send(e ari.Event) {
 func (b *bus) Subscribe(key *ari.Key, eTypes ...string) ari.Subscription {
 	s := newSubscription(b, key, eTypes...)
 	b.add(s)
+
 	return s
 }
 
@@ -96,6 +101,7 @@ func (b *bus) remove(s *subscription) {
 			b.subs[i] = b.subs[len(b.subs)-1] // replace the current with the end
 			b.subs[len(b.subs)-1] = nil       // remove the end
 			b.subs = b.subs[:len(b.subs)-1]   // lop off the end
+
 			break
 		}
 	}
@@ -137,11 +143,14 @@ func (s *subscription) Cancel() {
 	}
 
 	s.mu.Lock()
+
 	if s.closed {
 		s.mu.Unlock()
 		return
 	}
+
 	s.closed = true
+
 	s.mu.Unlock()
 
 	// Remove the subscription from the bus

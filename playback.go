@@ -96,6 +96,7 @@ func (ph *PlaybackHandle) Subscribe(n ...string) Subscription {
 	if ph == nil {
 		return nil
 	}
+
 	return ph.p.Subscribe(ph.key, n...)
 }
 
@@ -108,5 +109,6 @@ func (ph *PlaybackHandle) Exec() (err error) {
 			ph.exec = nil
 		}
 	}
+
 	return
 }

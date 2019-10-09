@@ -201,6 +201,7 @@ func (r *Result) Delete() error {
 	if r.h == nil {
 		return errors.New("no stored recording handle available")
 	}
+
 	return r.h.Delete()
 }
 
@@ -209,6 +210,7 @@ func (r *Result) Key() *ari.Key {
 	if r == nil || r.h == nil {
 		return nil
 	}
+
 	return r.h.Key()
 }
 
@@ -232,10 +234,12 @@ func (r *Result) Save(name string) error {
 
 		// we are set to overwrite, so delete the previous recording
 		Logger.Debug("overwriting previous recording")
+
 		err = destH.Delete()
 		if err != nil {
 			return errors.Wrap(err, "failed to remove previous destination recording")
 		}
+
 		_, err = r.h.Copy(name)
 		if err != nil {
 			return errors.Wrap(err, "failed to copy recording")
@@ -261,11 +265,15 @@ func Record(ctx context.Context, r ari.Recorder, opts ...OptionFunc) Session {
 	s := newRecordingSession(opts...)
 
 	var wg sync.WaitGroup
+
 	wg.Add(1)
+
 	go s.record(ctx, r, &wg)
+
 	wg.Wait()
 
 	Logger.Debug("returned from internal recording start")
+
 	return s
 }
 
@@ -315,6 +323,7 @@ func (s *recordingSession) Key() *ari.Key {
 	if s == nil || s.h == nil {
 		return nil
 	}
+
 	return s.h.Key()
 }
 
@@ -361,14 +370,18 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 	defer close(s.doneCh)
 
 	ctx, cancel := context.WithCancel(ctx)
-	s.cancel = cancel
 	defer cancel()
 
+	s.cancel = cancel
+
 	var err error
+
 	s.h, err = r.StageRecord(s.options.name, s.options.toRecordingOptions())
 	if err != nil {
 		s.res.Error = errors.Wrap(err, "failed to stage recording")
+
 		wg.Done()
+
 		return
 	}
 
@@ -393,6 +406,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 
 	// Record the duration of the recording
 	started := time.Now()
+
 	defer func() {
 		s.res.Duration = time.Since(started)
 		Logger.Debug("recording duration", "duration", s.res.Duration)
@@ -406,6 +420,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 
 	// Start recording
 	Logger.Debug("starting recording")
+
 	if err := s.h.Exec(); err != nil {
 		s.res.Error = err
 		return
@@ -421,30 +436,39 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 			return
 		case <-startTimer.C:
 			Logger.Debug("timeout waiting to start recording")
+
 			s.res.Error = timeoutErr{"Timeout waiting for recording to start"}
+
 			return
 		case _, ok := <-startSub.Events():
 			if !ok {
 				return
 			}
+
 			Logger.Debug("recording started")
 			startTimer.Stop()
 		case e, ok := <-failedSub.Events():
 			if !ok {
 				return
 			}
+
 			Logger.Debug("recording failed")
+
 			r := e.(*ari.RecordingFailed).Recording
 			s.res.Data = &r
 			s.res.Error = fmt.Errorf("Recording failed: %s", r.Cause)
+
 			return
 		case e, ok := <-finishedSub.Events():
 			if !ok {
 				return
 			}
-			r := e.(*ari.RecordingFinished).Recording
+
 			Logger.Debug("recording finished")
+
+			r := e.(*ari.RecordingFinished).Recording
 			s.res.Data = &r
+
 			return
 		}
 	}
@@ -457,6 +481,7 @@ func (s *recordingSession) collectDtmf(ctx context.Context, dtmfSub ari.Subscrip
 			if !ok {
 				return
 			}
+
 			v := e.(*ari.ChannelDtmfReceived)
 			s.res.DTMF += v.Digit
 		case <-ctx.Done():

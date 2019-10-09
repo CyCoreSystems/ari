@@ -22,6 +22,7 @@ func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 	}
 
 	err = sr.client.get("/recordings/stored", &recs)
+
 	for _, rec := range recs {
 		k := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, rec.Name))
 		if filter.Match(k) {
@@ -43,12 +44,13 @@ func (sr *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) 
 		return nil, errors.New("storedRecording key not supplied")
 	}
 
-	var data = new(ari.StoredRecordingData)
+	data := new(ari.StoredRecordingData)
 	if err := sr.client.get("/recordings/stored/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "storedRecording", "%v", key.ID)
 	}
 
 	data.Key = sr.client.stamp(key)
+
 	return data, nil
 }
 
@@ -67,7 +69,6 @@ func (sr *StoredRecording) Copy(key *ari.Key, dest string) (*ari.StoredRecording
 
 // StageCopy creates a `StoredRecordingHandle` with a `Copy` operation staged.
 func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredRecordingHandle, error) {
-
 	var resp struct {
 		Name string `json:"name"`
 	}
@@ -79,6 +80,7 @@ func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredReco
 	}
 
 	destKey := sr.client.stamp(ari.NewKey(ari.StoredRecordingKey, dest))
+
 	return ari.NewStoredRecordingHandle(destKey, sr, func(h *ari.StoredRecordingHandle) error {
 		return sr.client.post("/recordings/stored/"+key.ID+"/copy", &resp, &req)
 	}), nil

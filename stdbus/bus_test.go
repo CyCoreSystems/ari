@@ -43,6 +43,7 @@ var dtmfTestEvent ari.Event
 
 func init() {
 	var err error
+
 	dtmfTestEvent, err = ari.DecodeEvent([]byte(dtmfTestEventData))
 	if err != nil {
 		panic("failed to construct dtmf test event: " + err.Error())
@@ -57,9 +58,11 @@ func TestSubscribe(t *testing.T) {
 	defer b.Close()
 
 	sub := b.Subscribe(nil, ari.Events.ChannelDtmfReceived)
+
 	if len(b.subs) != 1 {
 		t.Error("failed to add subscription to bus")
 	}
+
 	sub.Cancel()
 }
 
@@ -93,7 +96,6 @@ func TestClose(t *testing.T) {
 		}
 	default:
 	}
-
 }
 
 func TestEvents(t *testing.T) {
@@ -111,10 +113,12 @@ func TestEvents(t *testing.T) {
 		return
 	case e, ok := <-sub.Events():
 		t.Log("event received")
+
 		if !ok {
 			t.Error("events channel was closed")
 			return
 		}
+
 		if e == nil {
 			t.Error("received empty event")
 			return
@@ -125,6 +129,7 @@ func TestEvents(t *testing.T) {
 			t.Errorf("event is not a DTMF received event")
 			return
 		}
+
 		if dtmf.Channel.ID != "9ae755c1-28a1-11e7-a1b1-0a580a480105" {
 			t.Errorf("Failed to parse channel subentity on DTMF event")
 			return
@@ -153,7 +158,7 @@ func TestEventsMultipleKeys(t *testing.T) {
 
 	b.Send(&multiKeyEvent)
 
-	var eventCount = 0
+	eventCount := 0
 L:
 	for {
 		select {

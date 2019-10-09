@@ -35,7 +35,7 @@ type StoredRecordingData struct {
 
 // ID returns the identifier for the stored recording.
 func (d StoredRecordingData) ID() string {
-	return d.Name //TODO: does the identifier include the Format and Name?
+	return d.Name // TODO: does the identifier include the Format and Name?
 }
 
 // A StoredRecordingHandle is a reference to a stored recording that can be operated on
@@ -74,6 +74,7 @@ func (s *StoredRecordingHandle) Exec() (err error) {
 			s.exec = nil
 		}
 	}
+
 	return
 }
 

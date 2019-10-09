@@ -108,6 +108,7 @@ func (u *uriList) Empty() bool {
 	if u == nil || u.list == nil || u.list.Len() == 0 {
 		return true
 	}
+
 	return false
 }
 
@@ -135,6 +136,7 @@ func (u *uriList) First() string {
 	defer u.mu.Unlock()
 
 	u.current = u.list.Front()
+
 	return u.val()
 }
 
@@ -151,6 +153,7 @@ func (u *uriList) Next() string {
 	}
 
 	u.current = u.current.Next()
+
 	return u.val()
 }
 
@@ -163,6 +166,7 @@ func (u *uriList) val() string {
 	if !ok {
 		return ""
 	}
+
 	return ret
 }
 
@@ -250,6 +254,7 @@ func (o *Options) ApplyOptions(opts ...OptionFunc) (err error) {
 			return errors.Wrap(err, "failed to apply option")
 		}
 	}
+
 	return nil
 }
 

@@ -37,6 +37,7 @@ func newSequence(s *playSession) *sequence {
 func (s *sequence) Play(ctx context.Context, p ari.Player) {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
+
 	defer cancel()
 	defer close(s.done)
 
@@ -45,12 +46,14 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 		if err != nil {
 			s.s.result.Status = Failed
 			s.s.result.Error = errors.Wrap(err, "failed to stage playback")
+
 			return
 		}
 
 		s.s.result.Status, err = playStaged(ctx, pb, s.s.o.playbackStartTimeout)
 		if err != nil {
 			s.s.result.Error = errors.Wrap(err, "failure in playback")
+
 			return
 		}
 	}
@@ -60,6 +63,7 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duration) (Status, error) {
 	started := h.Subscribe(ari.Events.PlaybackStarted)
 	defer started.Cancel()
+
 	finished := h.Subscribe(ari.Events.PlaybackFinished)
 	defer finished.Cancel()
 
@@ -67,10 +71,10 @@ func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duratio
 		timeout = DefaultPlaybackStartTimeout
 	}
 
-	err := h.Exec()
-	if err != nil {
+	if err := h.Exec(); err != nil {
 		return Failed, errors.Wrap(err, "failed to start playback")
 	}
+
 	defer h.Stop() // nolint: errcheck
 
 	select {

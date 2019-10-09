@@ -22,7 +22,7 @@ func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 		filter = ari.NodeKey(m.client.appName, m.client.node)
 	}
 
-	var modules = []struct {
+	modules := []struct {
 		Name string `json:"name"`
 	}{}
 
@@ -37,6 +37,7 @@ func (m *Modules) List(filter *ari.Key) (ret []*ari.Key, err error) {
 			if filter.Dialog != "" {
 				k.Dialog = filter.Dialog
 			}
+
 			ret = append(ret, k)
 		}
 	}
@@ -65,11 +66,12 @@ func (m *Modules) Data(key *ari.Key) (*ari.ModuleData, error) {
 		return nil, errors.New("module key not supplied")
 	}
 
-	var data = new(ari.ModuleData)
+	data := new(ari.ModuleData)
 	if err := m.client.get("/asterisk/modules/"+key.ID, data); err != nil {
 		return nil, dataGetError(err, "module", "%v", key.ID)
 	}
 
 	data.Key = m.client.stamp(key)
+
 	return data, nil
 }
