@@ -116,6 +116,15 @@ type Channel interface {
 	// creates a new snooping channel.
 	StageSnoop(key *Key, snoopID string, opts *SnoopOptions) (*ChannelHandle, error)
 
+	// StageExternalMedia creates a new non-telephony external media channel,
+	// when `Exec`ed, by which audio may be sent or received.  The stage version
+	// of this command will not actually communicate with Asterisk until Exec is
+	// called on the returned ExternalMedia channel.
+	StageExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
+
+	// ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
+	ExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
+
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
 }
@@ -227,6 +236,36 @@ type SnoopOptions struct {
 	// Whisper describes the direction of audio on which to send (none, in, out, both).
 	// The default is 'none'.
 	Whisper Direction `json:"whisper,omitempty"`
+}
+
+// ExternalMediaOptions describes the parameters to the externalMedia channel creation operation
+type ExternalMediaOptions struct {
+	// ChannelID specifies the channel ID to be used for the external media channel.  This parameter is optional and if not specified, a randomly-generated channel ID will be used.
+	ChannelID string `json:"channelId"`
+
+	// App is the ARI Application to which the newly-created external media channel should be placed.  This parameter is optional and if not specified, the current application will be used.
+	App string `json:"app"`
+
+	// ExternalHost specifies the <host>:<port> of the external host to which the external media channel will be connected.  This parameter is MANDATORY and has no default.
+	ExternalHost string `json:"external_host"`
+
+	// Encapsulation specifies the payload encapsulation which should be used.  Options include:  'rtp'.  This parameter is optional and if not specified, 'rtp' will be used.
+	Encapsulation string `json:"encapsulation"`
+
+	// Transport specifies the connection type to be used to communicate to the external server.  Options include 'udp'.  This parameter is optional and if not specified, 'udp' will be used.
+	Transport string `json:"transport"`
+
+	// ConnectionType defined the directionality of the network connection.  Options include 'client' and 'server'.  This parameter is optional and if not specified, 'client' will be used.
+	ConnectionType string `json:"connection_type"`
+
+	// Format specifies the codec to be used for the audio.  Options include 'slin16', 'ulaw' (and likely other codecs supported by Asterisk).  This parameter is MANDATORY and has not default.
+	Format string `json:"format"`
+
+	// Direction specifies the directionality of the audio stream.  Options include 'both'.  This parameter is optional and if not specified, 'both' will be used.
+	Direction string `json:"direction"`
+
+	// Variables defines the set of channel variables which should be bound to this channel upon creation.  This parameter is optional.
+	Variables map[string]string `json:"variables"`
 }
 
 // ChannelHandle provides a wrapper on the Channel interface for operations on a particular channel ID.
@@ -478,6 +517,19 @@ func (ch *ChannelHandle) Snoop(snoopID string, opts *SnoopOptions) (*ChannelHand
 // StageSnoop stages a `Snoop` operation
 func (ch *ChannelHandle) StageSnoop(snoopID string, opts *SnoopOptions) (*ChannelHandle, error) {
 	return ch.c.StageSnoop(ch.key, snoopID, opts)
+}
+
+// StageExternalMedia creates a new non-telephony external media channel,
+// when `Exec`ed, by which audio may be sent or received.  The stage version
+// of this command will not actually communicate with Asterisk until Exec is
+// called on the returned ExternalMedia channel.
+func (ch *ChannelHandle) StageExternalMedia(opts ExternalMediaOptions) (*ChannelHandle, error) {
+	return ch.c.StageExternalMedia(ch.key, opts)
+}
+
+// ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
+func (ch *ChannelHandle) ExternalMedia(opts ExternalMediaOptions) (*ChannelHandle, error) {
+	return ch.c.ExternalMedia(ch.key, opts)
 }
 
 // ----

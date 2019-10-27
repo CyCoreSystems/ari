@@ -376,6 +376,58 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 	}), nil
 }
 
+// ExternalMedia implements the ari.Channel interface
+func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
+	h, err := c.StageExternalMedia(key, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return h, h.Exec()
+}
+
+// StageExternalMedia implements the ari.Channel interface
+func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
+	if opts.ChannelID == "" {
+		opts.ChannelID = rid.New(rid.Channel)
+	}
+
+	if opts.App == "" {
+		opts.App = c.client.ApplicationName()
+	}
+
+	if opts.ExternalHost == "" {
+		return nil, errors.New("ExternalHost is mandatory")
+	}
+
+	if opts.Encapsulation == "" {
+		opts.Encapsulation = "rtp"
+	}
+
+	if opts.Transport == "" {
+		opts.Transport = "udp"
+	}
+
+	if opts.ConnectionType == "" {
+		opts.ConnectionType = "client"
+	}
+
+	if opts.Format == "" {
+		return nil, errors.New("Format is mandatory")
+	}
+
+	if opts.Direction == "" {
+		opts.Direction = "both"
+	}
+
+	// Create the snooping channel's key
+	k := c.client.stamp(ari.NewKey(ari.ChannelKey, opts.ChannelID))
+
+	return ari.NewChannelHandle(k, c, func(ch *ari.ChannelHandle) error {
+		return c.client.post("/channels/externalMedia", nil, &opts)
+	}), nil
+}
+
 // Dial dials the given calling channel identifier
 func (c *Channel) Dial(key *ari.Key, callingChannelID string, timeout time.Duration) error {
 	req := struct {
