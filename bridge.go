@@ -53,6 +53,12 @@ type Bridge interface {
 
 	// Subscribe subscribes the given bridge events events
 	Subscribe(key *Key, n ...string) Subscription
+
+	// VideoSource add Channel as Video-Source-ID at bridge
+	VideoSource(key *Key, channelID string) error
+
+	// VideoSourceDelete delete Video-Source-ID from bridge
+	VideoSourceDelete(key *Key) error
 }
 
 // BridgeData describes an Asterisk Bridge, the entity which merges media from
@@ -198,4 +204,14 @@ func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	}
 
 	return bh.b.Subscribe(bh.key, n...)
+}
+
+// Set channel as Video-Source-Id in a multi-party mixing bridge
+func (bh *BridgeHandle) VideoSource(channelID string) error {
+	return bh.b.VideoSource(bh.key, channelID)
+}
+
+// Delete Video-Source-Id in a multi-party mixing bridge
+func (bh *BridgeHandle) VideoSourceDelete() error {
+	return bh.b.VideoSourceDelete(bh.key)
 }
