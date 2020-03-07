@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package asterisk.ari;
+
+option go_package = "ari";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Key identifies a unique resource in the system
+message Key {
+   // NOTE: we build our own stringer
+   option (gogoproto.goproto_stringer) = false;
+   
+	// Kind indicates the type of resource the Key points to.  e.g., "channel",
+	// "bridge", etc.
+	string kind = 1;
+
+	// ID indicates the unique identifier of the resource
+   string id = 2 [(gogoproto.customname) = "ID"];
+
+	// Node indicates the unique identifier of the Asterisk node on which the
+	// resource exists or will be created
+   string node = 3;
+
+	// Dialog indicates a named scope of the resource, for receiving events
+   string dialog = 4;
+
+	// App indiciates the ARI application that this key is bound to.
+   string app = 5;
+}
+
+// CallerID describes the name and number which identifies the caller to other endpoints
+message CallerID {
+   // NOTE: we build our own stringer
+   option (gogoproto.goproto_stringer) = false;
+
+   // Name is the name of the party
+   string name = 1;
+
+   // Number is the number of the party
+   string number = 2;
+}
+
+// ChannelData describes the data for a specific channel
+message ChannelData {
+   // Key is the key of the channel
+   Key key = 1;
+
+   // Id is the unique ID for this channel (AMI-style)
+   string id = 2 [(gogoproto.customname) = "ID"];
+
+   // Name is the name of this channel (tect/name-id)
+   string name = 3;
+
+   // State is the current state of the channel
+   string state = 4;
+
+   // Accountcode is the account code assigned to the channel
+   string accountcode = 5;
+
+   // Caller is the callerID of the calling endpoint
+   CallerID caller = 6;
+
+   // Connected is the callerID of the connected line, if applicable
+   CallerID connected = 7;
+
+   // Creationtime is the time at which the channel was created
+   google.protobuf.Timestamp creationtime = 8;
+
+   // Dialplan is the current location of the channel in the dialplan
+   DialplanCEP dialplan = 9;
+
+   // Language is the default spoken language for this channel
+   string language = 10;
+
+   // ChannelVars is the list of channel variables set on this channel
+   map<string, string> channelvars = 11 [(gogoproto.customname) = "ChannelVars"];
+
+}
+
+// Dialplan describes a location in the Asterisk dialplan
+message DialplanCEP {
+
+   // Context describes the section in the dialplan
+   string context = 1;
+
+   // Exten describes the label in the section of the dialplan
+   string exten = 2;
+
+   // Priority indicates the index at the label in the section of the dialplan
+   int64 priority = 3;
+}
