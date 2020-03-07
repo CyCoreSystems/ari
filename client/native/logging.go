@@ -1,8 +1,9 @@
 package native
 
 import (
-	"github.com/CyCoreSystems/ari"
 	"github.com/pkg/errors"
+
+	"github.com/CyCoreSystems/ari/v5"
 )
 
 // Logging provides the ARI Logging accessors for a native client

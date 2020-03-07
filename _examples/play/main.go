@@ -5,9 +5,9 @@ import (
 
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/native"
-	"github.com/CyCoreSystems/ari/ext/play"
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/client/native"
+	"github.com/CyCoreSystems/ari/v5/ext/play"
 )
 
 var log = log15.New()
@@ -78,5 +78,4 @@ func app(ctx context.Context, h *ari.ChannelHandle) {
 
 	log.Info("completed playback")
 	return
-
 }

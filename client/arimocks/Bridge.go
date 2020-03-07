@@ -3,7 +3,7 @@
 package arimocks
 
 import (
-	ari "github.com/CyCoreSystems/ari"
+	ari "github.com/CyCoreSystems/ari/v5"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -314,6 +314,34 @@ func (_m *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ari.Subscription)
 		}
+	}
+
+	return r0
+}
+
+// VideoSource provides a mock function with given fields: key, channelID
+func (_m *Bridge) VideoSource(key *ari.Key, channelID string) error {
+	ret := _m.Called(key, channelID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, channelID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// VideoSourceDelete provides a mock function with given fields: key
+func (_m *Bridge) VideoSourceDelete(key *ari.Key) error {
+	ret := _m.Called(key)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key) error); ok {
+		r0 = rf(key)
+	} else {
+		r0 = ret.Error(0)
 	}
 
 	return r0

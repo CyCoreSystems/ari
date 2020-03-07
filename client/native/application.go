@@ -3,7 +3,8 @@ package native
 import (
 	"fmt"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/v5"
+
 	"github.com/pkg/errors"
 )
 

@@ -6,10 +6,10 @@ import (
 
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/native"
-	"github.com/CyCoreSystems/ari/ext/play"
-	"github.com/CyCoreSystems/ari/rid"
+	"github.com/CyCoreSystems/ari-rid" rid
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/client/native"
+	"github.com/CyCoreSystems/ari/v5/ext/play"
 	"github.com/pkg/errors"
 )
 
@@ -61,7 +61,7 @@ func app(ctx context.Context, cl ari.Client, h *ari.ChannelHandle) {
 
 	if err := h.Answer(); err != nil {
 		log.Error("failed to answer call", "error", err)
-		//return
+		// return
 	}
 
 	if err := ensureBridge(ctx, cl, h.Key()); err != nil {

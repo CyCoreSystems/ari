@@ -7,8 +7,8 @@ import (
 
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/native"
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/client/native"
 )
 
 var log = log15.New()
@@ -80,7 +80,6 @@ func listenApp(ctx context.Context, cl ari.Client, handler func(cl ari.Client, h
 			return
 		}
 	}
-
 }
 
 func createCall(cl ari.Client) (h *ari.ChannelHandle, err error) {
@@ -93,7 +92,6 @@ func createCall(cl ari.Client) (h *ari.ChannelHandle, err error) {
 }
 
 func connect(ctx context.Context) (cl ari.Client, err error) {
-
 	log.Info("Connecting")
 
 	cl, err = native.Connect(&native.Options{})
@@ -139,7 +137,6 @@ func channelHandler(cl ari.Client, h *ari.ChannelHandle) {
 				}
 			}
 		}
-
 	}()
 
 	h.Answer()

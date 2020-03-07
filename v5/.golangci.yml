@@ -1,6 +1,0 @@
-run:
-   skip-files:
-      - ".*_gen\\.go$"
-linters:
-   enable:
-      - wsl

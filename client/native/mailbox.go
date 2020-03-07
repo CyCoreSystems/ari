@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/CyCoreSystems/ari"
+	"github.com/CyCoreSystems/ari/v5"
 )
 
 // Mailbox provides the ARI Mailbox accessors for the native client

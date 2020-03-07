@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inconshreveable/log15"
+	rid "github.com/CyCoreSystems/ari-rid"
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/stdbus"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/rid"
-	"github.com/CyCoreSystems/ari/stdbus"
+	"github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"golang.org/x/net/websocket"
 )

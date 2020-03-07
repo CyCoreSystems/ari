@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/rid"
+	rid "github.com/CyCoreSystems/ari-rid"
+	"github.com/CyCoreSystems/ari/v5"
 	"github.com/pkg/errors"
 )
 

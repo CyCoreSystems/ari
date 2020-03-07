@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"testing"
-
 	"time"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/client/arimocks"
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/client/arimocks"
+
 	"github.com/stretchr/testify/mock"
 )
 

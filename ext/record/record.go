@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
-	"sync"
+	rid "github.com/CyCoreSystems/ari-rid"
+	"github.com/CyCoreSystems/ari/v5"
 
-	"github.com/CyCoreSystems/ari"
-	"github.com/CyCoreSystems/ari/rid"
 	"github.com/pkg/errors"
 )
 
