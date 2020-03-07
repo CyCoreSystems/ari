@@ -235,3 +235,18 @@ func (b *Bridge) StageRecord(key *ari.Key, name string, opts *ari.RecordingOptio
 func (b *Bridge) Subscribe(key *ari.Key, n ...string) ari.Subscription {
 	return b.client.Bus().Subscribe(key, n...)
 }
+
+// Set a channel as the video source in a multi-party mixing bridge.
+// This operation has no effect on bridges with two or fewer participants.
+// Equivalent to POST /bridges/{bridgeId}/videoSource/{channelId}
+func (b *Bridge) VideoSource(key *ari.Key, channelID string) error {
+	return b.client.post("/bridges/"+key.ID+"/videoSource/"+channelID, nil, nil)
+}
+
+// Removes any explicit video source in a multi-party mixing bridge.
+// This operation has no effect on bridges with two or fewer participants.
+// When no explicit video source is set, talk detection will be used to determine the active video stream.
+// Equivalent to DELETE /bridges/{bridgeId}/videoSource
+func (b *Bridge) VideoSourceDelete(key *ari.Key) error {
+	return b.client.del("/bridges/"+key.ID+"/videoSource", nil, "")
+}
