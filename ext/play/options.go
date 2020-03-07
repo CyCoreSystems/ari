@@ -294,6 +294,7 @@ func URI(uri ...string) OptionFunc {
 				o.uriList.Add(u)
 			}
 		}
+
 		return nil
 	}
 }
@@ -319,12 +320,15 @@ func DigitTimeouts(first, inter, overall time.Duration) OptionFunc {
 		if first >= 0 {
 			o.firstDigitTimeout = first
 		}
+
 		if inter >= 0 {
 			o.interDigitTimeout = inter
 		}
+
 		if overall >= 0 {
 			o.overallDigitTimeout = overall
 		}
+
 		return nil
 	}
 }
@@ -345,8 +349,10 @@ func MatchAny() OptionFunc {
 			if len(pat) > 0 {
 				return pat, Complete
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }
@@ -365,19 +371,24 @@ func MatchDiscrete(list []string) OptionFunc {
 	return func(o *Options) error {
 		o.matchFunc = func(pat string) (string, MatchResult) {
 			var maxLen int
+
 			for _, t := range list {
 				if t == pat {
 					return pat, Complete
 				}
+
 				if len(t) > maxLen {
 					maxLen = len(t)
 				}
 			}
+
 			if len(pat) > maxLen {
 				return pat, Invalid
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }
@@ -389,8 +400,10 @@ func MatchHash() OptionFunc {
 			if strings.Contains(pat, "#") {
 				return strings.Split(pat, "#")[0], Complete
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }
@@ -402,8 +415,10 @@ func MatchTerminator(terminator string) OptionFunc {
 			if strings.Contains(pat, terminator) {
 				return strings.Split(pat, terminator)[0], Complete
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }
@@ -415,8 +430,10 @@ func MatchLen(length int) OptionFunc {
 			if len(pat) >= length {
 				return pat, Complete
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }
@@ -428,11 +445,14 @@ func MatchLenOrTerminator(length int, terminator string) OptionFunc {
 			if len(pat) >= length {
 				return pat, Complete
 			}
+
 			if strings.Contains(pat, terminator) {
 				return strings.Split(pat, terminator)[0], Complete
 			}
+
 			return pat, Incomplete
 		}
+
 		return nil
 	}
 }

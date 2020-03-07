@@ -88,7 +88,9 @@ func testPlayStagedStartFinishedEvent(t *testing.T) {
 
 	go func() {
 		p.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		time.After(10 * time.Millisecond)
+
 		p.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
@@ -201,7 +203,9 @@ func testPlayStagedCancelAfterStart(t *testing.T) {
 
 	go func() {
 		p.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(100 * time.Millisecond)
+
 		cancel()
 	}()
 
@@ -270,7 +274,9 @@ func testPlay(t *testing.T) {
 
 	go func() {
 		p.ps.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(200 * time.Millisecond)
+
 		p.ps.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
@@ -298,11 +304,13 @@ func testPlayDtmf(t *testing.T) {
 
 	go func() {
 		p.ps.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(200 * time.Millisecond)
 
 		p.dtmfChannel <- &ari.ChannelDtmfReceived{
 			Digit: "1",
 		}
+
 		<-time.After(200 * time.Millisecond)
 
 		p.ps.playbackEndChan <- &ari.PlaybackFinished{}

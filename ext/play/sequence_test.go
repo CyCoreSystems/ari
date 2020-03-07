@@ -129,13 +129,17 @@ func testSequenceSomeItems(t *testing.T) {
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
+
 		s.playbackEndChan <- &ari.PlaybackFinished{}
 
 		<-time.After(20 * time.Millisecond)
 
 		s2.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
+
 		s2.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
@@ -178,12 +182,15 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
+
 		s.playbackEndChan <- &ari.PlaybackFinished{}
 
 		<-time.After(20 * time.Millisecond)
 
 		s2.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
 
 		cancel()
@@ -228,12 +235,15 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
+
 		s.playbackEndChan <- &ari.PlaybackFinished{}
 
 		<-time.After(20 * time.Millisecond)
 
 		s2.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
 
 		seq.Stop()
@@ -277,7 +287,9 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 
 	go func() {
 		s.playbackStartedChan <- &ari.PlaybackStarted{}
+
 		<-time.After(20 * time.Millisecond)
+
 		s.playbackEndChan <- &ari.PlaybackFinished{}
 
 		<-time.After(20 * time.Millisecond)

@@ -364,17 +364,19 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 	go func() {
 		for {
 			var data []byte
+
 			err := websocket.Message.Receive(ws, &data)
 			if err != nil {
 				errChan <- errors.Wrap(err, "failed to receive websocket message")
 				return
 			}
+
 			e, err := ari.DecodeEvent(data)
 			if err != nil {
 				errChan <- errors.Wrap(err, "failed to devoce websocket message to event")
 			}
-			c.bus.Send(e)
 
+			c.bus.Send(e)
 		}
 	}()
 
