@@ -1,8 +1,4 @@
 // Package rid provides unique resource IDs
-//
-// Deprecated: Use github.com/CyCoreSystems/ari-rid instead.  All code here was reproduced there.
-//
-// This package is no longer used internally and will be removed in a future release.
 package rid
 
 import (

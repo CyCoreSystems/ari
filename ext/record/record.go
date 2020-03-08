@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	rid "github.com/CyCoreSystems/ari-rid"
 	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v5/rid"
 
 	"github.com/pkg/errors"
 )

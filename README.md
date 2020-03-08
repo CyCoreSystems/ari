@@ -18,7 +18,7 @@ client library.  It can be found at
 
 Install with: 
 ```sh 
-go get github.com/CyCoreSystems/ari
+go get github.com/CyCoreSystems/ari/v5
 ```
 
 # Features
