@@ -1,7 +1,6 @@
 module github.com/CyCoreSystems/ari/v5
 
 require (
-	github.com/CyCoreSystems/ari-rid v0.1.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.0
 	github.com/inconshreveable/log15 v0.0.0-20171019012758-0decfc6c20d9
