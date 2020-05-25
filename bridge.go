@@ -206,12 +206,12 @@ func (bh *BridgeHandle) Subscribe(n ...string) Subscription {
 	return bh.b.Subscribe(bh.key, n...)
 }
 
-// Set channel as Video-Source-Id in a multi-party mixing bridge
+// VideoSource sets channel as Video-Source-Id in a multi-party mixing bridge
 func (bh *BridgeHandle) VideoSource(channelID string) error {
 	return bh.b.VideoSource(bh.key, channelID)
 }
 
-// Delete Video-Source-Id in a multi-party mixing bridge
+// VideoSourceDelete deletes Video-Source-Id in a multi-party mixing bridge
 func (bh *BridgeHandle) VideoSourceDelete() error {
 	return bh.b.VideoSourceDelete(bh.key)
 }
