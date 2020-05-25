@@ -19,6 +19,10 @@ type DeviceStateData struct {
 	// Key is the cluster-unique identifier for this device state
 	Key *Key `json:"key"`
 
+	// Name is the name of the device
+	Name string `json:"name"`
+
+	// State is the state of the device
 	State string `json:"state"`
 }
 
@@ -62,7 +66,7 @@ func (dsh *DeviceStateHandle) Update(state string) (err error) {
 // Delete deletes the device state
 func (dsh *DeviceStateHandle) Delete() (err error) {
 	err = dsh.d.Delete(dsh.key)
-	//NOTE: if err is not nil,
+	// NOTE: if err is not nil,
 	// we could replace 'd' with a version of it
 	// that always returns ErrNotFound. Not required, as the
 	// handle could "come back" at any moment via an 'Update'

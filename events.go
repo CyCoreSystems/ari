@@ -346,7 +346,7 @@ func (evt *ContactStatusChange) Keys() (sx Keys) {
 
 // Keys returns the list of keys associated with this event
 func (evt *DeviceStateChanged) Keys() (sx Keys) {
-	sx = append(sx, evt.DeviceState.Key)
+	sx = append(sx, evt.Key(DeviceStateKey, evt.DeviceState.Name))
 	return
 }
 
