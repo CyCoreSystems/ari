@@ -329,6 +329,18 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 			continue
 		}
 
+		info, err := c.Asterisk().Info(nil)
+		if err != nil {
+			Logger.Error("failed to get info from Asterisk", "error", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		if c.node != "" && c.node != info.SystemInfo.EntityID {
+			c.node = info.SystemInfo.EntityID
+		}
+		// We are connected again
+		c.connected = true
+
 		// Signal that we are connected (the first time only)
 		if wg != nil {
 			signalUp.Do(wg.Done)
