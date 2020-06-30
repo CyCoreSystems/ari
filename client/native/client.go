@@ -306,8 +306,6 @@ func (c *Client) Connect() error {
 
 	wg.Wait()
 
-	c.connected = true
-
 	return nil
 }
 
