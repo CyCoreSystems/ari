@@ -336,7 +336,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		if c.node != "" && c.node != info.SystemInfo.EntityID {
 			c.node = info.SystemInfo.EntityID
 		}
-		// We are connected again
+		// We are connected
 		c.connected = true
 
 		// Signal that we are connected (the first time only)
