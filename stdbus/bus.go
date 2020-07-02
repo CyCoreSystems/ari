@@ -118,6 +118,7 @@ type subscription struct {
 	mu     sync.Mutex
 	closed bool           // channel closure protection flag
 	C      chan ari.Event // channel for sending events to the subscriber
+	cb     func(d ari.Subscription) // callback to execute on Cancel()
 }
 
 // newSubscription creates a new, unattached subscription
@@ -162,4 +163,17 @@ func (s *subscription) Cancel() {
 	if s.C != nil {
 		close(s.C)
 	}
+
+	// Execute callback if set
+	if s.cb != nil {
+		s.cb(s)
+	}
+}
+
+// Set callback function
+func (s *subscription) SetCallback(cb func(d ari.Subscription)) {
+	if s.cb != nil {
+		return
+	}
+	s.cb = cb
 }

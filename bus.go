@@ -30,6 +30,9 @@ type Subscription interface {
 
 	// Cancel terminates the subscription
 	Cancel()
+
+	// Set callback
+	SetCallback(func(s Subscription))
 }
 
 // Once listens for the first event of the provided types,
