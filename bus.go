@@ -31,8 +31,8 @@ type Subscription interface {
 	// Cancel terminates the subscription
 	Cancel()
 
-	// Set callback
-	SetCallback(func(s Subscription))
+	// Add cancel callback
+	AddCancelCallback(func(s interface{}))
 }
 
 // Once listens for the first event of the provided types,
