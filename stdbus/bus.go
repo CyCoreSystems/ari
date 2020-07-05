@@ -51,6 +51,9 @@ func (b *bus) Send(e ari.Event) {
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
+		if s.closed {
+			continue
+		}
 		matched = false
 		for _, k := range e.Keys() {
 			if matched {
@@ -153,14 +156,14 @@ func (s *subscription) Cancel() {
 
 	s.mu.Unlock()
 
-	// Close the subscription's deliver channel
-	if s.C != nil {
-		close(s.C)
-	}
-
 	// Iterate through callbacks
 	for _,cb := range s.cb {
 		cb(s)
+	}
+
+	// Close the subscription's deliver channel
+	if s.C != nil {
+		close(s.C)
 	}
 }
 
