@@ -333,9 +333,11 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 			time.Sleep(time.Second)
 			continue
 		}
+
 		if c.node != "" && c.node != info.SystemInfo.EntityID {
 			c.node = info.SystemInfo.EntityID
 		}
+
 		// We are connected
 		c.connected = true
 
