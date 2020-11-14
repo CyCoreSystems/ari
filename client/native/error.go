@@ -2,6 +2,8 @@ package native
 
 import (
 	"fmt"
+
+	"github.com/rotisserie/eris"
 )
 
 type errDataGet struct {
@@ -16,12 +18,12 @@ func dataGetError(cause error, typ string, idfmt string, ctx ...interface{}) err
 		return nil
 	}
 
-	return eris.WithStack(&errDataGet{
+	return eris.Wrap(&errDataGet{
 		c:           cause,
 		entityType:  typ,
 		entityIDfmt: idfmt,
 		entityIDctx: ctx,
-	})
+	}, "failed to get data")
 }
 
 func (e *errDataGet) Error() string {
