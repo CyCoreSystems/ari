@@ -2,8 +2,7 @@ package native
 
 import (
 	"github.com/CyCoreSystems/ari/v5"
-
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Config provides the ARI Configuration accessors for a native client
@@ -19,12 +18,12 @@ func (c *Config) Get(key *ari.Key) *ari.ConfigHandle {
 // Data retrieves the state of a configuration object
 func (c *Config) Data(key *ari.Key) (*ari.ConfigData, error) {
 	if key == nil || key.ID == "" {
-		return nil, errors.New("config key not supplied")
+		return nil, eris.New("config key not supplied")
 	}
 
 	class, kind, name, err := ari.ParseConfigID(key.ID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse configuration key")
+		return nil, eris.Wrap(err, "failed to parse configuration key")
 	}
 
 	data := &ari.ConfigData{
@@ -46,7 +45,7 @@ func (c *Config) Data(key *ari.Key) (*ari.ConfigData, error) {
 func (c *Config) Update(key *ari.Key, tuples []ari.ConfigTuple) (err error) {
 	class, kind, name, err := ari.ParseConfigID(key.ID)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse key")
+		return eris.Wrap(err, "failed to parse key")
 	}
 
 	cfgList := ari.ConfigTupleList{}
@@ -59,7 +58,7 @@ func (c *Config) Update(key *ari.Key, tuples []ari.ConfigTuple) (err error) {
 func (c *Config) Delete(key *ari.Key) error {
 	class, kind, name, err := ari.ParseConfigID(key.ID)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse key")
+		return eris.Wrap(err, "failed to parse key")
 	}
 
 	return c.client.del("/asterisk/config/dynamic/"+class+"/"+kind+"/"+name, nil, "")

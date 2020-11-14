@@ -6,7 +6,7 @@ import (
 	"time"
 
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Channel represents a communication path interacting with an Asterisk server.
@@ -379,7 +379,7 @@ func (ch *ChannelHandle) Answer() error {
 func (ch *ChannelHandle) IsAnswered() (bool, error) {
 	updated, err := ch.Data()
 	if err != nil {
-		return false, errors.Wrap(err, "Failed to get updated channel")
+		return false, eris.Wrap(err, "Failed to get updated channel")
 	}
 
 	return strings.ToLower(updated.State) == "up", nil

@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari/v5"
-
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Asterisk provides the ARI Asterisk accessors for a native client
@@ -41,7 +40,7 @@ func (a *Asterisk) Config() ari.Config {
 func (a *Asterisk) Info(key *ari.Key) (*ari.AsteriskInfo, error) {
 	var m ari.AsteriskInfo
 
-	return &m, errors.Wrap(
+	return &m, eris.Wrap(
 		a.client.get("/asterisk/info", &m),
 		"failed to get asterisk info",
 	)
@@ -66,7 +65,7 @@ func (a *AsteriskVariables) Get(key *ari.Key) (string, error) {
 
 	err := a.client.get(fmt.Sprintf("/asterisk/variable?variable=%s", key.ID), &m)
 	if err != nil {
-		return "", errors.Wrapf(err, "Error getting asterisk variable '%v'", key.ID)
+		return "", eris.Wrapf(err, "Error getting asterisk variable '%v'", key.ID)
 	}
 
 	return m.Value, nil
@@ -83,7 +82,7 @@ func (a *AsteriskVariables) Set(key *ari.Key, value string) (err error) {
 		Value:    value,
 	}
 
-	return errors.Wrapf(
+	return eris.Wrapf(
 		a.client.post("/asterisk/variable", nil, &req),
 		"Error setting asterisk variable '%s' to '%s'", key.ID, value,
 	)

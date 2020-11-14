@@ -1,9 +1,8 @@
 package native
 
 import (
-	"github.com/pkg/errors"
-
 	"github.com/CyCoreSystems/ari/v5"
+	"github.com/rotisserie/eris"
 )
 
 // Logging provides the ARI Logging accessors for a native client
@@ -42,12 +41,12 @@ func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
 // Data returns the data of a logging channel
 func (l *Logging) Data(key *ari.Key) (*ari.LogData, error) {
 	if key == nil || key.ID == "" {
-		return nil, errors.New("logging key not supplied")
+		return nil, eris.New("logging key not supplied")
 	}
 
 	logChannels, err := l.getLoggingChannels()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get list of logging channels")
+		return nil, eris.Wrap(err, "failed to get list of logging channels")
 	}
 
 	for _, i := range logChannels {
@@ -57,7 +56,7 @@ func (l *Logging) Data(key *ari.Key) (*ari.LogData, error) {
 		}
 	}
 
-	return nil, errors.New("not found")
+	return nil, eris.New("not found")
 }
 
 // List lists the logging entities
@@ -87,7 +86,7 @@ func (l *Logging) List(filter *ari.Key) ([]*ari.Key, error) {
 func (l *Logging) Rotate(key *ari.Key) error {
 	name := key.ID
 	if name == "" {
-		return errors.New("Not allowed to rotate unnamed channels")
+		return eris.New("Not allowed to rotate unnamed channels")
 	}
 
 	return l.client.put("/asterisk/logging/"+name+"/rotate", nil, nil)
@@ -97,7 +96,7 @@ func (l *Logging) Rotate(key *ari.Key) error {
 func (l *Logging) Delete(key *ari.Key) error {
 	name := key.ID
 	if name == "" {
-		return errors.New("Not allowed to delete unnamed channels")
+		return eris.New("Not allowed to delete unnamed channels")
 	}
 
 	return l.client.del("/asterisk/logging/"+name, nil, "")

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // MaxIdleConnections is the maximum number of idle web client
@@ -104,14 +104,14 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	if req != nil {
 		reqBody, err = structToRequestBody(req)
 		if err != nil {
-			return errors.Wrap(err, "failed to marshal request")
+			return eris.Wrap(err, "failed to marshal request")
 		}
 	}
 
 	var r *http.Request
 
 	if r, err = http.NewRequest(method, url, reqBody); err != nil {
-		return errors.Wrap(err, "failed to create request")
+		return eris.Wrap(err, "failed to create request")
 	}
 
 	r.Header.Set("Content-Type", "application/json")
@@ -122,7 +122,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 
 	ret, err := c.httpClient.Do(r)
 	if err != nil {
-		return errors.Wrap(err, "failed to make request")
+		return eris.Wrap(err, "failed to make request")
 	}
 
 	defer ret.Body.Close() //nolint:errcheck
@@ -130,7 +130,7 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	if resp != nil {
 		err = json.NewDecoder(ret.Body).Decode(resp)
 		if err != nil {
-			return errors.Wrap(err, "failed to decode response")
+			return eris.Wrap(err, "failed to decode response")
 		}
 	}
 

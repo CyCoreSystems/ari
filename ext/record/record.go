@@ -9,8 +9,7 @@ import (
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/rid"
-
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 var (
@@ -199,7 +198,7 @@ type Result struct {
 // Delete discards the recording
 func (r *Result) Delete() error {
 	if r.h == nil {
-		return errors.New("no stored recording handle available")
+		return eris.New("no stored recording handle available")
 	}
 
 	return r.h.Delete()
@@ -222,14 +221,14 @@ func (r *Result) Save(name string) error {
 	}
 
 	if r.h == nil {
-		return errors.New("no stored recording handle available")
+		return eris.New("no stored recording handle available")
 	}
 
 	// Copy the recording to the desired name
 	destH, err := r.h.Copy(name)
 	if err != nil {
 		if !strings.Contains(err.Error(), "409 Conflict") || !r.overwrite {
-			return errors.Wrapf(err, "failed to copy recording (%s)", r.h.ID())
+			return eris.Wrapf(err, "failed to copy recording (%s)", r.h.ID())
 		}
 
 		// we are set to overwrite, so delete the previous recording
@@ -237,19 +236,19 @@ func (r *Result) Save(name string) error {
 
 		err = destH.Delete()
 		if err != nil {
-			return errors.Wrap(err, "failed to remove previous destination recording")
+			return eris.Wrap(err, "failed to remove previous destination recording")
 		}
 
 		_, err = r.h.Copy(name)
 		if err != nil {
-			return errors.Wrap(err, "failed to copy recording")
+			return eris.Wrap(err, "failed to copy recording")
 		}
 	}
 
 	// Delete the original
 	err = r.h.Delete()
 	if err != nil {
-		return errors.Wrap(err, "failed to remove temporary recording after copy")
+		return eris.Wrap(err, "failed to remove temporary recording after copy")
 	}
 
 	return nil
@@ -378,7 +377,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 
 	s.h, err = r.StageRecord(s.options.name, s.options.toRecordingOptions())
 	if err != nil {
-		s.res.Error = errors.Wrap(err, "failed to stage recording")
+		s.res.Error = eris.Wrap(err, "failed to stage recording")
 
 		wg.Done()
 

@@ -2,8 +2,6 @@ package native
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 type errDataGet struct {
@@ -18,7 +16,7 @@ func dataGetError(cause error, typ string, idfmt string, ctx ...interface{}) err
 		return nil
 	}
 
-	return errors.WithStack(&errDataGet{
+	return eris.WithStack(&errDataGet{
 		c:           cause,
 		entityType:  typ,
 		entityIDfmt: idfmt,

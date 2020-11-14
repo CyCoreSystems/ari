@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/CyCoreSystems/ari/v5"
-
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Application is a native implementation of ARI's Application functions
@@ -37,7 +36,7 @@ func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 		}
 	}
 
-	err = errors.Wrap(err, "Error listing applications")
+	err = eris.Wrap(err, "Error listing applications")
 
 	return
 }
@@ -46,7 +45,7 @@ func (a *Application) List(filter *ari.Key) (ax []*ari.Key, err error) {
 // Equivalent to GET /applications/{applicationName}
 func (a *Application) Data(key *ari.Key) (*ari.ApplicationData, error) {
 	if key == nil || key.ID == "" {
-		return nil, errors.New("application key not supplied")
+		return nil, eris.New("application key not supplied")
 	}
 
 	data := new(ari.ApplicationData)
@@ -70,7 +69,7 @@ func (a *Application) Subscribe(key *ari.Key, eventSource string) error {
 
 	err := a.client.post("/applications/"+key.ID+"/subscription", nil, &req)
 
-	return errors.Wrapf(err, "Error subscribing application '%v' for event source '%v'", key.ID, eventSource)
+	return eris.Wrapf(err, "Error subscribing application '%v' for event source '%v'", key.ID, eventSource)
 }
 
 // Unsubscribe unsubscribes (removes a subscription to) a given
@@ -80,5 +79,5 @@ func (a *Application) Unsubscribe(key *ari.Key, eventSource string) error {
 	name := key.ID
 	err := a.client.del("/applications/"+name+"/subscription", nil, fmt.Sprintf("eventSource=%s", eventSource))
 
-	return errors.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
+	return eris.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
 }

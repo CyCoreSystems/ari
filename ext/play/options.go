@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 var (
@@ -251,7 +251,7 @@ func (o *Options) ApplyOptions(opts ...OptionFunc) (err error) {
 	for _, f := range opts {
 		err = f(o)
 		if err != nil {
-			return errors.Wrap(err, "failed to apply option")
+			return eris.Wrap(err, "failed to apply option")
 		}
 	}
 

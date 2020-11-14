@@ -5,7 +5,7 @@ package ari
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // EventTypes enumerates the list of event types
@@ -109,10 +109,10 @@ func DecodeEvent(data []byte) (Event, error) {
 	var typer Message
 	err := json.Unmarshal(data, &typer)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode type")
+		return nil, eris.Wrap(err, "failed to decode type")
 	}
 	if typer.Type == "" {
-		return nil, errors.New("no type found")
+		return nil, eris.New("no type found")
 	}
 
 	switch typer.Type {
@@ -282,7 +282,7 @@ func DecodeEvent(data []byte) (Event, error) {
 		return &e, err
 
 	}
-	return nil, errors.New("unhandled type: " + typer.Type)
+	return nil, eris.New("unhandled type: " + typer.Type)
 }
 
 // ApplicationMoveFailed - "Notification that trying to move a channel to another Stasis application failed."

@@ -12,9 +12,9 @@ import (
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/rid"
 	"github.com/CyCoreSystems/ari/v5/stdbus"
+	"github.com/rotisserie/eris"
 
 	"github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"golang.org/x/net/websocket"
 )
 
@@ -257,7 +257,7 @@ func (c *Client) createWSConfig() (err error) {
 	// Construct a websocket config
 	c.WSConfig, err = websocket.NewConfig(wsurl, c.Options.WebsocketOrigin)
 	if err != nil {
-		return errors.Wrap(err, "Failed to construct websocket config")
+		return eris.Wrap(err, "Failed to construct websocket config")
 	}
 
 	// Add the authorization header
@@ -273,24 +273,24 @@ func (c *Client) Connect() error {
 
 	if c.connected {
 		cancel()
-		return errors.New("already connected")
+		return eris.New("already connected")
 	}
 
 	if c.Options.Username == "" {
 		cancel()
-		return errors.New("no username found")
+		return eris.New("no username found")
 	}
 
 	if c.Options.Password == "" {
 		cancel()
-		return errors.New("no password found")
+		return eris.New("no password found")
 	}
 
 	// Construct the websocket config, if we don't already have one
 	if c.WSConfig == nil {
 		if err := c.createWSConfig(); err != nil {
 			cancel()
-			return errors.Wrap(err, "failed to create websocket configuration")
+			return eris.Wrap(err, "failed to create websocket configuration")
 		}
 	}
 
@@ -381,13 +381,13 @@ func (c *Client) wsRead(ws *websocket.Conn) chan error {
 
 			err := websocket.Message.Receive(ws, &data)
 			if err != nil {
-				errChan <- errors.Wrap(err, "failed to receive websocket message")
+				errChan <- eris.Wrap(err, "failed to receive websocket message")
 				return
 			}
 
 			e, err := ari.DecodeEvent(data)
 			if err != nil {
-				errChan <- errors.Wrap(err, "failed to devoce websocket message to event")
+				errChan <- eris.Wrap(err, "failed to devoce websocket message to event")
 			}
 
 			c.bus.Send(e)

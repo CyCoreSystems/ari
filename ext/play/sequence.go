@@ -6,8 +6,7 @@ import (
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/rid"
-
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // sequence represents an audio sequence playback session
@@ -46,14 +45,14 @@ func (s *sequence) Play(ctx context.Context, p ari.Player) {
 		pb, err := p.StagePlay(rid.New(rid.Playback), u)
 		if err != nil {
 			s.s.result.Status = Failed
-			s.s.result.Error = errors.Wrap(err, "failed to stage playback")
+			s.s.result.Error = eris.Wrap(err, "failed to stage playback")
 
 			return
 		}
 
 		s.s.result.Status, err = playStaged(ctx, pb, s.s.o.playbackStartTimeout)
 		if err != nil {
-			s.s.result.Error = errors.Wrap(err, "failure in playback")
+			s.s.result.Error = eris.Wrap(err, "failure in playback")
 
 			return
 		}
@@ -73,7 +72,7 @@ func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duratio
 	}
 
 	if err := h.Exec(); err != nil {
-		return Failed, errors.Wrap(err, "failed to start playback")
+		return Failed, eris.Wrap(err, "failed to start playback")
 	}
 
 	defer h.Stop() // nolint: errcheck
@@ -85,7 +84,7 @@ func playStaged(ctx context.Context, h *ari.PlaybackHandle, timeout time.Duratio
 	case <-finished.Events():
 		return Finished, nil
 	case <-time.After(timeout):
-		return Timeout, errors.New("timeout waiting for playback to start")
+		return Timeout, eris.New("timeout waiting for playback to start")
 	}
 
 	// Wait for playback to complete
