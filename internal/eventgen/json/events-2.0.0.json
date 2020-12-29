@@ -687,7 +687,7 @@
 				},
 				"userevent": {
 					"required": true,
-					"type": "object",
+					"type": "json",
 					"description": "Custom Userevent data"
 				}
 			}
