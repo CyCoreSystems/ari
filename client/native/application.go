@@ -81,3 +81,19 @@ func (a *Application) Unsubscribe(key *ari.Key, eventSource string) error {
 
 	return eris.Wrapf(err, "Error unsubscribing application '%v' for event source '%v'", name, eventSource)
 }
+
+// EventFilter application events types. Allowed and/or disallowed event type filtering can be done.
+func (a *Application) EventFilter(key *ari.Key, req ari.EventFilterData) error {
+	name := key.ID
+	if req.Allowed == nil {
+		req.Allowed = []ari.EventFilter{}
+	}
+
+	if req.Disallowed == nil {
+		req.Disallowed = []ari.EventFilter{}
+	}
+
+	err := a.client.put("/applications/"+name+"/eventFilter", nil, &req)
+
+	return eris.Wrapf(err, "Error event filtering application '%v'", name)
+}
