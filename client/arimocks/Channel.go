@@ -70,6 +70,20 @@ func (_m *Channel) Continue(key *ari.Key, context string, extension string, prio
 	return r0
 }
 
+// Redirect provides a mock function with given fields: endpoint
+func (_m *Channel) Redirect(key *ari.Key, endpoint string) error {
+	ret := _m.Called(key, endpoint)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, endpoint)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: _a0, _a1
 func (_m *Channel) Create(_a0 *ari.Key, _a1 ari.ChannelCreateRequest) (*ari.ChannelHandle, error) {
 	ret := _m.Called(_a0, _a1)
