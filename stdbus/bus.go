@@ -51,6 +51,9 @@ func (b *bus) Send(e ari.Event) {
 
 	// Disseminate the message to the subscribers
 	for _, s := range b.subs {
+		if s.closed {
+			continue
+		}
 		matched = false
 		for _, k := range e.Keys() {
 			if matched {
@@ -78,7 +81,8 @@ func (b *bus) Send(e ari.Event) {
 // Subscribe returns a subscription to the given list
 // of event types
 func (b *bus) Subscribe(key *ari.Key, eTypes ...string) ari.Subscription {
-	s := newSubscription(b, key, eTypes...)
+	s := newSubscription(key, eTypes...)
+	s.AddCancelCallback(b.remove)
 	b.add(s)
 
 	return s
@@ -92,7 +96,7 @@ func (b *bus) add(s *subscription) {
 }
 
 // remove deletes the given subscription from the bus
-func (b *bus) remove(s *subscription) {
+func (b *bus) remove(s interface{}) {
 	b.rwMux.Lock()
 	for i, si := range b.subs {
 		if s == si {
@@ -112,19 +116,18 @@ func (b *bus) remove(s *subscription) {
 // events from the ARI event bus.
 type subscription struct {
 	key    *ari.Key
-	b      *bus     // reference to the event bus
 	events []string // list of events to listen for
 
 	mu     sync.Mutex
 	closed bool           // channel closure protection flag
 	C      chan ari.Event // channel for sending events to the subscriber
+	cb     []func(d interface{}) // slice of callbacks to execute on Cancel()
 }
 
 // newSubscription creates a new, unattached subscription
-func newSubscription(b *bus, key *ari.Key, eTypes ...string) *subscription {
+func newSubscription(key *ari.Key, eTypes ...string) *subscription {
 	return &subscription{
 		key:    key,
-		b:      b,
 		events: eTypes,
 		C:      make(chan ari.Event, subscriptionEventBufferSize),
 	}
@@ -153,13 +156,18 @@ func (s *subscription) Cancel() {
 
 	s.mu.Unlock()
 
-	// Remove the subscription from the bus
-	if s.b != nil {
-		s.b.remove(s)
+	// Iterate through callbacks
+	for _,cb := range s.cb {
+		cb(s)
 	}
 
 	// Close the subscription's deliver channel
 	if s.C != nil {
 		close(s.C)
 	}
+}
+
+// Add cancel callback function
+func (s *subscription) AddCancelCallback(cb func(d interface{})) {
+	s.cb = append(s.cb, cb)
 }
