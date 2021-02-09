@@ -12,7 +12,7 @@ contributors:
 	write_mailmap > CONTRIBUTORS
 
 protobuf: ari.proto
-	protoc -I. -I./vendor --gogofast_out=Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,plugins=grpc:. ari.proto
+	protoc -I. -I./vendor -I$(GOPATH)/src --gogofast_out=Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,plugins=grpc:. ari.proto
 
 dep:
 	go mod tidy
