@@ -25,6 +25,9 @@ type Application interface {
 	// ARI application from the provided event source
 	// Equivalent to DELETE /applications/{applicationName}/subscription
 	Unsubscribe(key *Key, eventSource string) error
+
+	// EventFilter application events types. Allowed and/or disallowed event type filtering can be done.
+	EventFilter(key *Key, filter EventFilterData) error
 }
 
 // ApplicationData describes the data for a Stasis (Ari) application
@@ -37,6 +40,18 @@ type ApplicationData struct {
 	DeviceNames []string `json:"device_names"` // Subscribed Device names
 	EndpointIDs []string `json:"endpoint_ids"` // Subscribed Endpoints (tech/resource format)
 	Name        string   `json:"name"`         // Name of the application
+}
+
+// EventFilter describes data for specific event filter
+type EventFilter struct {
+	// Type is the type name of this event
+	Type string `json:"type"`
+}
+
+// EventFilterData describes data for application event filtering
+type EventFilterData struct {
+	Allowed    []EventFilter `json:"allowed"`
+	Disallowed []EventFilter `json:"disallowed"`
 }
 
 // ApplicationHandle provides a wrapper to an Application interface for
@@ -86,6 +101,12 @@ func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
 // Equivalent to DELETE /applications/{applicationName}/subscription
 func (ah *ApplicationHandle) Unsubscribe(eventSource string) (err error) {
 	err = ah.a.Unsubscribe(ah.key, eventSource)
+	return
+}
+
+// EventFilter application events types. Allowed and/or disallowed event type filtering can be done.
+func (ah *ApplicationHandle) EventFilter(filter EventFilterData) (err error) {
+	err = ah.a.EventFilter(ah.key, filter)
 	return
 }
 

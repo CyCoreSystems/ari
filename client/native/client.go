@@ -57,6 +57,9 @@ type Options struct {
 
 	// Allow subscribe to all events in Asterisk Server
 	SubscribeAll bool
+
+	// Track Connection State
+	ConnState chan bool
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
@@ -348,6 +351,10 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 			signalUp.Do(wg.Done)
 		}
 
+		if c.Options.ConnState != nil {
+			c.Options.ConnState <- true
+		}
+
 		// Wait for context closure or read error
 		select {
 		case <-ctx.Done():
@@ -361,6 +368,10 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 
 		// Make sure our websocket connection is closed before looping
 		c.connected = false
+
+		if c.Options.ConnState != nil {
+			c.Options.ConnState <- false
+		}
 
 		err = ws.Close()
 		if err != nil {

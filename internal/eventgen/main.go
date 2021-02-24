@@ -26,6 +26,7 @@ func init() {
 	typeMappings["DeviceState"] = "DeviceStateData"
 	typeMappings["TextMessage"] = "TextMessageData"
 	typeMappings["object"] = "interface{}"
+	typeMappings["json"] = "json.RawMessage"
 }
 
 type event struct {

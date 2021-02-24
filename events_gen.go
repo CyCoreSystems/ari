@@ -550,11 +550,11 @@ type ChannelUserevent struct {
 	// Header describes any transport-related metadata
 	Header Header `json:"-"`
 
-	Bridge    BridgeData   `json:"bridge,omitempty"`   // A bridge that is signaled with the user event.
-	Channel   ChannelData  `json:"channel,omitempty"`  // A channel that is signaled with the user event.
-	Endpoint  EndpointData `json:"endpoint,omitempty"` // A endpoint that is signaled with the user event.
-	Eventname string       `json:"eventname"`          // The name of the user event.
-	Userevent interface{}  `json:"userevent"`          // Custom Userevent data
+	Bridge    BridgeData      `json:"bridge,omitempty"`   // A bridge that is signaled with the user event.
+	Channel   ChannelData     `json:"channel,omitempty"`  // A channel that is signaled with the user event.
+	Endpoint  EndpointData    `json:"endpoint,omitempty"` // A endpoint that is signaled with the user event.
+	Eventname string          `json:"eventname"`          // The name of the user event.
+	Userevent json.RawMessage `json:"userevent"`          // Custom Userevent data
 }
 
 // ChannelVarset - "Channel variable changed."
