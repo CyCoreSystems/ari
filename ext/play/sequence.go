@@ -34,12 +34,31 @@ func newSequence(s *playSession) *sequence {
 	}
 }
 
-func (s *sequence) Play(ctx context.Context, p ari.Player) {
+func (s *sequence) Play(ctx context.Context, p ari.Player, playbackCounter int) {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 
 	defer cancel()
 	defer close(s.done)
+
+	if playbackCounter > 0 && !s.s.o.invalidPrependUriList.Empty() {
+		for u := s.s.o.invalidPrependUriList.First(); u != ""; u = s.s.o.invalidPrependUriList.Next() {
+			pb, err := p.StagePlay(rid.New(rid.Playback), u)
+			if err != nil {
+				s.s.result.Status = Failed
+				s.s.result.Error = eris.Wrap(err, "failed to stage playback")
+
+				return
+			}
+
+			s.s.result.Status, err = playStaged(ctx, pb, s.s.o.playbackStartTimeout)
+			if err != nil {
+				s.s.result.Error = eris.Wrap(err, "failure in playback")
+
+				return
+			}
+		}
+	}
 
 	for u := s.s.o.uriList.First(); u != ""; u = s.s.o.uriList.Next() {
 		pb, err := p.StagePlay(rid.New(rid.Playback), u)
