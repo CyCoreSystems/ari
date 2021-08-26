@@ -139,7 +139,7 @@ func (s *playSession) play(ctx context.Context, p ari.Player) {
 		s.result.mu.Unlock()
 
 		// Play the sequence of audio URIs
-		s.playSequence(ctx, p)
+		s.playSequence(ctx, p, i)
 
 		if s.result.Error != nil {
 			return
@@ -151,14 +151,14 @@ func (s *playSession) play(ctx context.Context, p ari.Player) {
 }
 
 // playSequence plays the complete audio sequence
-func (s *playSession) playSequence(ctx context.Context, p ari.Player) {
+func (s *playSession) playSequence(ctx context.Context, p ari.Player, playbackCounter int) {
 	seq := newSequence(s)
 
 	s.mu.Lock()
 	s.currentSequence = seq
 	s.mu.Unlock()
 
-	go seq.Play(ctx, p)
+	go seq.Play(ctx, p, playbackCounter)
 
 	// Wait for sequence playback to complete (or context closure to be caught)
 	select {

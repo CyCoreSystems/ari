@@ -51,6 +51,7 @@ func TestSequence(t *testing.T) {
 	t.Run("someItemsStopEarly", testSequenceSomeItemsStopEarly)
 	t.Run("someItemsCancelEarly", testSequenceSomeItemsCancelEarly)
 	t.Run("someItemsStagePlayFailure", testSequenceSomeItemsStagePlayFailure)
+	t.Run("someItemsWithFailurePrepend", testSequenceFailurePrepend)
 }
 
 func testSequenceNoItems(t *testing.T) {
@@ -61,7 +62,7 @@ func testSequenceNoItems(t *testing.T) {
 
 	seq := newSequence(newPlaySession(NewDefaultOptions()))
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertNotCalled(t, "StagePlay")
 }
@@ -90,7 +91,7 @@ func testSequenceSomeItemsTimeoutStart(t *testing.T) {
 	opts.playbackStartTimeout = 10 * time.Millisecond
 	seq := newSequence(newPlaySession(opts))
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertNotCalled(t, "StagePlay", mock.Anything, "sound:2")
@@ -143,7 +144,7 @@ func testSequenceSomeItems(t *testing.T) {
 		s2.playbackEndChan <- &ari.PlaybackFinished{}
 	}()
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
@@ -196,7 +197,7 @@ func testSequenceSomeItemsCancelEarly(t *testing.T) {
 		cancel()
 	}()
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
@@ -249,7 +250,7 @@ func testSequenceSomeItemsStopEarly(t *testing.T) {
 		seq.Stop()
 	}()
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
@@ -295,7 +296,7 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 		<-time.After(20 * time.Millisecond)
 	}()
 
-	seq.Play(ctx, player)
+	seq.Play(ctx, player, 0)
 
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
 	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
@@ -306,5 +307,60 @@ func testSequenceSomeItemsStagePlayFailure(t *testing.T) {
 
 	if seq.s.result.Status != Failed {
 		t.Errorf("Expected status '%v', got '%v'", Failed, seq.s.result.Status)
+	}
+}
+
+func testSequenceFailurePrepend(t *testing.T) {
+	player := &arimocks.Player{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var s, s2, s3 sequenceTest
+
+	s.Setup("ph1")
+	s2.Setup("ph2")
+	s3.Setup("ph3")
+
+	ph1 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph1"), s.playback, nil)
+	ph2 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph2"), s2.playback, nil)
+	ph3 := ari.NewPlaybackHandle(ari.NewKey(ari.PlaybackKey, "ph3"), s3.playback, nil)
+
+	player.On("StagePlay", mock.Anything, "sound:1").Return(ph1, nil)
+	player.On("StagePlay", mock.Anything, "sound:2").Return(ph2, nil)
+	player.On("StagePlay", mock.Anything, "sound:3").Return(ph3, nil)
+
+	opts := NewDefaultOptions()
+	opts.uriList.Add("sound:1")
+	opts.uriList.Add("sound:2")
+	opts.invalidPrependUriList.Add("sound:3")
+	seq := newSequence(newPlaySession(opts))
+
+	go func() {
+		s3.playbackEndChan <- &ari.PlaybackFinished{}
+
+		<-time.After(20 * time.Millisecond)
+
+		s.playbackEndChan <- &ari.PlaybackFinished{}
+
+		<-time.After(20 * time.Millisecond)
+
+		s2.playbackEndChan <- &ari.PlaybackFinished{}
+
+		<-time.After(20 * time.Millisecond)
+	}()
+
+	seq.Play(ctx, player, 1)
+
+	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:1")
+	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:2")
+	player.AssertCalled(t, "StagePlay", mock.Anything, "sound:3")
+
+	if err := seq.s.result.Error; err != nil {
+		t.Errorf("Expected error: %v, got %v", "failed to stage playback: unknown error", err)
+	}
+
+	if seq.s.result.Status != Finished {
+		t.Errorf("Expected status '%v', got '%v'", Finished, seq.s.result.Status)
 	}
 }

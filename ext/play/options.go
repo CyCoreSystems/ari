@@ -175,6 +175,10 @@ type Options struct {
 	// uriList is the list of audio URIs to play
 	uriList *uriList
 
+	// invalidPrependUriList is an optional URI list which is play before the normal URI list if the replay counter is greater than 0.
+	// This is useful for cases such as "Invalid password" should be prepended when a non-matching result is received.
+	invalidPrependUriList *uriList
+
 	// playbackStartTimeout defines the amount of time to wait for a playback to
 	// start before declaring it failed.
 	//
@@ -236,9 +240,10 @@ type Options struct {
 // NewDefaultOptions returns a set of options which represent reasonable defaults for most simple playbacks.
 func NewDefaultOptions() *Options {
 	opts := &Options{
-		playbackStartTimeout: DefaultPlaybackStartTimeout,
-		maxPlaybackTime:      DefaultMaxPlaybackTime,
-		uriList:              new(uriList),
+		playbackStartTimeout:  DefaultPlaybackStartTimeout,
+		maxPlaybackTime:       DefaultMaxPlaybackTime,
+		uriList:               new(uriList),
+		invalidPrependUriList: new(uriList),
 	}
 
 	MatchAny()(opts) // nolint  No error is possible with MatchAny
@@ -292,6 +297,24 @@ func URI(uri ...string) OptionFunc {
 		for _, u := range uri {
 			if u != "" {
 				o.uriList.Add(u)
+			}
+		}
+
+		return nil
+	}
+}
+
+// InvalidPrependURI sets a prepend URI set to be played when Replay count > 0, such as when
+// a user has entered and invalid DMTF sequence.
+func InvalidPrependURI(uri ...string) OptionFunc {
+	return func(o *Options) error {
+		if o.invalidPrependUriList == nil {
+			o.invalidPrependUriList = new(uriList)
+		}
+
+		for _, u := range uri {
+			if u != "" {
+				o.invalidPrependUriList.Add(u)
 			}
 		}
 
