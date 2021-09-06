@@ -1,6 +1,7 @@
 package native
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -36,6 +37,23 @@ func (sr *StoredRecording) List(filter *ari.Key) (sx []*ari.Key, err error) {
 // Get gets a lazy handle for the given stored recording name
 func (sr *StoredRecording) Get(key *ari.Key) *ari.StoredRecordingHandle {
 	return ari.NewStoredRecordingHandle(key, sr, nil)
+}
+
+// File gets the file associated with the stored recording
+func (sr *StoredRecording) File(key *ari.Key) (*ari.StoredRecordingFile, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("storedRecording key not supplied")
+	}
+
+	buff := new(bytes.Buffer)
+	if err := sr.client.get("/recordings/stored/"+key.ID+"/file", buff); err != nil {
+		return nil, dataGetError(err, "storedRecording", "$v", key.ID)
+	}
+
+	return &ari.StoredRecordingFile{
+		Key:  sr.client.stamp(key),
+		File: buff,
+	}, nil
 }
 
 // Data retrieves the state of the stored recording

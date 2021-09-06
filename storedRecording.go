@@ -1,5 +1,7 @@
 package ari
 
+import "io"
+
 // StoredRecording represents a communication path interacting with an Asterisk
 // server for stored recording resources
 type StoredRecording interface {
@@ -36,6 +38,13 @@ type StoredRecordingData struct {
 // ID returns the identifier for the stored recording.
 func (d StoredRecordingData) ID() string {
 	return d.Name // TODO: does the identifier include the Format and Name?
+}
+
+// StoredRecordingFile is result with raw stored recording file
+type StoredRecordingFile struct {
+	Key *Key
+
+	File io.Reader
 }
 
 // A StoredRecordingHandle is a reference to a stored recording that can be operated on
