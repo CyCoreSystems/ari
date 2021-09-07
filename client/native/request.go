@@ -127,7 +127,11 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 
 	defer ret.Body.Close() //nolint:errcheck
 
-	if resp != nil {
+	if w, isWriter := resp.(io.Writer); isWriter {
+		if _, err = io.Copy(w, ret.Body); err != nil {
+			return eris.Wrap(err, "failed to copy response body")
+		}
+	} else if resp != nil {
 		err = json.NewDecoder(ret.Body).Decode(resp)
 		if err != nil {
 			return eris.Wrap(err, "failed to decode response")

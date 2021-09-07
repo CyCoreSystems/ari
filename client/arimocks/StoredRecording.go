@@ -58,6 +58,29 @@ func (_m *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) 
 	return r0, r1
 }
 
+// Data provides a mock function with given fields: key
+func (_m *StoredRecording) File(key *ari.Key) (*ari.StoredRecordingFile, error) {
+	ret := _m.Called(key)
+
+	var r0 *ari.StoredRecordingFile
+	if rf, ok := ret.Get(0).(func(*ari.Key) *ari.StoredRecordingFile); ok {
+		r0 = rf(key)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ari.StoredRecordingFile)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*ari.Key) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: key
 func (_m *StoredRecording) Delete(key *ari.Key) error {
 	ret := _m.Called(key)
