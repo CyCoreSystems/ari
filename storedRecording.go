@@ -24,6 +24,9 @@ type StoredRecording interface {
 
 	// Delete deletes the recording
 	Delete(key *Key) error
+
+	// File gets the file associated with the stored recording
+	File(key *Key) (*StoredRecordingFile, error)
 }
 
 // StoredRecordingData is the data for a stored recording
