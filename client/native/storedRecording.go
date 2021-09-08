@@ -3,6 +3,7 @@ package native
 import (
 	"bytes"
 	"errors"
+	"net/url"
 
 	"github.com/CyCoreSystems/ari/v5"
 )
@@ -46,7 +47,7 @@ func (sr *StoredRecording) File(key *ari.Key) (*ari.StoredRecordingFile, error) 
 	}
 
 	buff := new(bytes.Buffer)
-	if err := sr.client.get("/recordings/stored/"+key.ID+"/file", buff); err != nil {
+	if err := sr.client.get("/recordings/stored/"+url.QueryEscape(key.ID)+"/file", buff); err != nil {
 		return nil, dataGetError(err, "storedRecording", "$v", key.ID)
 	}
 
