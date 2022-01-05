@@ -120,10 +120,10 @@ type Channel interface {
 	// when `Exec`ed, by which audio may be sent or received.  The stage version
 	// of this command will not actually communicate with Asterisk until Exec is
 	// called on the returned ExternalMedia channel.
-	StageExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
+	StageExternalMedia(key *Key, opts ExternalMediaOptions, variables interface{}) (*ChannelHandle, error)
 
 	// ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
-	ExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
+	ExternalMedia(key *Key, opts ExternalMediaOptions, variables interface{}) (*ChannelHandle, error)
 
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
@@ -264,8 +264,8 @@ type ExternalMediaOptions struct {
 	// Direction specifies the directionality of the audio stream.  Options include 'both'.  This parameter is optional and if not specified, 'both' will be used.
 	Direction string `json:"direction"`
 
-	// Variables defines the set of channel variables which should be bound to this channel upon creation.  This parameter is optional.
-	Variables map[string]string `json:"variables"`
+	// Data defines the set of channel data which should be bound to this channel upon creation.  This parameter is optional.
+	Data string `json:"data"`
 }
 
 // ChannelHandle provides a wrapper on the Channel interface for operations on a particular channel ID.
@@ -523,13 +523,13 @@ func (ch *ChannelHandle) StageSnoop(snoopID string, opts *SnoopOptions) (*Channe
 // when `Exec`ed, by which audio may be sent or received.  The stage version
 // of this command will not actually communicate with Asterisk until Exec is
 // called on the returned ExternalMedia channel.
-func (ch *ChannelHandle) StageExternalMedia(opts ExternalMediaOptions) (*ChannelHandle, error) {
-	return ch.c.StageExternalMedia(ch.key, opts)
+func (ch *ChannelHandle) StageExternalMedia(opts ExternalMediaOptions, variables interface{}) (*ChannelHandle, error) {
+	return ch.c.StageExternalMedia(ch.key, opts, variables)
 }
 
 // ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
-func (ch *ChannelHandle) ExternalMedia(opts ExternalMediaOptions) (*ChannelHandle, error) {
-	return ch.c.ExternalMedia(ch.key, opts)
+func (ch *ChannelHandle) ExternalMedia(opts ExternalMediaOptions, variables interface{}) (*ChannelHandle, error) {
+	return ch.c.ExternalMedia(ch.key, opts, variables)
 }
 
 // ----

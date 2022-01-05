@@ -3,6 +3,7 @@ package native
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -377,8 +378,8 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 }
 
 // ExternalMedia implements the ari.Channel interface
-func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
-	h, err := c.StageExternalMedia(key, opts)
+func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions, variables interface{}) (*ari.ChannelHandle, error) {
+	h, err := c.StageExternalMedia(key, opts, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +388,7 @@ func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*a
 }
 
 // StageExternalMedia implements the ari.Channel interface
-func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
+func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions, variables interface{}) (*ari.ChannelHandle, error) {
 	if opts.ChannelID == "" {
 		opts.ChannelID = rid.New(rid.Channel)
 	}
@@ -424,7 +425,28 @@ func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions
 	k := c.client.stamp(ari.NewKey(ari.ChannelKey, opts.ChannelID))
 
 	return ari.NewChannelHandle(k, c, func(ch *ari.ChannelHandle) error {
-		return c.client.post("/channels/externalMedia", nil, &opts)
+		base, err := url.Parse("/channels/externalMedia")
+		if err != nil {
+			return err
+		}
+
+		// mandatory query type parameters
+		params := url.Values{}
+		params.Add("app", opts.App)
+		params.Add("external_host", opts.ExternalHost)
+		params.Add("format", opts.Format)
+
+		// optional query type parameters
+		params.Add("encapsulation", opts.Encapsulation)
+		params.Add("transport", opts.Transport)
+		params.Add("connection_type", opts.ConnectionType)
+		params.Add("direction", opts.Direction)
+		if opts.Data != "" {
+			params.Add("data", opts.Data)
+		}
+		base.RawQuery = params.Encode()
+
+		return c.client.post(base.String(), nil, variables)
 	}), nil
 }
 
