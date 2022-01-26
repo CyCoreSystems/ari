@@ -131,15 +131,15 @@ func (_m *Channel) Dial(key *ari.Key, caller string, timeout time.Duration) erro
 }
 
 // ExternalMedia provides a mock function with given fields: key, opts
-func (_m *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
+func (_m *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelData, error) {
 	ret := _m.Called(key, opts)
 
-	var r0 *ari.ChannelHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, ari.ExternalMediaOptions) *ari.ChannelHandle); ok {
+	var r0 *ari.ChannelData
+	if rf, ok := ret.Get(0).(func(*ari.Key, ari.ExternalMediaOptions) *ari.ChannelData); ok {
 		r0 = rf(key, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ari.ChannelHandle)
+			r0 = ret.Get(0).(*ari.ChannelData)
 		}
 	}
 

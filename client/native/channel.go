@@ -377,17 +377,51 @@ func (c *Channel) StageSnoop(key *ari.Key, snoopID string, opts *ari.SnoopOption
 }
 
 // ExternalMedia implements the ari.Channel interface
-func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
-	h, err := c.StageExternalMedia(key, opts)
-	if err != nil {
-		return nil, err
+func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelData, error) {
+	if opts.ChannelID == "" {
+		opts.ChannelID = rid.New(rid.Channel)
 	}
 
-	return h, h.Exec()
+	if opts.App == "" {
+		opts.App = c.client.ApplicationName()
+	}
+
+	if opts.ExternalHost == "" {
+		return nil, errors.New("ExternalHost is mandatory")
+	}
+
+	if opts.Encapsulation == "" {
+		opts.Encapsulation = "rtp"
+	}
+
+	if opts.Transport == "" {
+		opts.Transport = "udp"
+	}
+
+	if opts.ConnectionType == "" {
+		opts.ConnectionType = "client"
+	}
+
+	if opts.Format == "" {
+		return nil, errors.New("Format is mandatory")
+	}
+
+	if opts.Direction == "" {
+		opts.Direction = "both"
+	}
+
+	data := new(ari.ChannelData)
+	if err := c.client.post("/channels/externalMedia", data, &opts); err != nil {
+		return nil, dataGetError(err, "channel", "%v", key.ID)
+	}
+
+	data.Key = c.client.stamp(key)
+
+	return data, nil
 }
 
 // StageExternalMedia implements the ari.Channel interface
-func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
+func (c *Channel) StageExternalMedia(_ *ari.Key, opts ari.ExternalMediaOptions) (*ari.ChannelHandle, error) {
 	if opts.ChannelID == "" {
 		opts.ChannelID = rid.New(rid.Channel)
 	}

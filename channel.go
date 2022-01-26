@@ -123,7 +123,7 @@ type Channel interface {
 	StageExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
 
 	// ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
-	ExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelHandle, error)
+	ExternalMedia(key *Key, opts ExternalMediaOptions) (*ChannelData, error)
 
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
@@ -528,7 +528,7 @@ func (ch *ChannelHandle) StageExternalMedia(opts ExternalMediaOptions) (*Channel
 }
 
 // ExternalMedia creates a new non-telephony external media channel by which audio may be sent or received
-func (ch *ChannelHandle) ExternalMedia(opts ExternalMediaOptions) (*ChannelHandle, error) {
+func (ch *ChannelHandle) ExternalMedia(opts ExternalMediaOptions) (*ChannelData, error) {
 	return ch.c.ExternalMedia(ch.key, opts)
 }
 
