@@ -3,6 +3,7 @@ package native
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -410,8 +411,24 @@ func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*a
 		opts.Direction = "both"
 	}
 
+	base, err := url.Parse("/channels/externalMedia")
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("app", opts.App)
+	params.Add("external_host", opts.ExternalHost)
+	params.Add("format", opts.Format)
+	params.Add("encapsulation", opts.Encapsulation)
+	params.Add("transport", opts.Transport)
+	params.Add("connection_type", opts.ConnectionType)
+	params.Add("direction", opts.Direction)
+
+	base.RawQuery = params.Encode()
 	data := new(ari.ChannelData)
-	if err := c.client.post("/channels/externalMedia", data, &opts); err != nil {
+
+	if err := c.client.post(base.String(), data, nil); err != nil {
 		return nil, dataGetError(err, "channel", "%v", key.ID)
 	}
 
