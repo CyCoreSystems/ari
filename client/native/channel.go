@@ -417,6 +417,7 @@ func (c *Channel) ExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions) (*a
 	}
 
 	params := url.Values{}
+	params.Add("channelId", opts.ChannelID)
 	params.Add("app", opts.App)
 	params.Add("external_host", opts.ExternalHost)
 	params.Add("format", opts.Format)
