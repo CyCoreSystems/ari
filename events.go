@@ -352,9 +352,15 @@ func (evt *DeviceStateChanged) Keys() (sx Keys) {
 
 // Keys returns the list of keys associated with this event
 func (evt *Dial) Keys() (sx Keys) {
-	sx = append(sx, evt.Key(ChannelKey, evt.Caller.ID))
+	if evt.Caller.ID != "" {
+		sx = append(sx, evt.Key(ChannelKey, evt.Caller.ID))
+	}
+
 	sx = append(sx, evt.Key(ChannelKey, evt.Peer.ID))
-	sx = append(sx, evt.Key(ChannelKey, evt.Forwarded.ID))
+
+	if evt.Forwarded.ID != "" {
+		sx = append(sx, evt.Key(ChannelKey, evt.Forwarded.ID))
+	}
 
 	return
 }
