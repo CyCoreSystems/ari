@@ -154,8 +154,7 @@ func main() {
 
 			items := strings.Split(pkey, "_")
 			for _, x := range items {
-				caser := cases.Title(language.Und)
-				name += caser.String(x)
+				name += cases.Title(language.English).String(x)
 			}
 
 			required := true

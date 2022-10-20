@@ -3,7 +3,7 @@ module github.com/CyCoreSystems/ari/v5
 require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2
-	github.com/inconshreveable/log15 v0.0.0-20171019012758-0decfc6c20d9
+	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
