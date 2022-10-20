@@ -481,7 +481,7 @@ func (c *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
 		Source      string      `json:"source"`
 		Variables   interface{} `json:"variables"`
 	}{
-		application: "Stasis2",
+		application: key.App,
 		Source:      "channel:" + key.ID,
 		Variables:   ue.Userevent,
 	}
