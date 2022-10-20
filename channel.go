@@ -127,6 +127,9 @@ type Channel interface {
 
 	// Subscribe subscribes on the channel events
 	Subscribe(key *Key, n ...string) Subscription
+
+	// UserEvent Sends user-event to AMI channel subscribers
+	UserEvent(key *Key, ue *ChannelUserevent) error
 }
 
 // channelDataJSON is the data for a specific channel
@@ -572,4 +575,9 @@ func (ch *ChannelHandle) Subscribe(n ...string) Subscription {
 // SendDTMF sends the DTMF information to the server
 func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
 	return ch.c.SendDTMF(ch.key, dtmf, opts)
+}
+
+// UserEvent sends user-event to AMI channel subscribers
+func (ch *ChannelHandle) UserEvent(key *Key, ue *ChannelUserevent) error {
+	return ch.c.UserEvent(ch.key, ue)
 }
