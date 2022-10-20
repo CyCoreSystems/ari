@@ -624,3 +624,17 @@ func (_m *Channel) Unmute(key *ari.Key, dir ari.Direction) error {
 
 	return r0
 }
+
+// UserEvent provides a mock function with given fields: key, ue
+func (_m *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
+	ret := _m.Called(key, ue)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, *ari.ChannelUserevent) error); ok {
+		r0 = rf(key, ue)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
