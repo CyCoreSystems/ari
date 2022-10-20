@@ -472,3 +472,18 @@ func (c *Channel) SetVariable(key *ari.Key, name, value string) error {
 
 	return c.client.post(fmt.Sprintf("/channels/%s/variable", key.ID), nil, &req)
 }
+
+// UserEvent - triggers a UserEvent for the given channel
+func (c *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
+
+	req := struct {
+		application string      `json:"application"`
+		Source      string      `json:"source"`
+		Variables   interface{} `json:"variables"`
+	}{
+		application: "Stasis2",
+		Source:      "channel:" + key.ID,
+		Variables:   ue.Userevent,
+	}
+	return c.client.post("/events/user/"+ue.Eventname, nil, &req)
+}
