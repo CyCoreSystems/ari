@@ -484,5 +484,6 @@ func (c *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
 		Source:      "channel:" + key.ID,
 		Variables:   ue.Userevent,
 	}
+
 	return c.client.post(fmt.Sprintf("/events/user/%s", ue.Eventname), nil, &req)
 }
