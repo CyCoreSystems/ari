@@ -9,6 +9,9 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var typeMappings map[string]string
@@ -151,7 +154,8 @@ func main() {
 
 			items := strings.Split(pkey, "_")
 			for _, x := range items {
-				name += strings.Title(x)
+				caser := cases.Title(language.Und)
+				name += caser.String(x)
 			}
 
 			required := true
