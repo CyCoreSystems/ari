@@ -3,7 +3,7 @@ package bridgemon
 import (
 	"sync"
 
-	"github.com/CyCoreSystems/ari/v5"
+	"github.com/CyCoreSystems/ari/v6"
 )
 
 // Monitor is a bridge monitor, which maintains bridge data.  It monitors an ARI bridge for events and keeps an internal cache of the bridge's data.

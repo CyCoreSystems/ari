@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/inconshreveable/log15"
 
-	"github.com/CyCoreSystems/ari/v5/client/native"
+	"github.com/CyCoreSystems/ari/v6/client/native"
 )
 
 func main() {
