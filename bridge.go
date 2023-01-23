@@ -38,11 +38,11 @@ type Bridge interface {
 	StopMOH(key *Key) error
 
 	// Play plays the media URI to the bridge
-	Play(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
+	Play(key *Key, playbackID string, mediaURI ...string) (*PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(key *Key, playbackID string, mediaURI string) (*PlaybackHandle, error)
+	StagePlay(key *Key, playbackID string, mediaURI ...string) (*PlaybackHandle, error)
 
 	// Record records the bridge
 	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)

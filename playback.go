@@ -28,10 +28,10 @@ type Playback interface {
 // A Player is an entity which can play an audio URI
 type Player interface {
 	// Play plays the audio using the given playback ID and media URI
-	Play(string, string) (*PlaybackHandle, error)
+	Play(string, ...string) (*PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation
-	StagePlay(string, string) (*PlaybackHandle, error)
+	StagePlay(string, ...string) (*PlaybackHandle, error)
 
 	// Subscribe subscribes the player to events
 	Subscribe(n ...string) Subscription

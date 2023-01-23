@@ -271,12 +271,12 @@ func (c *Channel) StopSilence(key *ari.Key) error {
 
 // Play plays the given media URI on the channel, using the playbackID as
 // the identifier of the created ARI Playback entity
-func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
 
-	h, err := c.StagePlay(key, playbackID, mediaURI)
+	h, err := c.StagePlay(key, playbackID, mediaURI...)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func (c *Channel) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.P
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
@@ -293,7 +293,7 @@ func (c *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*
 	resp := make(map[string]interface{})
 
 	req := struct {
-		Media string `json:"media"`
+		Media []string `json:"media"`
 	}{
 		Media: mediaURI,
 	}

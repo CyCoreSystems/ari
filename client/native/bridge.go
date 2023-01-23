@@ -155,12 +155,12 @@ func (b *Bridge) StopMOH(key *ari.Key) error {
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
 
-	h, err := b.StagePlay(key, playbackID, mediaURI)
+	h, err := b.StagePlay(key, playbackID, mediaURI...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,14 +169,14 @@ func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI string) (*ari.Pl
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI string) (*ari.PlaybackHandle, error) {
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
 
 	resp := make(map[string]interface{})
 	req := struct {
-		Media string `json:"media"`
+		Media []string `json:"media"`
 	}{
 		Media: mediaURI,
 	}
