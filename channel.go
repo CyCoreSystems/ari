@@ -93,11 +93,11 @@ type Channel interface {
 	StopSilence(key *Key) error
 
 	// Play plays the media URI to the channel
-	Play(key *Key, playbackID string, mediaURI ...string) (*PlaybackHandle, error)
+	Play(key *Key, playbackID string, opts interface{}) (*PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation and returns the `PlaybackHandle`
 	// for invoking it.
-	StagePlay(key *Key, playbackID string, mediaURI ...string) (*PlaybackHandle, error)
+	StagePlay(key *Key, playbackID string, opts interface{}) (*PlaybackHandle, error)
 
 	// Record records the channel
 	Record(key *Key, name string, opts *RecordingOptions) (*LiveRecordingHandle, error)
@@ -329,8 +329,8 @@ func (ch *ChannelHandle) Continue(context, extension string, priority int) error
 
 // Play initiates playback of the specified media uri
 // to the channel, returning the Playback handle
-func (ch *ChannelHandle) Play(id string, mediaURI ...string) (ph *PlaybackHandle, err error) {
-	return ch.c.Play(ch.key, id, mediaURI...)
+func (ch *ChannelHandle) Play(id string, opts interface{}) (ph *PlaybackHandle, err error) {
+	return ch.c.Play(ch.key, id, opts)
 }
 
 // Record records the channel to the given filename
@@ -339,8 +339,8 @@ func (ch *ChannelHandle) Record(name string, opts *RecordingOptions) (*LiveRecor
 }
 
 // StagePlay stages a `Play` operation.
-func (ch *ChannelHandle) StagePlay(id string, mediaURI ...string) (*PlaybackHandle, error) {
-	return ch.c.StagePlay(ch.key, id, mediaURI...)
+func (ch *ChannelHandle) StagePlay(id string, opts interface{}) (*PlaybackHandle, error) {
+	return ch.c.StagePlay(ch.key, id, opts)
 }
 
 // StageRecord stages a `Record` operation

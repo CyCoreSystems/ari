@@ -28,13 +28,28 @@ type Playback interface {
 // A Player is an entity which can play an audio URI
 type Player interface {
 	// Play plays the audio using the given playback ID and media URI
-	Play(string, ...string) (*PlaybackHandle, error)
+	Play(string, interface{}) (*PlaybackHandle, error)
 
 	// StagePlay stages a `Play` operation
-	StagePlay(string, ...string) (*PlaybackHandle, error)
+	StagePlay(string, interface{}) (*PlaybackHandle, error)
 
 	// Subscribe subscribes the player to events
 	Subscribe(n ...string) Subscription
+}
+
+// PlaybackOptions describes the parameters to the playback operation
+type PlaybackOptions struct {
+	// Media URIs to play.
+	Media []string `json:"media"`
+
+	// For sounds, selects language for sound.
+	Lang string `json:"lang,omitempty"`
+
+	// Number of milliseconds to skip before playing. Only applies to the first URI if multiple media URIs are specified.
+	OffsetMs int `json:"offsetms,omitempty"`
+
+	// Number of milliseconds to skip for forward/reverse operations.
+	SkipMs int `json:"skipms,omitempty"`
 }
 
 // PlaybackData represents the state of a playback

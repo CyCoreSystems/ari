@@ -292,20 +292,13 @@ func (_m *Channel) Originate(_a0 *ari.Key, _a1 ari.OriginateRequest) (*ari.Chann
 	return r0, r1
 }
 
-// Play provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Channel) Play(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
-	_va := make([]interface{}, len(mediaURI))
-	for _i := range mediaURI {
-		_va[_i] = mediaURI[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, key, playbackID)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Play provides a mock function with given fields: key, playbackID, opts
+func (_m *Channel) Play(key *ari.Key, playbackID string, opts interface{}) (*ari.PlaybackHandle, error) {
+	ret := _m.Called(key, playbackID, opts)
 
 	var r0 *ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, ...string) *ari.PlaybackHandle); ok {
-		r0 = rf(key, playbackID, mediaURI...)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, interface{}) *ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.PlaybackHandle)
@@ -313,8 +306,8 @@ func (_m *Channel) Play(key *ari.Key, playbackID string, mediaURI ...string) (*a
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key, string, ...string) error); ok {
-		r1 = rf(key, playbackID, mediaURI...)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, interface{}) error); ok {
+		r1 = rf(key, playbackID, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -470,20 +463,13 @@ func (_m *Channel) StageOriginate(_a0 *ari.Key, _a1 ari.OriginateRequest) (*ari.
 	return r0, r1
 }
 
-// StagePlay provides a mock function with given fields: key, playbackID, mediaURI
-func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
-	_va := make([]interface{}, len(mediaURI))
-	for _i := range mediaURI {
-		_va[_i] = mediaURI[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, key, playbackID)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// StagePlay provides a mock function with given fields: key, playbackID, opts
+func (_m *Channel) StagePlay(key *ari.Key, playbackID string, opts interface{}) (*ari.PlaybackHandle, error) {
+	ret := _m.Called(key, playbackID, opts)
 
 	var r0 *ari.PlaybackHandle
-	if rf, ok := ret.Get(0).(func(*ari.Key, string, ...string) *ari.PlaybackHandle); ok {
-		r0 = rf(key, playbackID, mediaURI...)
+	if rf, ok := ret.Get(0).(func(*ari.Key, string, interface{}) *ari.PlaybackHandle); ok {
+		r0 = rf(key, playbackID, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ari.PlaybackHandle)
@@ -491,8 +477,8 @@ func (_m *Channel) StagePlay(key *ari.Key, playbackID string, mediaURI ...string
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*ari.Key, string, ...string) error); ok {
-		r1 = rf(key, playbackID, mediaURI...)
+	if rf, ok := ret.Get(1).(func(*ari.Key, string, interface{}) error); ok {
+		r1 = rf(key, playbackID, opts)
 	} else {
 		r1 = ret.Error(1)
 	}

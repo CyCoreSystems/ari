@@ -155,12 +155,12 @@ func (b *Bridge) StopMOH(key *ari.Key) error {
 
 // Play attempts to play the given mediaURI on the bridge, using the playbackID
 // as the identifier to the created playback handle
-func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
+func (b *Bridge) Play(key *ari.Key, playbackID string, opts interface{}) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
 
-	h, err := b.StagePlay(key, playbackID, mediaURI...)
+	h, err := b.StagePlay(key, playbackID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -169,17 +169,25 @@ func (b *Bridge) Play(key *ari.Key, playbackID string, mediaURI ...string) (*ari
 }
 
 // StagePlay stages a `Play` operation on the bridge
-func (b *Bridge) StagePlay(key *ari.Key, playbackID string, mediaURI ...string) (*ari.PlaybackHandle, error) {
+func (b *Bridge) StagePlay(key *ari.Key, playbackID string, opts interface{}) (*ari.PlaybackHandle, error) {
 	if playbackID == "" {
 		playbackID = rid.New(rid.Playback)
 	}
 
 	resp := make(map[string]interface{})
-	req := struct {
-		Media []string `json:"media"`
-	}{
-		Media: mediaURI,
+
+	var req interface{}
+	switch v := opts.(type) {
+	case string:
+		req = struct {
+			Media string `json:"media"`
+		}{
+			Media: v,
+		}
+	case ari.PlaybackOptions:
+		req = v
 	}
+
 	playbackKey := b.client.stamp(ari.NewKey(ari.PlaybackKey, playbackID))
 
 	return ari.NewPlaybackHandle(playbackKey, b.client.Playback(), func(h *ari.PlaybackHandle) error {
