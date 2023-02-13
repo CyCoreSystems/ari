@@ -21,8 +21,8 @@ import (
 // Logger defaults to a discard handler (null output).
 // If you wish to enable logging, you can set your own
 // handler like so:
+//		ari.Logger.SetHandler(log15.StderrHandler)
 //
-//	ari.Logger.SetHandler(log15.StderrHandler)
 var Logger = log15.New()
 
 func init() {
@@ -57,6 +57,27 @@ type Options struct {
 
 	// Allow subscribe to all events in Asterisk Server
 	SubscribeAll bool
+}
+
+// ConnectWithContext creates and connects a new Client to Asterisk ARI.
+// Providing a Context allows the caller to cancel the request, which is useful should the caller be in a go routine
+// that may be cancelled by it's parent.
+func ConnectWithContext(ctx context.Context, opts *Options) (ari.Client, error) {
+	c := New(opts)
+
+	err := c.ConnectWithContext(ctx)
+	if err != nil {
+		return c, err
+	}
+
+	info, err := c.Asterisk().Info(nil)
+	if err != nil {
+		return c, err
+	}
+
+	c.node = info.SystemInfo.EntityID
+
+	return c, err
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
@@ -266,9 +287,11 @@ func (c *Client) createWSConfig() (err error) {
 	return nil
 }
 
-// Connect sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
-func (c *Client) Connect() error {
-	ctx, cancel := context.WithCancel(context.Background())
+// ConnectWithContext sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
+// Providing a Context allows the caller to cancel the request, which is useful should the caller be in a go routine
+// that may be cancelled by it's parent.
+func (c *Client) ConnectWithContext(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 
 	if c.connected {
@@ -307,6 +330,11 @@ func (c *Client) Connect() error {
 	wg.Wait()
 
 	return nil
+}
+
+// Connect sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
+func (c *Client) Connect() error {
+	return c.ConnectWithContext(context.Background())
 }
 
 func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
