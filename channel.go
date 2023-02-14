@@ -268,7 +268,7 @@ type ExternalMediaOptions struct {
 	Direction string `json:"direction"`
 
 	// Data: when encapsulation=audiosocket this specifies the UUID to send
-	Data string `json:data`
+	Data string `json:"data",omitempty`
 
 	// Variables defines the set of channel variables which should be bound to this channel upon creation.  This parameter is optional.
 	Variables map[string]string `json:"variables"`
