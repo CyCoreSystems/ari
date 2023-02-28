@@ -77,6 +77,10 @@ message ChannelData {
    // ChannelVars is the list of channel variables set on this channel
    map<string, string> channelvars = 11 [(gogoproto.customname) = "ChannelVars"];
 
+   // ProtocolID is the protocol id from the underlying channel driver
+   // For chan_sip and PJSIP this will be the SIP packets Call-ID value
+   // Empty if not applicable or implemented by the driver
+   string protocol_id = 12 [(gogoproto.customname) = "ProtocolID"];
 }
 
 // Dialplan describes a location in the Asterisk dialplan
@@ -90,4 +94,10 @@ message DialplanCEP {
 
    // Priority indicates the index at the label in the section of the dialplan
    int64 priority = 3;
+
+   // Appname indicates the current dialplan application name
+   string app_name = 4;
+
+   // Appdata indicates all data parameters passed to the dialplan appname
+   string app_data = 5;
 }
