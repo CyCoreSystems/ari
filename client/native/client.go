@@ -346,6 +346,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 			if wg != nil {
 				wg.Done()
 			}
+
 			return
 		}
 
