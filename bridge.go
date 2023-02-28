@@ -67,13 +67,16 @@ type BridgeData struct {
 	// Key is the cluster-unique identifier for this bridge
 	Key *Key `json:"key"`
 
-	ID         string   `json:"id"`           // Unique Id for this bridge
-	Class      string   `json:"bridge_class"` // Class of the bridge
-	Type       string   `json:"bridge_type"`  // Type of bridge (mixing, holding, dtmf_events, proxy_media)
-	ChannelIDs []string `json:"channels"`     // List of pariticipating channel ids
-	Creator    string   `json:"creator"`      // Creating entity of the bridge
-	Name       string   `json:"name"`         // The name of the bridge
-	Technology string   `json:"technology"`   // Name of the bridging technology
+	ID            string   `json:"id"`              // Unique Id for this bridge
+	Class         string   `json:"bridge_class"`    // Class of the bridge
+	Type          string   `json:"bridge_type"`     // Type of bridge (mixing, holding, dtmf_events, proxy_media)
+	ChannelIDs    []string `json:"channels"`        // List of pariticipating channel ids
+	Creator       string   `json:"creator"`         // Creating entity of the bridge
+	Name          string   `json:"name"`            // The name of the bridge
+	Technology    string   `json:"technology"`      // Name of the bridging technology
+	CreationTime  string   `json:"creationtime"`    // Creation Time
+	VideoMode     string   `json:"video_mode"`      // Video mode the bridge is using. (none, talker, sfu, single)
+	VideoSourceID string   `json:"video_source_id"` // The ID of the channel that is the source of video in this bridge, if one exists.
 }
 
 // BridgeAddChannelOptions describes additional options to be applied to a channel when it is joined to a bridge
