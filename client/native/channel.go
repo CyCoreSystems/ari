@@ -161,7 +161,7 @@ func (c *Channel) Move(key *ari.Key, app string, appArgs string) error {
 		AppArgs: appArgs,
 	}
 
-	return c.client.post("/channels"+key.ID+"/move", nil, &req)
+	return c.client.post("/channels/"+key.ID+"/move", nil, &req)
 }
 
 // Busy sends the busy status code to the channel (TODO: does this play a busy signal too)
