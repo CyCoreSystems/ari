@@ -44,6 +44,9 @@ type Channel interface {
 	// Continue tells Asterisk to return a channel to the dialplan
 	Continue(key *Key, context, extension string, priority int) error
 
+	// Move moves the channel into another Stasis application
+	Move(key *Key, app string, appArgs string) error
+
 	// Busy hangs up the channel with the "busy" cause code
 	Busy(key *Key) error
 
@@ -324,6 +327,11 @@ func (ch *ChannelHandle) Data() (*ChannelData, error) {
 // Continue tells Asterisk to return the channel to the dialplan
 func (ch *ChannelHandle) Continue(context, extension string, priority int) error {
 	return ch.c.Continue(ch.key, context, extension, priority)
+}
+
+// Move moves the channel to a new Stasis app
+func (ch *ChannelHandle) Move(app string, appArgs string) error {
+	return ch.c.Move(ch.key, app, appArgs)
 }
 
 //---

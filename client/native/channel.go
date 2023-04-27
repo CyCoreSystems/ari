@@ -151,6 +151,19 @@ func (c *Channel) Continue(key *ari.Key, context, extension string, priority int
 	return c.client.post("/channels/"+key.ID+"/continue", nil, &req)
 }
 
+// Move moves the channel to another stasis application
+func (c *Channel) Move(key *ari.Key, app string, appArgs string) error {
+	req := struct {
+		App     string `json:"app"`
+		AppArgs string `json:"appArgs"`
+	}{
+		App:     app,
+		AppArgs: appArgs,
+	}
+
+	return c.client.post("/channels"+key.ID+"/move", nil, &req)
+}
+
 // Busy sends the busy status code to the channel (TODO: does this play a busy signal too)
 func (c *Channel) Busy(key *ari.Key) error {
 	return c.Hangup(key, "busy")
