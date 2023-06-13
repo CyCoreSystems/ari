@@ -344,7 +344,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		// Exit if our context has been closed
 		if ctx.Err() != nil {
 			if wg != nil {
-				wg.Done()
+				signalUp.Do(wg.Done)
 			}
 
 			return
