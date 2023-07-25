@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CyCoreSystems/ari/v6"
+	"github.com/Amtelco-Software/ari/v6"
 )
 
 // Session describes a structured Play session.
@@ -242,7 +242,7 @@ func (s *playSession) Stop() {
 	}
 
 	s.mu.Lock()
-	
+
 	if !s.closed {
 		s.closed = true
 		close(s.done)

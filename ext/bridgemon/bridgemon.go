@@ -3,7 +3,7 @@ package bridgemon
 import (
 	"sync"
 
-	"github.com/CyCoreSystems/ari/v6"
+	"github.com/Amtelco-Software/ari/v6"
 )
 
 // Monitor is a bridge monitor, which maintains bridge data.  It monitors an ARI bridge for events and keeps an internal cache of the bridge's data.
@@ -135,7 +135,6 @@ func (m *Monitor) Key() *ari.Key {
 // destoyed.
 //
 // NOTE:  the user should NEVER close this channel directly.
-//
 func (m *Monitor) Watch() <-chan *ari.BridgeData {
 	ch := make(chan *ari.BridgeData)
 

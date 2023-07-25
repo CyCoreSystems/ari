@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CyCoreSystems/ari/v6"
-	"github.com/CyCoreSystems/ari/v6/client/arimocks"
+	"github.com/Amtelco-Software/ari/v6"
+	"github.com/Amtelco-Software/ari/v6/client/arimocks"
 
 	"github.com/stretchr/testify/mock"
 )

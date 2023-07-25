@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/CyCoreSystems/ari/v6"
-	"github.com/CyCoreSystems/ari/v6/rid"
+	"github.com/Amtelco-Software/ari/v6"
+	"github.com/Amtelco-Software/ari/v6/rid"
 	"github.com/rotisserie/eris"
 )
 

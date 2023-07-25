@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CyCoreSystems/ari/v6"
-	"github.com/CyCoreSystems/ari/v6/rid"
-	"github.com/CyCoreSystems/ari/v6/stdbus"
+	"github.com/Amtelco-Software/ari/v6"
+	"github.com/Amtelco-Software/ari/v6/rid"
+	"github.com/Amtelco-Software/ari/v6/stdbus"
 	"github.com/rotisserie/eris"
 
 	"github.com/inconshreveable/log15"
