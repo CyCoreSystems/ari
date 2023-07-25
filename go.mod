@@ -1,4 +1,4 @@
-module github.com/CyCoreSystems/ari/v6
+module github.com/Amtelco-Software/ari/v6
 
 require (
 	github.com/gogo/protobuf v1.3.2
