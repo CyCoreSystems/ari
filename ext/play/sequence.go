@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/rotisserie/eris"
+
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/rid"
-	"github.com/rotisserie/eris"
 )
 
 // sequence represents an audio sequence playback session

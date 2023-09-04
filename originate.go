@@ -2,7 +2,6 @@ package ari
 
 // OriginateRequest defines the parameters for the creation of a new Asterisk channel
 type OriginateRequest struct {
-
 	// Endpoint is the name of the Asterisk resource to be used to create the
 	// channel.  The format is tech/resource.
 	//

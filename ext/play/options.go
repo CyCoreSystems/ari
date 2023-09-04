@@ -332,12 +332,11 @@ func PlaybackStartTimeout(timeout time.Duration) OptionFunc {
 
 // DigitTimeouts sets the digit timeouts.  Passing a negative value to any of these indicates that the default value (shown in parentheses below) should be used.
 //
-//  - First digit timeout (4 sec):  The time (after the stop of the audio) to wait for the first digit to be received
+//   - First digit timeout (4 sec):  The time (after the stop of the audio) to wait for the first digit to be received
 //
-//  - Inter digit timeout (3 sec):  The time (after receiving a digit) to wait for the _next_ digit to be received
+//   - Inter digit timeout (3 sec):  The time (after receiving a digit) to wait for the _next_ digit to be received
 //
-//  - Overall digit timeout (3 min):  The maximum amount of time to wait (after the stop of the audio) for digits to be received, regardless of the digit frequency
-//
+//   - Overall digit timeout (3 min):  The maximum amount of time to wait (after the stop of the audio) for digits to be received, regardless of the digit frequency
 func DigitTimeouts(first, inter, overall time.Duration) OptionFunc {
 	return func(o *Options) error {
 		if first >= 0 {

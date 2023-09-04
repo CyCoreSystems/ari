@@ -11,7 +11,6 @@ const EndpointIDSeparator = "|" // TODO: confirm separator isn't terrible
 // Endpoint represents a communication path to an Asterisk server
 // for endpoint resources
 type Endpoint interface {
-
 	// List lists the endpoints
 	List(filter *Key) ([]*Key, error)
 

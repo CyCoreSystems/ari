@@ -4,7 +4,6 @@ package ari
 // with an Asterisk ARI server.  It is agnostic to transport
 // and implementation.
 type Client interface {
-
 	// ApplicationName returns the ARI application name by which this client is connected
 	ApplicationName() string
 

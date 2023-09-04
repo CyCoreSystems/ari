@@ -3,8 +3,9 @@ package native
 import (
 	"fmt"
 
-	"github.com/CyCoreSystems/ari/v6"
 	"github.com/rotisserie/eris"
+
+	"github.com/CyCoreSystems/ari/v6"
 )
 
 // Application is a native implementation of ARI's Application functions

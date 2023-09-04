@@ -3,7 +3,6 @@ package ari
 // StoredRecording represents a communication path interacting with an Asterisk
 // server for stored recording resources
 type StoredRecording interface {
-
 	// List lists the recordings
 	List(filter *Key) ([]*Key, error)
 

@@ -3,7 +3,6 @@ package ari
 // Mailbox is the communication path to an Asterisk server for
 // operating on mailbox resources
 type Mailbox interface {
-
 	// Get gets a handle to the mailbox for further operations
 	Get(key *Key) *MailboxHandle
 

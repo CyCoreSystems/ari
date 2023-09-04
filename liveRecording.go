@@ -5,7 +5,6 @@ import "sync"
 // LiveRecording represents a communication path interacting with an Asterisk
 // server for live recording resources
 type LiveRecording interface {
-
 	// Get gets the Recording by type
 	Get(key *Key) *LiveRecordingHandle
 

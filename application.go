@@ -3,7 +3,6 @@ package ari
 // Application represents a communication path interacting with an Asterisk
 // server for application-level resources
 type Application interface {
-
 	// List returns the list of applications in Asterisk, optionally using the key for filtering
 	List(*Key) ([]*Key, error)
 
@@ -72,10 +71,10 @@ func (ah *ApplicationHandle) Data() (ad *ApplicationData, err error) {
 
 // Subscribe subscribes the application to an event source
 // event source may be one of:
-//  - channel:<channelId>
-//  - bridge:<bridgeId>
-//  - endpoint:<tech>/<resource> (e.g. SIP/102)
-//  - deviceState:<deviceName>
+//   - channel:<channelId>
+//   - bridge:<bridgeId>
+//   - endpoint:<tech>/<resource> (e.g. SIP/102)
+//   - deviceState:<deviceName>
 func (ah *ApplicationHandle) Subscribe(eventSource string) (err error) {
 	err = ah.a.Subscribe(ah.key, eventSource)
 	return

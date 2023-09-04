@@ -3,7 +3,6 @@ package ari
 // Asterisk represents a communication path for
 // the Asterisk server for system-level resources
 type Asterisk interface {
-
 	// Info gets data about the asterisk system
 	Info(key *Key) (*AsteriskInfo, error)
 
@@ -41,7 +40,7 @@ type BuildInfo struct {
 // ConfigInfo describes information about the Asterisk configuration
 type ConfigInfo struct {
 	DefaultLanguage string  `json:"default_language"`
-	MaxChannels     int     `json:"max_channels,omitempty"` //omitempty denotes an optional field, meaning the field may not be present if no value is assigned.
+	MaxChannels     int     `json:"max_channels,omitempty"` // omitempty denotes an optional field, meaning the field may not be present if no value is assigned.
 	MaxLoad         float64 `json:"max_load,omitempty"`
 	MaxOpenFiles    int     `json:"max_open_files,omitempty"`
 	Name            string  `json:"name"`  // Asterisk system name
@@ -68,7 +67,6 @@ type SystemInfo struct {
 
 // AsteriskVariables is an interface to interact with Asterisk global variables
 type AsteriskVariables interface {
-
 	// Get returns the value of the given variable; the ID field of the Key is the variable name
 	Get(key *Key) (string, error)
 
