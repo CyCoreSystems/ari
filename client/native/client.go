@@ -9,20 +9,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/inconshreveable/log15"
+	"github.com/rotisserie/eris"
+	"golang.org/x/net/websocket"
+
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/rid"
 	"github.com/CyCoreSystems/ari/v6/stdbus"
-	"github.com/rotisserie/eris"
-
-	"github.com/inconshreveable/log15"
-	"golang.org/x/net/websocket"
 )
 
 // Logger defaults to a discard handler (null output).
 // If you wish to enable logging, you can set your own
 // handler like so:
-// 		ari.Logger.SetHandler(log15.StderrHandler)
 //
+//	ari.Logger.SetHandler(log15.StderrHandler)
 var Logger = log15.New()
 
 func init() {

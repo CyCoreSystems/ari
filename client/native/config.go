@@ -1,8 +1,9 @@
 package native
 
 import (
-	"github.com/CyCoreSystems/ari/v6"
 	"github.com/rotisserie/eris"
+
+	"github.com/CyCoreSystems/ari/v6"
 )
 
 // Config provides the ARI Configuration accessors for a native client

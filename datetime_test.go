@@ -16,7 +16,7 @@ var dtMarshalTests = []struct {
 	Output   string
 	HasError bool
 }{
-	{dtTest{DateTime(time.Date(2005, 02, 04, 13, 12, 6, 0, time.UTC))}, `{"dt":"2005-02-04T13:12:06.000+0000"}`, false},
+	{dtTest{DateTime(time.Date(2005, 0o2, 0o4, 13, 12, 6, 0, time.UTC))}, `{"dt":"2005-02-04T13:12:06.000+0000"}`, false},
 }
 
 var dtUnmarshalTests = []struct {
@@ -24,7 +24,7 @@ var dtUnmarshalTests = []struct {
 	Output   dtTest
 	HasError bool
 }{
-	{`{"dt":"2005-02-04T13:12:06.000+0000"}`, dtTest{DateTime(time.Date(2005, 02, 04, 13, 12, 6, 0, time.UTC))}, false},
+	{`{"dt":"2005-02-04T13:12:06.000+0000"}`, dtTest{DateTime(time.Date(2005, 0o2, 0o4, 13, 12, 6, 0, time.UTC))}, false},
 	{`{"dt":"2x05-02-04T13:12:06.000+0000"}`, dtTest{}, true},
 	{`{"dt": 0 }`, dtTest{}, true},
 }

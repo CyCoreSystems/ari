@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/client/arimocks"
-
-	"github.com/stretchr/testify/mock"
 )
 
 type sequenceTest struct {

@@ -135,7 +135,6 @@ func (m *Monitor) Key() *ari.Key {
 // destoyed.
 //
 // NOTE:  the user should NEVER close this channel directly.
-//
 func (m *Monitor) Watch() <-chan *ari.BridgeData {
 	ch := make(chan *ari.BridgeData)
 

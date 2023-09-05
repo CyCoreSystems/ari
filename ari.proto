@@ -4,20 +4,16 @@ package asterisk.ari;
 
 option go_package = "ari";
 
-import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
 // Key identifies a unique resource in the system
 message Key {
-   // NOTE: we build our own stringer
-   option (gogoproto.goproto_stringer) = false;
-   
 	// Kind indicates the type of resource the Key points to.  e.g., "channel",
 	// "bridge", etc.
 	string kind = 1;
 
 	// ID indicates the unique identifier of the resource
-   string id = 2 [(gogoproto.customname) = "ID"];
+   string id = 2;
 
 	// Node indicates the unique identifier of the Asterisk node on which the
 	// resource exists or will be created
@@ -32,9 +28,6 @@ message Key {
 
 // CallerID describes the name and number which identifies the caller to other endpoints
 message CallerID {
-   // NOTE: we build our own stringer
-   option (gogoproto.goproto_stringer) = false;
-
    // Name is the name of the party
    string name = 1;
 
@@ -48,7 +41,7 @@ message ChannelData {
    Key key = 1;
 
    // Id is the unique ID for this channel (AMI-style)
-   string id = 2 [(gogoproto.customname) = "ID"];
+   string id = 2;
 
    // Name is the name of this channel (tect/name-id)
    string name = 3;
@@ -75,7 +68,7 @@ message ChannelData {
    string language = 10;
 
    // ChannelVars is the list of channel variables set on this channel
-   map<string, string> channelvars = 11 [(gogoproto.customname) = "ChannelVars"];
+   map<string, string> channel_vars = 11;
 
 }
 

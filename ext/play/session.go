@@ -242,7 +242,7 @@ func (s *playSession) Stop() {
 	}
 
 	s.mu.Lock()
-	
+
 	if !s.closed {
 		s.closed = true
 		close(s.done)

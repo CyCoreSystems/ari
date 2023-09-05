@@ -9,7 +9,6 @@ import (
 // Config represents a transport to the asterisk
 // config ARI resource.
 type Config interface {
-
 	// Get gets the reference to a config object
 	Get(key *Key) *ConfigHandle
 
@@ -40,7 +39,7 @@ func (cd *ConfigData) ID() string {
 	return fmt.Sprintf("%s/%s/%s", cd.Class, cd.Type, cd.Name)
 }
 
-//ConfigTupleList wrap a list for asterisk ari require.
+// ConfigTupleList wrap a list for asterisk ari require.
 type ConfigTupleList struct {
 	Fields []ConfigTuple `json:"fields"`
 }

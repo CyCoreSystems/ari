@@ -3,8 +3,9 @@ package native
 import (
 	"fmt"
 
-	"github.com/CyCoreSystems/ari/v6"
 	"github.com/rotisserie/eris"
+
+	"github.com/CyCoreSystems/ari/v6"
 )
 
 // Asterisk provides the ARI Asterisk accessors for a native client

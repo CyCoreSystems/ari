@@ -3,7 +3,6 @@ package ari
 // Bridge represents a communication path to an
 // Asterisk server for working with bridge resources
 type Bridge interface {
-
 	// Create creates a bridge
 	Create(key *Key, btype string, name string) (*BridgeHandle, error)
 
@@ -78,7 +77,6 @@ type BridgeData struct {
 
 // BridgeAddChannelOptions describes additional options to be applied to a channel when it is joined to a bridge
 type BridgeAddChannelOptions struct {
-
 	// AbsorbDTMF indicates that DTMF coming from this channel will not be passed through to the bridge
 	AbsorbDTMF bool
 

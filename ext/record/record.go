@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rotisserie/eris"
+
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/rid"
-	"github.com/rotisserie/eris"
 )
 
 var (

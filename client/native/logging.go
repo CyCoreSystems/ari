@@ -1,8 +1,9 @@
 package native
 
 import (
-	"github.com/CyCoreSystems/ari/v6"
 	"github.com/rotisserie/eris"
+
+	"github.com/CyCoreSystems/ari/v6"
 )
 
 // Logging provides the ARI Logging accessors for a native client

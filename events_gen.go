@@ -100,7 +100,6 @@ func init() {
 	Events.StasisEnd = "StasisEnd"
 	Events.StasisStart = "StasisStart"
 	Events.TextMessageReceived = "TextMessageReceived"
-
 }
 
 // DecodeEvent converts a JSON-encoded event to an ARI event.

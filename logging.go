@@ -3,7 +3,6 @@ package ari
 // Logging represents a communication path to an
 // Asterisk server for working with logging resources
 type Logging interface {
-
 	// Create creates a new log.  The levels are a comma-separated list of
 	// logging levels on which this channel should operate.  The name of the
 	// channel should be the key's ID.
@@ -43,7 +42,7 @@ type LogData struct {
 	Status string `json:"status"`
 }
 
-// NewLogHandle builds a new log handle given the `Key` and `Logging`` client
+// NewLogHandle builds a new log handle given the `Key` and `Logging` client
 func NewLogHandle(key *Key, l Logging) *LogHandle {
 	return &LogHandle{
 		key: key,
