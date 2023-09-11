@@ -3,26 +3,26 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 	"sync"
 
-	"github.com/inconshreveable/log15"
+	"golang.org/x/exp/slog"
 
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/client/native"
 )
 
-var log = log15.New()
+var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// connect
-	native.Logger = log
-
 	log.Info("Connecting to ARI")
+
 	cl, err := native.Connect(&native.Options{
 		Application:  "test",
+		Logger:       log.With("app", "test"),
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
@@ -30,6 +30,7 @@ func main() {
 	})
 	if err != nil {
 		log.Error("Failed to build ARI client", "error", err)
+
 		return
 	}
 
@@ -49,19 +50,22 @@ func main() {
 		h, err := createCall(cl)
 		if err != nil {
 			log.Error("Failed to create call", "error", err)
+
 			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte("Failed to create call: " + err.Error()))
+
+			w.Write([]byte("Failed to create call: " + err.Error())) //nolint:errcheck
+
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(h.ID()))
+
+		w.Write([]byte(h.ID())) //nolint:errcheck
 	}))
 
 	log.Info("Listening for requests on port 9990")
-	http.ListenAndServe(":9990", nil)
 
-	return
+	http.ListenAndServe(":9990", nil) //nolint:errcheck
 }
 
 func listenApp(ctx context.Context, cl ari.Client, handler func(cl ari.Client, h *ari.ChannelHandle)) {
@@ -72,7 +76,9 @@ func listenApp(ctx context.Context, cl ari.Client, handler func(cl ari.Client, h
 		select {
 		case e := <-sub.Events():
 			v := e.(*ari.StasisStart)
+
 			log.Info("Got stasis start", "channel", v.Channel.ID)
+
 			go handler(cl, cl.Channel().Get(v.Key(ari.ChannelKey, v.Channel.ID)))
 		case <-end.Events():
 			log.Info("Got stasis end")
@@ -91,13 +97,6 @@ func createCall(cl ari.Client) (h *ari.ChannelHandle, err error) {
 	return
 }
 
-func connect(ctx context.Context) (cl ari.Client, err error) {
-	log.Info("Connecting")
-
-	cl, err = native.Connect(&native.Options{})
-	return
-}
-
 func channelHandler(cl ari.Client, h *ari.ChannelHandle) {
 	log.Info("Running channel handler")
 
@@ -109,39 +108,44 @@ func channelHandler(cl ari.Client, h *ari.ChannelHandle) {
 		log.Error("Error getting data", "error", err)
 		return
 	}
+
 	log.Info("Channel State", "state", data.State)
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+
 	go func() {
 		log.Info("Waiting for channel events")
 
 		defer wg.Done()
 
-		for {
-			select {
-			case <-stateChange.Events():
-				log.Info("Got state change request")
+		defer stateChange.Cancel()
 
-				data, err = h.Data()
-				if err != nil {
-					log.Error("Error getting data", "error", err)
-					continue
-				}
-				log.Info("New Channel State", "state", data.State)
+		for ev := range stateChange.Events() {
+			if ev == nil {
+				return
+			}
 
-				if data.State == "Up" {
-					stateChange.Cancel() // stop subscription to state change events
-					return
-				}
+			log.Info("Got state change request")
+
+			data, err = h.Data()
+			if err != nil {
+				log.Error("Error getting data", "error", err)
+				continue
+			}
+
+			log.Info("New Channel State", "state", data.State)
+
+			if data.State == "Up" {
+				return
 			}
 		}
 	}()
 
-	h.Answer()
+	h.Answer() //nolint:errcheck
 
 	wg.Wait()
 
-	h.Hangup()
+	h.Hangup() //nolint:errcheck
 }

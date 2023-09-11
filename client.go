@@ -1,5 +1,7 @@
 package ari
 
+import "golang.org/x/exp/slog"
+
 // Client represents a set of operations to interact
 // with an Asterisk ARI server.  It is agnostic to transport
 // and implementation.
@@ -46,6 +48,9 @@ type Client interface {
 
 	// Playback accesses the Playback ARI namespace
 	Playback() Playback
+
+	// SetLogger sets the logger to be used for this client's internal logging.
+	SetLogger(logger *slog.Logger)
 
 	// Sound accesses the Sound ARI namespace
 	Sound() Sound

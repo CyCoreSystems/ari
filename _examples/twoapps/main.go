@@ -1,20 +1,22 @@
 package main
 
 import (
-	"github.com/inconshreveable/log15"
+	"os"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/CyCoreSystems/ari/v6/client/native"
 )
 
 func main() {
 	// OPTIONAL: setup logging
-	log := log15.New()
-	native.Logger = log
+	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	log.Info("connecting")
 
 	appA, err := native.Connect(&native.Options{
 		Application:  "example",
+		Logger:       log.With("app", "exampleA"),
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
@@ -30,6 +32,7 @@ func main() {
 
 	appB, err := native.Connect(&native.Options{
 		Application:  "exampleB",
+		Logger:       log.With("app", "exampleB"),
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",
@@ -48,6 +51,7 @@ func main() {
 		log.Error("Failed to get Asterisk Info", "error", err)
 		return
 	}
+
 	log.Info("AppA AsteriskInfo", "info", infoA)
 
 	infoB, err := appB.Asterisk().Info(nil)
@@ -55,5 +59,6 @@ func main() {
 		log.Error("Failed to get Asterisk Info", "error", err)
 		return
 	}
+
 	log.Info("AppB AsteriskInfo", "info", infoB)
 }

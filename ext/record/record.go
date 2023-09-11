@@ -3,11 +3,13 @@ package record
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/rotisserie/eris"
+	"golang.org/x/exp/slog"
 
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/rid"
@@ -39,6 +41,8 @@ type Options struct {
 
 	format string
 
+	logger *slog.Logger
+
 	maxDuration time.Duration
 
 	maxSilence time.Duration
@@ -58,6 +62,7 @@ func defaultOptions() *Options {
 		maxDuration: DefaultMaximumDuration,
 		maxSilence:  DefaultMaximumSilence,
 		name:        rid.New(rid.Recording),
+		logger:      slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError})),
 		terminateOn: "none",
 	}
 }
@@ -144,6 +149,14 @@ func TerminateOn(dtmf string) OptionFunc {
 	}
 }
 
+// WithLogger configures the internal logger for the recording.
+// This is only necessary when trying to debug the recorder itself.
+func WithLogger(logger *slog.Logger) OptionFunc {
+	return func(o *Options) {
+		o.logger = logger
+	}
+}
+
 // Session desribes the interface to a generic recording session
 type Session interface {
 	// Done returns a channel which is closed when the session is complete
@@ -193,6 +206,8 @@ type Result struct {
 	// destruction) during or after the recording.
 	Hangup bool
 
+	logger *slog.Logger
+
 	overwrite bool
 }
 
@@ -233,7 +248,7 @@ func (r *Result) Save(name string) error {
 		}
 
 		// we are set to overwrite, so delete the previous recording
-		Logger.Debug("overwriting previous recording")
+		r.logger.Debug("overwriting previous recording")
 
 		err = destH.Delete()
 		if err != nil {
@@ -272,7 +287,7 @@ func Record(ctx context.Context, r ari.Recorder, opts ...OptionFunc) Session {
 
 	wg.Wait()
 
-	Logger.Debug("returned from internal recording start")
+	s.options.logger.Debug("returned from internal recording start")
 
 	return s
 }
@@ -286,7 +301,9 @@ func newRecordingSession(opts ...OptionFunc) *recordingSession {
 		cancel:  func() {},
 		options: o,
 		doneCh:  make(chan struct{}),
-		res:     new(Result),
+		res: &Result{
+			logger: o.logger,
+		},
 	}
 
 	// If the recording options declare that we should overwrite,
@@ -409,7 +426,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 
 	defer func() {
 		s.res.Duration = time.Since(started)
-		Logger.Debug("recording duration", "duration", s.res.Duration)
+		s.options.logger.Debug("recording duration", "duration", s.res.Duration)
 	}()
 
 	// Record any DTMF received during the recording
@@ -419,7 +436,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 	go s.watchHangup(ctx, hangupSub)
 
 	// Start recording
-	Logger.Debug("starting recording")
+	s.options.logger.Debug("starting recording")
 
 	if err := s.h.Exec(); err != nil {
 		s.res.Error = err
@@ -435,7 +452,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 			s.Stop()
 			return
 		case <-startTimer.C:
-			Logger.Debug("timeout waiting to start recording")
+			s.options.logger.Debug("timeout waiting to start recording")
 
 			s.res.Error = timeoutErr{"Timeout waiting for recording to start"}
 
@@ -445,14 +462,14 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 				return
 			}
 
-			Logger.Debug("recording started")
+			s.options.logger.Debug("recording started")
 			startTimer.Stop()
 		case e, ok := <-failedSub.Events():
 			if !ok {
 				return
 			}
 
-			Logger.Debug("recording failed")
+			s.options.logger.Debug("recording failed")
 
 			r := e.(*ari.RecordingFailed).Recording
 			s.res.Data = &r
@@ -464,7 +481,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 				return
 			}
 
-			Logger.Debug("recording finished")
+			s.options.logger.Debug("recording finished")
 
 			r := e.(*ari.RecordingFinished).Recording
 			s.res.Data = &r

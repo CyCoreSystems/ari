@@ -3,32 +3,21 @@ package native
 import (
 	"context"
 	"encoding/base64"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/inconshreveable/log15"
 	"github.com/rotisserie/eris"
+	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
 
 	"github.com/CyCoreSystems/ari/v6"
 	"github.com/CyCoreSystems/ari/v6/rid"
 	"github.com/CyCoreSystems/ari/v6/stdbus"
 )
-
-// Logger defaults to a discard handler (null output).
-// If you wish to enable logging, you can set your own
-// handler like so:
-//
-//	ari.Logger.SetHandler(log15.StderrHandler)
-var Logger = log15.New()
-
-func init() {
-	// Null logger, by default
-	Logger.SetHandler(log15.DiscardHandler())
-}
 
 // Options describes the options for connecting to
 // a native Asterisk ARI server.
@@ -57,6 +46,9 @@ type Options struct {
 
 	// Allow subscribe to all events in Asterisk Server
 	SubscribeAll bool
+
+	// Logger provides a logger which should be used for this client.
+	Logger *slog.Logger
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
@@ -82,7 +74,7 @@ func Connect(opts *Options) (ari.Client, error) {
 // nolint: gocyclo
 func New(opts *Options) *Client {
 	if opts == nil {
-		opts = &Options{}
+		opts = new(Options)
 	}
 
 	// Make sure we have an Application defined
@@ -124,6 +116,11 @@ func New(opts *Options) *Client {
 
 	if opts.Password == "" {
 		opts.Password = os.Getenv("ARI_PASSWORD")
+	}
+
+	if opts.Logger == nil {
+		opts.Logger = slog.New(slog.NewTextHandler(io.Discard,
+			&slog.HandlerOptions{Level: slog.LevelError}))
 	}
 
 	return &Client{
@@ -309,6 +306,12 @@ func (c *Client) Connect() error {
 	return nil
 }
 
+func (c *Client) SetLogger(logger *slog.Logger) {
+	if logger != nil {
+		c.Options.Logger = logger
+	}
+}
+
 func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 	var signalUp sync.Once
 
@@ -321,7 +324,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		// Dial Asterisk
 		ws, err := websocket.DialConfig(c.WSConfig)
 		if err != nil {
-			Logger.Error("failed to connect to Asterisk", "error", err)
+			c.Options.Logger.Error("failed to connect to Asterisk", "error", err)
 			time.Sleep(time.Second)
 
 			continue
@@ -329,7 +332,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 
 		info, err := c.Asterisk().Info(nil)
 		if err != nil {
-			Logger.Error("failed to get info from Asterisk", "error", err)
+			c.Options.Logger.Error("failed to get info from Asterisk", "error", err)
 
 			time.Sleep(time.Second)
 
@@ -352,7 +355,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case <-ctx.Done():
 		case err = <-c.wsRead(ws):
-			Logger.Error("read failure on websocket", "error", err)
+			c.Options.Logger.Error("read failure on websocket", "error", err)
 
 			c.connected = false
 
@@ -364,7 +367,7 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 
 		err = ws.Close()
 		if err != nil {
-			Logger.Debug("failed to close websocket", "error", err)
+			c.Options.Logger.Debug("failed to close websocket", "error", err)
 		}
 	}
 }

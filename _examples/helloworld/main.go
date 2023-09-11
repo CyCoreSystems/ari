@@ -1,20 +1,22 @@
 package main
 
 import (
-	"github.com/inconshreveable/log15"
+	"os"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/CyCoreSystems/ari/v6/client/native"
 )
 
 func main() {
 	// OPTIONAL: setup logging
-	log := log15.New()
-	native.Logger = log
+	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	log.Info("Connecting")
 
 	cl, err := native.Connect(&native.Options{
 		Application:  "example",
+		Logger:       log.With("app", "example"),
 		Username:     "admin",
 		Password:     "admin",
 		URL:          "http://localhost:8088/ari",

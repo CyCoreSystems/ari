@@ -176,13 +176,13 @@ func (bh *BridgeHandle) StopMOH() error {
 
 // Play initiates playback of the specified media uri
 // to the bridge, returning the Playback handle
-func (bh *BridgeHandle) Play(id string, mediaURI string) (*PlaybackHandle, error) {
-	return bh.b.Play(bh.key, id, mediaURI)
+func (bh *BridgeHandle) Play(id string, mediaURI ...string) (*PlaybackHandle, error) {
+	return bh.b.Play(bh.key, id, mediaURI...)
 }
 
 // StagePlay stages a `Play` operation.
-func (bh *BridgeHandle) StagePlay(id string, mediaURI string) (*PlaybackHandle, error) {
-	return bh.b.StagePlay(bh.key, id, mediaURI)
+func (bh *BridgeHandle) StagePlay(id string, mediaURI ...string) (*PlaybackHandle, error) {
+	return bh.b.StagePlay(bh.key, id, mediaURI...)
 }
 
 // Record records the bridge to the given filename

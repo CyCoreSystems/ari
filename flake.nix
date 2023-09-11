@@ -44,6 +44,20 @@
           gofumpt -w .
           gci write --skip-generated -s standard -s default -s "Prefix(github.com/CyCoreSystems)" .
           golangci-lint run
+          golangci-lint run ./_examples/bridge
+          golangci-lint run ./_examples/helloworld
+          golangci-lint run ./_examples/play
+          golangci-lint run ./_examples/record
+          golangci-lint run ./_examples/stasisStart
+          golangci-lint run ./_examples/twoapps
+          golangci-lint run ./client/native
+          golangci-lint run ./ext/audiouri
+          golangci-lint run ./ext/bridgemon
+          golangci-lint run ./ext/keyfilter
+          golangci-lint run ./ext/play
+          golangci-lint run ./ext/record
+          golangci-lint run ./rid
+          golangci-lint run ./stdbus
         '';
 
         ccmocks = pkgs.writeScriptBin "gen-mocks" ''

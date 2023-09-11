@@ -155,7 +155,7 @@ type channelDataJSON struct {
 func (d *ChannelData) MarshalJSON() ([]byte, error) {
 	t, err := ptypes.TimestampFromProto(d.Creationtime)
 	if err != nil {
-		Logger.Debug("ignoring failed creationtime timestamp parsing", "error", err)
+		t = time.Now()
 	}
 
 	return json.Marshal(&channelDataJSON{
@@ -182,7 +182,9 @@ func (d *ChannelData) UnmarshalJSON(data []byte) error {
 
 	t, err := ptypes.TimestampProto(time.Time(in.Creationtime))
 	if err != nil {
-		Logger.Debug("ignoring failed creationtime timestamp parsing", "error", err)
+		t = &ptypes.Timestamp{
+			Seconds: time.Now().Unix(),
+		}
 	}
 
 	*d = ChannelData{
