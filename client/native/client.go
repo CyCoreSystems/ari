@@ -51,6 +51,26 @@ type Options struct {
 	Logger *slog.Logger
 }
 
+// ConnectWithContext creates and connects a new Client to Asterisk ARI.
+// Providing a Context allows the caller to control the lifetime of the connection.
+func ConnectWithContext(ctx context.Context, opts *Options) (ari.Client, error) {
+	c := New(opts)
+
+	err := c.ConnectWithContext(ctx)
+	if err != nil {
+		return c, err
+	}
+
+	info, err := c.Asterisk().Info(nil)
+	if err != nil {
+		return c, err
+	}
+
+	c.node = info.SystemInfo.EntityID
+
+	return c, err
+}
+
 // Connect creates and connects a new Client to Asterisk ARI.
 func Connect(opts *Options) (ari.Client, error) {
 	c := New(opts)
@@ -263,9 +283,10 @@ func (c *Client) createWSConfig() (err error) {
 	return nil
 }
 
-// Connect sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
-func (c *Client) Connect() error {
-	ctx, cancel := context.WithCancel(context.Background())
+// ConnectWithContext sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
+// Providing a Context allows the caller to control the lifetime of the connection.
+func (c *Client) ConnectWithContext(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 
 	if c.connected {
@@ -304,6 +325,11 @@ func (c *Client) Connect() error {
 	wg.Wait()
 
 	return nil
+}
+
+// Connect sets up and maintains and a websocket connection to Asterisk, passing any received events to the Bus
+func (c *Client) Connect() error {
+	return c.ConnectWithContext(context.Background())
 }
 
 func (c *Client) SetLogger(logger *slog.Logger) {
