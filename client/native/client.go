@@ -318,6 +318,10 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		// Exit if our context has been closed
 		if ctx.Err() != nil {
+			if wg != nil {
+				wg.Done()
+			}
+
 			return
 		}
 
