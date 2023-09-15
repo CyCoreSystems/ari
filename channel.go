@@ -148,7 +148,9 @@ type channelDataJSON struct {
 	Connected    *CallerID         `json:"connected"` // CallerId of the connected line
 	Creationtime DateTime          `json:"creationtime"`
 	Dialplan     *DialplanCEP      `json:"dialplan"` // Current location in the dialplan
+	Language     string            `json:"language"` // Language for the channel
 	ChannelVars  map[string]string `json:"channelvars"`
+	ProtocolId   string            `json:"protocolid"` // Protocol identifier from the underlying channel technology (SIP header Call-ID value for chan_sip and PJSIP) (since Asterisk 12)
 }
 
 // MarshalJSON encodes ChannelData to JSON
@@ -168,7 +170,9 @@ func (d *ChannelData) MarshalJSON() ([]byte, error) {
 		Connected:    d.Connected,
 		Creationtime: DateTime(t),
 		Dialplan:     d.Dialplan,
+		Language:     d.Language,
 		ChannelVars:  d.ChannelVars,
+		ProtocolId:   d.ProtocolId,
 	})
 }
 
@@ -197,7 +201,9 @@ func (d *ChannelData) UnmarshalJSON(data []byte) error {
 		Connected:    in.Connected,
 		Creationtime: t,
 		Dialplan:     in.Dialplan,
+		Language:     in.Language,
 		ChannelVars:  in.ChannelVars,
+		ProtocolId:   in.ProtocolId,
 	}
 
 	return nil
