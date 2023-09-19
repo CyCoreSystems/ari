@@ -53,22 +53,25 @@ type Options struct {
 
 // ConnectWithContext creates and connects a new Client to Asterisk ARI.
 // Providing a Context allows the caller to control the lifetime of the connection.
-func ConnectWithContext(ctx context.Context, opts *Options) (ari.Client, error) {
-	c := New(opts)
+// If you want to receive channel messages when the connection is Up (true) or Down (false),
+// specify a non-zero sizeForMsgConnectedChannel. This value sets the size of the buffered channel (when non-zero).
+// Caller receives the ari.Client, channel for reading the MsgConnected messages (if non-nil), and a error (nil if success).
+func ConnectWithContext(ctx context.Context, sizeForMsgConnectedChannel int, opts *Options) (ari.Client, chan bool, error) {
+	c := NewWithChannelMsgConnected(opts, sizeForMsgConnectedChannel)
 
 	err := c.ConnectWithContext(ctx)
 	if err != nil {
-		return c, err
+		return c, c.chanMsgConnected, err
 	}
 
 	info, err := c.Asterisk().Info(nil)
 	if err != nil {
-		return c, err
+		return c, c.chanMsgConnected, err
 	}
 
 	c.node = info.SystemInfo.EntityID
 
-	return c, err
+	return c, c.chanMsgConnected, err
 }
 
 // Connect creates and connects a new Client to Asterisk ARI.
@@ -90,9 +93,11 @@ func Connect(opts *Options) (ari.Client, error) {
 	return c, err
 }
 
-// New creates a new ari.Client.  This function should not be used directly unless you need finer control.
+// NewWithChannelMsgConnected creates a new ari.Client and configures a channel for connection up/down messages.
+// If sizeForMsgConnectedChannel is 0, then no channel will be created and no messages will be sent.
+// This function should not be used directly unless you need finer control.
 // nolint: gocyclo
-func New(opts *Options) *Client {
+func NewWithChannelMsgConnected(opts *Options, sizeForMsgConnectedChannel int) *Client {
 	if opts == nil {
 		opts = new(Options)
 	}
@@ -143,10 +148,24 @@ func New(opts *Options) *Client {
 			&slog.HandlerOptions{Level: slog.LevelError}))
 	}
 
-	return &Client{
-		appName: opts.Application,
-		Options: opts,
+	var chanMsgConnected chan bool
+	if sizeForMsgConnectedChannel > 0 {
+		chanMsgConnected = make(chan bool, sizeForMsgConnectedChannel)
+	} else {
+		chanMsgConnected = nil
 	}
+
+	return &Client{
+		appName:          opts.Application,
+		Options:          opts,
+		chanMsgConnected: chanMsgConnected,
+	}
+}
+
+// New creates a new ari.Client.  This function should not be used directly unless you need finer control.
+// nolint: gocyclo
+func New(opts *Options) *Client {
+	return NewWithChannelMsgConnected(opts, 0)
 }
 
 // Client describes a native ARI client, which connects directly to an Asterisk HTTP-based ARI service.
@@ -157,6 +176,9 @@ type Client struct {
 
 	// opts are the configuration options for the client
 	Options *Options
+
+	// golang buffered channel to send Connection Up (true) or Down (false) messages to the caller
+	chanMsgConnected chan bool
 
 	// WSConfig describes the configuration for the websocket connection to Asterisk, from which events will be received.
 	WSConfig *websocket.Config
@@ -191,7 +213,14 @@ func (c *Client) Close() {
 		c.cancel()
 	}
 
-	c.connected = false
+	if c.connected {
+		c.connected = false
+		if c.chanMsgConnected != nil {
+			c.chanMsgConnected <- false
+		}
+	}
+
+	c.chanMsgConnected = nil
 }
 
 // Application returns the ARI Application accessors for this client
@@ -348,6 +377,10 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 				signalUp.Do(wg.Done)
 			}
 
+			if c.chanMsgConnected != nil {
+				c.chanMsgConnected = nil
+			}
+
 			return
 		}
 
@@ -375,6 +408,9 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 
 		// We are connected
 		c.connected = true
+		if c.chanMsgConnected != nil {
+			c.chanMsgConnected <- true
+		}
 
 		// Signal that we are connected (the first time only)
 		if wg != nil {
@@ -387,13 +423,23 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		case err = <-c.wsRead(ws):
 			c.Options.Logger.Error("read failure on websocket", "error", err)
 
-			c.connected = false
+			if c.connected {
+				c.connected = false
+				if c.chanMsgConnected != nil {
+					c.chanMsgConnected <- false
+				}
+			}
 
 			time.Sleep(10 * time.Millisecond)
 		}
 
 		// Make sure our websocket connection is closed before looping
-		c.connected = false
+		if c.connected {
+			c.connected = false
+			if c.chanMsgConnected != nil {
+				c.chanMsgConnected <- false
+			}
+		}
 
 		err = ws.Close()
 		if err != nil {
