@@ -8,8 +8,8 @@ require (
 	github.com/rotisserie/eris v0.5.4
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
-	golang.org/x/net v0.7.0
-	golang.org/x/text v0.7.0
+	golang.org/x/net v0.17.0
+	golang.org/x/text v0.13.0
 )
 
 require (
