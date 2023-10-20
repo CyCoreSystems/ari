@@ -133,6 +133,9 @@ type Channel interface {
 
 	// UserEvent Sends user-event to AMI channel subscribers
 	UserEvent(key *Key, ue *ChannelUserevent) error
+
+	// Redirect tells Asterisk to redirect the channel to a different location
+	Redirect(key *Key, endpoint string) error
 }
 
 // channelDataJSON is the data for a specific channel
@@ -593,4 +596,9 @@ func (ch *ChannelHandle) SendDTMF(dtmf string, opts *DTMFOptions) error {
 // UserEvent sends user-event to AMI channel subscribers
 func (ch *ChannelHandle) UserEvent(key *Key, ue *ChannelUserevent) error {
 	return ch.c.UserEvent(ch.key, ue)
+}
+
+// Redirect tells Asterisk to redirect the channel to a different location
+func (ch *ChannelHandle) Redirect(endpoint string) error {
+	return ch.c.Redirect(ch.key, endpoint)
 }

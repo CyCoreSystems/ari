@@ -500,3 +500,13 @@ func (c *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
 
 	return c.client.post(fmt.Sprintf("/events/user/%s", ue.Eventname), nil, &req)
 }
+
+// Redirect tells to redirect the channel to a different location
+func (c *Channel) Redirect(key *ari.Key, endpoint string) (err error) {
+	req := struct {
+		Endpoint string `json:"endpoint"`
+	}{
+		Endpoint: endpoint,
+	}
+	return c.client.post("/channels/"+key.ID+"/redirect", nil, &req)
+}

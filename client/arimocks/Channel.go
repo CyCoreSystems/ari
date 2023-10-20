@@ -666,3 +666,16 @@ func (_m *Channel) UserEvent(key *ari.Key, ue *ari.ChannelUserevent) error {
 
 	return r0
 }
+
+// Redirect provides a mock function with given fields: endpoint
+func (_m *Channel) Redirect(key *ari.Key, endpoint string) error {
+	ret := _m.Called(key, endpoint)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*ari.Key, string) error); ok {
+		r0 = rf(key, endpoint)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
