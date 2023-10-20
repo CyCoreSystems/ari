@@ -2,6 +2,7 @@ package native
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/CyCoreSystems/ari/v6"
 )
@@ -89,4 +90,11 @@ func (sr *StoredRecording) StageCopy(key *ari.Key, dest string) (*ari.StoredReco
 // Delete deletes the stored recording
 func (sr *StoredRecording) Delete(key *ari.Key) error {
 	return sr.client.del("/recordings/stored/"+key.ID, nil, "")
+}
+
+func (sr *StoredRecording) File(key *ari.Key) ([]byte, error) {
+	var resp map[string]interface{}
+	err := sr.client.get("/recordings/stored/"+key.ID+"/file", &resp)
+	fmt.Printf("response: %v", resp)
+	return nil, err
 }
