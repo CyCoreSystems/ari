@@ -2,7 +2,7 @@ package native
 
 import (
 	"errors"
-	"fmt"
+	"io"
 
 	"github.com/CyCoreSystems/ari/v6"
 )
@@ -93,8 +93,16 @@ func (sr *StoredRecording) Delete(key *ari.Key) error {
 }
 
 func (sr *StoredRecording) File(key *ari.Key) ([]byte, error) {
-	var resp map[string]interface{}
-	err := sr.client.get("/recordings/stored/"+key.ID+"/file", &resp)
-	fmt.Printf("response: %v", resp)
-	return nil, err
+	ret, err := sr.client.makeGenericRequest(
+		"GET",
+		sr.client.Options.URL+"/recordings/stored/"+key.ID+"/file",
+		nil,
+		"application/octet-stream",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer ret.Body.Close()
+
+	return io.ReadAll(ret.Body)
 }
