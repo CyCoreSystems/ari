@@ -1,6 +1,6 @@
 # bridgemon
 
-[![](https://godoc.org/github.com/CyCoreSystems/ari?status.svg)](http://godoc.org/github.com/CyCoreSystems/ari)
+[![](https://godoc.org/github.com/PolyAI-LDN/ari?status.svg)](http://godoc.org/github.com/PolyAI-LDN/ari)
 
 Bridge Monitor provides a simple tool to monitor and cache a bridge's data for
 easy, efficient access by other routines.  It is safe for multi-threaded use and

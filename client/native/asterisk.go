@@ -5,7 +5,7 @@ import (
 
 	"github.com/rotisserie/eris"
 
-	"github.com/CyCoreSystems/ari/v6"
+	"github.com/PolyAI-LDN/ari/v6"
 )
 
 // Asterisk provides the ARI Asterisk accessors for a native client

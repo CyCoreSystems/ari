@@ -1,4 +1,4 @@
-module github.com/CyCoreSystems/ari/v6
+module github.com/PolyAI-LDN/ari/v6
 
 go 1.20
 

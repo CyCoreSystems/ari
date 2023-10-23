@@ -3,7 +3,7 @@ package native
 import (
 	"errors"
 
-	"github.com/CyCoreSystems/ari/v6"
+	"github.com/PolyAI-LDN/ari/v6"
 )
 
 // Modules provides the ARI modules accessors for a native client

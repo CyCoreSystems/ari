@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/CyCoreSystems/ari/v6"
+	"github.com/PolyAI-LDN/ari/v6"
 )
 
 // StoredRecording provides the ARI StoredRecording accessors for the native client
