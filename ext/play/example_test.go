@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/CyCoreSystems/ari/v6"
-	"github.com/CyCoreSystems/ari/v6/client/arimocks"
+	"github.com/PolyAI-LDN/ari/v6"
+	"github.com/PolyAI-LDN/ari/v6/client/arimocks"
 )
 
 func ExamplePlay() {

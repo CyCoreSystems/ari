@@ -3,7 +3,7 @@
 package arimocks
 
 import (
-	ari "github.com/CyCoreSystems/ari/v6"
+	ari "github.com/PolyAI-LDN/ari/v6"
 	mock "github.com/stretchr/testify/mock"
 
 	slog "golang.org/x/exp/slog"

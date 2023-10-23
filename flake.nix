@@ -14,7 +14,7 @@
         write-mailmap = pkgs.buildGoModule rec {
           name = "write_mailmap";
           src = pkgs.fetchFromGitHub {
-            owner = "CyCoreSystems";
+            owner = "PolyAI-LDN";
             repo = "write_mailmap";
             rev = "v0.3.0";
             sha256 = "sha256-LzLLEtsWLeIOnlY1pygAOhTsGiWfISnuVF/jeoHHzaw=";
@@ -42,7 +42,7 @@
           cd $(git rev-parse --show-toplevel)
           write_mailmap > CONTRIBUTORS
           gofumpt -w .
-          gci write --skip-generated -s standard -s default -s "Prefix(github.com/CyCoreSystems)" .
+          gci write --skip-generated -s standard -s default -s "Prefix(github.com/PolyAI-LDN)" .
           golangci-lint run
           golangci-lint run ./_examples/bridge
           golangci-lint run ./_examples/helloworld

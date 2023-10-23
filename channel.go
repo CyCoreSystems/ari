@@ -2,10 +2,10 @@ package ari
 
 import (
 	"encoding/json"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
 	"time"
 
-	ptypes "github.com/gogo/protobuf/types"
 	"github.com/rotisserie/eris"
 )
 
@@ -156,8 +156,13 @@ type channelDataJSON struct {
 
 // MarshalJSON encodes ChannelData to JSON
 func (d *ChannelData) MarshalJSON() ([]byte, error) {
-	t, err := ptypes.TimestampFromProto(d.Creationtime)
-	if err != nil {
+	var (
+		t time.Time
+	)
+
+	if d.Creationtime.IsValid() {
+		t = d.Creationtime.AsTime()
+	} else {
 		t = time.Now()
 	}
 
@@ -183,11 +188,9 @@ func (d *ChannelData) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	t, err := ptypes.TimestampProto(time.Time(in.Creationtime))
-	if err != nil {
-		t = &ptypes.Timestamp{
-			Seconds: time.Now().Unix(),
-		}
+	t := timestamppb.New(time.Time(in.Creationtime))
+	if !t.IsValid() {
+		t = timestamppb.Now()
 	}
 
 	*d = ChannelData{

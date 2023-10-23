@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/CyCoreSystems/ari/v6"
-	"github.com/CyCoreSystems/ari/v6/rid"
+	"github.com/PolyAI-LDN/ari/v6"
+	"github.com/PolyAI-LDN/ari/v6/rid"
 )
 
 // Channel provides the ARI Channel accessors for the native client
