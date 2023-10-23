@@ -99,19 +99,22 @@ func (c *Client) del(url string, resp interface{}, req string) error {
 	return c.makeRequest("DELETE", url, resp, nil)
 }
 
-func (c *Client) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
-	var reqBody io.Reader
+func (c *Client) makeGenericRequest(method, url string, req interface{}, contentType string) (*http.Response, error) {
+	var (
+		reqBody io.Reader
+		err     error
+	)
 	if req != nil {
 		reqBody, err = structToRequestBody(req)
 		if err != nil {
-			return eris.Wrap(err, "failed to marshal request")
+			return nil, eris.Wrap(err, "failed to marshal request")
 		}
 	}
 
 	var r *http.Request
 
 	if r, err = http.NewRequest(method, url, reqBody); err != nil {
-		return eris.Wrap(err, "failed to create request")
+		return nil, eris.Wrap(err, "failed to create request")
 	}
 
 	r.Header.Set("Content-Type", "application/json")
@@ -120,7 +123,11 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 		r.SetBasicAuth(c.Options.Username, c.Options.Password)
 	}
 
-	ret, err := c.httpClient.Do(r)
+	return c.httpClient.Do(r)
+}
+
+func (c *Client) makeRequest(method, url string, resp interface{}, req interface{}) (err error) {
+	ret, err := c.makeGenericRequest(method, url, req, "application/json")
 	if err != nil {
 		return eris.Wrap(err, "failed to make request")
 	}

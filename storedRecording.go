@@ -9,7 +9,7 @@ type StoredRecording interface {
 	// Get gets the Recording by type
 	Get(key *Key) *StoredRecordingHandle
 
-	// data gets the data for the stored recording
+	// Data gets the data for the stored recording
 	Data(key *Key) (*StoredRecordingData, error)
 
 	// Copy copies the recording to the destination name
@@ -21,6 +21,9 @@ type StoredRecording interface {
 
 	// Delete deletes the recording
 	Delete(key *Key) error
+
+	// File downloads the recordings contents
+	File(key *Key) ([]byte, error)
 }
 
 // StoredRecordingData is the data for a stored recording
@@ -94,4 +97,9 @@ func (s *StoredRecordingHandle) Copy(dest string) (*StoredRecordingHandle, error
 // Delete deletes the recording
 func (s *StoredRecordingHandle) Delete() error {
 	return s.s.Delete(s.key)
+}
+
+// File retrieves the recording
+func (s *StoredRecordingHandle) File() ([]byte, error) {
+	return s.s.File(s.key)
 }
