@@ -306,7 +306,7 @@ func NewChannelHandle(key *Key, c Channel, exec func(ch *ChannelHandle) error) *
 
 // ID returns the identifier for the channel handle
 func (ch *ChannelHandle) ID() string {
-	return ch.key.Id
+	return ch.key.ID
 }
 
 // Key returns the key for the channel handle
