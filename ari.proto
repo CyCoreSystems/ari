@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package asterisk.ari;
+package ari;
 
-option go_package = "ari";
+option go_package = "github.com/PolyAI-LDN/ari";
 
 import "google/protobuf/timestamp.proto";
 
