@@ -49,6 +49,9 @@ type Options struct {
 
 	// Logger provides a logger which should be used for this client.
 	Logger *slog.Logger
+
+	// buffered channel for sending Connection Up (true) or Down (false) messages to the caller
+	ChanMsgConnected chan bool
 }
 
 // ConnectWithContext creates and connects a new Client to Asterisk ARI.
@@ -191,7 +194,14 @@ func (c *Client) Close() {
 		c.cancel()
 	}
 
-	c.connected = false
+	if c.connected {
+		c.connected = false
+		if c.Options.ChanMsgConnected != nil {
+			c.Options.ChanMsgConnected <- false
+		}
+	}
+
+	c.Options.ChanMsgConnected = nil
 }
 
 // Application returns the ARI Application accessors for this client
@@ -375,6 +385,9 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 
 		// We are connected
 		c.connected = true
+		if c.Options.ChanMsgConnected != nil {
+			c.Options.ChanMsgConnected <- true
+		}
 
 		// Signal that we are connected (the first time only)
 		if wg != nil {
@@ -387,13 +400,23 @@ func (c *Client) listen(ctx context.Context, wg *sync.WaitGroup) {
 		case err = <-c.wsRead(ws):
 			c.Options.Logger.Error("read failure on websocket", "error", err)
 
-			c.connected = false
+			if c.connected {
+				c.connected = false
+				if c.Options.ChanMsgConnected != nil {
+					c.Options.ChanMsgConnected <- false
+				}
+			}
 
 			time.Sleep(10 * time.Millisecond)
 		}
 
 		// Make sure our websocket connection is closed before looping
-		c.connected = false
+		if c.connected {
+			c.connected = false
+			if c.Options.ChanMsgConnected != nil {
+				c.Options.ChanMsgConnected <- false
+			}
+		}
 
 		err = ws.Close()
 		if err != nil {
