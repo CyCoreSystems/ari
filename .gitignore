@@ -10,6 +10,12 @@ bin
 vendor/
 /.direnv/
 
+# Mac OS specific files
+**/.DS_Store
+
+# Generated files related to _examples/record-and-download
+audio.wav
+
 # Architecture specific extensions/prefixes
 *.[568vq]
 [568vq].out
