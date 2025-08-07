@@ -65,6 +65,7 @@ func TestKeysFilter(t *testing.T) {
 		if newKeys[0].Kind != ChannelKey && newKeys[0].ID != "ch1" {
 			t.Errorf("Unexpected first index %v", newKeys[0])
 		}
+
 		if newKeys[1].Kind != BridgeKey && newKeys[1].ID != "br1" {
 			t.Errorf("Unexpected second index %v", newKeys[1])
 		}
@@ -78,6 +79,7 @@ func TestKeysFilter(t *testing.T) {
 		if newKeys[0].Kind != ChannelKey && newKeys[0].ID != "ch1" {
 			t.Errorf("Unexpected first index %v", newKeys[0])
 		}
+
 		if newKeys[1].Kind != BridgeKey && newKeys[1].ID != "br1" {
 			t.Errorf("Unexpected second index %v", newKeys[1])
 		}

@@ -47,6 +47,7 @@ func main() {
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// make call
 		log.Info("Make sample call")
+
 		h, err := createCall(cl)
 		if err != nil {
 			log.Error("Failed to create call", "error", err)

@@ -55,7 +55,7 @@ func TestDateTimeMarshal(t *testing.T) {
 	for _, tx := range dtMarshalTests {
 		ret := runTestMarshal(tx.Input, tx.Output, tx.HasError)
 		if ret != "" {
-			t.Errorf(ret)
+			t.Error(ret)
 		}
 	}
 }
@@ -66,7 +66,7 @@ func TestDateTimeUnmarshal(t *testing.T) {
 
 		ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError)
 		if ret != "" {
-			t.Errorf(ret)
+			t.Error(ret)
 		}
 	}
 }
@@ -75,7 +75,7 @@ func TestDurationSecsMarshal(t *testing.T) {
 	for _, tx := range dsMarshalTests {
 		ret := runTestMarshal(tx.Input, tx.Output, tx.HasError)
 		if ret != "" {
-			t.Errorf(ret)
+			t.Error(ret)
 		}
 	}
 }
@@ -84,19 +84,23 @@ func TestDurationSecsUnmarshal(t *testing.T) {
 	for _, tx := range dsUnmarshalTests {
 		var out dsTest
 		if ret := runTestUnmarshal(&out, tx.Input, &tx.Output, tx.HasError); ret != "" {
-			t.Errorf(ret)
+			t.Error(ret)
 		}
 	}
 }
 
 // generalized test functions
 
-func runTestMarshal(input interface{}, output string, hasError bool) (ret string) {
-	var buf bytes.Buffer
+func runTestMarshal(input any, output string, hasError bool) (ret string) {
+	var (
+		buf    bytes.Buffer
+		failed bool
+	)
+
 	err := json.NewEncoder(&buf).Encode(input)
+
 	out := strings.TrimSpace(buf.String())
 
-	failed := false
 	failed = failed || (err == nil && hasError)
 	failed = failed || (out != output)
 

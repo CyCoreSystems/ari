@@ -190,7 +190,7 @@ type ChannelData struct {
 	// Language is the default spoken language for this channel
 	Language string `protobuf:"bytes,10,opt,name=language,proto3" json:"language,omitempty"`
 	// ChannelVars is the list of channel variables set on this channel
-	ChannelVars          map[string]string `protobuf:"bytes,11,rep,name=channelvars,proto3" json:"channelvars,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ChannelVars map[string]string `protobuf:"bytes,11,rep,name=channelvars,proto3" json:"channelvars,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// ProtocolId is the protocol id from the underlying channel driver
 	// For chan_sip and PJSIP this will be the SIP packets Call-ID value
 	// Empty if not applicable or not implemented by the driver
@@ -324,9 +324,9 @@ type DialplanCEP struct {
 	// Exten describes the label in the section of the dialplan
 	Exten string `protobuf:"bytes,2,opt,name=exten,proto3" json:"exten,omitempty"`
 	// Priority indicates the index at the label in the section of the dialplan
-	Priority             int64    `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
+	Priority int64 `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
 	// AppName indicates the current dialplan application name
-	AppName              string   `protobuf:"bytes,4,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
+	AppName string `protobuf:"bytes,4,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
 	// AppData indicates all data parameters passed to the dialplan AppName
 	AppData              string   `protobuf:"bytes,5,opt,name=app_data,json=appData,proto3" json:"app_data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`

@@ -473,7 +473,7 @@ func (s *recordingSession) record(ctx context.Context, r ari.Recorder, wg *sync.
 
 			r := e.(*ari.RecordingFailed).Recording
 			s.res.Data = &r
-			s.res.Error = fmt.Errorf("Recording failed: %s", r.Cause)
+			s.res.Error = fmt.Errorf("recording failed: %s", r.Cause)
 
 			return
 		case e, ok := <-finishedSub.Events():

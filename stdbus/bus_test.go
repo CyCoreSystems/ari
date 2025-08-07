@@ -159,6 +159,7 @@ func TestEventsMultipleKeys(t *testing.T) {
 	b.Send(&multiKeyEvent)
 
 	eventCount := 0
+
 L:
 	for {
 		select {

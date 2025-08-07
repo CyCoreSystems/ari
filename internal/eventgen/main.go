@@ -103,7 +103,7 @@ func main() {
 	defer input.Close()
 
 	// parse data
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	dec := json.NewDecoder(input)
 
 	if err := dec.Decode(&data); err != nil {
@@ -114,7 +114,7 @@ func main() {
 
 	var events eventList
 
-	models, ok := data["models"].(map[string]interface{})
+	models, ok := data["models"].(map[string]any)
 	if !ok {
 		log.Fatalln("failed to get models")
 	}
@@ -124,8 +124,8 @@ func main() {
 	}
 
 	for mkey, m := range models {
-		model := m.(map[string]interface{})
-		name := strings.Replace(mkey, "Id", "ID", -1)
+		model := m.(map[string]any)
+		name := strings.ReplaceAll(mkey, "Id", "ID")
 
 		if name == "Message" || name == "Event" {
 			continue
@@ -133,13 +133,13 @@ func main() {
 
 		var pl propList
 
-		props := model["properties"].(map[string]interface{})
+		props := model["properties"].(map[string]any)
 		for pkey, p := range props {
-			propm := p.(map[string]interface{})
+			propm := p.(map[string]any)
 			desc, _ := propm["description"].(string)
 
-			desc = strings.Replace(desc, "\n", "", -1)
-			desc = strings.Replace(desc, "\r", "", -1)
+			desc = strings.ReplaceAll(desc, "\n", "")
+			desc = strings.ReplaceAll(desc, "\r", "")
 
 			if desc != "" {
 				desc = "// " + desc
@@ -179,8 +179,8 @@ func main() {
 		sort.Sort(pl)
 
 		desc, _ := model["description"].(string)
-		desc = strings.Replace(desc, "\n", "", -1)
-		desc = strings.Replace(desc, "\r", "", -1)
+		desc = strings.ReplaceAll(desc, "\n", "")
+		desc = strings.ReplaceAll(desc, "\r", "")
 
 		events = append(events, event{
 			Name:        name,

@@ -94,12 +94,14 @@ func (m *Monitor) updateData(data *ari.BridgeData) {
 
 	// Distribute new data to any watchers
 	m.watcherMu.Lock()
+
 	for _, w := range m.watchers {
 		select {
 		case w <- data:
 		default:
 		}
 	}
+
 	m.watcherMu.Unlock()
 }
 
@@ -159,21 +161,28 @@ func (m *Monitor) Close() {
 		return
 	}
 
-	m.mu.Lock()
-	if !m.closed {
-		m.closed = true
-		if m.sub != nil {
-			m.sub.Cancel()
+	{
+		m.mu.Lock()
+
+		if !m.closed {
+			m.closed = true
+			if m.sub != nil {
+				m.sub.Cancel()
+			}
 		}
-	}
-	m.mu.Unlock()
 
-	m.watcherMu.Lock()
-
-	for _, w := range m.watchers {
-		close(w)
+		m.mu.Unlock()
 	}
 
-	m.watchers = nil
-	m.watcherMu.Unlock()
+	{
+		m.watcherMu.Lock()
+
+		for _, w := range m.watchers {
+			close(w)
+		}
+
+		m.watchers = nil
+
+		m.watcherMu.Unlock()
+	}
 }

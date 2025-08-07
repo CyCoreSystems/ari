@@ -426,7 +426,7 @@ func (c *Channel) StageExternalMedia(key *ari.Key, opts ari.ExternalMediaOptions
 	}
 
 	if opts.Format == "" {
-		return nil, errors.New("Format is mandatory")
+		return nil, errors.New("format is mandatory")
 	}
 
 	if opts.Direction == "" {

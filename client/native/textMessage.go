@@ -18,6 +18,7 @@ func (t *TextMessage) Send(from, tech, resource, body string, vars map[string]st
 	if vars == nil {
 		vars = map[string]string{}
 	}
+
 	data := struct {
 		Variables map[string]string `json:"variables"`
 	}{
@@ -39,6 +40,7 @@ func (t *TextMessage) SendByURI(from, to, body string, vars map[string]string) e
 	if vars == nil {
 		vars = map[string]string{}
 	}
+
 	data := struct {
 		Variables map[string]string `json:"variables"`
 	}{

@@ -17,7 +17,7 @@
             owner = "CyCoreSystems";
             repo = "write_mailmap";
             rev = "v0.3.0";
-            sha256 = "sha256-LzLLEtsWLeIOnlY1pygAOhTsGiWfISnuVF/jeoHHzaw=";
+            hash = "sha256-LzLLEtsWLeIOnlY1pygAOhTsGiWfISnuVF/jeoHHzaw=";
           };
 
           # There are no upstream packages, so vendor hash is null.
@@ -35,7 +35,7 @@
 
           # Switch to fake vendor sha for upgrades:
           #vendorSha256 = pkgs.lib.fakeSha256;
-          vendorSha256 = "sha256-g7htGfU6C2rzfu8hAn6SGr0ZRwB8ZzSf9CgHYmdupE8=";
+          vendorHash = "sha256-g7htGfU6C2rzfu8hAn6SGr0ZRwB8ZzSf9CgHYmdupE8=";
         };
 
         cclint = pkgs.writeScriptBin "lint" ''

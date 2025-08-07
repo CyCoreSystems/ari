@@ -210,11 +210,11 @@ func ToneURI(name string) string {
 func Check(uri string) error {
 	l := strings.Split(uri, ":")
 	if len(l) != 2 {
-		return fmt.Errorf("Audio URI %s is not formatted properly", uri)
+		return fmt.Errorf("audio URI %s is not formatted properly", uri)
 	}
 
 	if sort.SearchStrings(SupportedPlaybackPrefixes, l[0]) == len(SupportedPlaybackPrefixes) {
-		return fmt.Errorf("Audio URI prefix %s not supported", l[0])
+		return fmt.Errorf("audio URI prefix %s not supported", l[0])
 	}
 
 	return nil

@@ -45,7 +45,9 @@ func Once(ctx context.Context, bus Bus, key *Key, eTypes ...string) <-chan Event
 		case ret <- <-s.Events():
 		case <-ctx.Done():
 		}
+
 		close(ret)
+
 		s.Cancel()
 	}()
 

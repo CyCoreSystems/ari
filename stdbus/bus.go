@@ -94,6 +94,7 @@ func (b *bus) add(s *subscription) {
 // remove deletes the given subscription from the bus
 func (b *bus) remove(s *subscription) {
 	b.rwMux.Lock()
+
 	for i, si := range b.subs {
 		if s == si {
 			// Subs are pointers, so we have to explicitly remove them
@@ -105,6 +106,7 @@ func (b *bus) remove(s *subscription) {
 			break
 		}
 	}
+
 	b.rwMux.Unlock()
 }
 

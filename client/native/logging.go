@@ -34,6 +34,7 @@ func (l *Logging) Get(key *ari.Key) *ari.LogHandle {
 
 func (l *Logging) getLoggingChannels() ([]*ari.LogData, error) {
 	var ld []*ari.LogData
+
 	err := l.client.get("/asterisk/logging", &ld)
 
 	return ld, err

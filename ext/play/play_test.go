@@ -127,10 +127,11 @@ func testPlayStagedFinishedEvent(t *testing.T) {
 }
 
 func testPlayStagedFailExec(t *testing.T) {
+	var p playStagedTest
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var p playStagedTest
 	p.handleExec = func(_ *ari.PlaybackHandle) error {
 		return errors.New("err2")
 	}
