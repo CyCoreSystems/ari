@@ -1,0 +1,11 @@
+all: false
+dir: "client/arimocks"
+filename: "{{.InterfaceName}}.go"
+structname: "{{.InterfaceName}}"
+pkgname: "arimocks"
+template-data:
+  unroll-variadic: true
+packages:
+  github.com/CyCoreSystems/ari/v6:
+    config:
+      all: true

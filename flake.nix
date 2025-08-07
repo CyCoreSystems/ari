@@ -61,8 +61,8 @@
         '';
 
         ccmocks = pkgs.writeScriptBin "gen-mocks" ''
-           rm -Rf vendor/ client/arimocks
-           mockery --name . --outpkg arimocks --output client/arimocks
+           rm -Rf client/arimocks
+           mockery
         '';
       in
       {
