@@ -137,6 +137,40 @@ func (c *Client) makeRequest(method, url string, resp interface{}, req interface
 	return maybeRequestError(ret)
 }
 
+func (c *Client) getRaw(url string) (*http.Response, error) {
+	url = c.Options.URL + url
+	return c.makeRequestRaw("GET", url, nil)
+}
+
+func (c *Client) makeRequestRaw(method, url string, req interface{}) (*http.Response, error) {
+	var reqBody io.Reader
+
+	if req != nil {
+		var err error
+		reqBody, err = structToRequestBody(req)
+		if err != nil {
+			return nil, eris.Wrap(err, "failed to marshal request")
+		}
+	}
+
+	r, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to create request")
+	}
+
+	r.Header.Set("Content-Type", "application/json")
+	if c.Options.Username != "" {
+		r.SetBasicAuth(c.Options.Username, c.Options.Password)
+	}
+
+	ret, err := c.httpClient.Do(r)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to make request")
+	}
+
+	return ret, maybeRequestError(ret)
+}
+
 func structToRequestBody(req interface{}) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 

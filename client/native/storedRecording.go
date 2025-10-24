@@ -2,7 +2,6 @@ package native
 
 import (
 	"errors"
-
 	"github.com/CyCoreSystems/ari/v6"
 )
 
@@ -52,6 +51,25 @@ func (sr *StoredRecording) Data(key *ari.Key) (*ari.StoredRecordingData, error) 
 	data.Key = sr.client.stamp(key)
 
 	return data, nil
+}
+
+// Download retrieves the data for the stored recording
+// IMPORTANT: Don't forget to close the reader when done.
+func (sr *StoredRecording) Download(key *ari.Key) (*ari.StoredRecordingBinaryData, error) {
+	if key == nil || key.ID == "" {
+		return nil, errors.New("storedRecording key not supplied")
+	}
+
+	res, err := sr.client.getRaw("/recordings/stored/" + key.ID + "/file")
+	if err != nil {
+		return nil, dataGetError(err, "storedRecording", "%v", key.ID)
+	}
+
+	return &ari.StoredRecordingBinaryData{
+		Key:         key,
+		ReadCloser:  res.Body,
+		ContentType: res.Header.Get("Content-Type"),
+	}, nil
 }
 
 // Copy copies a stored recording and returns the new handle
