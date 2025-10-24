@@ -1,6 +1,6 @@
 module github.com/CyCoreSystems/ari/v6
 
-go 1.23.7
+go 1.24.0
 
 toolchain go1.24.4
 
@@ -9,7 +9,7 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/net v0.42.0
 	golang.org/x/text v0.27.0
 )
