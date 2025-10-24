@@ -150,7 +150,7 @@ type channelDataJSON struct {
 	Dialplan     *DialplanCEP      `json:"dialplan"` // Current location in the dialplan
 	Language     string            `json:"language"` // Language for the channel
 	ChannelVars  map[string]string `json:"channelvars"`
-	ProtocolId   string            `json:"protocolid"` // Protocol identifier from the underlying channel technology (SIP header Call-ID value for chan_sip and PJSIP) (since Asterisk 12)
+	ProtocolId   string            `json:"protocol_id"` // Protocol identifier from the underlying channel technology (SIP header Call-ID value for chan_sip and PJSIP) (since Asterisk 12)
 }
 
 // MarshalJSON encodes ChannelData to JSON
