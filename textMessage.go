@@ -1,5 +1,9 @@
 package ari
 
+import (
+	"encoding/json"
+)
+
 // TextMessage needs some verbiage here
 type TextMessage interface {
 	// Send() sends a text message to an endpoint
@@ -24,4 +28,30 @@ type TextMessageData struct {
 type TextMessageVariable struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+// UnmarshalJSON parses the data into the TextMessageVariable object
+func (t *TextMessageData) UnmarshalJSON(data []byte) error {
+	// Alias to avoid recursive call
+	type Alias TextMessageData
+	aux := &struct {
+		Variables map[string]string `json:"variables"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Convert map into slice
+	for k, v := range aux.Variables {
+		t.Variables = append(t.Variables, TextMessageVariable{
+			Key:   k,
+			Value: v,
+		})
+	}
+
+	return nil
 }
