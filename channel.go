@@ -56,6 +56,9 @@ type Channel interface {
 	// Answer answers the channel
 	Answer(key *Key) error
 
+	// Progress indicates progress on the channel
+	Progress(key *Key) error
+
 	// Hangup hangs up the given channel
 	Hangup(key *Key, reason string) error
 
@@ -395,6 +398,11 @@ func (ch *ChannelHandle) Hangup() error {
 // Answer answers the channel
 func (ch *ChannelHandle) Answer() error {
 	return ch.c.Answer(ch.key)
+}
+
+// Progress indicates progress on the channel
+func (ch *ChannelHandle) Progress() error {
+	return ch.c.Progress(ch.key)
 }
 
 // IsAnswered checks the current state of the channel to see if it is "Up"
