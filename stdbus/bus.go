@@ -2,6 +2,8 @@ package stdbus
 
 import (
 	"sync"
+	"os"
+	"strconv"
 
 	"github.com/CyCoreSystems/ari/v6"
 )
@@ -25,6 +27,11 @@ type bus struct {
 func New() ari.Bus {
 	b := &bus{
 		subs: []*subscription{},
+	}
+
+	if os.Getenv("BUS_BUFFERSIZE") != "" {
+		size := os.Getenv("BUS_BUFFERSIZE")
+		subscriptionEventBufferSize, _ = strconv.Atoi(size)
 	}
 
 	return b
