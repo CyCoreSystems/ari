@@ -29,9 +29,11 @@ func New() ari.Bus {
 		subs: []*subscription{},
 	}
 
-	if os.Getenv("BUS_BUFFERSIZE") != "" {
-		size := os.Getenv("BUS_BUFFERSIZE")
-		subscriptionEventBufferSize, _ = strconv.Atoi(size)
+	if size := os.Getenv("BUS_BUFFERSIZE"); size != "" {
+		sizeInt, err := strconv.Atoi(size)
+		if err == nil && sizeInt > 0 {
+			subscriptionEventBufferSize = sizeInt
+		}
 	}
 
 	return b
