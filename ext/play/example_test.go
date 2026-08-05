@@ -93,8 +93,10 @@ func ExamplePrompt_custom() {
 					// was found, so there is no match possible
 					return pat, Invalid
 				}
+
 				return in, Incomplete
 			}
+
 			return pat, Complete
 		}),
 	).Result()
