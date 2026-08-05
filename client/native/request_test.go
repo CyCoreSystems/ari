@@ -10,15 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRequestStopsAtConfiguredTimeout(t *testing.T) {
+func TestRequestStopsAtCustomHTTPClientTimeout(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, request *http.Request) {
 		<-request.Context().Done()
 	}))
 	defer server.Close()
 
+	httpClient := &http.Client{Timeout: 25 * time.Millisecond}
 	client := New(&Options{
-		URL:            server.URL,
-		RequestTimeout: 25 * time.Millisecond,
+		URL:        server.URL,
+		HTTPClient: httpClient,
 	})
 
 	startedAt := time.Now()
@@ -32,7 +33,15 @@ func TestRequestStopsAtConfiguredTimeout(t *testing.T) {
 	require.True(t, networkError.Timeout())
 }
 
-func TestRequestUsesPackageDefaultTimeout(t *testing.T) {
+func TestNewUsesProvidedHTTPClient(t *testing.T) {
+	httpClient := &http.Client{}
+
+	client := New(&Options{HTTPClient: httpClient})
+
+	require.Same(t, httpClient, client.httpClient)
+}
+
+func TestNewUsesPackageDefaultRequestTimeout(t *testing.T) {
 	client := New(&Options{})
 
 	require.Equal(t, RequestTimeout, client.httpClient.Timeout)

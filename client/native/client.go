@@ -50,9 +50,9 @@ type Options struct {
 	// Logger provides a logger which should be used for this client.
 	Logger *slog.Logger
 
-	// RequestTimeout limits the complete lifetime of an ARI REST request.
-	// The package RequestTimeout value is used when this is not positive.
-	RequestTimeout time.Duration
+	// HTTPClient sends ARI REST requests. When nil, a client using the package
+	// RequestTimeout is created.
+	HTTPClient *http.Client
 }
 
 // ConnectWithContext creates and connects a new Client to Asterisk ARI.
@@ -147,17 +147,15 @@ func New(opts *Options) *Client {
 			&slog.HandlerOptions{Level: slog.LevelError}))
 	}
 
-	requestTimeout := opts.RequestTimeout
-	if requestTimeout <= 0 {
-		requestTimeout = RequestTimeout
+	httpClient := opts.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: RequestTimeout}
 	}
 
 	return &Client{
-		appName: opts.Application,
-		Options: opts,
-		httpClient: http.Client{
-			Timeout: requestTimeout,
-		},
+		appName:    opts.Application,
+		Options:    opts,
+		httpClient: httpClient,
 	}
 }
 
@@ -180,7 +178,7 @@ type Client struct {
 	bus ari.Bus
 
 	// httpClient is the reusable HTTP client on which commands to Asterisk are sent
-	httpClient http.Client
+	httpClient *http.Client
 
 	cancel context.CancelFunc
 }
