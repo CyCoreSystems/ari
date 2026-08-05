@@ -2,6 +2,7 @@ package native
 
 import (
 	"errors"
+	"net/url"
 
 	"github.com/CyCoreSystems/ari/v6"
 )
@@ -24,7 +25,7 @@ func (lr *LiveRecording) Data(key *ari.Key) (d *ari.LiveRecordingData, err error
 	}
 
 	data := new(ari.LiveRecordingData)
-	if err := lr.client.get("/recordings/live/"+key.ID, data); err != nil {
+	if err := lr.client.get("/recordings/live/"+url.PathEscape(key.ID), data); err != nil {
 		return nil, dataGetError(err, "liveRecording", "%v", key.ID)
 	}
 
@@ -41,32 +42,32 @@ func (lr *LiveRecording) Stop(key *ari.Key) error {
 		return errors.New("liveRecording key not supplied")
 	}
 
-	return lr.client.post("/recordings/live/"+key.ID+"/stop", nil, nil)
+	return lr.client.post("/recordings/live/"+url.PathEscape(key.ID)+"/stop", nil, nil)
 }
 
 // Pause pauses the live recording (TODO: does it error if the live recording is already paused)
 func (lr *LiveRecording) Pause(key *ari.Key) error {
-	return lr.client.post("/recordings/live/"+key.ID+"/pause", nil, nil)
+	return lr.client.post("/recordings/live/"+url.PathEscape(key.ID)+"/pause", nil, nil)
 }
 
 // Resume resumes the live recording (TODO: does it error if the live recording is already resumed)
 func (lr *LiveRecording) Resume(key *ari.Key) error {
-	return lr.client.del("/recordings/live/"+key.ID+"/pause", nil, "")
+	return lr.client.del("/recordings/live/"+url.PathEscape(key.ID)+"/pause", nil, "")
 }
 
 // Mute mutes the live recording (TODO: does it error if the live recording is already muted)
 func (lr *LiveRecording) Mute(key *ari.Key) error {
-	return lr.client.post("/recordings/live/"+key.ID+"/mute", nil, nil)
+	return lr.client.post("/recordings/live/"+url.PathEscape(key.ID)+"/mute", nil, nil)
 }
 
 // Unmute unmutes the live recording (TODO: does it error if the live recording is already muted)
 func (lr *LiveRecording) Unmute(key *ari.Key) error {
-	return lr.client.del("/recordings/live/"+key.ID+"/mute", nil, "")
+	return lr.client.del("/recordings/live/"+url.PathEscape(key.ID)+"/mute", nil, "")
 }
 
 // Scrap removes a live recording (TODO: describe difference between scrap and delete)
 func (lr *LiveRecording) Scrap(key *ari.Key) error {
-	return lr.client.del("/recordings/live/"+key.ID, nil, "")
+	return lr.client.del("/recordings/live/"+url.PathEscape(key.ID), nil, "")
 }
 
 // Stored returns the StoredRecording handle for the given LiveRecording
