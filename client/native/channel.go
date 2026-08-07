@@ -179,6 +179,11 @@ func (c *Channel) Answer(key *ari.Key) error {
 	return c.client.post("/channels/"+key.ID+"/answer", nil, nil)
 }
 
+// Progress indicates progress on the channel
+func (c *Channel) Progress(key *ari.Key) error {
+	return c.client.post("/channels/"+key.ID+"/progress", nil, nil)
+}
+
 // Ring causes a channel to start ringing (TODO: does this return an error if already ringing?)
 func (c *Channel) Ring(key *ari.Key) error {
 	return c.client.post("/channels/"+key.ID+"/ring", nil, nil)
