@@ -270,6 +270,20 @@ func (r *Result) Save(name string) error {
 	return nil
 }
 
+func (r *Result) Download() (*ari.StoredRecordingBinaryData, error) {
+	if r.h == nil {
+		return nil, eris.New("no stored recording handle available")
+	}
+
+	// Download the recording
+	data, err := r.h.Download()
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to download recording")
+	}
+
+	return data, nil
+}
+
 // URI returns the AudioURI to play the recording
 func (r *Result) URI() string {
 	return "recording:" + r.h.ID()
